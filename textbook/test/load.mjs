@@ -18,8 +18,8 @@ export function loadBook() {
 // textbook/rewrite/combined/TEST-CONSTANTS.md)
 //  parts (FL.book.PARTS: the front part 序部 p0 and parts 1–6), chapters, secs, quiz, terms, examples, cautions,
 //  refs (source links in the end matter), lessons (end matter), figs (SVG figures), photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう), folds (もっと深く・計算演習: bk.deep, bk.drill)
-export const COUNTS = { parts: 7, chapters: 29, secs: 171, quiz: 150, terms: 538, examples: 84, cautions: 74, refs: 294, lessons: 70, figs: 119, photos: 35, calcs: 10, simTags: 65, details: 127, folds: 19 };
-export const ORDER = ['intro', 'basics', 'english', 'sim', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
+export const COUNTS = { parts: 7, chapters: 30, secs: 181, quiz: 162, terms: 581, examples: 89, cautions: 78, refs: 319, lessons: 74, figs: 135, photos: 40, calcs: 10, simTags: 70, details: 128, folds: 31 };
+export const ORDER = ['intro', 'basics', 'english', 'sim', 'aero', 'sys', 'inst', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
 export const NOTICE = [
   'このページは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。',
   'ANA の公式ソフトウェア・公式教材ではありません。',

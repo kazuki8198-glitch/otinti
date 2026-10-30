@@ -4,8 +4,8 @@
  "unit": "W15",
  "chapter": "inst",
  "updated": "2026-10-30",
- "by": "W15",
- "about": "第 1 部の新しい章 inst（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文と図のキャプション。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。sys.g1000・sys.compass は sys から移した節で、この章の行に入れた。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W15.ledger.json にも同じ行がある）。checkedBy は事実確認役（W15 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値に出典はなく、W15 が検算した）。囲みの行（FL.jur が描く文）は W05・W06 が確かめた値。",
+ "by": "W15・revise-inst",
+ "about": "第 1 部の新しい章 inst（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文と図のキャプション。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。sys.g1000・sys.compass は sys から移した節で、この章の行に入れた。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W15.ledger.json にも同じ行がある）。checkedBy は事実確認役（W15 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値に出典はなく、W15 が検算した）。囲みの行（FL.jur が描く文）は W05・W06 が確かめた値。 revise-inst（2026-10-30）が事実確認・初学者・専門家の読みの直しのあとで抜き出し直した：文が変わらない行は W15 の札のまま（factcheck の N5・N6 の 4 行は出典の書き方だけ直した）、新しい行と文が変わった行は by に revise-inst（文が変わった行は note に前の ID）。extracted: false の行（id の後ろが hand-）は、道具が抜き出さない文（単位のない数の表・数のない規則）のうち、値や手順を言う文を revise-inst が手で足したもの（check-claims は抜き出さないので、ID は道具の claimId ではない。統合役が CLAIMS.json に入れるときは、この形のまま入れるか、道具が抜き出す形に合わせる）。",
  "format": {
   "id": "<節ID>#<8 桁>",
   "sec": "節 ID",
@@ -15,16 +15,20 @@
   "kind": "例題（仮定の値の計算）のときだけ",
   "by": "書いた単位",
   "checkedBy": "確かめ役（書いた人と別）",
-  "checkedOn": "確認日"
+  "checkedOn": "確認日",
+  "extracted": "false：道具が抜き出さない文を手で足した行",
+  "note": "直したときの前の ID・直した理由"
  },
  "counts": {
-  "rows": 77,
+  "rows": 100,
   "byTag": {
-   "参考値": 71,
-   "教材値": 2,
-   "条文": 4
+   "参考値": 95,
+   "条文": 4,
+   "教材値": 1
   },
-  "examples": 23
+  "examples": 19,
+  "extractedByTool": 88,
+  "addedByHand": 12
  },
  "rows": [
   {
@@ -36,12 +40,13 @@
    "by": "W15"
   },
   {
-   "id": "sys.g1000#f956f55f",
+   "id": "sys.g1000#fabd8aec",
    "sec": "sys.g1000",
-   "text": "そのときの高度の誤差は、表示の札がなければ 50 ft より小さいとしています（POH 7.21）。",
+   "text": "そのときの高度の誤差は、機体に別の値を書いた札（placard）がなければ、50 ft より小さいとしています（POH 7.21）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.21「The altimeter error is less than 50 feet unless otherwise placarded」",
-   "by": "W15"
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.21（The altimeter error is less than 50 feet unless otherwise placarded）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID sys.g1000#f956f55f）"
   },
   {
    "id": "inst.speed#fa037a45",
@@ -52,64 +57,23 @@
    "by": "W15"
   },
   {
-   "id": "inst.speed#1e6b7bf8",
+   "id": "inst.speed#24ae8f0d",
    "sec": "inst.speed",
-   "text": "超過禁止速度（VNE、never-exceed speed）：154 KIAS ＝ 148 KCAS",
+   "text": "① POH 2.3 では、VNO は 125 KIAS ＝ 121 KCAS です。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3 Airspeed Limitations（VNE 154 KIAS／148 KCAS）",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#875135c5",
-   "sec": "inst.speed",
-   "text": "VNO（穏やかな空気のときだけ超えてよい速度）：125 KIAS ＝ 121 KCAS",
-   "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VNO 125 KIAS／121 KCAS）",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#cb6ec5aa",
-   "sec": "inst.speed",
-   "text": "VFE（フラップを下げてよい最大の速度）：102 KIAS ＝ 100 KCAS",
-   "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VFE 102 KIAS／100 KCAS）",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#366d3ef9",
-   "sec": "inst.speed",
-   "text": "① 空気の密度を仮に 1.2 kg/m³ とします。",
-   "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3 Airspeed Limitations（VNO 125 KIAS／121 KCAS）",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst"
   },
   {
-   "id": "inst.speed#cd8098cd",
+   "id": "inst.speed#fb10eed7",
    "sec": "inst.speed",
-   "text": "速さ 50 m/s の動圧はいくらですか。",
+   "text": "② この CAS 121 kt で、空気の密度が海面の 0.64 倍の高さを飛んでいます。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（121 KCAS）と、密度比 0.64 はこの本で決めた仮定の値（kiso04.q3 と同じ値）",
    "kind": "例題",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#85808be5",
-   "sec": "inst.speed",
-   "text": "速さが 2 倍なら、どうなりますか。",
-   "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
-   "kind": "例題",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#a087fa9b",
-   "sec": "inst.speed",
-   "text": "② 空気の密度が海面の 0.64 倍の高さで、海面の 120 kt と同じ動圧で飛んでいます。",
-   "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
-   "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.speed#a087fa9b）"
   },
   {
    "id": "inst.speed#00331970",
@@ -121,64 +85,61 @@
    "by": "W15"
   },
   {
-   "id": "inst.speed#e4add740",
+   "id": "inst.speed#61d22738",
    "sec": "inst.speed",
-   "text": "100 m/s なら 6,000 Pa で、4 倍です。",
+   "text": "① 125 − 121 ＝ 4 kt で、CAS のほうが 4 kt 小さくなります。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）：½ × 1.2 × 100² ＝ 6,000 Pa",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：125 − 121 ＝ 4",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst"
   },
   {
-   "id": "inst.speed#f6da01f0",
+   "id": "inst.speed#5153853c",
    "sec": "inst.speed",
-   "text": "② 動圧 ½ρV² を同じにするには、V² を 1 ÷ 0.64 倍、V を 1 ÷ 0.8 ＝ 1.25 倍にします。",
+   "text": "② 動圧 ½ρV² が同じなので、V² は 1 ÷ 0.64 倍です。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）：√(1/0.64) ＝ 1.25",
+   "source": "FAA PHAK 第 5 章（q ＝ ½ρv²）からの計算（revise-inst が検算した）",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.speed#f6da01f0）"
   },
   {
-   "id": "inst.speed#52d82784",
+   "id": "inst.speed#a1fd522c",
    "sec": "inst.speed",
-   "text": "120 × 1.25 ＝ 150 kt です。",
+   "text": "V は √ をとって 1 ÷ √0.64 ＝ 1 ÷ 0.8 ＝ 1.25 倍です。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：√0.64 ＝ 0.8、1 ÷ 0.8 ＝ 1.25",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.speed#f6da01f0）"
   },
   {
-   "id": "inst.speed#80e82269",
+   "id": "inst.speed#66fe2d21",
    "sec": "inst.speed",
-   "text": "真正面の風だけなら、GS は 150 − 20 ＝ 130 kt です。",
+   "text": "121 × 1.25 ≈ 151 kt です。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：121 × 1.25 ＝ 151.25",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.speed#52d82784）"
   },
   {
-   "id": "inst.speed#1f60d6d2",
+   "id": "inst.speed#01075e16",
    "sec": "inst.speed",
-   "text": "Archer III の POH の速度計の帯は、白が 45〜102 KIAS、緑が 50〜125 KIAS、黄色が 125〜154 KIAS です。",
+   "text": "真正面の風だけなら、GS は 151 − 20 ＝ 131 kt です（計算用の仮の値。空気の圧縮は無視した）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.5 Airspeed Indicator Markings（PFD と予備の速度計：白 45〜102、緑 50〜125、黄 125〜154 KIAS）",
-   "by": "W15"
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：151 − 20 ＝ 131",
+   "kind": "例題",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.speed#80e82269）"
   },
   {
-   "id": "inst.speed#8685a94f",
+   "id": "inst.speed#b362f748",
    "sec": "inst.speed",
-   "text": "赤い線は 154 KIAS です（参考値：POH 2.5）。",
+   "text": "速度のトレンド（いまの変わり方が続いたときの、6 秒後の速度の予想）が VNE を超えると、数字が黄色に変わります。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.5（赤い線 154 KIAS）",
-   "by": "W15"
-  },
-  {
-   "id": "inst.speed#7992c2a3",
-   "sec": "inst.speed",
-   "text": "この教材の Archer の値（教材値）も、白 45〜102・緑 50〜125・黄色 125〜154・赤い線 154 KIAS で、参考値と同じです。",
-   "tag": "教材値",
-   "source": "FL.physics の pa28.v（s0 45・fe 102・s1 50・no 125・ne 154）。POH 2.5 の参考値と同じ",
-   "by": "W15"
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（NEW_R.g1000pg。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 2 章 Flight Instruments（Airspeed Trend Vector：predicted airspeed in six seconds、トレンドが VNE を超えると数字が黄色）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）",
+   "by": "revise-inst"
   },
   {
    "id": "inst.speed#d77ca182",
@@ -197,12 +158,29 @@
    "by": "W15"
   },
   {
-   "id": "inst.alt#9bb0f772",
+   "id": "inst.alt#d7712150",
    "sec": "inst.alt",
-   "text": "差が ±75 ft 以上なら、高度計の正しさが疑わしいので、整備で調べてもらいます（米国の AIM 7-2-3・PHAK 第 8 章）。",
+   "text": "表示と標高の差が 75 ft 以上（高くても低くても）なら、高度計の正しさが疑わしいので、整備で調べてもらいます（米国の AIM 7-2-3・PHAK 第 8 章）。",
    "tag": "参考値",
-   "source": "FAA AIM 7-2-3（±75 ft 以上なら高度計の正しさが疑わしい）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Instrument Check：75 feet）",
-   "by": "W15"
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-3（plus or minus 75 feet or greater）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）（Instrument Check：75 feet）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#9bb0f772）"
+  },
+  {
+   "id": "inst.alt#74b432e7",
+   "sec": "inst.alt",
+   "text": "この点検で分かるのは、高度計の目盛りの誤差です（米国の AIM 7-2-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-3（Scale error may be observed while performing a ground altimeter check）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.alt#bf58b37c",
+   "sec": "inst.alt",
+   "text": "駐機場の高さは空港の標高と違うことがあるので、75 ft を超えたら、試運転（ランナップ、run-up）の場所で測り直します（IFH 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-37 の 6（the elevation of the ramp or hangar area might differ significantly from field elevation, recheck when in the run-up area if the error exceeds 75 feet）",
+   "by": "revise-inst"
   },
   {
    "id": "inst.alt#5763f629",
@@ -229,21 +207,58 @@
    "by": "W15"
   },
   {
-   "id": "inst.alt#de4a28c5",
+   "id": "inst.alt#5f49f3d6",
    "sec": "inst.alt",
-   "text": "hPa で数えると約 36 hPa なので、海面の近くでは 1 hPa が約 28 ft にあたります。",
+   "text": "差の 1.06 inHg は、1 inHg を約 33.9 hPa として約 36 hPa です。",
    "tag": "参考値",
-   "source": "PHAK 第 4 章 図 4-3 からの計算：1.06 inHg × 33.864 hPa/inHg ≈ 35.9 hPa、1,000 ÷ 35.9 ≈ 27.9 ft/hPa（PHAK 第 4 章：29.92 inHg ＝ 1,013.2 mb）",
-   "by": "W15"
+   "source": "FAA PHAK 第 4 章 図 4-3（0 ft 29.92・1,000 ft 28.86 inHg、29.92 inHg ＝ 1,013.2 mb）からの計算：1,013.2 ÷ 29.92 ＝ 33.86 hPa/inHg、1.06 × 33.86 ＝ 35.9 hPa",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#de4a28c5）"
   },
   {
-   "id": "inst.alt#4e563e16",
+   "id": "inst.alt#1708dd01",
    "sec": "inst.alt",
-   "text": "① 規正値 29.94 inHg のまま、規正値が 29.69 inHg の空港の場周を、高度計 2,600 ft で飛びました。",
+   "text": "海面から 1,000 ft までの平均で、1 hPa が約 28 ft にあたります。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） の Dallas Love → Mineral Wells 29.94 → Abilene 29.69 inHg・2,600 ft の例",
+   "source": "FAA PHAK 第 4 章 図 4-3 からの計算：1,000 ÷ 35.9 ≈ 27.9 ft/hPa（海面から 1,000 ft までの平均）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#de4a28c5）"
+  },
+  {
+   "id": "inst.alt#d3711f2f",
+   "sec": "inst.alt",
+   "text": "海面そのものでは約 27 ft です（標準大気の密度からの計算）。",
+   "tag": "参考値",
+   "source": "国際標準大気の海面の密度 1.225 kg/m³（aero の下書きの aero.lift と同じ値）と g ＝ 9.80665 m/s² からの計算：1 ÷（1.225 × 9.80665）＝ 0.0832 m/Pa ＝ 8.32 m/hPa ≈ 27.3 ft/hPa（revise-inst の計算。factcheck-inst の N3 と同じ値）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.alt#10e909b0",
+   "sec": "inst.alt",
+   "text": "規正値を hPa で使う所では、この 27〜28 ft の目安を使います。",
+   "tag": "参考値",
+   "source": "上の 2 行の計算（27.3〜27.9 ft/hPa）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.alt#857a8947",
+   "sec": "inst.alt",
+   "text": "① 規正値 29.94 inHg のまま、規正値が 29.69 inHg の空港へ飛びました。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ） の Dallas Love → Mineral Wells 29.94 → Abilene 29.69 inHg・2,600 ft の例",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#4e563e16）"
+  },
+  {
+   "id": "inst.alt#4dce0b9d",
+   "sec": "inst.alt",
+   "text": "その空港の場周経路（トラフィックパターン、traffic pattern）を、高度計 2,600 ft で飛びます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ） の Abilene の例（2,600 ft）",
+   "kind": "例題",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#4e563e16）"
   },
   {
    "id": "inst.alt#299974dc",
@@ -273,13 +288,14 @@
    "by": "W15"
   },
   {
-   "id": "inst.alt#3a1d1213",
+   "id": "inst.alt#667ce5b3",
    "sec": "inst.alt",
-   "text": "② 10 hPa × 約 28 ft ＝ 約 280 ft、表示が高くなります。",
+   "text": "② 10 hPa × 約 27〜28 ft ＝ 約 270〜280 ft、表示が高くなります。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）（約 28 ft/hPa は上の行の計算）",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：10 × 27〜28 ＝ 270〜280（標準大気の 1003 hPa と 1013 hPa の高さの差は約 274 ft：factcheck-inst の N3）",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#3a1d1213）"
   },
   {
    "id": "inst.alt#8ddc879a",
@@ -306,12 +322,30 @@
    "by": "W15"
   },
   {
-   "id": "inst.alt#5a3c903d",
+   "id": "inst.alt#95be0521",
    "sec": "inst.alt",
-   "text": "28.00 inHg より低い規正値を合わせられない高度計で飛ぶことは、勧められていません（米国の AIM 7-2-2・PHAK 第 8 章）。",
+   "text": "つまり、実際の高さは表示より高くなります（米国の AIM 7-2-2・PHAK 第 8 章）。",
    "tag": "参考値",
-   "source": "FAA AIM 7-2-2（28.00 \"Hg 未満に合わせられないときの飛行は勧めない）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）",
-   "by": "W15"
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-2 a（When an aircraft's altimeter cannot be set to pressure settings above 31.00 \"Hg, the aircraft's true altitude will be higher than the indicated altitude）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.alt#1611a2b0",
+   "sec": "inst.alt",
+   "text": "反対に、規正値が 28.00 inHg より低い日に、そこまで合わせられない高度計で飛ぶと、実際の高さは表示より低くなります。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-2 b（Flight operations are not recommended when an aircraft's altimeter is unable to be set below 28.00 \"Hg. In this situation, the aircraft's true altitude is lower than the indicated altitude）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#5a3c903d）"
+  },
+  {
+   "id": "inst.alt#b6a064b0",
+   "sec": "inst.alt",
+   "text": "だから、そうした高度計で飛ぶことは勧められていません（米国の AIM 7-2-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-2 b（Flight operations are not recommended …・may be exacerbated when operating in extremely cold temperatures）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#5a3c903d）"
   },
   {
    "id": "inst.alt#94ec3e50",
@@ -322,30 +356,33 @@
    "by": "W15"
   },
   {
-   "id": "inst.alt#19e3a2c9",
+   "id": "inst.alt#5e18992b",
    "sec": "inst.alt",
-   "text": "毎分 600 ft の上昇を 20 秒続けると、何 ft 上がりますか。",
+   "text": "毎分 500 ft の上昇を 30 秒続けると、何 ft 上がりますか。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#19e3a2c9）"
   },
   {
-   "id": "inst.alt#9846296f",
+   "id": "inst.alt#ab59aa11",
    "sec": "inst.alt",
-   "text": "600 × 20 ÷ 60 ＝ 200 ft です。",
+   "text": "500 × 30 ÷ 60 ＝ 250 ft です。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：500 × 30 ÷ 60 ＝ 250",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#9846296f）"
   },
   {
-   "id": "inst.alt#21d91f7c",
+   "id": "inst.alt#dc74c53e",
    "sec": "inst.alt",
-   "text": "地上で空港の標高と ±75 ft 以上違えば、高度計を疑う",
+   "text": "地上で空港の標高と 75 ft 以上違えば、高度計を疑う",
    "tag": "参考値",
-   "source": "FAA AIM 7-2-3・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（±75 ft）",
-   "by": "W15"
+   "source": "FAA AIM 7-2（R.aim72。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 7-2-3（plus or minus 75 feet or greater）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.alt#21d91f7c）"
   },
   {
    "id": "inst.alt#ee1cd051",
@@ -412,6 +449,14 @@
    "by": "W15"
   },
   {
+   "id": "inst.gyro#b785fe0b",
+   "sec": "inst.gyro",
+   "text": "旋回傾斜計は、小さな飛行機の翼を左右の 2 つめの印に合わせると、1 秒に 3° の旋回です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）（Turn Coordinator：standard-rate turn 3° per second、図 8-21 の 2 MIN. の印）",
+   "by": "revise-inst"
+  },
+  {
    "id": "inst.gyro#263cf16e",
    "sec": "inst.gyro",
    "text": "上のバンクの目盛りは、10°・20°・30°・45°・60° などを示します。",
@@ -428,22 +473,56 @@
    "by": "W15"
   },
   {
-   "id": "inst.gyro#8de2e8a2",
+   "id": "inst.gyro#310db222",
    "sec": "inst.gyro",
-   "text": "図：機首が水平線より 5° 上でも、翼に当たる角度が 8° なら、飛行経路は 3° 下向きです（翼の取り付け角を 0 とした模式図。角度は大きくして描いた）",
+   "text": "動力が入ってからこまが立つまで、最大 5 分、ふつうは 2〜3 分かかります（IFH 第 5 章）。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）（θ ＝ α ＋ γ：基礎教材 kiso04.11 の単純な関係。翼の取り付け角を 0 とした模式）",
-   "kind": "例題",
-   "by": "W15"
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-18（This erection can take as long as 5 minutes, but is normally done within 2 to 3 minutes）",
+   "by": "revise-inst"
   },
   {
-   "id": "inst.gyro#5532998f",
+   "id": "inst.gyro#ef827753",
    "sec": "inst.gyro",
-   "text": "θ が 5°、α が 8° なら、γ は −3° で、降下しています。",
+   "text": "180° 旋回のあとにも、バンクとピッチの小さな誤差が出ることがあります。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-18〜5-19（There is also a possibility of a small bank angle and pitch error after a 180° turn）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.gyro#9e634fec",
+   "sec": "inst.gyro",
+   "text": "どれも、水平飛行に戻ると 1 分ほどで直ります（IFH 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-19（These inherent errors are small and correct themselves within a minute or so after returning to straight-and-level flight）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.gyro#f0a74da4",
+   "sec": "inst.gyro",
+   "text": "G1000 型の AHRS は、電源を入れてから、ふつう 1 分ほどで姿勢と方位を出します。",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（NEW_R.g1000pg。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 1 章（The AHRS should display valid attitude and heading fields typically within the first minute of power-up. The AHRS can align itself both while taxiing and during level flight）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.gyro#b5fc81f4",
+   "sec": "inst.gyro",
+   "text": "図：機首が水平線より 5° 上（ピッチ角 5°）でも、迎え角が 8° なら、飛行経路は 3° 下向きです（取付角を 0 とした模式図。角度は大きくして描いた）",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（図の札。W15 の例と同じ 5°・8°・−3°）",
    "kind": "例題",
-   "by": "W15"
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.gyro#8de2e8a2）"
+  },
+  {
+   "id": "inst.gyro#1790f1b1",
+   "sec": "inst.gyro",
+   "text": "図は取付角を 0 とした例で、ピッチ角 5°・迎え角 8° なら、飛行経路角は 5 − 8 ＝ −3° です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（revise-inst が検算した）：aero.aoa の α ＝ θ ＋ i − γ で i ＝ 0、γ ＝ 5 − 8 ＝ −3",
+   "kind": "例題",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.gyro#5532998f）"
   },
   {
    "id": "inst.gyro#c32812f4",
@@ -462,48 +541,38 @@
    "by": "W15"
   },
   {
-   "id": "inst.gyro#272676b4",
+   "id": "inst.gyro#0c47a12a",
    "sec": "inst.gyro",
-   "text": "1 秒に 3° 回る旋回で、180° に 60 秒、360° に 2 分かかります。",
+   "text": "旋回の物理の節で学んだ、1 秒に 3° の旋回です。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（standard-rate turn 3° per second・2 MIN.）",
-   "by": "W15"
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）（standard-rate turn 3° per second）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.gyro#272676b4）"
   },
   {
-   "id": "inst.gyro#31097599",
+   "id": "inst.gyro#5ebb7b62",
    "sec": "inst.gyro",
-   "text": "TAS 100 kt で標準旋回をするときのバンク角は、およそ何度ですか。",
+   "text": "文字盤の「2 MIN」は、この旋回で 360° に 2 分かかることを表します（PHAK 第 8 章）。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
-   "kind": "例題",
-   "by": "W15"
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（revise-inst が 2026-10-30 に取り寄せて本文を読んだ）（図 8-21 の 2 MIN.：標準旋回で 360° に 2 分）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.gyro#272676b4）"
   },
   {
-   "id": "inst.gyro#573b0b21",
+   "id": "inst.gyro#974ee638",
    "sec": "inst.gyro",
-   "text": "標準旋回で 90° 向きを変えるのに、何秒かかりますか。",
+   "text": "姿勢指示器の地平線が、まっすぐ進む間は水平のままか、曲がるときに 5° を超えて傾かないかを見ます。",
    "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
-   "kind": "例題",
-   "by": "W15"
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-38 の 3（If the horizon bar fails to remain in the horizontal position during straight taxiing, or tips in excess of 5° during taxi turns, the instrument is unreliable）",
+   "by": "revise-inst"
   },
   {
-   "id": "inst.gyro#1a42c6bd",
+   "id": "inst.gyro#c6c76dc4",
    "sec": "inst.gyro",
-   "text": "3 ＝ 1,091 × tan φ ÷ 100 より、tan φ ＝ 0.275 で、φ は約 15° です。",
+   "text": "離陸の前には、滑走路の向きと 5° 以内で合うかを見ます（IFH 第 5 章）",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（ROT ＝ 1,091 × tan(bank) ÷ TAS）からの計算：tan φ ＝ 0.275、φ ≈ 15.4°",
-   "kind": "例題",
-   "by": "W15"
-  },
-  {
-   "id": "inst.gyro#6cfc4d8b",
-   "sec": "inst.gyro",
-   "text": "90 ÷ 3 ＝ 30 秒です。",
-   "tag": "参考値",
-   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
-   "kind": "例題",
-   "by": "W15"
+   "source": "FAA IFH FAA-H-8083-15B（R.ifh。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 5 章 p.5-38 の 2（the heading indicator should show the known taxiway or runway direction when the airplane is aligned with them (within 5°)）",
+   "by": "revise-inst"
   },
   {
    "id": "inst.gyro#36d544ee",
@@ -542,8 +611,9 @@
    "sec": "sys.compass",
    "text": "どれだけ手前で止めるかの目安は「15° ＋ 緯度の半分」で、北緯 30° の近くなら約 30° です（PHAK 第 8 章）。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（15 degrees plus half of the latitude：near 30 degrees latitude … 15+15=30）",
-   "by": "W15"
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（Northerly Turning Error：15 degrees plus half of the latitude。PHAK の例は北緯 40° で 35°。北緯 30° の 30° は 15 ＋ 30 ÷ 2 の計算）",
+   "by": "W15",
+   "note": "revise-inst：factcheck-inst の N5 で出典の引用を直した"
   },
   {
    "id": "sys.compass#997d72e4",
@@ -570,36 +640,64 @@
    "by": "W15"
   },
   {
+   "id": "inst.pfd#a3f968c7",
+   "sec": "inst.pfd",
+   "text": "3 回のチャイムが、繰り返し鳴ります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.13 Crew Alerting System（Red Warning Messages … accompanied by a repeating triple chime）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.pfd#18e95ca3",
+   "sec": "inst.pfd",
+   "text": "2 回のチャイムが、1 度鳴ります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.13 Crew Alerting System（Amber Caution Messages … accompanied by a non-repeating double aural chime）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.pfd#20ac3f77",
+   "sec": "inst.pfd",
+   "text": "1 回のチャイムが鳴ります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.13 Crew Alerting System（White Advisory Messages … accompanied by a single aural chime）",
+   "by": "revise-inst"
+  },
+  {
    "id": "inst.pfd#c7120cd1",
    "sec": "inst.pfd",
    "text": "マゼンタのトレンドの線は、いまの変わり方が続いたら 6 秒後にどうなるかの予想です。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Trend vectors … 6-second projection）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（six seconds）",
-   "by": "W15"
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Trend vectors … 6-second projection）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A第 2 章 Flight Instruments（six seconds）",
+   "by": "W15",
+   "note": "revise-inst：factcheck-inst の N6 で出典の場所を直した"
   },
   {
    "id": "inst.pfd#a0317f35",
    "sec": "inst.pfd",
    "text": "方位の目盛りの上の旋回率の線も、6 秒後の針路の予想です。",
    "tag": "参考値",
-   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（Turn Rate Trend Vector：heading predicted in 6 seconds）",
-   "by": "W15"
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A第 2 章 Flight Instruments（Turn Rate Trend Vector：heading predicted in 6 seconds）",
+   "by": "W15",
+   "note": "revise-inst：factcheck-inst の N6 で出典の場所を直した"
   },
   {
-   "id": "inst.pfd#d847ca61",
+   "id": "inst.pfd#5f55abb6",
    "sec": "inst.pfd",
-   "text": "標準旋回のときは、2 つめの目盛り（18° 先）まで伸びます（G1000 型の手引き）。",
+   "text": "標準旋回のときは、2 つめの目盛り（18° 先）まで伸びます（G1000 の別の機体の手引き）。",
    "tag": "参考値",
-   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（standard-rate … predicted heading of 18° from the current heading）",
-   "by": "W15"
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（NEW_R.g1000pg。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 2 章 Flight Instruments（Turn Rate Trend Vector：standard-rate … predicted heading of 18° from the current heading）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.pfd#d847ca61）"
   },
   {
    "id": "inst.pfd#1e541e5a",
    "sec": "inst.pfd",
    "text": "トレンドの線は 6 秒先の予想。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）",
-   "by": "W15"
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A第 2 章 Flight Instruments",
+   "by": "W15",
+   "note": "revise-inst：factcheck-inst の N6 で出典の場所を直した"
   },
   {
    "id": "inst.ap#43d17686",
@@ -619,20 +717,38 @@
    "by": "W15"
   },
   {
-   "id": "inst.ap#3b666314",
+   "id": "inst.ap#2ddf2394",
    "sec": "inst.ap",
-   "text": "たとえば、選んだ高度へ近づくと、高度をとらえるモード（ALTS）が作動し、50 ft 手前で高度を保つモード（ALT）に移ります（G1000 型の手引き）。",
+   "text": "たとえば、選んだ高度へ近づくと、高度をとらえるモード（ALTS）が作動し、50 ft 手前で高度を保つモード（ALT）に移ります（G1000 の別の機体の手引き）。",
    "tag": "参考値",
-   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（At 50 feet from the Selected Altitude … Altitude Hold Mode）",
-   "by": "W15"
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（NEW_R.g1000pg。revise-inst が 2026-10-30 に取り寄せて本文を読んだ） 第 7 章 AFCS（GFC 700 型：At 50 feet from the Selected Altitude … Altitude Hold Mode）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.ap#3b666314）"
   },
   {
-   "id": "inst.ap#db8cbd7d",
+   "id": "inst.ap#d597513a",
    "sec": "inst.ap",
-   "text": "同じ補足は、上昇・巡航・降下中の故障で、回復を始めるのが 3 秒遅れると、バンクが 55° まで深くなり、高度を 320 ft 失いうるとしています（POH 補足 2）。",
+   "text": "選んだ高度の 1,000 ft 手前で高度の表示が点滅し、200 ft 以内に近づくか離れると音が鳴ります。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2（three second delay … 55° bank and 320 ft. altitude loss）",
-   "by": "W15"
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.13 Autopilot（The Altitude preselect will flash when approaching within 1000 feet of the selected altitude, and an audio tone is played when approaching or deviating within 200 feet）",
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.ap#6ca0b9c9",
+   "sec": "inst.ap",
+   "text": "上昇・巡航・降下中の故障では、3 秒遅れると、バンクが 55° まで深くなり、高度を 320 ft 失いえます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Section 3（a. … climb, cruise, or descent, with a three second delay … 55° bank and 320 ft. altitude loss）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.ap#db8cbd7d）"
+  },
+  {
+   "id": "inst.ap#6b18af35",
+   "sec": "inst.ap",
+   "text": "進入中や運動中の故障では、1 秒の遅れで、バンク 20°・高度 80 ft です（POH 補足 2）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Section 3（b. … during an approach or maneuvering flight with a one second delay … 20° bank and 80 ft. altitude loss）",
+   "by": "revise-inst"
   },
   {
    "id": "inst.ap#d72f3984",
@@ -651,12 +767,13 @@
    "by": "W15"
   },
   {
-   "id": "inst.ap#82e8fece",
+   "id": "inst.ap#7b681a4b",
    "sec": "inst.ap",
-   "text": "結合した進入 ｜ 地上 200 ft より下では使わない ｜",
+   "text": "結合した進入（自動操縦を計器進入のコースにつないで降りること） ｜ 地上 200 ft より下では使わない ｜",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Limitations（prohibited below 200 feet AGL during coupled approach operations）",
-   "by": "W15"
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Limitations 5（Autopilot operation prohibited below 200 feet AGL during coupled approach operations）",
+   "by": "revise-inst",
+   "note": "文を直した（前の ID inst.ap#82e8fece）"
   },
   {
    "id": "inst.ap#989a7eae",
@@ -665,6 +782,117 @@
    "tag": "参考値",
    "source": "FAA PHAK FAA-H-8083-25C 第 2 章（In a single-pilot environment, an autopilot system can greatly reduce workload）",
    "by": "W15"
+  },
+  {
+   "id": "inst.speed#hand-126fcd47",
+   "sec": "inst.speed",
+   "text": "超過禁止速度（VNE、never-exceed speed） ｜ 154 ｜ 148 ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3 Airspeed Limitations（VNE 154 KIAS／148 KCAS）",
+   "extracted": false,
+   "by": "revise-inst",
+   "note": "表にした（前の ID inst.speed#1e6b7bf8）"
+  },
+  {
+   "id": "inst.speed#hand-475f6579",
+   "sec": "inst.speed",
+   "text": "構造上の最大巡航速度（最大構造巡航速度、maximum structural cruising speed）VNO ｜ 125 ｜ 121 ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VNO 125 KIAS／121 KCAS）",
+   "extracted": false,
+   "by": "revise-inst",
+   "note": "表にした（前の ID inst.speed#875135c5）"
+  },
+  {
+   "id": "inst.speed#hand-96ed3859",
+   "sec": "inst.speed",
+   "text": "フラップ下げ最大速度 VFE ｜ 102 ｜ 100 ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VFE 102 KIAS／100 KCAS。Do not exceed this speed with the flaps extended）",
+   "extracted": false,
+   "by": "revise-inst",
+   "note": "表にした（前の ID inst.speed#cb6ec5aa）"
+  },
+  {
+   "id": "inst.flow#hand-e7f70a54",
+   "sec": "inst.flow",
+   "text": "発電機（オルタネーター、alternator）が止まると、まずバッテリーが電気を送ります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 3.5d Alternator Failure（the battery will become the primary source of electrical power … ESSENTIAL BUS）・7.13 Standby Instrument（During an alternator failure, the EFD1000 will continue to operate on the essential bus until the primary battery is depleted）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.flow#hand-c654547b",
+   "sec": "inst.flow",
+   "text": "バッテリーが弱って電気系統が止まると、非常用バッテリーが予備計器などに電気を送ります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 3.5d（As battery power is depleted … the emergency battery should activate automatically）・7.13（then operate on the emergency battery/bus for 30 minutes）・7.17",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.pfd#hand-8b0f9842",
+   "sec": "inst.pfd",
+   "text": "Archer では、MFD が壊れたときは、PFD が自動で切り替わります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 3.5e（Although the PFD should automatically go to reversionary mode display after an MFD failure, pressing the DISPLAY BACKUP button ensures that the PFD reverts）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.pfd#hand-48cc45b5",
+   "sec": "inst.pfd",
+   "text": "PFD が壊れたときは、ボタンで MFD を切り替えます（Archer の G1000 の手引き・POH 3.5e）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 3.5e NOTE（If the PFD fails, the MFD will remain in normal mode. Pushing the DISPLAY BACKUP button on the audio panel allows the MFD to display AHRS and ADC information）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.alt#hand-add27d07",
+   "sec": "inst.alt",
+   "text": "日本の学科試験の例題では、高度計を標準の気圧に合わせることを「QNE セッティング」と呼びます。",
+   "tag": "参考値",
+   "source": "国土交通省 航空局「航空従事者技能証明学科試験例題集 自家用操縦士（飛行機）」2026 年 6 月 航空工学 例題 18（滑走路上において QNE セッティングしたときの高度計の指示 → 正答（２）気圧高度）。sha256 は FL.terms の reiPPL と同じ（revise-inst が 2026-10-30 に取り寄せて確かめた）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.ap#hand-48c1d16a",
+   "sec": "inst.ap",
+   "text": "操縦輪で機体を保ちます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Section 3 AUTOPILOT MALFUNCTION（Aircraft Control … Maintain by overpowering autopilot servos）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.ap#hand-1fe539e3",
+   "sec": "inst.ap",
+   "text": "原因が分かって直るまで、自動操縦を入れ直しません（POH 補足 2）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Section 3（Do not re-engage the autopilot until the problem has been identified and corrected）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.ap#hand-93696d0f",
+   "sec": "inst.ap",
+   "text": "降下から水平に移るときに巡航の出力に戻さないと、自動操縦は高度を保とうとして機首を上げ続け、失速します（FAA の手引き AAH 第 4 章）。",
+   "tag": "参考値",
+   "source": "FAA Advanced Avionics Handbook 第 4 章 Power Management（NEW_R.aah4。Leveling off from a descent, without restoring a cruise power setting results in a stall as the FD/autopilot attempts to hold the altitude selected）",
+   "extracted": false,
+   "by": "revise-inst"
+  },
+  {
+   "id": "inst.ap#hand-a7b840e5",
+   "sec": "inst.ap",
+   "text": "FD だけを使うときは、サーボは働かず、人が操縦します（POH 7.13）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.13（When the autopilot master switch is in the FD position, the autopilot servos will be disengaged and the aircraft must be flown manually）",
+   "extracted": false,
+   "by": "revise-inst"
   }
  ]
 }

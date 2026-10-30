@@ -40,7 +40,7 @@ export function ledgerOfId(id) {
   if (/^kiso\d\d\.|^ch\d\d-(fig|photo)/.test(id)) return 'PROVENANCE';
   if (/^(cpl|ir|ppl)\.\d/.test(id)) return 'JCAB-MAP';
   if (/^(PA|IR|CA)\.[IVX]+\./.test(id)) return 'ACS-MAP';
-  if (/#[0-9a-f]{8}$/.test(id)) return 'CLAIMS';
+  if (/#(?:hand-)?[0-9a-f]{8}$/.test(id)) return 'CLAIMS';   // #hand-…: a row a writer added by hand for a sentence check-claims does not pick (R2: inst, navb)
   if (/^(toc|origin|kiso|prov|errata|rulings|jur|book)\./.test(id)) return 'COUNTS';
   return null;
 }

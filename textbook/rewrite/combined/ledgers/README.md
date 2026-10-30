@@ -36,7 +36,7 @@
 | JCAB-MAP | `<cpl｜ir｜ppl>.<科目>.<大項目>.<ア＝1…>.<（ア）＝1…>` | `cpl.1.1.2.2`（１（１）イ（イ）設計強度） |
 | ACS-MAP | ACS のコードそのまま | `PA.I.C.K3`・`CA.X.B.K1` |
 | JCAB-CALIBRATION | `CAL.<科目>.<期>` | `CAL.jlaw.2019-07` |
-| CLAIMS | `<節ID>#<8 桁>`（`../tools/check-claims.mjs` の claimId） | `aero.lift#0123abcd` |
+| CLAIMS | `<節ID>#<8 桁>`（`../tools/check-claims.mjs` の claimId）。道具が抜き出さない文を書き手が手で足した行は `<節ID>#hand-<8 桁>`（R2 の `inst`・`navb`） | `aero.lift#0123abcd`・`inst.ap#hand-48c1d16a` |
 | COUNTS | `<種類>.<名>` | `toc.sections` |
 
 - **節の書き方**：節 ID は DESIGN 3.3 の目次の ID（まだない節も書いてよい）。PROVENANCE の行き先には、ほかに `door:pN`（部の扉）・`summary:<章ID>`（章のねらい）・`written:<章ID>`（章末の説明してみよう・課題）を使う。

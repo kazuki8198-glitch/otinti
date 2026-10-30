@@ -4,8 +4,8 @@
  "unit": "W14",
  "chapter": "sys",
  "updated": "2026-10-30",
- "by": "W14",
- "about": "第 1 部の章 sys（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W14.ledger.json にも同じ行がある）。checkedBy は事実確認役（W14 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値に出典はなく、W14 が検算した）。sys.lights の囲みの 2 行は FL.jur が描く文で、W06 が確かめた値。",
+ "by": "W14・revise-sys",
+ "about": "第 1 部の章 sys（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W14.ledger.json にも同じ行がある）。checkedBy は事実確認役（W14 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値に出典はなく、W14 が検算した）。sys.lights の囲みの 2 行は FL.jur が描く文で、W06 が確かめた値。 revise-sys（2026-10-30）が直した文の行を引き継ぎ（note に前の ID）、新しい文の行を足した。extracted: false の行は、数字を含まないので道具が抜き出さないが、事実の主張なので札を付けた文。",
  "format": {
   "id": "<節ID>#<8 桁>",
   "sec": "節 ID",
@@ -18,13 +18,14 @@
   "checkedOn": "確認日"
  },
  "counts": {
-  "rows": 79,
+  "rows": 150,
+  "extracted": 99,
   "byTag": {
-   "参考値": 72,
-   "条文": 5,
+   "参考値": 141,
+   "条文": 7,
    "教材値": 2
   },
-  "examples": 17
+  "examples": 18
  },
  "rows": [
   {
@@ -87,7 +88,8 @@
    "source": "kiso02.03 の疲労の説明を書き直した。数は「1 回」だけで値の主張ではない（疲労＝くり返しの力による損傷：PHAK 第 3 章の composite の段落も金属の疲労と比べる）",
    "by": "W14",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "一般の説明（値の主張なし）。疲労の定義は FAA の整備士のハンドブック（Airframe Vol. 1 の構造の章）などにあるが、この文は数字を含むと抜き出されただけで、値の主張はない（factcheck-sys N7）"
   },
   {
    "id": "sys.gear#33f77355",
@@ -110,6 +112,26 @@
    "checkedOn": null
   },
   {
+   "id": "sys.gear#bde8129b",
+   "sec": "sys.gear",
+   "text": "in はインチ（inch）で、1 in は 2.54 cm です。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811。revise-sys が 2026-10-30 に開いて読んだ）：inch (in) = 2.54 cm",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#098a098c",
+   "sec": "sys.gear",
+   "text": "ブレーキがいちばん効くのは、フラップを上げ、操縦輪を引いて、重さを主輪に乗せたときです（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5m（Braking is most effective when flaps are raised and back pressure is applied to the control wheel, putting most of the aircraft weight on the main wheels）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "sys.gear#813e7f51",
    "sec": "sys.gear",
    "text": "接地の速度が 20% 速いと、止めるエネルギーは 1.2 × 1.2 ＝ 1.44 倍になります。",
@@ -117,6 +139,16 @@
    "source": "物理（運動エネルギー ½mV²）：1.2² ＝ 1.44。kiso02.15 の例の考え方。W14 が検算",
    "kind": "例題",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#5369640a",
+   "sec": "sys.gear",
+   "text": "1 psi は約 6.9 kPa です（NIST SP 811）。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811。revise-sys が 2026-10-30 に開いて読んだ）：pound-force per square inch (psi) = 6.894 757 kPa",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -138,6 +170,16 @@
    "source": "FAA PHAK FAA-H-8083-25C 第 11 章 Water on the Runway and Dynamic Hydroplaning（W14 が 2026-10-30 に読んだ）（minimum hydroplaning speed ＝ 9 × √(main gear tire pressure psi)、例 36 psi → 54 kt）。9 × √24 ＝ 44.09 を W14 が検算",
    "kind": "例題",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#2b67a2a1",
+   "sec": "sys.gear",
+   "text": "最も重いときの、出力を絞った全フラップの失速速度（stall speed）は 45 KIAS です（POH 4.5m・4.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.7（The gross weight stalling speed … with power off and full flaps is 45 KIAS）・4.5m（contact the ground close to the stalling speed）",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -172,12 +214,43 @@
    "checkedOn": null
   },
   {
-   "id": "sys.lights#e2cd67f4",
+   "id": "sys.lights#72fce576",
    "sec": "sys.lights",
-   "text": "左舷灯と右舷灯は前から横の 110° まで、尾灯は後ろの 140° を照らします（米国の耐空性の基準、旧 14 CFR 23.1387）。",
+   "text": "左舷灯と右舷灯は、真正面から左右それぞれ 110° まで（真横より少し後ろまで）を照らします。",
    "tag": "参考値",
+   "source": "旧 14 CFR 23.1387(b)・(c)（左右の航空灯は前方から左右 110°、尾灯は後方 140°。W14 が確かめ factcheck-sys が照合した旧 sys.lights#e2cd67f4 と同じ値）。「真横より少し後ろまで」は 110° が 90° を超えることの言い換え",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#47d71c7a",
+   "sec": "sys.lights",
+   "text": "尾灯は、後ろの 140° を照らします（米国の耐空性の基準、旧 14 CFR 23.1387）。",
+   "tag": "条文",
    "source": "旧 14 CFR 23.1387（航空灯の配光：前方 110°・後方 140°）。教科書の既存の文（W07a・W12）",
-   "by": "W14",
+   "by": "W14・revise-sys",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "旧 sys.lights#e2cd67f4 を 2 文に分けた後半。札を 参考値 → 条文 に直した（factcheck-sys N7：旧 14 CFR 23.1387 の引用）"
+  },
+  {
+   "id": "sys.lights#4d3b4c13",
+   "sec": "sys.lights",
+   "text": "米国の規則（14 CFR 91.205(c)）は、夜に有視界で飛ぶ機体に、昼の装備に加えて次を求めます。",
+   "tag": "条文",
+   "source": "14 CFR 91.205(c)（Visual flight rules (night)：(1) paragraph (b) の装備 (2) position lights (3) anticollision light system (4) for hire なら one electric landing light (5) adequate source of electrical energy (6) one spare set of fuses, or three spare fuses of each kind, accessible in flight）。eCFR（2026-10-01 の版。expert-sys が取得した写しを revise-sys が 2026-10-30 に読んだ）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#aded49f8",
+   "sec": "sys.lights",
+   "text": "米国の AIM 4-3-24 は、地上での灯火の使い方も勧めています。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-24 Use of Aircraft Lights（Prior to commencing taxi … turn on navigation, position, anti-collision … lights；all exterior lights should be illuminated when taxiing on or across any runway；entering the departure runway … all lights, except for landing lights；landing lights … when takeoff clearance is received or when commencing takeoff roll at an airport without an operating control tower）。R.aim43（revise-sys が 2026-10-30 に factcheck-sys の取り直した写しを読んだ）",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -206,7 +279,7 @@
    "sec": "sys.piston",
    "text": "吸入・圧縮・膨張・排気をくり返し、4 つの行程でクランク軸は 2 回転します。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke cycle）。図のキャプション",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke cycle）。図のキャプション。2 回転（720°）は基礎教材 kiso03.4（「一つのサイクルに、クランク軸は 2 回転、720 度回ります」）と PHAK 第 7 章の二行程との比べ（a two-stroke engine has a power stroke upon each revolution）で確かめた（factcheck-sys N7 の勧めで出典を並べた。revise-sys）",
    "by": "W14",
    "checkedBy": null,
    "checkedOn": null
@@ -226,7 +299,7 @@
    "sec": "sys.piston",
    "text": "4 つの行程で、クランク軸は 2 回転します。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）・基礎教材 kiso03.4（1 サイクルにクランク軸 2 回転 720°）",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）・基礎教材 kiso03.4（1 サイクルにクランク軸 2 回転 720°）。2 回転（720°）は基礎教材 kiso03.4（「一つのサイクルに、クランク軸は 2 回転、720 度回ります」）と PHAK 第 7 章の二行程との比べ（a two-stroke engine has a power stroke upon each revolution）で確かめた（factcheck-sys N7 の勧めで出典を並べた。revise-sys）",
    "by": "W14",
    "checkedBy": null,
    "checkedOn": null
@@ -236,8 +309,18 @@
    "sec": "sys.piston",
    "text": "だから、1 つのシリンダーが燃えるのは 2 回転に 1 回です。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程・クランク軸 2 回転に 1 回の膨張）",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程・クランク軸 2 回転に 1 回の膨張）。2 回転（720°）は基礎教材 kiso03.4（「一つのサイクルに、クランク軸は 2 回転、720 度回ります」）と PHAK 第 7 章の二行程との比べ（a two-stroke engine has a power stroke upon each revolution）で確かめた（factcheck-sys N7 の勧めで出典を並べた。revise-sys）",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#a3c7c086",
+   "sec": "sys.piston",
+   "text": "回転の速さは、1 分あたりの回転数（rpm、revolutions per minute）で表します。",
+   "tag": "参考値",
+   "source": "単位の名前（rpm＝revolutions per minute）。数値の主張なし",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -253,14 +336,15 @@
    "checkedOn": null
   },
   {
-   "id": "sys.piston#af1fcbbc",
+   "id": "sys.piston#80ba6816",
    "sec": "sys.piston",
-   "text": "例：O-360-A4M の定格は 2,700 rpm で 180 hp です（POH 2.7）。",
+   "text": "例：O-360-A4M の定格は 2,700 rpm で 180 BHP です（POH 2.7）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7（O-360-A4M、180 BHP、2700 RPM）。Lycoming SSP-110-3 Certified Engines（2025-07。O-360-A4M：180 hp・2,700 rpm・100/100LL・8.50:1。W14 が 2026-10-30 に読んだ）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：1.3（Takeoff Power (BHP) 180・2700 RPM）・2.7（Rated Horsepower (BHP) 180）",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.piston#af1fcbbc。「180 hp」を POH の書き方「180 BHP」に（expert-sys X-S12）"
   },
   {
    "id": "sys.piston#f742833f",
@@ -277,7 +361,7 @@
    "sec": "sys.piston",
    "text": "クランク軸 2 回転で 1 回燃える",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（ここが大切の短い言い切り）",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（ここが大切の短い言い切り）。2 回転（720°）は基礎教材 kiso03.4（「一つのサイクルに、クランク軸は 2 回転、720 度回ります」）と PHAK 第 7 章の二行程との比べ（a two-stroke engine has a power stroke upon each revolution）で確かめた（factcheck-sys N7 の勧めで出典を並べた。revise-sys）",
    "by": "W14",
    "checkedBy": null,
    "checkedOn": null
@@ -309,8 +393,18 @@
    "sec": "sys.piston",
    "text": "4 つの行程でクランク軸が 2 回転し、そのうち燃えるのは 1 回だからです。",
    "tag": "参考値",
-   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程でクランク軸 2 回転）",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程でクランク軸 2 回転）。2 回転（720°）は基礎教材 kiso03.4（「一つのサイクルに、クランク軸は 2 回転、720 度回ります」）と PHAK 第 7 章の二行程との比べ（a two-stroke engine has a power stroke upon each revolution）で確かめた（factcheck-sys N7 の勧めで出典を並べた。revise-sys）",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#27a20598",
+   "sec": "sys.engine",
+   "text": "燃料消費率（燃料流量、fuel consumption rate）は、1 時間に使う燃料の量です。",
+   "tag": "参考値",
+   "source": "用語の定義（FL.terms fuel-consumption：燃料消費率＝fuel consumption rate）。数値の主張なし",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -325,14 +419,15 @@
    "checkedOn": null
   },
   {
-   "id": "sys.engine#f7cce60e",
+   "id": "sys.engine#c0498fed",
    "sec": "sys.engine",
-   "text": "出力が 75% 以下なら、それより低くても絞ってかまいません。",
+   "text": "出力（定格の 180 hp に対する割合）が 75% 以下なら、それより低くても絞ってかまいません。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（and at pilot's discretion at lower altitudes when 75% power or less is being used）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5k（lean … at pilot's discretion at lower altitudes when 75% power or less is being used）・第 5 章の表（Powers are percent of 180 BHP）",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.engine#f7cce60e。「定格の 180 hp に対する割合」を足した（reader-sys E4）"
   },
   {
    "id": "sys.engine#4b3165bd",
@@ -345,24 +440,26 @@
    "checkedOn": null
   },
   {
-   "id": "sys.engine#cf899b6b",
+   "id": "sys.engine#aa67253d",
    "sec": "sys.engine",
-   "text": "POH は、ピーク EGT を最良の燃費、ピークから 100°F 濃い側を最良の出力の混合比としています（POH 4.5k）。",
+   "text": "最良の出力の混合比は、ピークから濃い側へ戻して、EGT がピークより 100°F 低くなった所です（POH 4.5k）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（best economy at peak EGT; best power … 100°F rich of the peak; roughness before peak → use as peak）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5k（Best power mixture is obtained by leaning to peak EGT and then enrichening until the EGT is 100°F rich of the peak value）",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.engine#cf899b6b を 2 文に分けた後半（reader-sys E3）"
   },
   {
-   "id": "sys.engine#93191433",
+   "id": "sys.engine#13fca1c4",
    "sec": "sys.engine",
-   "text": "止まって全開にしたときの回転は、2,240〜2,340 rpm です（POH 2.7）。",
+   "text": "止まって全開にしたときの回転は、海面・標準大気で 2,240〜2,340 rpm です（POH 2.7）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7(10)（static RPM at maximum permissible throttle at sea level: not above 2340, not below 2240）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：2.7(10)（Propeller Tolerance @ ISA Conditions：static RPM at maximum permissible throttle setting at sea level 2240〜2340）",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.engine#93191433。条件「海面・標準大気」を足した（factcheck-sys N4）"
   },
   {
    "id": "sys.engine#d5053812",
@@ -375,14 +472,15 @@
    "checkedOn": null
   },
   {
-   "id": "sys.engine#d47e8ecc",
+   "id": "sys.engine#f31befb9",
    "sec": "sys.engine",
-   "text": "POH のふつうの降下は、スロットルで 2,500 rpm に合わせます（POH 4.51）。",
+   "text": "POH のふつうの降下は、スロットルで 2,500 rpm に合わせます（POH 4.5l）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.51（Normal Descent: THROTTLE 2500 RPM）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5l（Descent：Normal Descent THROTTLE 2500 RPM）",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.engine#d47e8ecc。節の番号を 4.51 → 4.5l に（factcheck-sys N3）"
   },
   {
    "id": "sys.engine#6da22770",
@@ -412,6 +510,26 @@
    "tag": "参考値",
    "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9（oil pressure red line 25・115 PSI）・3.1 の CAS（Oil Pressure less than 25 PSI or greater than 115 PSI）・7.13（warning: flashing）。図のキャプション",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#c9cd916d",
+   "sec": "sys.eis",
+   "text": "燃料消費率の単位の GPH は、1 時間あたりの US gal（gallons per hour）です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.13（EIS の FFLOW GPH）。GPH＝gallons per hour（US gal）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#1f7cf31a",
+   "sec": "sys.eis",
+   "text": "qt はクォート（quart）で、1 qt は約 0.95 L です（NIST SP 811）。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811。revise-sys が 2026-10-30 に開いて読んだ）：quart (U.S. liquid) = 0.946 352 9 L",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -446,6 +564,16 @@
    "checkedOn": null
   },
   {
+   "id": "sys.eis#092df40c",
+   "sec": "sys.eis",
+   "text": "油圧の黄色の帯は、回転の低いアイドル（25〜55 psi）と、冷えたオイルの暖機（95〜115 psi）の範囲です（POH 2.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：2.9（Oil Pressure：Yellow Arc (Caution) 25〜55 PSI (Idle)・95〜115 PSI (Ground Warm-Up)。factcheck-sys が図 sysEis で照合）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "sys.eis#6048d67a",
    "sec": "sys.eis",
    "text": "たとえば、回転が 1,100 rpm より高いときに油圧が 26〜55 psi なら、注意です。",
@@ -466,12 +594,24 @@
    "checkedOn": null
   },
   {
-   "id": "sys.carb#7e2eacf5",
+   "id": "sys.carb#8066f344",
    "sec": "sys.carb",
-   "text": "そのため温度が大きく下がり（PHAK：最大で 60〜70°F、約 33〜39℃）、空気中の水分が氷になって空気の通り道をふさぎます。",
+   "text": "下がる温度は、PHAK では最大で 60〜70°F です。",
    "tag": "参考値",
    "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（7-9〜7-10：temperature drop as much as 60 to 70 Fahrenheit degrees ＝ 33〜39 ℃ の差）。教科書の既存の文",
-   "by": "W14",
+   "by": "W14・revise-sys",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "旧 sys.carb#7e2eacf5 を分けた。温度の差の換算を本文で説明した（reader-sys CB1）"
+  },
+  {
+   "id": "sys.carb#89b1012e",
+   "sec": "sys.carb",
+   "text": "だから、約 33〜39℃ の差です。",
+   "tag": "参考値",
+   "kind": "例題",
+   "source": "換算：60〜70°F の差 × 5/9 ＝ 33.3〜38.9 ℃ の差（factcheck-sys 5 の計算と同じ）。FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：temperature drop as much as 60 to 70 °F",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -496,22 +636,74 @@
    "checkedOn": null
   },
   {
-   "id": "sys.carb#7049d6da",
+   "id": "sys.carb#74a9539e",
    "sec": "sys.carb",
-   "text": "Archer の POH は「−5〜20℃ の湿った空気」と書いていますが、それより暖かくても起きます（POH 3.5j）。",
+   "text": "Archer の POH は「−5〜20℃ の湿った空気」と書いています（POH 3.5j）。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.5j（Under certain moist atmospheric conditions at temperatures of -5°C to 20°C …）。R.carb-ice-temp（PHAK の値を主に、POH の値も）",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5j（Under certain moist atmospheric conditions at temperatures of -5°C to 20°C, it is possible for ice to form）",
+   "by": "W14・revise-sys",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "旧 sys.carb#7049d6da。（POH 3.5j）を −5〜20℃ の文だけに掛けた。「それより暖かくても起きる」は前の文の PHAK（行 sys.carb#a1245600）の分（factcheck-sys S2）"
+  },
+  {
+   "id": "sys.carb#66647649",
+   "sec": "sys.carb",
+   "text": "熱い空気は薄いので、混合気が濃くなり、出力は最大で約 15% 下がります（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Carburetor Heat（The use of carburetor heat causes a decrease in engine power, sometimes up to 15 percent, because the heated air is less dense … This enriches the mixture）",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
   {
-   "id": "sys.carb#c543431a",
+   "id": "sys.carb#1146f4fa",
    "sec": "sys.carb",
-   "text": "とけた水でエンジンは 30 秒から数分荒れますが、ヒーターはいっぱいのまま、ふつうの出力が戻るまで待ちます（PHAK 第 7 章）。",
+   "text": "降りている間は、約 30 秒ごとにスロットルを少し開いてすぐ戻し、エンジンが応えるかを確かめます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5l（Power response should be verified approximately every 30 seconds by partially opening and then closing the throttle (clearing the engine)）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#5810f1b8",
+   "sec": "sys.carb",
+   "text": "ヒーターで出力が下がり、着陸復行で全開にしたときに足りなくなるからです（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5m（Carburetor heat should not be applied unless there is an indication of carburetor icing, since the use of carburetor heat causes a reduction in power which may be critical in case of a go-around）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#a70fb332",
+   "sec": "sys.carb",
+   "text": "着氷と分かっているときは、とけた水でエンジンが 30 秒から数分荒れても、ヒーターはいっぱいのまま、ふつうの出力が戻るまで待ちます（PHAK 第 7 章）。",
    "tag": "参考値",
    "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（roughness as melted ice goes through … may last from 30 seconds to several minutes … must resist the temptation to decrease the carburetor heat）",
-   "by": "W14",
+   "by": "W14・revise-sys",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "旧 sys.carb#c543431a。「着氷と分かっているとき」を足し、POH 3.5k の 1 分の手順（次の行）と並べた（factcheck-sys S1・expert-sys X-M1）"
+  },
+  {
+   "id": "sys.carb#55272650",
+   "sec": "sys.carb",
+   "text": "ただし、Archer の POH の「エンジンの荒れ」の手順では、ヒーターをいっぱいに入れて 1 分たっても荒れが続くなら、ヒーターを戻します。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5k（CARB HEAT FULL ON → If roughness continues after one min: CARB HEAT OFF → MIXTURE → FUEL PUMP ON → Fuel Selector SWITCH TANKS → Engine Indicators CHECK → MAG Switches）。R.archerCk（ENGINE ROUGHNESS：IF ROUGHNESS CONTINUES >1 MIN）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#48815131",
+   "sec": "sys.carb",
+   "text": "また、ヒーターを入れたまま全開で飛ぶと、デトネーションを起こすおそれがあります（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5m（Full throttle operation with carburetor heat on can cause detonation）。節の番号を 4.5 → 4.5m に（factcheck-sys N3）",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -670,14 +862,35 @@
    "checkedOn": null
   },
   {
-   "id": "sys.elec#f07d2c10",
+   "id": "sys.elec#cad5f300",
    "sec": "sys.elec",
-   "text": "非常用バッテリーで使えるのは 30 分ほどです。",
+   "text": "いらない電気を 3 分以内に切り、本体のバッテリーで飛びます。",
    "tag": "参考値",
-   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（minimum duration of 30 minutes）。教科書の既存の文",
-   "by": "W14",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5d（Alternator Failure：If alternator still failed … Electrical Load SHED in less than 3 minutes；… the battery will become the primary source of electrical power）",
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
+  },
+  {
+   "id": "sys.elec#033febd9",
+   "sec": "sys.elec",
+   "text": "POH は、残りの電気を 30 分以下としています。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5d（Alternator Failure：Electrical Power Remaining 30 minutes or less）",
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#0c84e21e",
+   "sec": "sys.elec",
+   "text": "使えるのは、上の箇条のとおり少なくとも 30 分です（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.17（The emergency battery is sized to provide a minimum duration of 30 minutes）・3.5d（Complete Electrical Failure：Approximately 30 minutes of electrical power is available）",
+   "by": "W14・revise-sys",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "旧 sys.elec#f07d2c10。「30 分ほど」を上の箇条の「少なくとも 30 分」（POH 7.17）にそろえた（reader-sys EL1）"
   },
   {
    "id": "sys.elec#260152bf",
@@ -690,14 +903,15 @@
    "checkedOn": null
   },
   {
-   "id": "sys.elec#44d12a8b",
+   "id": "sys.elec#ab073b7d",
    "sec": "sys.elec",
-   "text": "戻すのは1 回だけです。",
+   "text": "戻すのは1 回だけであること（もう一度飛び出したら、そのままにする）",
    "tag": "参考値",
    "source": "FAA SAIB CE-10-11（reset only once）。教科書の既存の文（W07a・W12）",
-   "by": "W14",
+   "by": "W14・revise-sys",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "旧 sys.elec#44d12a8b。箇条の形をそろえた（reader-sys EL6）"
   },
   {
    "id": "sys.elec#3f88fc76",
@@ -831,6 +1045,567 @@
    "tag": "参考値",
    "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（Figure 11-75：VHF comm 118–137 MHz、AM）。ここが大切の短い言い切り",
    "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#e0ab3876",
+   "sec": "sys.ctl",
+   "text": "この POH の機体のエンジンは、気化器（キャブレター、carburetor）で燃料を混ぜる O-360-A4M です（POH 1.3）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：1.3（Engine Model Number O-360-A4M）。気化器式であることは 3.5j・3.5k・4.5l・4.5m の carburetor heat の手順と Lycoming SSP-110-3（型式名に I（fuel injected）がない）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#ba24ff81",
+   "sec": "sys.ctl",
+   "text": "新しい Archer には、燃料噴射式の IO-360 の機体もあります（Piper の資料）。",
+   "tag": "参考値",
+   "source": "Piper Trainer Brochure 2026（R.piperTrainer：Archer TX Lycoming IO-360-B4A。factcheck-sys が読んだ）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#87aa9cdc",
+   "sec": "sys.ctl",
+   "text": "すると空気がタブを押し返し、操縦が重くなって、動かしすぎを防ぎます（PHAK 第 6 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 6 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Stabilator・Antiservo Tabs（deflect in the same direction as the stabilator … increase in the force required … less prone to pilot-induced overcontrolling）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#ee0c3e7a",
+   "sec": "sys.ctl",
+   "text": "ふつうのトリムタブ（trim tab）は、舵面と反対の向きに動きます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 6 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Antiservo Tabs（Conversely, trim tabs on elevators move opposite of the control surface）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#147e2842",
+   "sec": "sys.ctl",
+   "text": "スタビレーターには、ふつう主桁の前に重り（バランスウエイト、balance weight）があります（PHAK 第 6 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 6 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Stabilator（a balance weight is usually incorporated in front of the main spar）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.cockpit#41ac8bb1",
+   "sec": "sys.cockpit",
+   "text": "始動を助ける電動のプライマー（primer）のスイッチは、スターターの右です（POH 7.15）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.15（An electric engine priming system is provided … The primer switch is located right of the starter switch in the overhead switch panel）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.airframe#76b3edb9",
+   "sec": "sys.airframe",
+   "text": "強い反面、表面が少しへこむと、力を受けられずにつぶれやすくなります（PHAK 第 3 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 3 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Monocoque（very strong, monocoque construction is not highly tolerant to deformation of the surface … collapses easily）・Truss Structure（main drawback … lack of a streamlined shape）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.airframe#3dad5844",
+   "sec": "sys.airframe",
+   "text": "エンジンと操縦席の間には、ステンレス鋼などの熱に強い仕切り（防火壁、firewall）があります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 3 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Semimonocoque（a fireproof partition between the rear of the engine and the flight deck or cabin … called a firewall … usually made of heat-resistant material such as stainless steel）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#41a23085",
+   "sec": "sys.gear",
+   "text": "車輪のブレーキが効かないときは、空気の抵抗による減速（aerodynamic braking）を使い切ります（PHAK 第 11 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Dynamic Hydroplaning（Landing at higher than recommended touchdown speeds exposes the aircraft to a greater potential for hydroplaning … landing into the wind. Abrupt control inputs should be avoided … anticipate braking problems … aerodynamic braking should be used to its fullest advantage）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#ccebf4ff",
+   "sec": "sys.lights",
+   "text": "こちらが速ければ近づくので、間隔を保ちます（AFH 第 11 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 11 章 p.11-5（the red light is on the left and the green to the right, the airplane is flying the same direction. Care must be taken to maintain clearance）。factcheck-sys の写し（afh11）を revise-sys が読んだ",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#db7e40ce",
+   "sec": "sys.lights",
+   "text": "白い尾灯だけが見えるのは、相手の後ろの方にいるときです。",
+   "tag": "参考値",
+   "source": "旧 14 CFR 23.1387 の配光（尾灯は後方 140°、左右の灯は前方から 110°）から言えること。「遠ざかっている」は誤り（expert-sys X-M2）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#4bba8dc4",
+   "sec": "sys.piston",
+   "text": "Lycoming の型式名の O は水平対向（opposed）、I は燃料噴射（fuel injected）です。",
+   "tag": "参考値",
+   "source": "Lycoming SSP-110-3（2025-07、NEW_R.lycomingEngines）の型式名の説明（I - Fuel Injected・O - Opposed Cylinders・Cylinder Cubic Inch Displacement）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#372cd21e",
+   "sec": "sys.piston",
+   "text": "航空ガソリン（AVGAS）の等級の数字（オクタン価やパフォーマンス・ナンバー）は、異常な燃え方（下のデトネーション）への強さを表します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Grades（an octane or performance number (grade), which designates the antiknock value … The higher the grade … the more pressure the fuel can withstand without detonating）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#8fd1e460",
+   "sec": "sys.piston",
+   "text": "指定の等級がないときは、1 つ上の等級を使います。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Grades（If the proper grade of fuel is not available, use the next higher grade as a substitute）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#e5f1bee5",
+   "sec": "sys.piston",
+   "text": "使えるのは、米国の FAA が認めた改造（STC：Supplemental Type Certificate）を受けた機体だけです（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Grades（Automobile gas should NEVER be used … unless the aircraft has been modified with a Supplemental Type Certificate (STC) issued by the FAA）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#0e9a5d41",
+   "sec": "sys.piston",
+   "text": "FAA の案内では、100VLL という等級も、100LL と同じように使えます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Grades（SAIB NE-11-15 advises that grade 100VLL AVGAS is acceptable … meets the approved operating limitations for aircraft and engines certificated to operate with these other grades … 100VLL is blue like 100LL and virtually indistinguishable）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#b351aa8c",
+   "sec": "sys.piston",
+   "text": "定速プロペラ（constant-speed propeller）は、羽根の角度が自動で変わり、回転を一定に保つプロペラです（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Constant-Speed Propeller（pitch is automatically varied in flight by a governor maintaining constant rpm；for any given rpm, there is a manifold pressure that should not be exceeded）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#ce52a376",
+   "sec": "sys.piston",
+   "text": "BHP（制動馬力、brake horsepower）は、軸で実際に取り出せる出力です（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Brake horsepower (BHP)—the horsepower actually delivered to the output shaft",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#727ed6bc",
+   "sec": "sys.piston",
+   "text": "今の Seminole は燃料噴射式の IO-360-B1G6（片方は逆回転の LIO-360-B1G6）です。",
+   "tag": "参考値",
+   "source": "Piper Trainer Brochure 2026（R.piperTrainer：Seminole (2) Lycoming IO-360-B1G6）・Lycoming SSP-110-3（LIO-360-B1G6：Piper Seminole (PA-44-180)）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#b5898cdf",
+   "sec": "sys.piston",
+   "text": "古い年式の Seminole には、気化器式の O-360 の機体もあります（Lycoming の資料）。",
+   "tag": "参考値",
+   "source": "Lycoming SSP-110-3：O-360-A1H6・O-360-E1A6D・LO-360-A1H6・LO-360-E1A6D が Piper Seminole (PA-44-180)。型式名に I（fuel injected）がない",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#b0071f3a",
+   "sec": "sys.piston",
+   "text": "ターボ付きの Seminole（PA-44-180T）もあります（Lycoming の資料）。",
+   "tag": "参考値",
+   "source": "Lycoming SSP-110-3：TO-360-E1A6D・LTO-360-E1A6D が Piper Seminole (PA-44-180T)",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#e2b21520",
+   "sec": "sys.engine",
+   "text": "まったく下がらないのも異常で、そのときは飛びません（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Ignition System（“no drop” in rpm is not normal, and in that instance, the aircraft should not be flown）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#616610eb",
+   "sec": "sys.engine",
+   "text": "スイッチが壊れていると、OFF の位置でも点火の回路に電流が流れ、点火が止まりません（AFH 第 2 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 2 章（The switches that control the magnetos operate on the principle of short-circuiting the current … If the switch is faulty, it can be in the “off” position and still permit current to flow in the magneto primary circuit）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#51a372e0",
+   "sec": "sys.engine",
+   "text": "濃すぎる混合気は、点火プラグにすすをためてエンジンを荒らし、出力も下げます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Mixture Control（progressively richer mixture that can result in engine roughness and an appreciable loss of power … spark plug fouling from excessive carbon buildup）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#5f8dbdd3",
+   "sec": "sys.engine",
+   "text": "巡航で混合気を絞ると、燃料消費率は大きく下がります（POH 4.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5k（Use of the mixture control in cruising flight reduces fuel consumption significantly）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#66d716f4",
+   "sec": "sys.eis",
+   "text": "POH の最低の安全な量は 2 qt です（POH 8.19）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：8.19（The oil capacity of the engine is 8 quarts and the minimum safe quantity is 2 quarts）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#5d319e4c",
+   "sec": "sys.eis",
+   "text": "この POH の EIS の表示の一覧（POH 7.13）には、CHT がありません。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.13 Fig. 7-2（RPM・OIL PSI・OIL °F・EGT・FFLOW GPH・FUEL QTY）。POH の本文の全文に CHT・cylinder head の語がない（revise-sys が検索した）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#0abca6f6",
+   "sec": "sys.eis",
+   "text": "「できるだけ早く」は、緊急の重さ・天気・設備を考えて、いちばん近い適当な飛行場に降りることです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.1 Terminology（Land as soon as possible - A landing should be accomplished at the nearest suitable airfield considering the severity of the emergency, weather conditions, field facilities, and ambient lighting）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#5401bb24",
+   "sec": "sys.eis",
+   "text": "飛行は打ち切りますが、すぐにいちばん近い飛行場に降りなくてもかまいません（POH 3.1）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.1 Terminology（Land as soon as practical - Emergency conditions are less urgent, and although the mission is to be terminated, … an immediate landing at the nearest suitable airfield may not be necessary）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#4c601769",
+   "sec": "sys.eis",
+   "text": "油温が急に上がる・オイルの煙が出るなどのしるしがあり、空港が遠ければ、出力があるうちに場外に降りることも考えます（POH 3.5c）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5c（Maintain altitude until such time as a dead stick landing can be accomplished. Don't change power settings unnecessarily, as this may hasten complete power loss … off airport landing while power is still available … sudden increases in temperatures, or oil smoke … an airport is not close）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#4f50b970",
+   "sec": "sys.eis",
+   "text": "油温が高すぎるときは、オイルの管の詰まり、オイルの量の不足、オイルクーラーの詰まり、計器の故障を考えます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Oil Systems（High oil temperature indications may signal a plugged oil line, a low oil quantity, a blocked oil cooler, or a defective temperature gauge）・Engine Cooling（high-speed descents … can shock cool the engine）・wet-sump / dry-sump",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#f48e1021",
+   "sec": "sys.eis",
+   "text": "油温は電気抵抗式の温度計で、CHT は熱電対（thermocouple）で測ります（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-31A AMT Handbook Airframe Vol. 2（NEW_R.amtAirframe2。revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ） 第 10 章（direct reading Bourdon tube oil pressure gauges；Electrical resistance thermometers … measure … oil；Thermocouples … cylinder head temperature (CHT) in reciprocating engines）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#2169df1d",
+   "sec": "sys.carb",
+   "text": "キャブレターヒーターをいっぱいに入れ、ミクスチャーを最もなめらかに回る位置に合わせます（POH 3.5j）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5j（Carburetor Icing：CARB HEAT ON・MIXTURE Adjust for Maximum Smoothness）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#5aac894c",
+   "sec": "sys.carb",
+   "text": "水平飛行に戻ったら混合気を濃くし、着氷の疑いがなければヒーターを切ります（POH 4.5l）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：4.5l（If a prolonged power off descent is to be made, apply full carburetor heat prior to power reduction … When leveling off enrichen mixture, set power as required and select carburetor heat off unless carburetor icing conditions are suspected）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#515893b0",
+   "sec": "sys.carb",
+   "text": "そのあと、ミクスチャー・電動燃料ポンプ・タンクの切り替え・計器・マグネトーの順に確かめます（POH 3.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5k（MIXTURE Adjust for Maximum Smoothness・FUEL PUMP ON・Fuel Selector SWITCH TANKS・Engine Indicators CHECK・LEFT/RIGHT MAG Switches Individually Select OFF and ON）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#b7e071dc",
+   "sec": "sys.fuel",
+   "text": "寒くて、気化器の中で燃料が気化しにくいときに役立ちます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Primer（draw fuel from the tanks to vaporize fuel directly into the cylinders prior to starting … During cold weather …）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#cb09ad1a",
+   "sec": "sys.fuel",
+   "text": "水は、色のついた燃料と分かれて底にたまるか、燃料が濁って見えます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Contamination（Suspended water droplets … cloudy appearance … or by the clear separation of water from the colored fuel）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#56b9b8ca",
+   "sec": "sys.fuel",
+   "text": "燃料が温かいまま急に上昇すると、タンクの中の圧力が下がって、起きやすくなります（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-31A AMT Handbook Airframe Vol. 2（NEW_R.amtAirframe2。revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ） 第 14 章 Vapor Lock（can be caused by excessively hot fuel, low pressure, or excessive turbulence … when an aircraft climbs rapidly, the pressure on the fuel in the tank decreases while the fuel is still warm）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#db1da097",
+   "sec": "sys.fuel",
+   "text": "Archer の燃料計は、各翼の浮き式のセンサーで量を測ります（POH 7.15）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.15（There is one float type fuel sensor in each wing）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#e108ff5f",
+   "sec": "sys.fuel",
+   "text": "米国の型式証明の基準が燃料計に求める正確さは、「空」の表示だけです（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Gauges（Aircraft certification rules require accuracy in fuel gauges only when they read “empty.”）。国を書いた（expert-sys X-N1）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#19468cb6",
+   "sec": "sys.fuel",
+   "text": "給油の設備の表示も手がかりで、AVGAS は赤地に白い文字、ジェット燃料は黒地に白い文字です（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Fuel Grades（all AVGAS is identified by name, using white letters on a red background … turbine fuels are identified by white letters on a black background）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#340e3a99",
+   "sec": "sys.elec",
+   "text": "そのため、決められた容量の予備のヒューズを積みます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ）：Electrical System（Fuses or circuit breakers … Spare fuses of the proper amperage limit should be carried in the aircraft）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#ccdc8767",
+   "sec": "sys.elec",
+   "text": "スイッチを ARM の位置にしておくと、主な電気系統の電気がなくなったとき、自動でつながります（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：7.17（With the EMERG BATT switch in the ARM position, power is applied to the emergency bus automatically if electrical power is removed from the primary electrical system）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#8d81522b",
+   "sec": "sys.elec",
+   "text": "できるだけ早く（as soon as possible）着陸します。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5d（Alternator Failure … Land as soon as possible）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#32632a1a",
+   "sec": "sys.elec",
+   "text": "本体のバッテリーが減って電圧が下がると、非常用バッテリーが自動で働きます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。revise-sys が 2026-10-30 に factcheck-sys の取り直した写しで本文を読んだ）：3.5d（As battery power is depleted … the emergency battery should activate automatically）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#fe99fbd8",
+   "sec": "sys.elec",
+   "text": "地上で飛び出していたブレーカーも、関係する整備の不具合があれば戻しません（SAIB CE-10-11）。",
+   "tag": "参考値",
+   "source": "SAIB CE-10-11（2009-12-23、R.saib1011）勧め 4（Check circuit breakers and if a circuit breaker is not set, do not reset the circuit breaker if there is a related maintenance malfunction）。SAIB は情報で、強制ではない（冒頭の文）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#8f2fec7e",
+   "sec": "sys.radio",
+   "text": "整流器（rectifier）は交流を直流に、インバーター（inverter）は直流を交流に変えます（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-30B AMT Handbook General（2023、NEW_R.amtGeneral。revise-sys が 2026-10-30 に FAA のサイトから取得して読んだ）第 12 章（An electrical generator is a machine that converts mechanical energy into electrical energy by electromagnetic induction；Rectifiers；An inverter is used … to convert a portion of the aircraft’s DC power to AC）。factcheck-sys S4 の出典の不足を、この資料で確かめて直した",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#fdc13170",
+   "sec": "sys.radio",
+   "text": "そのため、充電の近くでは火花や火を使いません（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-30B AMT Handbook General（2023、NEW_R.amtGeneral。revise-sys が 2026-10-30 に FAA のサイトから取得して読んだ）第 12 章（lead-acid・nickel-cadmium・SLA・lithium-ion；When a storage battery is being charged, it generates a certain amount of hydrogen and oxygen … explosive mixture … Do not permit open flames, sparks）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#fdce1b85",
+   "sec": "sys.radio",
+   "text": "大きな電流で放電するほど、バッテリーが熱くなり、取り出せる容量は小さくなります（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-30B AMT Handbook General（2023、NEW_R.amtGeneral。revise-sys が 2026-10-30 に FAA のサイトから取得して読んだ）第 12 章（the ampere-hour output of a particular battery depends on the rate at which it is discharged. Heavy discharge current heats the battery and decreases its efficiency and total ampere-hour output）",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#3c6e8f2e",
+   "sec": "sys.radio",
+   "text": "HF より高い周波数（VHF・UHF など）の空間波は、見通しの範囲だけに届き、電離層では曲がりません。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-31A AMT Handbook Airframe Vol. 2（NEW_R.amtAirframe2。revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ） 第 11 章 Types of Radio Waves p.11-32（Above HF transmissions, radio waves are known as space waves … only capable of line-of-sight transmission and do not refract off of the ionosphere … This includes VHF (30-300MHz), UHF …）。factcheck-sys M1 を直した",
+   "extracted": false,
+   "by": "revise-sys",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#e5c00b53",
+   "sec": "sys.radio",
+   "text": "この電気が少しずつ放電する（コロナ放電、corona discharge）と、無線に雑音が入ります（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA-H-8083-31A AMT Handbook Airframe Vol. 2（NEW_R.amtAirframe2。revise-sys が 2026-10-30 に factcheck-sys の取り直した PDF の本文を読んだ） 第 11 章 Static Discharge Wicks（This interference is caused by corona discharge emitted from the aircraft as a result of precipitation static）",
+   "extracted": false,
+   "by": "revise-sys",
    "checkedBy": null,
    "checkedOn": null
   }

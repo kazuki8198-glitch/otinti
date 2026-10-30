@@ -256,7 +256,7 @@
 | | ★`inst.ap` 自動操縦の入口（GFC 700 型のモードの帯） | K04.21・04.22（図 ch04-fig4-10・4-11 を小型機の版に）・K10.25（図 ch10-fig10-12）＋新（緑＝作動・白＝待機、切り方、電動トリムの暴走） | 共通 |
 | 8 `perf` 性能（7） | `perf.da` | T（計算機 `da` に hPa の入力）＋K06.3〜06.5（二重に補正しない、写真 ch06-photo2［条件つき］：標高の高い空港）［wb-perf T2］ | 日米（alt.unit） |
 | | `perf.tol` | T＋K06.7（向かい風・追い風の補正。速度の区別は `basics.speed` を 3 行で）・06.9・06.10・06.23（2 つの距離を足さない、10% 速いと少なくとも 21%）［T1・T4・T5］ | 日米（preflight） |
-| | ★`perf.chart` POH の表と図の読み方・補間・公示距離・余裕 | K06.1・06.2・06.6（重量が性能表の条件になる。重心の影響は `perf.wb` の囲み）・06.11・06.12・06.24＋新（PHAK 図 11-15 型の読み方、TORA など、計画の余裕は学校の決まり） | 共通 |
+| | ★`perf.chart` POH の表と図の読み方・補間・公示距離・余裕 | K06.1・06.2・06.6（重量が性能表の条件になる。重心の影響は `perf.wb` の囲み）・06.11・06.12・06.24＋新（PHAK 図 11-23 型（組み合わせの図）の読み方、TORA など、計画の余裕は学校の決まり） | 共通 |
 | | `perf.climb` | T＋K06.13〜06.16（余剰推力と余剰パワー、対地上昇勾配：図 ch06-fig6-8） | 共通 |
 | | ★`perf.range` 巡航・航続・滞空と風 | K06.17〜06.19（図 ch06-fig6-9）［T3：ミクスチャーの条件］ | 共通 |
 | | `perf.fuel` | T（91.151 は「最初の着陸予定地まで」） | 日米（fuel.vfr〔安全〕） |
@@ -286,17 +286,17 @@
 | | ★`navb.calc` 時間・燃料・フライトコンピュータ | K08.3・08.10・08.11＋新（E6-B、写真 ch08-photo4、AVGAS 約 6 lb/US gal・比重 約 0.72） | 共通 |
 | 12 `law` 米国の規則と空域（8） | ★`law.basis` 規則の読み方：資料の格・承認と条件・適用の時点 | K09.1・09.2・09.8＋新（日米の資料の格の表） | 米国＋日米の地図 |
 | | `law.pic` | T | 米国（preflight） |
-| | ★`law.pilot` 操縦士の決まり：flight review・最近の経験・事故の報告 | 新（61.23・61.56・61.57・NTSB 830） | 米国（accident・night・medical） |
+| | ★`law.pilot` 操縦士の決まり：フライトレビュー・最近の経験・事故の報告 | 新（61.23・61.56・61.57・NTSB 830） | 米国（accident・night・medical） |
 | | `law.aircraft` | T | 米国（docs） |
 | | `law.airspace` | T（日本の空域は第 7 部へ。リンクは囲みの中） | 米国 |
 | | `law.vfr` | T＋新（「上方 150 m に雲がない」と「雲の下 500 ft」が同じ考えであることの図） | 米国（vmc・vmc.ad） |
 | | `law.special` | T（NOTAM の訳を「ノータム」に）〔CADET：架空・NOT FOR NAVIGATION〕 | 米国（svfr） |
 | | `law.rules` | T | 米国（msa・speed・row・fuel.vfr） |
 | 13〜17 `radio1`〜`radio5` 英語の交信（28） | `radio1`：`radio.why`（T＋K09.15：航空交通業務の 3 つ）・`radio.equip`・`radio.technique`（写真 ch09-photo2［条件つき：顔］）・`radio.listen`（日本の交信の聞き取りは `jatc.listen`） | T | 米国（english.radio） |
-| | `radio2`：`comm.basic`・`comm.numbers`（ICAO の言い方の列）・`comm.callsign`〔CADET：実名を消したあとの文〕・`comm.words` | T | 米国（words） |
+| | `radio2`：`comm.basic`・`comm.numbers`（ICAO の違いは `comm.icao` の表）・`comm.callsign`〔CADET：実名を消したあとの文〕・`comm.words` | T | 米国（words） |
 | | `radio3`：`comm.pattern`・`comm.ack`・`comm.readback`（＋K09.19 ヒアバック）・`comm.clarify`（＋K09.20 許可・指示・情報）・`comm.mistakes`・★`comm.runway` 滑走路に入る許可と誤進入の防ぎ方（K09.20〜09.22、写真 ch09-photo3） | T・K | 米国（readback） |
 | | `radio4`：`comm.flow`（＋K09.25・09.27）・`comm.atis`・`comm.dep`・`comm.tower`・`comm.radar`・`comm.arrive`・`comm.option`（報告点と missed approach を直す） | T | 米国 |
-| | `radio5`：`comm.ctaf`・`comm.xpdr`（写真 ch04-photo5：コード 7000 は欧州の例と書く）・`comm.mayday`（上昇の但し書き）・`comm.nordo`（写真 ch09-photo6：ライトガン）・`comm.sfb`・`comm.icao`（FAA・ICAO（英国：〔要確認〕）・日本の 3 列）〔CADET〕・`comm.practice` | T | 米国（xpdr・light・nordo.vfr） |
+| | `radio5`：`comm.ctaf`・`comm.xpdr`（写真 ch04-photo5：コード 7000 は英国（CAP 413）の例と書く）・`comm.mayday`（上昇の但し書き）・`comm.nordo`（写真 ch09-photo6：ライトガン）・`comm.sfb`・`comm.icao`（FAA・ICAO（英国：〔要確認〕）・日本の 3 列）〔CADET〕・`comm.practice` | T | 米国（xpdr・light・nordo.vfr） |
 | 18 `hf` 人間の能力と ADM（9） | `hf.self` | T＋K10.12・10.13［human T7］ | 共通（alcohol〔安全〕・medical） |
 | | ★`hf.fatigue` 疲労・睡眠・時差・ストレス・暑さと寒さ | K10.10（図 ch10-fig10-5）・10.11＋新（日本 → ロンドン → フロリダの時差、熱中症と低体温） | 共通 |
 | | `hf.altitude` | T＋K10.2（図 ch10-fig10-2、写真 ch10-photo2：低圧室）・10.3・10.4・10.9（写真 ch10-photo4）＋新（高度の減圧症、自分の低酸素の症状を知る）［T3〜T5］ | 共通（oxygen〔要確認〕） |
@@ -1354,7 +1354,7 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 R1 の確かめ（7.2 の W12）は、事実の二人目（`reports/factcheck2-R1.md`）と安全レビュー（`reports/safety-R1.md`）の 2 つの役で行い、二人の must と should は統合役が直した（`reports/integrate-R1.md`）。
 
 - **3.4 の表**（値と確度の正は `FL.jur`）：`metar.taf` の米国の PROB を「PROB30（PROB40 は使わない）」に（NWSI 10-813（2024-10-30）付録 B 2.9.4 は PROB30 だけを使い、最初の 9 時間の制限を外した。AIM 7-1-29 の表は古いまま：付記 3 の「PROB30/40（最初の 9 時間は使わない）」は誤り）。`solo` の米国の型式の承認は「訓練をした教官が飛ぶ日の前 90 日以内に書き、そのあと 90 日ごとに書き足す」（14 CFR 61.87(n)(p)）。`sbas` の日本の欄は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から。使える進入の種類は〔要確認〕）、`ws.alert` の日本の欄は気象庁の空港気象ドップラーレーダー・ドップラーライダーの探知と METAR の WS の群（管制の伝え方は〔要確認〕）。どちらも原本の重ね表示 `kiso-errata.js` が W11 で確かめた資料と同じ。`fuel.vfr` の日本の欄に「訓練では、学校の規程の量に従う」を足した。
-- **〔安全〕の 7 項目（5 章の基準 7）の R1 のつなぎ**：③ VFR で雲に入ったときは `hf.body` に段落と「ここが大切」（AFH 第 18 章：翼を水平 → 地形から離れる → 浅い 180°（来た方が確実に晴れて地形が許すときだけ）→ 管制に助け。旋回は 10° 以下・上昇は 1 目盛り・上昇しながら旋回しない）。② 周回進入で目視を失ったときは `ifr.np` に 1 段落（AIM 5-4-21：着陸する滑走路へ向かって上昇旋回）。本番の節 `emg.imc`（W28）・`ifr.circle`（W30）は R3 のまま（3.3）。④ `wx.shear` に「失速警報が鳴ったら、警報が止まるまで迎え角を減らすのが先（AFH 第 5 章）」。①〜⑦の文をテストで確かめる（`flight-lab/test/flight.test.mjs`「textbook: the seven safety items…」。⑤ は前からの「the stall lessons teach the AFH recovery order」）。
+- **〔安全〕の 7 項目（5 章の基準 7）の R1 のつなぎ**：③ VFR で雲に入ったときは `hf.body` に段落と「ここが大切」（AFH 第 18 章：翼を水平 → 地形から離れる → 浅い 180°（来た方が確実に晴れて地形が許すときだけ）→ 管制に助け。旋回は 10° 以下・機首の上げ下げは姿勢指示器の線（bar width）1 本分まで・上昇しながら旋回しない）。② 周回進入で目視を失ったときは `ifr.np` に 1 段落（AIM 5-4-21：着陸する滑走路へ向かって上昇旋回）。本番の節 `emg.imc`（W28）・`ifr.circle`（W30）は R3 のまま（3.3）。④ `wx.shear` に「失速警報が鳴ったら、警報が止まるまで迎え角を減らすのが先（AFH 第 5 章）」。①〜⑦の文をテストで確かめる（`flight-lab/test/flight.test.mjs`「textbook: the seven safety items…」。⑤ は前からの「the stall lessons teach the AFH recovery order」）。
 - **10.5 の課目**：`SYNC.e3-glide-entry`（最良滑空速度より速いときは高度を保って減速してから滑空の姿勢：AFH 第 9 章 p.9-28）と `SYNC.i2-upset`（スパイラルは少し押して荷重を抜いてから翼を水平：AFH 第 5 章 p.5-26。機首上げは減速の程度に合わせて出力：IFH p.7-27）を R1 で直した（7.2 では R3 の W36 だった）。採点は変えていない。a7 の目標は「迎え角を先に減らして確実に回復する」。失速の課目の採点「回復で失った高度 300 ft 以内」は 10.5 のとおり変えず（AC 120-109A は高度の損失を評価に入れないことを勧める）、a7・a8 の基準と `aero.stall`・`ops.stall` のシミュレータの囲みに「目安。ACS の基準ではない」と書き、参考の行にするかを所有者の判断 11 に上げた（`DECISIONS.md`）。
 - **台帳**：R1 で閉じた ERRATA 101 行・RULINGS 35 行に確かめ役の署名（`checkedBy: W12`。〔安全〕の行は安全レビューも）。統合役が直した `SYNC.e3-glide-entry`・`SYNC.i2-upset` の二人目は R3 の W36。COUNTS に R1 の作った本の数（`built`）。
 
@@ -1366,3 +1366,15 @@ R2 の始めに、R1 の残り 2 つ（描く部品・R1 の確かめの残り�
 - **写真**（4.2・8.1・8.2・5 章の基準 17）：基礎教材の写真 51 枚を `book-photos-k.js`（`FL.bookPhotosK`、原本のファイルとバイト一致）に入れ、81 枚（教科書 30・基礎教材 51）のクレジットを元のページの値と照らした（W22）。条件つき 4 枚は `ch01-photo4` だけを使い、表で「使う」だった `ch09-photo6` は管制員の顔が写るので外した（4.2 の表：使う 52・使わない 33）。注記入りは 24 枚で、どれもキャプションで用語の対応を書いた。`bk.photo` は 2 つの入れ物から引き、写真ごとの加工の表示 `mod` を出す（無加工／切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加／注記は本書で追加、2 つ以上は「／」）。FLIGHT LAB のビルドは、原本の入口（`kiso/kiso-data.js`）がある間は `book-photos-k.js` の写真のバイト（`SRC` の塊）を入れず、`FL.kiso.photos` から読む（8.2。ページの中の `book-photos-k.js` は 46,677 バイトで、FLIGHT-LAB.html は R1 の 9,791,707 バイトから 9,748,145 バイトになった：`holdShort` の差し替えで小さくなった分を含む）。TEXTBOOK は全部を入れる（TEXTBOOK.html は 4,759,132 → 6,131,992 バイト）。写真のデコード後の合計は 3,364,306 バイト（予算 4.0 MiB の内）。最初に置いたのは `ch00-photo5`（`basics.alt`）。ほかの写真は章の単位（W13〜W41）が置く。
 - **3.6 の表**：「過給機付き・引込脚の単発機」を「引込脚などを持つ単発機（complex）と 200 馬力を超える単発機（high-performance）の承認（14 CFR 61.31(e)(f)）」に直した（R1V が見つけた誤り。61.31 に過給機付きの区分はない。本文 `intro.exams` も直した）。
 - **R1 の確かめの残り**（R1V）：CLAIMS の署名待ち 320 行のうち 316 行を一次資料で確かめて署名し、誤り 2 行の文を直した。序部の初学者の 2 回目の読み（`intro`・`english`）で理解を止めるつまずきはなかった。日本の法令レビューで `FL.jur` の `nordo.ifr` の日本の欄（施行規則第 206 条第 3 号の進入の許可と離陸時刻の場合）を直した。W07f が直した図 32 枚の目視の記録ができた。署名待ちの 38 行（PROVENANCE 32・UNVERIFIED 3・CONCEPTS 1・ERRATA 2）に署名した。
+
+## 付記 9：R2 の第 1 部の章の登録（R2B）の統合での直し（2026-10-30）
+
+R2 の章の単位（W13〜W20：書き手 → 事実確認 → 初学者の読み → 専門家の読み → 直し役）の下書き 9 つを、統合役が本に登録した（`reports/integrate-R2B.md`）。第 1 部は 3.3 の 15 章（`g1` を除く）・116 節になり、本は 7 部・33 章・206 節（`#aero.lift` は 5.3）。
+
+- **新しい章のファイル**（3.1「第 1〜6 部の新しい章は、その部の既存のファイルに `before:` で入れる」のとおり）：`inst`・`wb` は `book-1.js`（`sys`・`perf` の後）、`navb`・`adm` は `book-2.js`（`wx`・`hf` の後）。新しいファイルは足していない（共有の列 `modules.mjs` と TEXTBOOK の `FL_MODULES.length` 18 は同じ）。各章のコードは本のファイルの中で 1 つのブロック `{ … }` に入れ、章の部品の名前がほかの章とぶつからないようにした。下書きの `NEW_R` は `book-core.js` の `R` へ（同じ URL を引く下書きどうしは 1 つの項目にまとめ、題は章の名前だけにした。`faaVfrCharts` は `R.vfr`）。図は `book-figs.js` に章ごとのブロックで入れ（下書きの部品のうち、ファイルの頭の部品と違うものだけをブロックに残す）、描き直した図は同じ名前の古い関数を消して置き換えた。計算機 `da`・`wb` は `CALC` の中で置き換え、`ARCHER_WB` に POH の数を足した。
+- **6 つの移動**（6.2 の決まり 2）：`sys.g1000`・`sys.compass` は `inst` と同じコミットで、`perf.wb`・`perf.wbex` は `wb` と同じコミットで移した。節 ID で引くリンク（`bk.see`）は全部行き先が残る。`{ch:}` は `ground.walk` のピトー静圧（`{ch:sys}` → `{ch:inst}`）と `nav.xc` の準備の表（`{ch:perf}・{ch:wb}`）を直した。`sys.1`・`sys.3`・`perf.2`・`perf.3` の確認問題は元の章に残り、理由が移した先を指す。
+- **3.3 の文言**：`law.pilot` の題を本のとおり「フライトレビュー」に、`comm.numbers` の注を「ICAO の違いは `comm.icao` の表」に、`comm.xpdr` のコード 7000 を「英国（CAP 413）の例」に、`perf.chart` の「PHAK 図 11-15 型」を「図 11-23 型（組み合わせの図）」に（factcheck-perfwb N8：図 11-15 は表の形の離陸距離の図）。付記 7 の「上昇は 1 目盛り」を「機首の上げ下げは姿勢指示器の線（bar width）1 本分まで」に（revise-hfadm：AFH 第 18 章の言い方）。
+- **3.4 の `fuel.vfr`**：囲みの節は `perf.fuel`・`nav.log`・`law.rules` のまま。`navb.calc` は、基礎教材の誤り（ERRATA `K.navigation.K1`〔安全〕：自家用の VFR に法定の予備があるように読める）を直すために、日本の欄の中身を手で書いた `bk.jp` を持つ（factcheck-navb S1 の案 (b)：数字はなく、条番号と「法令の量がないことは予備がいらないという意味ではない」）。`FL.jur` の `fuel.vfr` の日本の欄を直すときは、この囲みも一緒に直す（`FL.jur` がその文を持てば `bk.jp('fuel.vfr')` に替えて `boxes` に `navb.calc` を足す案 (a)）。
+- **所有者の判断 11**：失速の課目（a7・a8・c1）の「回復で失った高度」は参考の行になった（`syllabus.js` の `stallRecovery`。合否は二次失速だけ）。10.5 の「採点は変えない」は、この行について判断 11 で解いた。
+- **CADET**（6.3）：授業 `CLASSES` の中を広げる・`BANK_OF`・講義で `deep` を飛ばすのは W26 のまま（6 つの授業は今の 11 章を話し、新しい 4 章 `inst`・`wb`・`navb`・`adm` は質問メニューと AI 教官の目次とゲームの本に出る：30 章・193 節）。CADET の内容のテストがキーの名前と読む書き方（「T（ターボ）」「CDI のキーで」「6°W（教材値）」など）と、図のキャプションの由来の文（「パイロット基礎教材の図 10-5 を描き直した」）は、本の側の書き方を変えた（下書きは記録として元のまま）。
+- **台帳の道具**：`validate.mjs` は、3.3 の ★ の節を「まだない節」と見なすのを、本にその節がない間だけにした（登録した新しい節を `mapped` にできなかった）。CLAIMS の ID に、書き手が道具の抜き出さない文を手で足した形 `<節ID>#hand-<8 桁>` を認めた（`inst`・`navb`）。検査の道具 `check-style.mjs` は W10b の部品の見出しを文と数えない。

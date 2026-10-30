@@ -418,12 +418,12 @@ test('browser: 教科書 — the scope badge and the provenance line beside the 
     assert.deepEqual(m, { title: '飛行方式と気象状態は別の軸', scope: '共通', from: 'パイロット基礎教材（第 3 版）第 0 章 14 節、第 9 章 8 節、第 12 章 1 節をもとに改稿', beside: true, under: true });
     await open('intro.japan');
     assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#bkArt .bk-head .bk-scope, #bkArt .bk-head .bk-from')].map(e => e.textContent)), ['日本の決まり', 'パイロット基礎教材（第 3 版）第 9 章 3 節をもとに改稿']);
-    await open('aero.forces');                     // no section data yet: nothing is guessed
+    await open('ground.walk');                     // no section data yet (Part 2 is rewritten in R3): nothing is guessed
     assert.equal(await page.locator('#bkArt .bk-scope, #bkArt .bk-from').count(), 0);
     await open('intro.marks');                     // the promises explain the badge, the line and 発展, now drawn
     const marks = await page.textContent('#bkArt');
     for (const t of ['範囲の札', '由来の行', '発展']) assert.ok(marks.includes(t), t);
-    // 発展: a deep section has its badge in the contents and beside its title (none is deep yet: one is made so here)
+    // 発展: a deep section has its badge in the contents and beside its title (aero.lift is not deep: it is made so here)
     await page.evaluate(() => { FL.book.findSection('aero.lift').sec.deep = true; __lab.showPage('book'); });
     await open('aero.lift');
     assert.deepEqual(await page.evaluate(() => { const b = document.querySelector('#bkNav .bk-item.sel'); return [b && b.querySelector('.bk-deep-tag') && b.querySelector('.bk-deep-tag').textContent, b && b.lastChild.textContent, document.querySelector('#bkArt .bk-head .bk-deep-tag').textContent]; }),

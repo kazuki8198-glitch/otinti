@@ -2354,8 +2354,9 @@
       return svg(400, 232, s, `図：風 ${pad3(wd)}°/${ws} kt を、航路 ${pad3(tc)}° に沿う向かい風成分と、航路を横切る横風成分に分けたもの（縮尺どおり）。風の矢印は、風が流れて行く向きに描きます`);
     },
     // ---------------------------------------------------------------- navb.wind (3) — REDRAWN under its own name: FIG.windTriangle
-    // (book-figs.js; nav.plan uses it too). The same drawing, word for word; only the caption names the triangle with FL.terms'
-    // official name「風力三角形」(wind-triangle) instead of「風の三角形」.
+    // (book-figs.js; nav.plan uses it too). The same triangle; W18 and revise-navb named the boxes TC・TH・MH・CH, wrote the steps
+    // as「偏差 6°W ＋6°」(MAGVAR_W)「自差 2°W ＋2°」, added the MC line, and the caption uses FL.terms' official name「風力三角形」(wind-triangle).
+    // nav.plan's text reads the same way (TC → TH → MH → CH, W is added, MC ＝ TC ＋ variation): checked when it was registered (R2B).
     windTriangle() {
       // the wind triangle drawn to scale for the wca calculator's default case (true course 090°, TAS 105 kt, wind 030° / 15 kt), and
       // the chain from true course to compass heading with the course's variation (MAGVAR_W) and an example deviation of 2°W (added, like a west variation)

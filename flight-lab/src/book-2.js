@@ -1,5 +1,7 @@
-// FLIGHT LAB — book-2.js : Part 1 (ground school), chapters 5–8: weather, regulations and airspace,
-// aviation English and ATC, human factors and decision making. Facts from 14 CFR, the AIM and FAA handbooks (cited).
+// FLIGHT LAB — book-2.js : Part 1 (ground school): weather (wx), navigation basics (navb), regulations and airspace (law),
+// human factors (hf) and error, situational awareness and risk (adm); the radio chapters are book-comm.js's (before 'hf').
+// Rewritten in R2 from the drafts in textbook/rewrite/combined/drafts/, each chapter's code in a block of its own. Facts
+// from 14 CFR, the AIM and FAA handbooks (cited).
 (function (FL) {
   'use strict';
   const B = FL.book, R = B.R, bk = B.bk, FIG = FL.bookFigs;

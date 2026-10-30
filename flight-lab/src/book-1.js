@@ -1,7 +1,7 @@
 // FLIGHT LAB — book-1.js : the introduction ('intro', in the front part p0 that book-0.js adds) and Part 1's first chapters
-// (ground school: aero, sys, perf).
-// Sources are listed per chapter. The aerodynamics chapter is carried over from 空島フライト's textbook and moved to the
-// Piper Archer and the FAA's material; numbers that come from the flight model are labelled as teaching values.
+// (ground school: aero, sys, inst, perf, wb — rewritten in R2 from the drafts in textbook/rewrite/combined/drafts/, each
+// chapter's code in a block of its own).
+// Sources are listed per chapter. Numbers that come from the flight model are labelled as teaching values.
 (function (FL) {
   'use strict';
   const B = FL.book, R = B.R, bk = B.bk, FIG = FL.bookFigs;
@@ -1082,7 +1082,7 @@ ${bk.key('直流では P ＝ VI・V ＝ IR。容量 ÷ 電流は理想の時間'
       ['吸気圧力（inHg）と回転（rpm を 100 で割った数）の大小だけで、使ってはいけない組み合わせを決められますか。', `決められません。使ってよい組み合わせは、その機体の POH の表で決まります。${bk.see('sys.eis', '吸気圧力と回転')}`, ['kiso03.q13']],
       ['Archer の POH で、次の 3 つを調べて書いてください。①エンジンの型式・燃料の等級・オイルの量、②油圧と油温と回転の限界、③油圧が下がったときの手順。それぞれが POH のどの章にあるかも書き、教官に説明してください。', `例：①Lycoming O-360-A4M・100 か 100LL・8 qt（POH 第 1 章・第 2 章）、②油圧 25〜115 psi（緑 55〜95）・油温 245°F・2,700 rpm（POH 第 2 章）、③スロットルを必要な最小にし、油温も高ければできるだけ早く着陸（POH 第 3 章 3.5c）。実機では、その機体の POH の版と補足を確かめます。${bk.see('sys.eis', 'エンジンの計器・潤滑・冷却')}`, ['kiso03.q28']],
     ],
-    refs: [R.phak, R.phak3, R.phak5, R.phak7, R.phak11, R.afh, R.archerCk, R.archerPoh, R.g1000, R.archer, R.piperTrainer, R.seminole, R.lycomingEngines, R.amtAirframe2, R.amtGeneral, R.phak6, R.cfr91205, R.nist811si, R.nist811, R.cfr1, R.cfr91, R.aim43, R.saib1011], lessons: ['a1', 'a2', 'i3'] });
+    refs: [R.phak, R.phak3, R.phak5, R.phak7, R.phak11, R.afh, R.archerCk, R.archerPoh, R.g1000, R.archer, R.piperTrainer, R.seminole, R.lycomingEngines, R.amtAirframe2, R.amtGeneral, R.phak6, R.cfr91205, R.nist811si, R.nist811, R.cfr1, R.cfr91, R.aim43, R.saib1011], lessons: ['a1', 'a2'] });
   }
 
   // =======================================================================

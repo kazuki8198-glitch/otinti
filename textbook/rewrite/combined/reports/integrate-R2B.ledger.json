@@ -10195,6 +10195,299 @@
    "by": "W20",
    "verified": true,
    "note": "integrate-R2B（2026-10-30）：文体の行（一次資料で確かめる事実ではない）。章 hf・adm を登録した本で check-chapter hf adm の style が error 0（体言止め・常体なし）、節の形（form）が error 0、初学者の読み（reports/reader-hfadm.md）を直し役が当てた形なので verified: true にした。確かめ役の署名は W27"
+  },
+  {
+   "op": "add",
+   "id": "C.carb-heat",
+   "kind": "address",
+   "name": "キャブレターヒーターの使い方（気化器着氷の対処）",
+   "address": "sys.carb",
+   "recalls": [
+    "perf.plan",
+    "emg.abnormal",
+    "wx.ice"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys 5・revise-sys 6.2（手順の全体は emg.abnormal：W28）",
+   "unit": "W14",
+   "recallUnits": [
+    "W16",
+    "W28",
+    "W17"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.position-lights-rule",
+   "kind": "address",
+   "name": "航空灯（位置灯）の決まりと読み方",
+   "address": "sys.lights",
+   "recalls": [
+    "law.pilot"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys 5・revise-sys 6.2（law.pilot の表の 91.209 の行）",
+   "unit": "W14",
+   "recallUnits": [
+    "W19"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.mixture-best",
+   "kind": "address",
+   "name": "混合比の調整（最良出力と最良経済）",
+   "address": "sys.engine",
+   "recalls": [
+    "perf.range"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys 5・revise-sys 6.2",
+   "unit": "W14",
+   "recallUnits": [
+    "W16"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.hydroplaning",
+   "kind": "address",
+   "name": "ハイドロプレーニング",
+   "address": "sys.gear",
+   "recalls": [
+    "perf.tol"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys 5・revise-sys 6.2",
+   "unit": "W14",
+   "recallUnits": [
+    "W16"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.mag-check",
+   "kind": "address",
+   "name": "マグネトーの点検（原理）",
+   "address": "sys.engine",
+   "recalls": [
+    "ground.runup"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys 5・revise-sys 6.2（数の限度と手順は ground.runup）",
+   "unit": "W14",
+   "recallUnits": [
+    "W28"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.trim-tabs",
+   "kind": "address",
+   "name": "トリムタブとマス・バランス",
+   "address": "aero.axes",
+   "recalls": [
+    "sys.ctl"
+   ],
+   "maxLines": 3,
+   "basis": "expert-sys X-S7・revise-aero 6.7・revise-sys 6.2（表は aero.axes のもっと深く。逆にするなら W13 と W14 が決める）",
+   "unit": "W13",
+   "recallUnits": [
+    "W14"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-sys の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.best-speeds",
+   "kind": "address",
+   "name": "目的別の最良速度（最大滞空・最大航続）",
+   "address": "aero.power",
+   "recalls": [
+    "perf.range"
+   ],
+   "maxLines": 3,
+   "basis": "expert-perfwb E-S13・revise-perfwb 6.2（perf.range の思い出そうは統合で aero.power と aero.drag へ）",
+   "unit": "W13",
+   "recallUnits": [
+    "W16"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-perfwb の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.hpa-ft",
+   "kind": "address",
+   "name": "hPa と ft の目安（1 hPa ≒ 27〜28 ft）",
+   "address": "inst.alt",
+   "recalls": [
+    "perf.da"
+   ],
+   "maxLines": 3,
+   "basis": "expert-perfwb E-S15・revise-perfwb 6.2",
+   "unit": "W15",
+   "recallUnits": [
+    "W16"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-perfwb の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.fuel-flow",
+   "kind": "address",
+   "name": "燃料消費率（燃料流量）",
+   "address": "perf.range",
+   "recalls": [
+    "navb.calc",
+    "perf.fuel"
+   ],
+   "maxLines": 3,
+   "basis": "expert-perfwb E-S16・revise-perfwb 6.2（perf.range に太字の定義）",
+   "unit": "W16",
+   "recallUnits": [
+    "W18",
+    "W16"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-perfwb の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.task-priority",
+   "kind": "address",
+   "name": "作業の優先順位（飛ばす・航法・交信）",
+   "address": "adm.error",
+   "recalls": [
+    "hf.srm"
+   ],
+   "maxLines": 3,
+   "basis": "expert-hfadm 10・revise-hfadm 6.2",
+   "unit": "W20",
+   "recallUnits": [
+    "W20"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-hfadm の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.checklist-use",
+   "kind": "address",
+   "name": "チェックリストの使い方と中断からの再開",
+   "address": "adm.check",
+   "recalls": [
+    "hf.srm"
+   ],
+   "maxLines": 3,
+   "basis": "expert-hfadm 10・revise-hfadm 6.2",
+   "unit": "W20",
+   "recallUnits": [
+    "W20"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-hfadm の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "op": "add",
+   "id": "C.get-there-itis",
+   "kind": "address",
+   "name": "計画の継続（get-there-itis）",
+   "address": "adm.sa",
+   "recalls": [
+    "hf.adm"
+   ],
+   "maxLines": 3,
+   "basis": "expert-hfadm 10・revise-hfadm 6.2",
+   "unit": "W20",
+   "recallUnits": [
+    "W20"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "integrate-R2B",
+   "checkedBy": null,
+   "note": "integrate-R2B（2026-10-30）：revise-hfadm の報告 6 の 2の頼みで足した行（統合役は CONCEPTS の持ち主）。住所の節は本にある。呼び戻す節を思い出そう（3 行以内とリンク）にするのは、呼び戻す側の単位"
+  },
+  {
+   "id": "C.cg-performance",
+   "by": "W16",
+   "recalls": [
+    "perf.chart",
+    "aero.stall",
+    "aero.stab"
+   ],
+   "recallUnits": [
+    "W16",
+    "W13"
+   ],
+   "note": "integrate-R2B（2026-10-30）：revise-perfwb の報告 6 の 2 の頼みで、呼び戻しに aero.stall・aero.stab を足した（aero.stab の重心の段落を perf.wb への思い出そうにするのは W13 の側：expert-perfwb E-S14）"
+  },
+  {
+   "id": "C.altimeter-errors",
+   "by": "W17",
+   "recalls": [
+    "wx.atm",
+    "basics.alt"
+   ],
+   "recallUnits": [
+    "W17",
+    "W10"
+   ],
+   "note": "integrate-R2B（2026-10-30）：revise-inst の報告 6 の 6 の頼みで、呼び戻しに basics.alt を足した（basics.alt のここに注意を 3 行に縮めて inst.alt へつなぐのは序部の持ち主：PROGRESS の未解決）"
+  },
+  {
+   "id": "APP.lesson-k1k2",
+   "status": "fixed",
+   "where": "flight-lab/src/syllabus.js の課目 k1・k2 に book: ['inst.pfd']（節 inst.pfd は章 inst を登録したコミット 2e6d32b で本に入った）",
+   "by": "integrate-R2B",
+   "note": "integrate-R2B（2026-10-30）：W15 の報告 8 の 1 の頼み。章を登録するコミットで入れるはずだったのを落としていたので、統合の最後のコミットで入れた。CADET は同じ book を content/book.js の lessonSections で読む（教官の説明と AI 教官が課目の節として引く）。verified：flight-lab/src/syllabus.js を読み、FLIGHT LAB の課目のカードに「教科書 7. PFD と MFD・予備計器・表示の切替え」のボタンが出ることを book の findSection で確かめた。確かめ役の署名は W27",
+   "verified": true
   }
  ]
 }

@@ -93,8 +93,8 @@
     { id: 's0', title: '第 1 段階　地上学科（英語の座学）', phase: 'p1',
       desc: '公開情報では、座学はロンドンで英語で行う。ここでは G1000 型の計器の読み方、英語の交信（言い方・1 回の飛行の全交信・復唱・聞き取り）、学科の確認テストで準備する。',
       lessons: [
-        { id: 'k1', tutor: 'g1000', title: 'G1000 型 PFD の読み方（チュートリアル）', goal: '速度・姿勢・高度・昇降率・方位・CDI の位置と読み方を、実際の表示で 1 つずつ' },
-        { id: 'k2', read: true, title: 'PFD の読み取り練習', goal: 'ランダムな PFD の表示を読み取る 10 問・80% で合格' },
+        { id: 'k1', tutor: 'g1000', title: 'G1000 型 PFD の読み方（チュートリアル）', goal: '速度・姿勢・高度・昇降率・方位・CDI の位置と読み方を、実際の表示で 1 つずつ', book: ['inst.pfd'] },
+        { id: 'k2', read: true, title: 'PFD の読み取り練習', goal: 'ランダムな PFD の表示を読み取る 10 問・80% で合格', book: ['inst.pfd'] },
         { id: 'k3', radio: 'drill', title: '英語交信①：アルファベットと数字の言い方', goal: '高度・針路・周波数・コードなどの言い方 10 問・80% で合格', book: ['comm.basic', 'comm.numbers'] },
         { id: 'k4', radio: 'flight', title: '英語交信②：1 回の飛行の交信を通して聞く', goal: 'ATIS から駐機場まで全部の交信を、意味と理由つきで最後まで', book: ['comm.atis', 'comm.dep', 'comm.tower', 'comm.radar', 'comm.arrive'] },
         { id: 'k5', radio: 'scenes', title: '英語交信③：復唱と応答', goal: 'ランダムな 10 場面・80% で合格', book: ['comm.readback', 'comm.clarify'] },

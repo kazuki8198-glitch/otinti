@@ -64,6 +64,10 @@ export function buildGround(L, FL, { quality }) {
         float stripe = sign(sin(rf.x * 3.14159 / 7.0));
         float sw = fwidth(rf.x) / 7.0;                                         // fade the strips before they alias
         grass *= 1.0 + 0.04 * stripe * (1.0 - inField) * (1.0 - smoothstep(0.08, 0.35, sw));
+        // walking-distance mottling of the grass itself (graphics plan C1): two fine octaves over the photo
+        // grass, groundDetail-gated like the near normals below — at uDetail 0 the grass is the plain photo
+        float mk = (1.0 - smoothstep(8.0, 42.0, dist)) * uDetail * (1.0 - inField);
+        grass *= 1.0 + ((cdNoise(loc * 6.3) - 0.5) * 0.17 + (cdNoise(loc * 21.0) - 0.5) * 0.10) * mk;
         // the farmland: FLIGHT LAB's field grid, jittered per column and split, with pasture, crops, sod, citrus groves,
         // fallow land, tree lines on some edges and patches of pine woods (sRGB palette, made linear)
         vec2 cs = vec2(460.0, 320.0);
@@ -87,6 +91,31 @@ export function buildGround(L, FL, { quality }) {
         float treeLine = step(0.6, cdHash12(cell + 31.0));
         c = mix(mix(c * 0.72, lin(vec3(0.16, 0.25, 0.12)), treeLine * 0.8), c, smoothstep(2.0 - fw, (treeLine > 0.5 ? 9.0 : 4.0) + fw, edge));
         c *= mix(0.86, 1.1, cdFbm3(w * 0.004));
+        // the fields' own large-scale texture (graphics plan C2): what still reads from the pattern and from
+        // 3,000 ft, where the 5 m rows have long faded — one tone and one growth tint per field (constant over
+        // the field, so nothing can alias), mottling and dry patches anchored to the field's own frame, wide
+        // tillage bands that fade as they go sub-pixel, and a slow regional drift over kilometres. The palette
+        // above is untouched: these are all multipliers around 1, gated by uDetail inside the branch, so at
+        // groundDetail 0 (the low preset) the fields stay the old flat colours bit for bit — and the airfield
+        // itself (inField 0) never pays for any of it.
+        if (uDetail > 0.001 && inField > 0.001) {
+          float rc = rowDir > 0.5 ? w.x : w.y;                                  // along this field's rows
+          c *= 1.0 + (cdHash12(cell + 41.0) - 0.5) * 0.30 * uDetail;            // this field's tone
+          vec3 gtint = mix(vec3(1.06, 1.01, 0.92), vec3(0.94, 1.00, 1.04), cdHash12(cell + 43.0));
+          c *= mix(vec3(1.0), gtint, uDetail);                                  // young growth ↔ mature
+          c *= 1.0 + (cdFbm3(w * 0.00045 + 11.0) - 0.44) * 0.14 * uDetail;      // regional drift, ~2 km across
+          float mott = cdFbm3(f * vec2(3.0, 2.2) + cdHash22(cell + 47.0) * 23.0);
+          c *= 1.0 + (mott - 0.44) * 0.36 * uDetail;                            // blotches ~150 m across, per field
+          if (r < 0.42 || r >= 0.84) {                                          // pasture, crops, fallow: dry patches
+            float dry = smoothstep(0.52, 0.72, cdFbm3(f * vec2(2.0, 1.6) + cdHash22(cell + 59.0) * 31.0));
+            c = mix(c, lin(vec3(0.55, 0.53, 0.36)) * (0.92 + 0.16 * mott), dry * 0.50 * uDetail);
+          }
+          if ((r >= 0.26 && r < 0.42) || (r >= 0.74 && r < 0.84)) {             // crops and ploughed: tillage bands
+            float bph = rc * 0.1848 + cdHash12(cell + 61.0) * 6.2832;           // 34 m bands, own phase per field
+            float baa = 1.0 - smoothstep(1.2, 3.2, fwidth(bph));                // gone before they can sparkle
+            c *= 1.0 + 0.5 * sin(bph) * 0.09 * baa * uDetail;
+          }
+        }
         // pine woods and wet flatwoods over the grid (large, irregular)
         float wood = smoothstep(0.60, 0.66, cdFbm(w * 0.00042 + 3.0)) * smoothstep(2200.0, 3200.0, length(loc - vec2(300.0, -500.0)));
         // the canopy seen from above: crowns about 7 m across (nearest of jittered points), shaded, fading with distance

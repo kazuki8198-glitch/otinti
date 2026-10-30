@@ -476,35 +476,35 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#b9452c1d",
+   "id": "navb.wind#aad2bb6d",
    "sec": "navb.wind",
-   "text": "向かい風の成分（風速 20 kt） ｜ 20 kt ｜ 17 kt ｜ 14 kt ｜ 10 kt ｜ 0 kt ｜",
+   "text": "向かい風成分（風速 20 kt） ｜ 20 kt ｜ 17 kt ｜ 14 kt ｜ 10 kt ｜ 0 kt ｜",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × cos θ（20・17.3・14.1・10・0）",
    "kind": "例題",
    "by": "W18"
   },
   {
-   "id": "navb.wind#21cb54ee",
+   "id": "navb.wind#df223b87",
    "sec": "navb.wind",
-   "text": "横風の成分（風速 20 kt） ｜ 0 kt ｜ 10 kt ｜ 14 kt ｜ 17 kt ｜ 20 kt ｜",
+   "text": "横風成分（風速 20 kt） ｜ 0 kt ｜ 10 kt ｜ 14 kt ｜ 17 kt ｜ 20 kt ｜",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × sin θ（0・10・14.1・17.3・20）",
    "kind": "例題",
    "by": "W18"
   },
   {
-   "id": "navb.wind#48437e0b",
+   "id": "navb.wind#35346be4",
    "sec": "navb.wind",
-   "text": "角度が 90° を超えると、向かい風の成分は負の値になり、追い風になります。",
+   "text": "角度が 90° を超えると、向かい風成分は負の値になり、追い風になります。",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：cos θ ＜ 0（θ ＞ 90°）",
    "by": "W18"
   },
   {
-   "id": "navb.wind#b1aba1b3",
+   "id": "navb.wind#77cb9182",
    "sec": "navb.wind",
-   "text": "図：風 030°/15 kt を、航路 090° に沿う向かい風の成分と、航路を横切る横風の成分に分けたもの（縮尺どおり）。",
+   "text": "図：風 030°/15 kt を、航路 090° に沿う向かい風成分と、航路を横切る横風成分に分けたもの（縮尺どおり）。",
    "tag": "参考値",
    "source": "図の例（FIG.windTriangle と同じ仮定の風）",
    "kind": "例題",
@@ -520,9 +520,9 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#f856ed8f",
+   "id": "navb.wind#e5214a39",
    "sec": "navb.wind",
-   "text": "向かい風の成分は 15 × 0.5 ＝ 7.5 kt、左からの横風の成分は約 13 kt です。",
+   "text": "向かい風成分は 15 × 0.5 ＝ 7.5 kt、左からの横風成分は約 13 kt です。",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：15 × cos 60° ＝ 7.5、15 × sin 60° ≈ 13.0",
    "kind": "例題",
@@ -547,9 +547,9 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#41107be3",
+   "id": "navb.wind#0ce3957b",
    "sec": "navb.wind",
-   "text": "sin（偏流修正角）＝ 横風の成分 ÷ TAS ＝ 20 ÷ 100 ＝ 0.2 → 偏流修正角 ≈ 11.5°",
+   "text": "sin（偏流修正角）＝ 横風成分 ÷ TAS ＝ 20 ÷ 100 ＝ 0.2 → 偏流修正角 ≈ 11.5°",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：asin(0.2) ≈ 11.54°",
    "kind": "例題",
@@ -592,9 +592,9 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#88e10248",
+   "id": "navb.wind#b723abc3",
    "sec": "navb.wind",
-   "text": "図：風の三角形（真航路 090°・真対気速度 105 kt・風 030°/15 kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。",
+   "text": "図：風力三角形（真航路 090°・真対気速度 105 kt・風 030°/15 kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。",
    "tag": "参考値",
    "source": "FIG.windTriangle の既存のキャプション（book-figs.js。計算（W18 が検算：scratch の python。2026-10-30）：WCA −7.1°、GS 96.7 kt）",
    "kind": "例題",
@@ -672,9 +672,9 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#73e0b3ac",
+   "id": "navb.wind#e16e6e66",
    "sec": "navb.wind",
-   "text": "横風の成分は 20 × sin 50° ≈ 15.3 kt、向かい風の成分は 20 × cos 50° ≈ 12.9 kt です。",
+   "text": "横風成分は 20 × sin 50° ≈ 15.3 kt、向かい風成分は 20 × cos 50° ≈ 12.9 kt です。",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × sin 50° ≈ 15.32、20 × cos 50° ≈ 12.86",
    "kind": "例題",
@@ -717,9 +717,9 @@
    "by": "W18"
   },
   {
-   "id": "navb.wind#1d72df8e",
+   "id": "navb.wind#e719ad67",
    "sec": "navb.wind",
-   "text": "横風の成分がないので、偏流修正角は 0° です。",
+   "text": "横風成分がないので、偏流修正角は 0° です。",
    "tag": "参考値",
    "source": "計算（W18 が検算：scratch の python。2026-10-30）：横風の成分 20 × sin 180° ＝ 0",
    "kind": "例題",

@@ -1,0 +1,1245 @@
+{
+ "ledger": "CLAIMS",
+ "draft": "textbook/rewrite/combined/drafts/hfadm.js",
+ "unit": "W20",
+ "chapter": "hf, adm",
+ "updated": "2026-10-30",
+ "by": "W20",
+ "about": "第 1 部の章 hf（書き直し）と adm（新）の下書きの主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・表・図のキャプション・写真の説明・日米の囲み）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W20.ledger.json にも同じ行がある）。checkedBy は事実確認役（W20 と別）が付ける。AIM・PHAK・AFH・Risk Management Handbook・FAA の資料・CAP 737・AC の文は規則でない資料なので 参考値、14 CFR・航空法の文は 条文。日米の囲みの文は FL.jur が描く文で W06 が確かめた値（W20 は書いていない）。写真の説明は W22 の文。hf.self の 3 行・hf.body の 2 行は既存の CLAIMS の行と同じ文（id も同じ）。kind: 例題 は、この本で決めた場面の設定の文。hf.body#296f3797 は RULINGS R.vfr-into-imc（この本の教え方）なので 教材値。",
+ "format": {
+  "id": "<節ID>#<8 桁>",
+  "sec": "節 ID",
+  "text": "文",
+  "tag": "教材値／参考値／条文／推測・要確認",
+  "source": "出典と確かめた日",
+  "kind": "例題（仮定の場面）のときだけ",
+  "by": "書いた単位",
+  "checkedBy": "確かめ役（書いた人と別）",
+  "checkedOn": "確認日"
+ },
+ "counts": {
+  "rows": 121,
+  "byTag": {
+   "参考値": 96,
+   "条文": 22,
+   "推測・要確認": 2,
+   "教材値": 1
+  },
+  "examples": 3
+ },
+ "rows": [
+  {
+   "id": "hf.self#5dfa93fa",
+   "sec": "hf.self",
+   "text": "米国の FAA が出す AIM（Aeronautical Information Manual）は、事故の統計を引いています。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 Fitness For Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#56cad0d3",
+   "sec": "hf.self",
+   "text": "米国の規則（14 CFR 91.17）では、安全に反する影響のある薬を使っている間は、乗務できません。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.17(a)(1)〜(4)（8 hours・under the influence・0.04 以上・安全に反する薬）。eCFR の版を W20 が 2026-10-30 に読んだ（scratchpad ecfr/91.17）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#71c26c13",
+   "sec": "hf.self",
+   "text": "A：Alcohol（飲酒） ｜ 米国の規則（14 CFR 91.17）：飲んでから 8 時間以内・酔っている間・アルコール濃度 0.04 以上は乗務できません。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.17(a)(1)〜(4)（8 hours・under the influence・0.04 以上・安全に反する薬）。eCFR の版を W20 が 2026-10-30 に読んだ（scratchpad ecfr/91.17）／AIM 8-1-1（Alcohol）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#e3e60f16",
+   "sec": "hf.self",
+   "text": "米国の AIM：ビール 1 本でも技量は落ち、少なくとも 3 時間は息や血液から検出されます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 Fitness For Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#21e4eda7",
+   "sec": "hf.self",
+   "text": "8 時間たっても影響が残ることがあるので、量に応じて 12〜24 時間あけます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 Fitness For Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#ffd62b55",
+   "sec": "hf.self",
+   "text": "PHAK は、新しい薬は飲み始めてから少なくとも 48 時間は飛ばずに、副作用がないかを確かめるよう勧めています（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Medication：wait at least 48 hours after the first dose）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#394f60e3",
+   "sec": "hf.self",
+   "text": "眠気などの副作用がある薬は、飲む間隔の長い方の 5 倍の時間をあけてから飛びます。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（wait at least five maximal dosing intervals）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#9c069ee4",
+   "sec": "hf.self",
+   "text": "5〜6 時間ごとに飲む薬なら、6 時間の 5 倍で 30 時間です（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（「a dosing interval of 5 to 6 hours would require you to wait 30 hours」）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#6612a221",
+   "sec": "hf.self",
+   "text": "米国の規則（14 CFR 61.53）は、病気や治療と、航空身体検査証明（medical certificate）の関係を決めています。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 61.53(a)（medical condition・medication or other treatment で基準を満たさないと知っているとき PIC・required crewmember にならない）。eCFR の版を W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#f4184d5b",
+   "sec": "hf.self",
+   "text": "飲酒は米国の規則で 8 時間・0.04。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.17(a)(1)〜(4)（8 hours・under the influence・0.04 以上・安全に反する薬）。eCFR の版を W20 が 2026-10-30 に読んだ（scratchpad ecfr/91.17）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#7868aeb8",
+   "sec": "hf.self",
+   "text": "米国の AIM は 12〜24 時間あけるよう勧める",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 Fitness For Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#89932c3c",
+   "sec": "hf.self",
+   "text": "新しい薬は、飲み始めて 48 時間は飛ばずに様子を見る",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#fc1f7655",
+   "sec": "hf.self",
+   "text": "飲酒 ｜ 飲んでから 8 時間以内、酒の影響があるとき、アルコール濃度が 0.04 以上（血液 1 dL か呼気 210 L あたりのグラム）のときは乗務しない（14 CFR 91.17(a)） ｜ 酒の影響で正常な運航ができないおそれがある間は業務をしない（自家用の操縦者も対象）。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#c85085bf",
+   "sec": "hf.self",
+   "text": "通達：原則として体にアルコールがある状態で業務をしない。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#ece212de",
+   "sec": "hf.self",
+   "text": "血液 1 L あたり 0.2 g 以上か呼気 1 L あたり 0.09 mg 以上は、そのおそれがある状態の目安（その後の改正は〔要確認〕）（航空法第 70 条・国土交通省航空局長通達（平成 31 年 1 月 31 日・国空航第 2278 号）） ｜",
+   "tag": "推測・要確認",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#e84a06e4",
+   "sec": "hf.self",
+   "text": "自家用・学生は第 3 種以上か、条件を満たせば BasicMed（14 CFR 61.23） ｜ 第一種・第二種。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#910e9fd2",
+   "sec": "hf.self",
+   "text": "自家用操縦士は第一種か第二種、事業用操縦士は第一種（航空法第 31 条・航空法施行規則第 61 条の 2） ｜",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#70635bb8",
+   "sec": "hf.self",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#f0ab73ab",
+   "sec": "hf.self",
+   "text": "21 時から 6 時までは 9 時間で、米国の規則の 8 時間（14 CFR 91.17）はぎりぎり過ぎます。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.17(a)(1)「Within 8 hours after the consumption of any alcoholic beverage」。21:00〜06:00 は 9 時間（既存の CLAIMS の行。文は変えていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#975525ba",
+   "sec": "hf.self",
+   "text": "でも米国の AIM は、8 時間たっても影響が残ることがあるとして、12〜24 時間あけるよう勧めています。",
+   "tag": "参考値",
+   "source": "AIM 8-1-1 の Alcohol（a minimum of 12 to 24 hours）（既存の CLAIMS の行。文は変えていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.self#bc843bab",
+   "sec": "hf.self",
+   "text": "9 時間は、その 12 時間に足りません。",
+   "tag": "参考値",
+   "source": "計算（9 < 12）。AIM 8-1-1（既存の CLAIMS の行。文は変えていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#4397f62e",
+   "sec": "hf.fatigue",
+   "text": "米国の AIM は、疲れは大きな間違いをするまで自分では気づきにくい、と書いています。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 Fitness For Flight。W20 が 2026-10-30 に読んだ（Fatigue：「may not be apparent to a pilot until serious errors are made」）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#e593d8b8",
+   "sec": "hf.fatigue",
+   "text": "人の体には、およそ 1 日の周期で眠気と目覚めをくり返す体内時計（概日リズム、circadian rhythm）があります。",
+   "tag": "参考値",
+   "source": "FAA CAMI「Circadian Rhythm Disruption and Aviation」（OK-23-0080）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#3fed8947",
+   "sec": "hf.fatigue",
+   "text": "出発の数日前から、寝る時刻を 1 日 1 時間ずつ行き先に近づけます。",
+   "tag": "参考値",
+   "source": "FAA CAMI「Circadian Rhythm Disruption and Aviation」（OK-23-0080）。W20 が 2026-10-30 に読んだ（Adjust your bedtime by an hour a day a few days before your trip）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#3f77c18d",
+   "sec": "hf.fatigue",
+   "text": "のどが渇くのは、体重の約 2% の水分を失ってからで、それでは遅すぎます。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Dehydration：thirst ... about 1.5 quarts or 2 percent of total body weight）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#dfe11d44",
+   "sec": "hf.fatigue",
+   "text": "ひどい暑さや寒さ・熱・不安は、体が使う酸素を増やし、低酸素症（hypoxia）になりやすくします（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（Extreme heat and cold, fever, and anxiety increase the body's demand for oxygen）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#18ad81f2",
+   "sec": "hf.fatigue",
+   "text": "考えてみよう：日本を出て 2 日後、フロリダで朝 7 時から初めての飛行。",
+   "tag": "参考値",
+   "source": "この本で決めた場面の設定（考えてみよう）。数字は仮定",
+   "kind": "例題",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.fatigue#d5d1b1b1",
+   "sec": "hf.fatigue",
+   "text": "前の晩は 4 時間しか眠れなかった。",
+   "tag": "参考値",
+   "source": "この本で決めた場面の設定（考えてみよう）。数字は仮定",
+   "kind": "例題",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#40e3a478",
+   "sec": "hf.body",
+   "text": "PHAK 第 17 章は、そのしきい値を「毎秒 2° 以下」と書いています。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Vestibular Illusions：a rate of change of 2 degrees per second or lower is below the detection threshold）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#cbd0ab3a",
+   "sec": "hf.body",
+   "text": "PHAK と米国の AIM はこれを featureless terrain illusion と呼び、PHAK は black hole approach とも呼ばれると書いています。",
+   "tag": "参考値",
+   "source": "PHAK（FAA-H-8083-25C）第 17 章 Featureless Terrain Illusion（「sometimes referred to as the \"black hole approach\"」）、AIM 8-1-5（既存の行 hf.body#7c45f4dd の文に「米国の」を足した。W20 が 2026-10-30 に読み直した）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#e722f562",
+   "sec": "hf.body",
+   "text": "計器で飛ぶ訓練を受けていない操縦士は、計器だけに頼るようになってから約 10 分で機体の操縦を失う、と事故の統計は示しています（AFH 第 18 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 18 章 Inadvertent VFR Flight Into IMC（p.18-17〜18-21）。W20 が 2026-10-30 に読んだ（accident statistics show that the pilot who has no instrument training ... will lose control of the airplane in about 10 minutes）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#112e25f3",
+   "sec": "hf.body",
+   "text": "天気で予定の高度を保てなくなったら、雲に入る前に早めに 180° 旋回し、天気のよい空港へ降りる判断をします（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Spatial disorientation の予防：decide early to make a 180° turn and land at an alternate when weather prevents the planned altitude）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#340a75af",
+   "sec": "hf.body",
+   "text": "旋回はバンク 10° 以下、上昇は姿勢指示器の 1 目盛りまでにし、上昇と旋回を同時にしません（AFH 第 18 章）。",
+   "tag": "参考値",
+   "source": "AFH（FAA-H-8083-3C）第 18 章 Inadvertent VFR Flight Into IMC p.18-19「no more than 10° bank angle」・一目盛り・上昇と旋回を同時にしない（既存の CLAIMS の行。文は変えていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#296f3797",
+   "sec": "hf.body",
+   "text": "この本では、来た方が確実に晴れていて地形が許すときは、浅いバンクで 180° 旋回して雲から出ることを、1 つの手として教えます。",
+   "tag": "教材値",
+   "source": "RULINGS R.vfr-into-imc の裁定（翼を水平 → 地形から離れる → 浅い 180° → 援助）。AFH 第 18 章（p.18-17〜18-21）は旋回の向きを決めない（W20 が 2026-10-30 に読んで確かめた）。この本の教え方で、FAA の規則・手順ではない",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#9e862111",
+   "sec": "hf.body",
+   "text": "雲の中の 180° 旋回は浅く（10° 以下）、来た方が確実に晴れて地形が許すときだけ。",
+   "tag": "参考値",
+   "source": "同上（hf.body#296f3797・hf.body#340a75af）。既存の CLAIMS の行。文は変えていない",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.body#83256e59",
+   "sec": "hf.body",
+   "text": "水の上の暗い地域と細い滑走路は、どちらも「高い」と感じさせるので、低すぎる進入になりがちです（米国の AIM 8-1-5）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-5 Illusions in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.motion#1f26115c",
+   "sec": "hf.motion",
+   "text": "60° では 2 G です。",
+   "tag": "参考値",
+   "source": "計算：n ＝ 1 ÷ cos（バンク角）、60° で 1 ÷ 0.5 ＝ 2（PHAK 第 5 章 Load Factors in Steep Turns と同じ式。W20 が 2026-10-30 に検算）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.motion#d3feb0fd",
+   "sec": "hf.motion",
+   "text": "右は G が体に与える影響で、正の G では血が足の方へ下がり、目から先に影響が出ます（米国の AIM 8-1-7）",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-7 Aerobatic Flight（+G・−G）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.motion#18e286fe",
+   "sec": "hf.motion",
+   "text": "初めは会話の音より高い 4,000 Hz のあたりから落ちるので、自分では気づきにくいのです。",
+   "tag": "参考値",
+   "source": "FAA CAMI「Hearing and Noise in Aviation」（AM-400-98/3。Small Single Plane (Cockpit) 70-90 dB、4,000 Hz）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.motion#921cf266",
+   "sec": "hf.motion",
+   "text": "水平旋回の荷重倍数は 1 ÷ cos（バンク角）で、60° では 2 です。",
+   "tag": "参考値",
+   "source": "計算：n ＝ 1 ÷ cos（バンク角）、60° で 1 ÷ 0.5 ＝ 2（PHAK 第 5 章 Load Factors in Steep Turns と同じ式。W20 が 2026-10-30 に検算）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#6115f936",
+   "sec": "hf.altitude",
+   "text": "夜は 5,000 ft、昼は 10,000 ft を超えたら酸素がすすめ（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（図 hypoxiaAltitudes の説明。既存の図）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#474036bb",
+   "sec": "hf.altitude",
+   "text": "米国の規則では、12,500 ft を超えると乗員の酸素が必要になります（14,000 ft までは 30 分を超える分。14 CFR 91.211）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.211(a)(1)〜(3)（12,500 ft を超え 14,000 ft まで 30 分を超える分・14,000 ft を超える・15,000 ft を超える）。eCFR の版を W20 が 2026-10-30 に読んだ（図 hypoxiaAltitudes の説明。既存の図）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#1b3083a2",
+   "sec": "hf.altitude",
+   "text": "対処できなくなるまでの時間は米国の AIM 8-1-2 の値で、PHAK の有効意識時間の表（図 17-1）とは違う目安です",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ・PHAK 第 17 章 図 17-1（図 hypoxiaAltitudes の説明。既存の図）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#e389bceb",
+   "sec": "hf.altitude",
+   "text": "空気の中の酸素の割合（約 21%）は、高く上がってもほぼ変わりません。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（approximately 21 percent oxygen）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#3c730c7c",
+   "sec": "hf.altitude",
+   "text": "気圧が下がるので、酸素の分圧（空気の圧力のうち酸素が受け持つ分）が下がるのです（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#cd5de0f5",
+   "sec": "hf.altitude",
+   "text": "図：高度が上がっても、空気の中の酸素の割合（約 21%）は変わりません。",
+   "tag": "参考値",
+   "source": "FL.physics.atmos（標準大気）で W20 が計算：0・10,000・18,000 ft で 1,013・697・506 hPa、21% で 213・146・106 hPa（W20 が 2026-10-30 に検算）。酸素の割合 21% は AIM 8-1-2",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#7c4475bc",
+   "sec": "hf.altitude",
+   "text": "数字は標準大気で計算した気圧と、その 21% の酸素の分圧（hPa）で、18,000 ft では海面の約半分です",
+   "tag": "参考値",
+   "source": "FL.physics.atmos（標準大気）で W20 が計算：0・10,000・18,000 ft で 1,013・697・506 hPa、21% で 213・146・106 hPa（W20 が 2026-10-30 に検算）。酸素の割合 21% は AIM 8-1-2",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#32960869",
+   "sec": "hf.altitude",
+   "text": "夜の目は、機内の高度 5,000 ft で、もう落ち始めます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（night vision ... as low as 5,000 feet）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#f90ffaad",
+   "sec": "hf.altitude",
+   "text": "健康な人では、ほかの大きな影響はふつう 12,000 ft より下では出ません。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（other significant effects ... usually do not occur in the normal healthy pilot below 12,000 feet）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#1abff5c4",
+   "sec": "hf.altitude",
+   "text": "12,000〜15,000 ft では、判断・記憶・注意・計算の力が落ちます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#0c23eb53",
+   "sec": "hf.altitude",
+   "text": "上の図の「対処できなくなるまでの時間」は米国の AIM 8-1-2 の値で、20,000 ft では 5〜12 分です。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（At cabin pressure altitudes above 15,000 feet ... 20,000 feet ... 5 to 12 minutes）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#de262eb9",
+   "sec": "hf.altitude",
+   "text": "PHAK の有効意識時間（time of useful consciousness）の表（図 17-1）は、20,000 ft を「30 分以上」としていて、値が違います。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Figure 17-1 Time of useful consciousness：20,000 feet 30 minutes or more）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#2fe8d420",
+   "sec": "hf.altitude",
+   "text": "PHAK は、1 オンス（約 30 mL）のアルコールで、体が感じる高度が約 2,000 ft 上がるとしています（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（one ounce of alcohol can equate to about an additional 2,000 feet of physiological altitude）。30 mL は 1 液量オンス（29.6 mL）の丸め",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#3dcd3b5f",
+   "sec": "hf.altitude",
+   "text": "5,000 ft を超える（夜） ｜ 米国の AIM：夜は酸素を使うとよい ｜",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（use supplemental oxygen ... above 5,000 feet at night）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#13d87d5e",
+   "sec": "hf.altitude",
+   "text": "10,000 ft を超える（昼） ｜ 米国の AIM：昼も酸素を使うとよい ｜",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（above 10,000 feet during the day）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#7755c182",
+   "sec": "hf.altitude",
+   "text": "12,500 ft を超え 14,000 ft まで ｜ 米国の規則：その高さで 30 分を超える分は、乗員が酸素を使う（14 CFR 91.211） ｜",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.211(a)(1)〜(3)（12,500 ft を超え 14,000 ft まで 30 分を超える分・14,000 ft を超える・15,000 ft を超える）。eCFR の版を W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#a381e429",
+   "sec": "hf.altitude",
+   "text": "14,000 ft を超える ｜ 米国の規則：乗員は、その高さにいる間ずっと酸素を使う ｜",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.211(a)(1)〜(3)（12,500 ft を超え 14,000 ft まで 30 分を超える分・14,000 ft を超える・15,000 ft を超える）。eCFR の版を W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#2b9222c1",
+   "sec": "hf.altitude",
+   "text": "15,000 ft を超える ｜ 米国の規則：乗っている全員に酸素を用意する ｜",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.211(a)(1)〜(3)（12,500 ft を超え 14,000 ft まで 30 分を超える分・14,000 ft を超える・15,000 ft を超える）。eCFR の版を W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#3562301d",
+   "sec": "hf.altitude",
+   "text": "酸素を使っているときは、まず酸素を 100% にし、装置が働いているかを確かめます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-3 Hyperventilation in Flight（「set the oxygen regulator to 100 percent」・「usually within a few minutes」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#0a940df9",
+   "sec": "hf.altitude",
+   "text": "それから、息の速さと深さを意識してゆっくりにすると、数分でおさまります（米国の AIM 8-1-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-3 Hyperventilation in Flight（「set the oxygen regulator to 100 percent」・「usually within a few minutes」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#13f32cff",
+   "sec": "hf.altitude",
+   "text": "一酸化炭素は色もにおいも味もなく、酸素の約 200 倍ヘモグロビンにつきやすい気体です（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（CO attaches itself to the hemoglobin about 200 times more easily than oxygen）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#4bb7f38e",
+   "sec": "hf.altitude",
+   "text": "体から抜けるまでに、最大で 48 時間かかります（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（The body requires up to 48 hours to dispose of CO）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#17b9a8d7",
+   "sec": "hf.altitude",
+   "text": "小型機の暖房は排気管の周りで空気を温めるので、排気管にひびがあると機内に入ります（米国の AIM 8-1-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-4 Carbon Monoxide Poisoning in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#9bd0eece",
+   "sec": "hf.altitude",
+   "text": "暖房を使っていて、排気のにおいや頭痛・眠気・めまいを感じたら、すぐに暖房を切り、通気口を開けます（米国の AIM 8-1-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-4 Carbon Monoxide Poisoning in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#87c174ee",
+   "sec": "hf.altitude",
+   "text": "画面に、血液の酸素飽和度（%SpO2）と脈拍数が出ます（写真では 96 % と 85）。",
+   "tag": "参考値",
+   "source": "W22 の写真の説明（book-photos-k.js。W22 が Commons の原本で確かめた）。W20 は書いていない",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#044744d2",
+   "sec": "hf.altitude",
+   "text": "降下のときは、つばを飲む・あくびをする・鼻をつまんで口を閉じ、軽く息を押し出す（バルサルバ法）ことで、耳の中の圧力を合わせます（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#3852ea30",
+   "sec": "hf.altitude",
+   "text": "強い痛みと聞こえにくさが出て、鼓膜が破れる例もあります（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#d2d8283d",
+   "sec": "hf.altitude",
+   "text": "予防は、かぜや鼻のアレルギーがあるときに飛ばないことです（米国の AIM 8-1-2・PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ・PHAK 第 17 章（Ear Block、Sinus Block：the only way to prevent ... is to not fly with an upper respiratory infection）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#a6eaac1f",
+   "sec": "hf.altitude",
+   "text": "飲む鼻づまりの薬は、副作用で操縦の力を落とします（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（Oral decongestants have side effects that can significantly impair pilot performance）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#a015e9e9",
+   "sec": "hf.altitude",
+   "text": "ダイビングをしていない健康な人では、18,000 ft より下で起きることはまれです。",
+   "tag": "参考値",
+   "source": "FAA CAMI「Altitude-Induced Decompression Sickness」（very little evidence of altitude DCS ... below 18,000 feet ... who have not been SCUBA diving）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#02f9fd23",
+   "sec": "hf.altitude",
+   "text": "起きたら酸素を 100% にし、緊急降下をして、できるだけ早く着陸します。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Decompression Sickness：put on oxygen 100 percent, emergency descent, land as soon as possible, seek medical even if symptoms disappear）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#d9e8c364",
+   "sec": "hf.altitude",
+   "text": "減圧停止のいらないダイビングのあと、8,000 ft までの飛行は、少なくとも 12 時間あけます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（Scuba diving：12 hours ... up to 8,000 feet）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#9827b93d",
+   "sec": "hf.altitude",
+   "text": "減圧停止をしたダイビングのあとや、8,000 ft を超える飛行は、少なくとも 24 時間あけます（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ（24 hours after decompression stop dives or above 8,000 feet。altitudes are actual flight altitudes above MSL, not pressurized cabin altitudes）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#d3943812",
+   "sec": "hf.altitude",
+   "text": "夜は 5,000 ft、昼は 10,000 ft を超えたら酸素がすすめ",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#21e3b6ea",
+   "sec": "hf.altitude",
+   "text": "酸素を使っていて具合が悪くなったら、まず酸素を 100% にして装置を確かめる",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-3 Hyperventilation in Flight（「set the oxygen regulator to 100 percent」・「usually within a few minutes」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#9e0c4b8f",
+   "sec": "hf.altitude",
+   "text": "ダイビングのあとは 12〜24 時間あける",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Effects of Altitude。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#a9246d38",
+   "sec": "hf.altitude",
+   "text": "酸素 ｜ 客室の気圧高度が 12,500 ft を超え 14,000 ft までで 30 分を超える分は乗員が酸素を使う。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#75c7528e",
+   "sec": "hf.altitude",
+   "text": "14,000 ft を超えたら乗員はずっと使う。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#8ba4f934",
+   "sec": "hf.altitude",
+   "text": "15,000 ft を超えたら全員に用意する（14 CFR 91.211(a)） ｜ 航空法と航空法施行規則には、操縦者が酸素を使う決まりの条が見当たらない。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#6a3b158b",
+   "sec": "hf.altitude",
+   "text": "告示・通達などの定めは〔要確認〕 ｜",
+   "tag": "推測・要確認",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#70635bb8",
+   "sec": "hf.altitude",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#a68986e2",
+   "sec": "hf.altitude",
+   "text": "考えてみよう：冬の朝、暖房を入れて 20 分ほど飛んでいたら、頭が痛く、眠くなってきた。",
+   "tag": "参考値",
+   "source": "この本で決めた場面の設定（考えてみよう）。数字は仮定",
+   "kind": "例題",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.altitude#26a4a5e6",
+   "sec": "hf.altitude",
+   "text": "一酸化炭素を疑い、すぐに暖房を切って通気口を開けます（米国の AIM 8-1-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-4 Carbon Monoxide Poisoning in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#293a13f2",
+   "sec": "hf.vision",
+   "text": "夜は、見たい物の 5〜10° 横を見て、周りの桿体で見ます（PHAK 第 17 章）",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（Night vision：look 5° to 10° off center）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#3de6262b",
+   "sec": "hf.vision",
+   "text": "目は一度に広い範囲（約 200°）を見られますが、はっきり見えるのは、まん中の小さな部分（中心窩）だけです。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（approximate 200 degree arc）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#58c8cad0",
+   "sec": "hf.vision",
+   "text": "中心で見れば 7 マイル先で見つけられる機も、中心を外れると 0.7 マイルまで近づかないと気づけません。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（7 miles ... 7/10 of a mile）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#9f8dac39",
+   "sec": "hf.vision",
+   "text": "見張り（see and avoid）のしかた：空を区切って、1 回の目の動きは 10° 以内、それぞれの所を少なくとも 1 秒見ます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（Each movement should not exceed 10 degrees ... at least 1 second）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#9654925d",
+   "sec": "hf.vision",
+   "text": "計器を見る時間は、外を見る時間の 1/4〜1/3 まで（外を 16 秒見るごとに、計器は 4〜5 秒まで）にします。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（no more than 1/4 to 1/3 ... 4 to 5 seconds ... for every 16 seconds outside）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#f1caa903",
+   "sec": "hf.vision",
+   "text": "雲の上やもやの中で、外に見るものがないと、目は 3〜9 m（10〜30 ft）くらいに焦点を合わせてしまい、「見ているのに見えない」状態になります。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（empty-field myopia ... 10 to 30 feet）。3〜9 m は換算",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#521401b8",
+   "sec": "hf.vision",
+   "text": "夜は、見たい物の 5〜10° 横を見ます。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（look 5° to 10° off center）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#2d4946b5",
+   "sec": "hf.vision",
+   "text": "横を見たまま 2〜3 秒より長く見続けると像が消えるので、少しずつ視線を動かします（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ（if an object is viewed off center for more than 2 to 3 seconds ... the image will fade）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#7f72f732",
+   "sec": "hf.vision",
+   "text": "暗順応には、真っ暗な所で少なくとも 30 分かかります。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（at least 30 minutes）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#82c4baa1",
+   "sec": "hf.vision",
+   "text": "暗い赤い灯の下なら、20 分である程度まで慣れます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（moderate degree of dark adaptation within 20 minutes under dim red cockpit lighting）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#00a84f48",
+   "sec": "hf.vision",
+   "text": "5,000 ft を超える機内の高度・一酸化炭素・たばこも、夜の目を悪くします。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（Dark adaptation is impaired by exposure to cabin pressure altitudes above 5,000 feet, carbon monoxide inhaled in smoking and from exhaust fumes ...）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#1b41b718",
+   "sec": "hf.vision",
+   "text": "写真：国際宇宙ステーションから見た夜のフロリダ（2014 年 10 月）。",
+   "tag": "参考値",
+   "source": "W22 の写真の説明（book-photos-k.js。W22 が Commons の原本で確かめた）。W20 は書いていない",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#3962f952",
+   "sec": "hf.vision",
+   "text": "強いまぶしさには、目に入る光の 85% 以上をさえぎり、色を同じようにさえぎるサングラスを使います（米国の AIM 8-1-6）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ（sunglasses ... absorb at least 85 percent of visible light ... neutral gray）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#fd9cd9fc",
+   "sec": "hf.vision",
+   "text": "見張りは 10° ずつ、1 か所 1 秒。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#8f980825",
+   "sec": "hf.vision",
+   "text": "夜の目は 30 分で慣れ、明るい光で数秒で戻る。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6 Vision in Flight。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#57d8ae51",
+   "sec": "hf.vision",
+   "text": "暗い所では 5〜10° 横を見る",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#1365c0ff",
+   "sec": "hf.vision",
+   "text": "見張り ｜ 天候が許す限り、IFR でも VFR でも、操縦する人は見張って他機を避ける（14 CFR 91.113(b)） ｜ 外が見えない気象状態のときを除き、管制の指示に従っていても、他機などと衝突しないよう見張る（練習で監督者が同乗するときは監督者）（航空法第 71 条の 2） ｜",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く文（W06 が一次資料で確かめた値。W20 は書いていない）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#0e7a5db9",
+   "sec": "hf.vision",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.vision#5376a1a8",
+   "sec": "hf.vision",
+   "text": "衝突のコースです（米国の AIM 8-1-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-8 Judgment Aspects of Collision Avoidance。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.adm#5c133213",
+   "sec": "hf.adm",
+   "text": "FAA は、航空事故の約 80% に人の要因が関わるとしています（PHAK 第 2 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（approximately 80 percent of all aviation accidents are related to human factors）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.adm#7c7421d5",
+   "sec": "hf.adm",
+   "text": "1 人で飛ぶときの型に、5P があります。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（The 5 P Check。single-pilot）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.adm#3fc0a15a",
+   "sec": "hf.adm",
+   "text": "2 時間を超える飛行では、1 時間ごとにも見直します（PHAK 第 2 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（for flights of more than 2 hours, the 5 P check should be conducted hourly）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.adm#d2f51d67",
+   "sec": "hf.adm",
+   "text": "2 時間を超える飛行は 1 時間ごと",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "hf.srm#0f671831",
+   "sec": "hf.srm",
+   "text": "SRM（1 人で操縦するときの資源管理、single-pilot resource management）は、ひとりで飛ぶときの考え方です。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（Single-Pilot Resource Management）。「1 人」は数字の誤検出",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#64f8b5d1",
+   "sec": "adm.risk",
+   "text": "自分：体調・薬・ストレス・疲れ、しばらく飛んでいない ｜ 雲高に 500 ft 以上足す ｜",
+   "tag": "参考値",
+   "source": "FAA Risk Management Handbook（FAA-H-8083-2A）第 2 章 Personal Minimums（Step 5、Figure 2-9「Examples of additional safety margins」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#919669f8",
+   "sec": "adm.risk",
+   "text": "機体：慣れない機体や装置 ｜ 視程に 1/2 SM 以上足す ｜",
+   "tag": "参考値",
+   "source": "FAA Risk Management Handbook（FAA-H-8083-2A）第 2 章 Personal Minimums（Step 5、Figure 2-9「Examples of additional safety margins」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#7c990b5a",
+   "sec": "adm.risk",
+   "text": "環境：慣れない空港・空域・地形 ｜ 滑走路の長さに 500 ft 以上足す ｜",
+   "tag": "参考値",
+   "source": "FAA Risk Management Handbook（FAA-H-8083-2A）第 2 章 Personal Minimums（Step 5、Figure 2-9「Examples of additional safety margins」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#95a832f8",
+   "sec": "adm.risk",
+   "text": "外からの圧力：必ず着きたい予定・同乗者の期待 ｜ 風の基準を 5 kt 以上下げる ｜",
+   "tag": "参考値",
+   "source": "FAA Risk Management Handbook（FAA-H-8083-2A）第 2 章 Personal Minimums（Step 5、Figure 2-9「Examples of additional safety margins」）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#baad1ae9",
+   "sec": "adm.risk",
+   "text": "PHAK は、夜の VFR の事故の率は、飛行時間が 100 時間になるまでに半分近くまで下がるとしています。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（night VFR accident rate ... drops by nearly 50 percent once a pilot obtains 100 hours）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.risk#4644973a",
+   "sec": "adm.risk",
+   "text": "そして、最初の 500 時間は、規則より高い個人の基準を勧めています（PHAK 第 2 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 2 章 Aeronautical Decision-Making。W20 が 2026-10-30 に読んだ（during the first 500 hours, pilots flying VFR at night might want to establish higher personal limitations）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#207ad7b5",
+   "sec": "adm.review",
+   "text": "筋肉がびくっとし、脈と血圧が上がります（FAA AC 120-111）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-111 Change 1 の定義（startle：uncontrollable, automatic muscle reflex、heart rate・blood pressure の上昇）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#79565a18",
+   "sec": "adm.review",
+   "text": "驚愕の反射だけなら、手の操作は 5〜10 秒ほどで元に戻ります（英国 CAA の CAP 737 第 7 章）。",
+   "tag": "参考値",
+   "source": "UK CAA CAP 737（第 2 版 2023）第 7 章 Surprise and Startle。W20 が 2026-10-30 に読んだ（startle reflex ... back to normal within five to ten seconds）",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#0455a82e",
+   "sec": "adm.review",
+   "text": "FAA は、ASRS に出された報告を、規則違反の処分に使いません（14 CFR 91.25。犯罪と事故の情報は除く。FAA AC 00-46F）。",
+   "tag": "条文",
+   "source": "FAA AC 00-46F Aviation Safety Reporting Program（2021-04-02。NASA の ASRS・秘匿・14 CFR 91.25 の禁止と例外：犯罪と事故）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#2d541d0b",
+   "sec": "adm.review",
+   "text": "平成 26 年 7 月 10 日に始まり、公益財団法人 航空輸送技術研究センターが運営します。",
+   "tag": "参考値",
+   "source": "VOICES「VOICES について」（https://jihatsu.jp/about/。平成 26 年 7 月 10 日開始・公益財団法人 航空輸送技術研究センター・義務報告の代替ではない）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#d2d04e3e",
+   "sec": "adm.review",
+   "text": "航空法などで求められる義務報告の代わりにはなりません（VOICES の案内）。",
+   "tag": "参考値",
+   "source": "VOICES「VOICES について」（https://jihatsu.jp/about/。平成 26 年 7 月 10 日開始・公益財団法人 航空輸送技術研究センター・義務報告の代替ではない）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#83c73fe3",
+   "sec": "adm.review",
+   "text": "また、改正航空法（令和 7 年 6 月 6 日公布）で、技能発揮訓練の決まりができました。",
+   "tag": "条文",
+   "source": "国土交通省「自家用操縦士等ヒューマンファクターズ訓練検討会 最終とりまとめ」（令和 8 年 2 月 24 日。改正航空法 令和 7 年 6 月 6 日公布・技能発揮訓練・間隔 2 年・最低 3 時間・義務の適用は令和 10 年 6 月頃の見込み）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#a68e8498",
+   "sec": "adm.review",
+   "text": "国土交通省の検討会の最終とりまとめ（令和 8 年 2 月 24 日）は、訓練の間隔を 2 年、最低の訓練時間を 3 時間としています。",
+   "tag": "参考値",
+   "source": "国土交通省「自家用操縦士等ヒューマンファクターズ訓練検討会 最終とりまとめ」（令和 8 年 2 月 24 日。改正航空法 令和 7 年 6 月 6 日公布・技能発揮訓練・間隔 2 年・最低 3 時間・義務の適用は令和 10 年 6 月頃の見込み）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "adm.review#b98bbf30",
+   "sec": "adm.review",
+   "text": "この義務が始まるのは政令で決める日で、とりまとめは令和 10 年 6 月頃を見込んでいます。",
+   "tag": "参考値",
+   "source": "国土交通省「自家用操縦士等ヒューマンファクターズ訓練検討会 最終とりまとめ」（令和 8 年 2 月 24 日。改正航空法 令和 7 年 6 月 6 日公布・技能発揮訓練・間隔 2 年・最低 3 時間・義務の適用は令和 10 年 6 月頃の見込み）。W20 が 2026-10-30 に読んだ",
+   "by": "W20",
+   "checkedBy": null,
+   "checkedOn": null
+  }
+ ]
+}

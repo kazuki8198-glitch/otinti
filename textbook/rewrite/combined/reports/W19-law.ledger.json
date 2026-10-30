@@ -1,0 +1,2340 @@
+{
+ "unit": "W19",
+ "about": "R2 の W19 の law の分（章 law の下書き：drafts/law.js・law-figs.js・law.claims.json）の台帳のパッチ。radio の分は別の書き手（reports/W19-radio）。下書きが本に入る前に取り込むと、由来表の行が本にない節（law.basis・law.pilot）を指して閉じてしまうので、統合役が章 law を登録するコミットで apply-patches.mjs に流す。CLAIMS の 218 行は law.claims.json と同じ（law.rules#f71d58f7 は CLAIMS にもうある：W12・R1V の署名つきで文は同じ）。文が変わったら check-chapter.mjs --claims-out で抜き出し直す",
+ "patches": [
+  {
+   "id": "kiso09.1",
+   "status": "done",
+   "where": "law.basis（from）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。kiso09.1（法規を予定する飛行に当てはめる・管制の承認は機体と資格の条件を満たしたことにならない）を米国の本文に書き直した"
+  },
+  {
+   "id": "kiso09.8",
+   "status": "done",
+   "where": "basics.rules（from）・law.basis（from。思い出そうで basics.rules へ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。行き先の 2 つがそろった（basics.rules は R1 の P5 で登録済み）"
+  },
+  {
+   "id": "kiso09.2",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.basis の分を置いた（国際民間航空条約と附属書・国内の規則・AIP の役割と適用の時点を米国の本文に、日本の層（航空法・施行規則・告示・AIP とノータム）を bk.jp に）。行き先の jlaw.system・jair.ais（W38）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.cover",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。summary:law に「この章でできるようになること」の趣旨（米国の規則を予定する飛行に当てはめて確かめる）を書き直して入れた。行き先の door:p7（第 7 部の扉）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q1",
+   "status": "done",
+   "where": "written:law 問 1（米国の本文に書き直した。from つき）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso09.q2",
+   "status": "done",
+   "where": "written:law 問 2（米国の本文に書き直した。from つき）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso09.q7",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 3 に書き直した（from つき）。日本の版の行き先 written:jlaw（W42）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q9",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 4 に書き直した（from つき）。日本の版の行き先 written:jair（W42）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q11",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 5 に書き直した（from つき）。日本の版の行き先 written:jair（W42）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q12",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 6 に書き直した（from つき）。日本の版の行き先 written:jair（W42）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q13",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 7 に書き直した（from つき）。日本の版の行き先 written:jlaw（W42）が残るので開いたまま"
+  },
+  {
+   "id": "kiso09.q14",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。米国の版を written:law 問 8 に書き直した（from つき）。日本の版の行き先 written:jair（W42）が残るので開いたまま"
+  },
+  {
+   "id": "ch09-fig9-2",
+   "status": "done",
+   "where": "FIG.lawSources（law.basis。drafts/law-figs.js：米国の本文の版に描き直した）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。図の描き直しは W21 の持ち物なので、W21 の目視（390 px）を待つ。W19 は figshot で 390 px の PNG を見た（重なり・はみ出しなし、最小 10.3 px）"
+  },
+  {
+   "id": "C.flight-rules-conditions",
+   "status": "done",
+   "where": "basics.rules（住所・太字の定義）・law.basis（bk.recall：3 文・リンク basics.rules）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。check-concepts.mjs で太字の定義 1 回・呼び戻し 3 行以内を確かめた"
+  },
+  {
+   "id": "C.notam-vs-ais",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.special にノータム（NOTAM：Notice to Airmen）の太字の定義と「航空情報は AIP やノータムなどをまとめた呼び名」の文、law.basis に航空情報（aeronautical information）の初出。住所 jair.ais（W38）が残るので開いたまま"
+  },
+  {
+   "id": "PA.I.A.K1",
+   "status": "mapped",
+   "missing": [],
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pilot（新）に 操縦士の書類・期限・最近の飛行経験・記録（61.3・61.19・61.23・61.51・61.56・61.57）。深さの確かめは W42"
+  },
+  {
+   "id": "PA.I.A.K2",
+   "status": "mapped",
+   "missing": [],
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pilot（新）に 学生操縦士の制限（61.89）・裏書きの条件。深さの確かめは W42"
+  },
+  {
+   "id": "PA.I.A.K4",
+   "status": "mapped",
+   "missing": [],
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pilot（新）に 持つ書類（61.3・61.51(i)）。深さの確かめは W42"
+  },
+  {
+   "id": "PA.I.H.K2",
+   "status": "mapped",
+   "missing": [],
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pilot（新）に 飲酒と薬の規則は hf.self（91.17）へのリンク（law.pilot は住所ではない）。深さの確かめは W42"
+  },
+  {
+   "id": "PA.III.A.K8",
+   "status": "mapped",
+   "missing": [],
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pilot（新）に NTSB への報告（49 CFR 830.2・830.5・830.10・830.15）。深さの確かめは W42"
+  },
+  {
+   "id": "PA.I.D.K6",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.special に迎撃されたときにすること（AIM 5-6-13：迎撃機の指示に従う・121.5 MHz で呼ぶ・7700）を足した"
+  },
+  {
+   "id": "PA.I.B.K3",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.aircraft に動かない装備の判断（91.213(d)）を足した（PA.I.B.K3a）"
+  },
+  {
+   "id": "PA.VI.C.K2",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.pic に、緊急で管制の指示から外れたら知らせる（91.123(c)）・優先されたら求めに応じて 48 時間以内に報告（91.123(d)）を足した"
+  },
+  {
+   "id": "R.right-of-way",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.rules の本文・図 rightOfWay・用語の表・確認問題の語を FL.terms の正式名「進路権（優先権、right-of-way）」にそろえた（W24 の分の law の章）"
+  },
+  {
+   "id": "U.icao-class",
+   "by": "W19",
+   "note": "W19（2026-10-30）：章 law の下書き drafts/law.js（W19-law）。このパッチは、章 law を登録するコミットで取り込む。law.airspace の bk.jp に「米国の Class と日本の空域の対応は〔要確認〕」と書いた（数字や対応は書いていない）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#5798e01d",
+   "sec": "law.basis",
+   "text": "米国の飛行の決まりの中心は、連邦規則集の第 14 編（14 CFR）です。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 1 章 The Code of Federal Regulations（FAA の規則は Title 14 \"Aeronautics and Space\"）。W19 が 2026-10-30 に PDF で読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#a45458f2",
+   "sec": "law.basis",
+   "text": "14 CFR は、連邦の法律（合衆国法典の第 49 編）にもとづいて FAA が定める規則です（14 CFR Part 91 の根拠の欄）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR Part 91 の Authority の欄（49 U.S.C. 106(f), 40101, 40103, 40113, 44701 … と国際民間航空条約第 12 条・第 29 条）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#a610691c",
+   "sec": "law.basis",
+   "text": "操縦士の資格は Part 61、飛び方は Part 91 にあります。",
+   "tag": "参考値",
+   "source": "FAA PHAK 第 1 章（14 CFR part 61 は操縦士・教官の資格、part 91 は一般の飛行規則・VFR・IFR）。W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#5fe23b25",
+   "sec": "law.basis",
+   "text": "規則 ｜ 14 CFR（Part 61・Part 91 など） ｜ ある。",
+   "tag": "条文",
+   "source": "14 CFR Part 61・Part 91（連邦規則。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#d106f03c",
+   "sec": "law.basis",
+   "text": "機体の運用限界 ｜ 飛行規程（AFM：airplane flight manual）と POH（操縦士用の機体の手引書、pilot's operating handbook）の限界、機体の標示と表示板 ｜ ある（91.9） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.9（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#103d9483",
+   "sec": "law.basis",
+   "text": "一時的な規制 ｜ ノータム（NOTAM）で出る一時的な飛行制限（TFR）など ｜ ある（91.137〜91.145） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.137・91.145（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#315cd85c",
+   "sec": "law.basis",
+   "text": "管制の承認と指示 ｜ 管制承認・管制の指示 ｜ ある（91.123。緊急のときは機長が必要な範囲で外れてよい） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.123（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#b1f72359",
+   "sec": "law.basis",
+   "text": "指針と情報 ｜ AIM・AC（advisory circular）・FAA のハンドブック ｜ 規則ではない。",
+   "tag": "参考値",
+   "source": "AIM の Flight Information Publication Policy（\"This publication, while not regulatory, …\"）と Code of Federal Regulations and Advisory Circulars（AC は \"nonregulatory material … not binding on the public\"）。AIM_Basic_w_Chg_1_and_2_and_3_dtd_7-9-26 の PDF を W19 が 2026-10-30 に読んだ。PHAK 第 1 章（ACs \"are not regulations\"）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#7c6aa0a9",
+   "sec": "law.basis",
+   "text": "AIM は、自分を「規則ではない」と書いています。",
+   "tag": "参考値",
+   "source": "AIM の Flight Information Publication Policy d（\"This publication, while not regulatory, provides information which reflects examples of operating techniques and procedures which may be requirements in other federal publications or regulations\"）。AIM の PDF（2026-07-09 有効の版）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#3d3c3588",
+   "sec": "law.basis",
+   "text": "そのうえで、ほかの規則で求められる手順の例を示す、と書いています（AIM の Flight Information Publication Policy）。",
+   "tag": "参考値",
+   "source": "AIM の Flight Information Publication Policy d（\"This publication, while not regulatory, provides information which reflects examples of operating techniques and procedures which may be requirements in other federal publications or regulations\"）。AIM の PDF（2026-07-09 有効の版）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#9bac0223",
+   "sec": "law.basis",
+   "text": "AC も、規則に取り込まれていなければ、守る義務はありません（AIM の Code of Federal Regulations and Advisory Circulars）。",
+   "tag": "参考値",
+   "source": "AIM の Code of Federal Regulations and Advisory Circulars（\"Unless incorporated into a regulation by reference, the contents of an advisory circular are not binding on the public\"）。AIM の PDF（2026-07-09 有効の版）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#1fde9d0f",
+   "sec": "law.basis",
+   "text": "だから、AIM の手順を軽く見てよいわけではありません。",
+   "tag": "参考値",
+   "source": "AIM の Flight Information Publication Policy d（AIM の手順はほかの規則の求めの例）。W19 の言いかえ（数字なし）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#6af055b5",
+   "sec": "law.basis",
+   "text": "たとえば、Class C 空域に入る前に交信を確立する決まりは、米国の 14 CFR 91.130 にあります。",
+   "tag": "条文",
+   "source": "14 CFR 91.130(c)(1)（Class C に入る前に双方向の無線交信を確立し、中にいる間は保つ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#e6f0f6cf",
+   "sec": "law.basis",
+   "text": "その確立のしかたを、AIM 3-2-4 が具体的な言い方で説明しています。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4（Class C の Arrival or Through Flight Entry Requirements と NOTE：コールサインつきの \"standby\" で確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#097f463e",
+   "sec": "law.basis",
+   "text": "米国の Part 91 も、根拠の 1 つにこの条約を挙げています。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR Part 91 の Authority の欄（\"articles 12 and 29 of the Convention on International Civil Aviation, 61 Stat. 1180\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#fc700671",
+   "sec": "law.basis",
+   "text": "管制承認は、管制が知っている交通を前提に、決めた条件で管制空域を進んでよいという許可です（14 CFR 1.1・AIM 4-4-1）。",
+   "tag": "参考値",
+   "source": "AIM 4-4-1（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#92547b75",
+   "sec": "law.basis",
+   "text": "規則や最低高度から外れてよい許可でも、危ない飛び方をしてよい許可でもありません（AIM 4-4-1）。",
+   "tag": "参考値",
+   "source": "AIM 4-4-1（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#0ae3b3a7",
+   "sec": "law.basis",
+   "text": "承認に従うと規則を破る、または危ないと思ったら、変えた承認を求めます（AIM 4-4-1）。",
+   "tag": "参考値",
+   "source": "AIM 4-4-1（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#308daf66",
+   "sec": "law.basis",
+   "text": "承認の中身が分からないときは、すぐに管制に聞きます（91.123(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.123(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#2a4fb471",
+   "sec": "law.basis",
+   "text": "機種・期間・空域のほか、操縦教員が書いた制限があり、その中でだけ有効です（61.87・61.89・61.95）。",
+   "tag": "条文",
+   "source": "14 CFR 61.87・61.89・61.95（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#3d938d0f",
+   "sec": "law.basis",
+   "text": "たとえば米国の 91.113（進路権（優先権、right-of-way）の決まり）は、2025 年 7 月に改正されました（14 CFR 91.113 の改正の記録）。",
+   "tag": "条文",
+   "source": "14 CFR 91.113 の改正の記録（最後は Docket FAA-2023-1377, Amdt. 91-381, 90 FR 35220, July 24, 2025）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#e956bf44",
+   "sec": "law.basis",
+   "text": "FAA の VFR のチャートと Chart Supplement（空港と施設の案内）は、56 日ごとに新しい版になります（FAA Aeronautical Information Services）。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Information Services の VFR Raster Charts のページ（Digital Visual Charts (56-Day Sets)、今の版 2026-10-29）と Chart Supplements のページ（\"issued by FAA every 56 days\"）。W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#a4bc0824",
+   "sec": "law.basis",
+   "text": "AIM も、ほぼ半年ごとに改訂の版が出ます（AIM の Publication Schedule）。",
+   "tag": "参考値",
+   "source": "AIM の Publication Schedule（Basic 2025-02-20、Change 1 2025-08-07、Change 2 2026-01-22、Change 3 2026-07-09、次の Basic 2026-12-24：ほぼ 24 週ごと）。AIM の PDF を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#415220cd",
+   "sec": "law.basis",
+   "text": "米国の 14 CFR Part 91 は、米国の中（海岸から 3 NM までの海の上を含む）を飛ぶ航空機に当てはまります（91.1(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.1(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#7876544e",
+   "sec": "law.basis",
+   "text": "米国で登録した機体でも、外国ではその国の決まりに従います（91.703(a)(2)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.703(a)(2)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#d0b758d0",
+   "sec": "law.basis",
+   "text": "規則（14 CFR）と指針（AIM・AC） ｜ 規則は守る義務がある。",
+   "tag": "条文",
+   "source": "規則は 14 CFR（守る義務）、AIM・AC は規則ではない（AIM の Flight Information Publication Policy・Code of Federal Regulations and Advisory Circulars）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#3c481690",
+   "sec": "law.basis",
+   "text": "運用限界と性能の数字 ｜ 運用限界は超えてはいけない限り（91.9）。",
+   "tag": "条文",
+   "source": "14 CFR 91.9(a)（承認された飛行規程・標示・表示板の運用限界を守る）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#f8c1418c",
+   "sec": "law.basis",
+   "text": "AIM と AC は規則ではないが、規則を守る手順を示す",
+   "tag": "参考値",
+   "source": "AIM の Flight Information Publication Policy d と Code of Federal Regulations and Advisory Circulars（AIM の PDF、2026-07-09 有効の版）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#db193e64",
+   "sec": "law.basis",
+   "text": "数字は、その日の 14 CFR と、最新のチャート・ノータムで確かめます。",
+   "tag": "参考値",
+   "source": "W19 の手順の文（14 CFR の版・チャートの 56 日の版・ノータムの時刻：この節の上の出典）。数字は 14 CFR の「14」",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#13870aa0",
+   "sec": "law.basis",
+   "text": "日本の航空法は、国際民間航空条約と、その附属書の標準・方式・手続に準拠すると、目的の条に書いています。",
+   "tag": "条文",
+   "source": "航空法第 1 条（この法律の目的：「国際民間航空条約の規定並びに同条約の附属書として採択された標準、方式及び手続に準拠して」）。e-Gov API v2 の令和 7 年 12 月 1 日施行の版（327AC0000000231_20251201_507AC0000000055、elm=MainProvision-Article_1）を W19 が 2026-10-30 に読んだ。e-Gov の写し（sources/egov/）に第 1 条はない",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#d8ce31fa",
+   "sec": "law.basis",
+   "text": "具体的な条件は、国土交通省令の航空法施行規則が決めます。",
+   "tag": "条文",
+   "source": "航空法施行規則は昭和二十七年運輸省令第五十六号（今は国土交通省令）。e-Gov の写し sources/egov/articles/kokuho-kisoku/*.json の lawNum と、施行規則の改正が「国土交通省令」（令和八年国土交通省令第八十二号）であること（sources/egov/README.md）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#260f0bfa",
+   "sec": "law.basis",
+   "text": "空域などは、国土交通大臣の告示で指定します。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 12〜14 項（管制区・管制圏・情報圏は「国土交通大臣が告示で指定するもの」）。e-Gov の写し sources/egov/articles/kokuho/2.json（令和 7 年 12 月 1 日施行の版）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#d6570e5b",
+   "sec": "law.basis",
+   "text": "その指示に従うと、規則（91.155）を守れません。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)（VFR の雲からの距離）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#0ba9293f",
+   "sec": "law.basis",
+   "text": "管制承認と指示は、規則から外れてよい許可ではありません（AIM 4-4-1）。",
+   "tag": "参考値",
+   "source": "AIM 4-4-1（\"IT IS NOT AUTHORIZATION FOR A PILOT TO DEVIATE FROM ANY RULE, REGULATION, OR MINIMUM ALTITUDE NOR TO CONDUCT UNSAFE OPERATION OF THE AIRCRAFT\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.basis#b94930ef",
+   "sec": "law.basis",
+   "text": "緊急のときは、機長が必要な範囲で行動し、すぐに管制に知らせます（91.3・91.123）。",
+   "tag": "条文",
+   "source": "14 CFR 91.3・91.123（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#5de6b933",
+   "sec": "law.pic",
+   "text": "図：飛行前の準備（米国の 14 CFR 91.103）。",
+   "tag": "条文",
+   "source": "14 CFR 91.103（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#fa3f54f5",
+   "sec": "law.pic",
+   "text": "91.3 機長の責任：機長は、その飛行機の運航に直接の責任を持ち、最終的な権限があります。",
+   "tag": "条文",
+   "source": "14 CFR 91.3（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#c380e060",
+   "sec": "law.pic",
+   "text": "すぐに行動しなければならない飛行中の緊急事態では、その緊急事態に必要な範囲で、Part 91 の規則から外れてよいことになっています。",
+   "tag": "条文",
+   "source": "14 CFR 91.3(b)（\"In an in-flight emergency requiring immediate action, the pilot in command may deviate from any rule of this part to the extent required to meet that emergency\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#cc951cda",
+   "sec": "law.pic",
+   "text": "91.103 出発前の確認（preflight action）：機長は出発前に、その飛行に関する入手できるすべての情報を知っておきます。",
+   "tag": "条文",
+   "source": "14 CFR 91.103（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#54977796",
+   "sec": "law.pic",
+   "text": "離陸距離（takeoff distance）と着陸距離（landing distance）も確かめます（91.103(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.103(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#003ae2b5",
+   "sec": "law.pic",
+   "text": "計画どおり行けないときの代わりと、ATC から知らされた遅れも確かめます（91.103(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.103(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#2e886839",
+   "sec": "law.pic",
+   "text": "91.7 耐空性：安全に飛べる状態でない飛行機は飛ばせません。",
+   "tag": "条文",
+   "source": "14 CFR 91.7（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#354944b1",
+   "sec": "law.pic",
+   "text": "緊急で管制の承認や指示から外れたら、できるだけ早く管制に知らせます（91.123(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.123(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#dfa99a73",
+   "sec": "law.pic",
+   "text": "緊急で管制から優先して扱われたら、管制に求められたときは、48 時間以内に報告を出します（91.123(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.123(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#ab485284",
+   "sec": "law.pic",
+   "text": "飛ぶ前に、その飛行に関するすべての情報を知る（91.103）",
+   "tag": "条文",
+   "source": "14 CFR 91.103（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#5f62aa7c",
+   "sec": "law.pic",
+   "text": "不具合が起きたら飛行をやめる（91.7）",
+   "tag": "条文",
+   "source": "14 CFR 91.7（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#58319105",
+   "sec": "law.pic",
+   "text": "IFR か空港の近くでない飛行は、気象の報告と予報・燃料・代わりの案・管制の遅れも確かめる（14 CFR 91.103） ｜ 機長は、整備状況、離着陸の重量・重心位置・重量分布、航空情報、気象情報、燃料と滑油の量と品質、積載物の安全を確かめてから出発させる（航空法第 73 条の 2・航空法施行規則第 164 条の 15） ｜",
+   "tag": "条文",
+   "source": "FL.jur の preflight（米国の欄 14 CFR 91.103、日本の欄 航空法第 73 条の 2・航空法施行規則第 164 条の 15。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#70635bb8",
+   "sec": "law.pic",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#1e5e0933",
+   "sec": "law.pic",
+   "text": "すぐに行動しなければならない緊急事態では、機長はその緊急事態に必要な範囲で規則から外れてよいことになっています（91.3(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.3(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pic#43b598bd",
+   "sec": "law.pic",
+   "text": "FAA に求められたら、あとで書面で報告します（91.3(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.3(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#217be9b5",
+   "sec": "law.pilot",
+   "text": "暦月で数える決まり（フライトレビューの 24 暦月など）は、その月の終わりまで有効です。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(c)（\"since the beginning of the 24th calendar month before the month in which that pilot acts as pilot in command\"）・61.23(d)（\"expires … at the end of the last day of the … month\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#7266cf70",
+   "sec": "law.pilot",
+   "text": "日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます",
+   "tag": "条文",
+   "source": "14 CFR 61.57(a)(1)（\"within the preceding 90 days\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#2305cd35",
+   "sec": "law.pilot",
+   "text": "どれも、身につけているか、機内のすぐ取り出せる所に置きます（61.3）。",
+   "tag": "条文",
+   "source": "14 CFR 61.3（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#144a4b63",
+   "sec": "law.pilot",
+   "text": "FAA・国家運輸安全委員会（NTSB）・警察から求められたら、証明書とログブック（飛行の記録、logbook）を見せます（61.51(i)(1)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.51(i)(1)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#cd93fc10",
+   "sec": "law.pilot",
+   "text": "学生が単独で野外飛行をするときは、ログブックと学生操縦士の証明を機内に持ちます（61.51(i)(2)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.51(i)(2)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#f2ac96c6",
+   "sec": "law.pilot",
+   "text": "資格や審査に使う訓練と経験、最近の飛行経験は、ログブックに記録します（61.51(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.51(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#1c54aa49",
+   "sec": "law.pilot",
+   "text": "米国で、自家用と学生の資格で飛ぶには、第 3 種以上の航空身体検査証明が要ります（61.23(a)(3)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.23(a)(3)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#760a067f",
+   "sec": "law.pilot",
+   "text": "期限は、検査を受けた日の年齢で決まります（61.23(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#4d1cb50f",
+   "sec": "law.pilot",
+   "text": "米国の運転免許を使う BasicMed という例外もありますが、前に航空身体検査証明を受けたことが条件の 1 つです（61.23(c)(3)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.23(c)(3)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#11bbb4a3",
+   "sec": "law.pilot",
+   "text": "検査を受けた日の年齢 ｜ 第 3 種が切れるとき（61.23(d)） ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#105524c2",
+   "sec": "law.pilot",
+   "text": "40 歳未満 ｜ 検査の月の 60 か月後の月の、最後の日の終わり ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)(3)(i)（第 3 種・40 歳未満：60th month after the month of the date of examination）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#5a753ea2",
+   "sec": "law.pilot",
+   "text": "40 歳以上 ｜ 検査の月の 24 か月後の月の、最後の日の終わり ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)(3)(ii)（第 3 種・40 歳以上：24th month）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#b691129b",
+   "sec": "law.pilot",
+   "text": "2016 年 4 月 1 日より後に出た学生操縦士の証明には、期限がありません（61.19(c)(1)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.19(c)(1)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#51906f46",
+   "sec": "law.pilot",
+   "text": "機長として飛ぶには、24 暦月の間にフライトレビューを受けている必要があります（61.56(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#5493867a",
+   "sec": "law.pilot",
+   "text": "フライトレビューは、地上 1 時間以上と飛行 1 時間以上の訓練です（61.56(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#7486fcd2",
+   "sec": "law.pilot",
+   "text": "Part 91 の規則と、操縦教員が選んだ操作と手順を見直し、終わるとログブックに裏書きを受けます。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(a)(1)(2)・(c)(2)（Part 91 の規則の見直しと、教官が選ぶ操作と手順。終えたら教官のログブックへの裏書き）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#069f385e",
+   "sec": "law.pilot",
+   "text": "その期間に資格の実地試験に合格した人は、フライトレビューを受けなくてよいことになっています（61.56(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#e8dae076",
+   "sec": "law.pilot",
+   "text": "訓練中の学生も、単独飛行の裏書きが有効なら要りません（61.56(g)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(g)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#32410d12",
+   "sec": "law.pilot",
+   "text": "人を乗せて機長をする ｜ 90 日以内に、離陸と着陸を 3 回ずつ（同じカテゴリー・クラスの機体で、自分で操縦） ｜ 61.57(a) ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.57(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#d0b6afb5",
+   "sec": "law.pilot",
+   "text": "日没の 1 時間後から日の出の 1 時間前までに、人を乗せて機長をする ｜ 90 日以内に、その時間帯に、離陸と、完全に止まるまでの着陸を 3 回ずつ ｜ 61.57(b) ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.57(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#e74a3a4a",
+   "sec": "law.pilot",
+   "text": "IFR で機長をする ｜ 6 暦月以内に、計器進入 6 回・待機（ホールディング、holding）・電子航法でのコースの会合と追跡 ｜ 61.57(c) ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.57(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#13207a2f",
+   "sec": "law.pilot",
+   "text": "90 日は日で数えます。",
+   "tag": "条文",
+   "source": "14 CFR 61.57(a)・(b)（\"within the preceding 90 days\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#8dbc3be3",
+   "sec": "law.pilot",
+   "text": "24 暦月や 6 暦月は月で数え、その月の終わりまで有効です（61.56(c)・61.57(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(c)・61.57(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#0c5d0d4b",
+   "sec": "law.pilot",
+   "text": "自家用操縦士の資格を持つ 30 歳の人が、2026 年 3 月 10 日に第 3 種の航空身体検査を受け、同じ日にフライトレビューも終えました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の例（30 歳・2026 年 3 月 10 日）。W19 が 14 CFR 61.23(d)・61.56(c) で数えた",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#90faaabe",
+   "sec": "law.pilot",
+   "text": "① 検査の月（2026 年 3 月）の 60 か月後の月は、2031 年 3 月です。",
+   "tag": "参考値",
+   "source": "14 CFR 61.23(d)(3)(i)（40 歳未満の第 3 種は検査の月の 60 か月後の月の末日まで）で、2026 年 3 月から数えた（W19 が検算）",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#3ebfcf58",
+   "sec": "law.pilot",
+   "text": "2031 年 3 月 31 日の終わりまで使えます（61.23(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#e483f1f9",
+   "sec": "law.pilot",
+   "text": "② 2028 年 3 月に飛ぶとき、その月の 24 暦月前は 2026 年 3 月なので、間に合います。",
+   "tag": "参考値",
+   "source": "14 CFR 61.56(c) で、2028 年 3 月の 24 暦月前の月を数えた（2026 年 3 月。W19 が検算）",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#fb51bb75",
+   "sec": "law.pilot",
+   "text": "2028 年 4 月からは受け直しが要るので、2028 年 3 月 31 日までです（61.56(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.56(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#128cf62f",
+   "sec": "law.pilot",
+   "text": "学生操縦士の制限（61.89）",
+   "tag": "条文",
+   "source": "14 CFR 61.89（学生操縦士の一般の制限）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#af020c27",
+   "sec": "law.pilot",
+   "text": "飛行視程（flight visibility）か地上視程（ground visibility）が、昼は 3 SM 未満、夜は 5 SM 未満のときに飛ぶ",
+   "tag": "条文",
+   "source": "14 CFR 61.89(a)(6)（\"flight or surface visibility of less than 3 statute miles during daylight hours or 5 statute miles at night\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#da035f4f",
+   "sec": "law.pilot",
+   "text": "単独飛行の裏書きは、機種ごとに 90 日以内のものが要ります。",
+   "tag": "条文",
+   "source": "14 CFR 61.87(n)・(p)(4)（機種ごとの裏書きは 90 日以内、そのあと 90 日ごとに更新）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#9545e56e",
+   "sec": "law.pilot",
+   "text": "事故とインシデントの報告のしかたは、米国の 49 CFR Part 830 にあります。",
+   "tag": "条文",
+   "source": "49 CFR Part 830 Notification and Reporting of Aircraft Accidents or Incidents。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#c730cbc2",
+   "sec": "law.pilot",
+   "text": "事故から 10 日以内に、NTSB の書式で報告を出します（830.15）。",
+   "tag": "条文",
+   "source": "49 CFR 830.15（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#a7ecc970",
+   "sec": "law.pilot",
+   "text": "夜間（night）の定義（14 CFR 1.1） ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで ｜ 夜の燃料の予備（91.151）・夜の VFR の装備（91.205(c)）など ｜",
+   "tag": "条文",
+   "source": "14 CFR 1.1 の Night（夕方の市民薄明の終わりから朝の市民薄明の始まり）、91.151(a)(2)（夜は 45 分）、91.205(c)（夜の VFR の装備）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#2c309f85",
+   "sec": "law.pilot",
+   "text": "人を乗せる夜の最近の経験（61.57(b)） ｜ 日没の 1 時間後から、日の出の 1 時間前まで ｜ 人を乗せる前の、夜の 3 回の着陸 ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.57(b)(1)（\"the period beginning 1 hour after sunset and ending 1 hour before sunrise\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#53472fa8",
+   "sec": "law.pilot",
+   "text": "右舷灯・左舷灯・尾灯（航空灯、position lights）をつける時間（91.209） ｜ 日没から日の出まで ｜ 航空灯の点灯 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.209(a)(1)（\"During the period from sunset to sunrise … lighted position lights\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#557ab20d",
+   "sec": "law.pilot",
+   "text": "機長として飛ぶには、24 暦月の間のフライトレビュー（学生は不要）",
+   "tag": "条文",
+   "source": "14 CFR 61.56(c)・(g)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#9824f757",
+   "sec": "law.pilot",
+   "text": "人を乗せるには、90 日以内に離陸と着陸を 3 回ずつ",
+   "tag": "条文",
+   "source": "14 CFR 61.57(a)(1)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#4592509b",
+   "sec": "law.pilot",
+   "text": "第 3 種の身体検査証明は、40 歳未満 60 か月・40 歳以上 24 か月",
+   "tag": "条文",
+   "source": "14 CFR 61.23(d)(3)(i)(ii)（60th month・24th month）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#6aa39cc9",
+   "sec": "law.pilot",
+   "text": "報告書は 10 日以内",
+   "tag": "条文",
+   "source": "49 CFR 830.15(a)（\"within 10 days after an accident\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#f647a6ef",
+   "sec": "law.pilot",
+   "text": "衝突や接触のおそれなど、事故が起きるおそれのある事態も報告する（航空法第 76 条・航空法第 76 条の 2） ｜",
+   "tag": "条文",
+   "source": "FL.jur の accident（米国の欄 49 CFR 830.5、日本の欄 航空法第 76 条・航空法第 76 条の 2。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#0092754b",
+   "sec": "law.pilot",
+   "text": "夜の定義 ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで（14 CFR 1.1） ｜ 日没から日出まで（航空法第 64 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の night（米国の欄 14 CFR 1.1、日本の欄 航空法第 64 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#0e7a5db9",
+   "sec": "law.pilot",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#27afaf5a",
+   "sec": "law.pilot",
+   "text": "考えてみよう：自家用の資格を持つ人が、2 か月前に 3 回の離着陸をした。",
+   "tag": "参考値",
+   "source": "考えてみようの仮定の場面（数字は仮定）。答えの根拠は 14 CFR 61.57(a)(b)",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#da3274ee",
+   "sec": "law.pilot",
+   "text": "今夜、日没の 2 時間後に友人を乗せて飛べる？",
+   "tag": "参考値",
+   "source": "考えてみようの仮定の場面（数字は仮定）。答えの根拠は 14 CFR 61.57(b)",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#76dcc557",
+   "sec": "law.pilot",
+   "text": "日没の 1 時間後から日の出の 1 時間前までに人を乗せるには、その時間帯に、完全に止まるまでの着陸を 90 日以内に 3 回していることが要ります（61.57(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.57(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.pilot#789a04ee",
+   "sec": "law.pilot",
+   "text": "昼の 3 回は、昼に人を乗せる条件（61.57(a)）を満たすだけです。",
+   "tag": "条文",
+   "source": "14 CFR 61.57(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#0cf58532",
+   "sec": "law.aircraft",
+   "text": "耐空証明（airworthiness certificate） ｜ 客室か操縦席の入口に、乗る人が読めるように掲示する（91.203） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.203（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#39e2171c",
+   "sec": "law.aircraft",
+   "text": "登録証明（registration certificate） ｜ 機内に置く（91.203） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.203（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#5aa4446c",
+   "sec": "law.aircraft",
+   "text": "飛行規程と運用限界（POH・標示・表示板） ｜ 機内に置き、その限界を守る（91.9） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.9（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#82e1ae5c",
+   "sec": "law.aircraft",
+   "text": "磁気コンパス（コンパス、magnetic compass）・回転計・油圧計・油温計・燃料計なども要ります（91.205(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.205(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#bf6fe7d4",
+   "sec": "law.aircraft",
+   "text": "Class A・B・C などでは、トランスポンダー（transponder）と ADS-B Out も必要です（91.215・91.225）。",
+   "tag": "条文",
+   "source": "14 CFR 91.215・91.225（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#8dcc634d",
+   "sec": "law.aircraft",
+   "text": "承認された MEL のない小型機では、91.213(d) の順で判断します。",
+   "tag": "条文",
+   "source": "14 CFR 91.213(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#124fe1fd",
+   "sec": "law.aircraft",
+   "text": "型式証明の昼の VFR の装備・機体の装備の一覧・91.205 などで要るものなら、飛べません。",
+   "tag": "条文",
+   "source": "14 CFR 91.213(d)(2)（VFR-day type certification の装備・装備の一覧・91.205 など・AD で要るものは不可）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#15b4ced1",
+   "sec": "law.aircraft",
+   "text": "そのうえで、危険がないと操縦士か整備士が判断します（91.213(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.213(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#06f1e3a5",
+   "sec": "law.aircraft",
+   "text": "年次点検（annual inspection） ｜ 12 暦月ごと ｜ 91.409(a) ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.409(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#58c83520",
+   "sec": "law.aircraft",
+   "text": "100 時間点検 ｜ 有償で人を乗せる・自分が用意した機体で有償の飛行訓練をするときは 100 時間ごと（訓練機に多い） ｜ 91.409(b) ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#d53b34ce",
+   "sec": "law.aircraft",
+   "text": "ELT（Emergency Locator Transmitter：航空機用救命無線機） ｜ 12 暦月ごと。",
+   "tag": "条文",
+   "source": "14 CFR 91.207(d)（\"within 12 calendar months after the last inspection\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#9e75ad9c",
+   "sec": "law.aircraft",
+   "text": "電池は、使った時間が合わせて 1 時間を超えたときか、寿命の半分で替える ｜ 91.207 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.207（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#3501bb6a",
+   "sec": "law.aircraft",
+   "text": "トランスポンダー ｜ 24 暦月ごと ｜ 91.413 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.413（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#ad45a152",
+   "sec": "law.aircraft",
+   "text": "静圧系統・高度計・高度の自動報告装置 ｜ 管制空域を IFR で飛ぶなら 24 暦月ごと ｜ 91.411 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.411（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#d624b882",
+   "sec": "law.aircraft",
+   "text": "年次点検は 12 暦月、訓練機は 100 時間点検も",
+   "tag": "条文",
+   "source": "14 CFR 91.409(a)(b)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#164767bf",
+   "sec": "law.aircraft",
+   "text": "動かない装備は 91.213 で判断",
+   "tag": "条文",
+   "source": "14 CFR 91.213（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#265c1311",
+   "sec": "law.aircraft",
+   "text": "承認された飛行規程（AFM・POH）か、承認された資料・標示・表示板（14 CFR 91.203・91.9） ｜ 航空機登録証明書・耐空証明書・搭載用航空日誌・運用限界等指定書・飛行規程・飛行に適した航空図（航空運送事業は運航規程も）（航空法第 59 条・航空法施行規則第 144 条・航空法施行規則第 144 条の 2） ｜",
+   "tag": "条文",
+   "source": "FL.jur の docs（米国の欄 14 CFR 91.203・91.9、日本の欄 航空法第 59 条・航空法施行規則第 144 条・航空法施行規則第 144 条の 2。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#70635bb8",
+   "sec": "law.aircraft",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#3598764b",
+   "sec": "law.aircraft",
+   "text": "考えてみよう：訓練機の年次点検は 10 か月前に済んでいるが、100 時間点検から 104 時間飛んでいた。",
+   "tag": "参考値",
+   "source": "考えてみようの仮定の場面（10 か月・104 時間は仮定）。答えの根拠は 14 CFR 91.409(a)(b)",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#19c05b5c",
+   "sec": "law.aircraft",
+   "text": "有償の飛行訓練に使う機体（学校が用意した機体）は、100 時間ごとの点検が必要です（91.409(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#1ecfd5c2",
+   "sec": "law.aircraft",
+   "text": "年次点検の期限内でも、100 時間を超えていれば飛ばせません。",
+   "tag": "条文",
+   "source": "14 CFR 91.409(b)（100 時間の点検は年次点検と別に要る）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.aircraft#22e096b1",
+   "sec": "law.aircraft",
+   "text": "点検の場所へ移動するためだけに、10 時間まで超えてよい例外があります（91.409(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#819d17bc",
+   "sec": "law.airspace",
+   "text": "目盛りは MSL で、Class C・D の高さ（2,500・4,000 ft）は空港の標高からの高さです（図は標高 0 ft の空港の例）。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4・3-2-5（Class C は空港の標高の上 4,000 ft、Class D は 2,500 ft、\"charted in MSL\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#644277b0",
+   "sec": "law.airspace",
+   "text": "Class G は多くの場所で地上 1,200 ft（空港の近くでは 700 ft）より下です。",
+   "tag": "参考値",
+   "source": "PHAK（FAA-H-8083-25C）第 15 章 Airspace（Class E は多く地上 700 ft か 1,200 ft から上、Class G はその下）・AIM 3-2-6・3-3。PHAK 第 15 章（\"In most areas, the Class E airspace base is 1,200 feet AGL. In many other areas … the surface or 700 feet AGL\"、Class G は地表から上の Class E の下限まで）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#257ee6ce",
+   "sec": "law.airspace",
+   "text": "Class B は許可、Class C・D は入る前に双方向の無線交信の確立が必要です（14 CFR 91.129〜91.131、AIM 3-2）",
+   "tag": "条文",
+   "source": "14 CFR 91.129・91.131（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）、AIM 3-2（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#13b8111f",
+   "sec": "law.airspace",
+   "text": "ただし、Class C・D の「地表から 4,000 ft・2,500 ft」は、空港の標高からの高さです。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4・3-2-5（\"from the surface to 4,000 feet above the airport elevation (charted in MSL)\"・\"2,500 feet above the airport elevation (charted in MSL)\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#ee9a5b34",
+   "sec": "law.airspace",
+   "text": "Class A ｜ 18,000 ft MSL〜FL600 ｜ IFR だけ（VFR では入れない） ｜",
+   "tag": "参考値",
+   "source": "AIM 3-2-2（Class A は 18,000 ft MSL から FL600 まで、IFR だけ）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#f2fde70b",
+   "sec": "law.airspace",
+   "text": "ふつう 10,000 ft MSL まで ｜ 管制承認（「cleared to enter Bravo airspace」など）が要る。",
+   "tag": "参考値",
+   "source": "AIM 3-2-3（Class B は ふつう地表から 10,000 ft MSL、ATC clearance が要る）。言い方は FAA JO 7110.65 の 7-9-2 の PHRASEOLOGY（CLEARED THROUGH/TO ENTER/OUT OF BRAVO AIRSPACE）。W19 が 2026-10-30 に HTML で読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#60df8efb",
+   "sec": "law.airspace",
+   "text": "学生がひとりで入るには、操縦教員の訓練と裏書きが要る（61.95） ｜",
+   "tag": "条文",
+   "source": "14 CFR 61.95（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#0d2fbaca",
+   "sec": "law.airspace",
+   "text": "半径 5 NM で地表から空港の標高の上 4,000 ft までの中心部と、半径 10 NM で 1,200〜4,000 ft の棚 ｜ 入る前に双方向の無線交信を確立する。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4（5 NM の地表から 4,000 ft の中心と、10 NM の 1,200〜4,000 ft の棚。入る前に双方向の無線交信の確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#ef1f6a32",
+   "sec": "law.airspace",
+   "text": "ふつう地表から空港の標高の上 2,500 ft まで ｜ 入る前に双方向の無線交信を確立する ｜",
+   "tag": "参考値",
+   "source": "AIM 3-2-5（Class D は地表から空港の標高の上 2,500 ft、入る前に交信の確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#42d2a303",
+   "sec": "law.airspace",
+   "text": "多くは地上 700 ft か 1,200 ft から上。",
+   "tag": "参考値",
+   "source": "AIM 3-2-6・PHAK 第 15 章（Class E の下限は多く地上 700 ft か 1,200 ft）。W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#9af9093f",
+   "sec": "law.airspace",
+   "text": "14,500 ft MSL から 18,000 ft 未満は、ほぼどこでも Class E。",
+   "tag": "参考値",
+   "source": "AIM 3-2-6 c（\"The airspace extending upward from 14,500 feet MSL to, but not including, 18,000 feet MSL overlying the 48 contiguous states …\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#e3f8c40e",
+   "sec": "law.airspace",
+   "text": "ただし、地上 1,500 ft 以下などは除く ｜ 管制承認も交信も要らない（気象条件は 91.155）。",
+   "tag": "参考値",
+   "source": "AIM 3-2-6 c（\"excluding … the airspace below 1,500 feet above the surface\"）、Class E は入る条件なし（AIM 3-2-6 b）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#a31c09d0",
+   "sec": "law.airspace",
+   "text": "ただし 10,000 ft MSL 以上（地上 2,500 ft 以下を除く）では、トランスポンダーと ADS-B Out が要る ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.215(b)(5)(i)・91.225(d)(4)（10,000 ft MSL 以上、地上 2,500 ft 以下を除く）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#60a95b69",
+   "sec": "law.airspace",
+   "text": "多くは地上 1,200 ft より下 ｜ 管制承認も交信も要らない ｜",
+   "tag": "参考値",
+   "source": "PHAK 第 15 章・AIM 3-3（Class G は管制空域でない。多く地上 1,200 ft より下）。W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#e2c72fc9",
+   "sec": "law.airspace",
+   "text": "このほか、14 CFR Part 91 の付録 D に載る主な空港のまわりでも、装備が要ります。",
+   "tag": "条文",
+   "source": "14 CFR 91.215(b)(2)・91.225(d)(2) と Part 91 Appendix D Section 1（オーランド国際空港を含む）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#aaa9d1b1",
+   "sec": "law.airspace",
+   "text": "その空港から 30 NM 以内で、地表から 10,000 ft MSL までは、どの空域でも同じです（91.215・91.225）。",
+   "tag": "条文",
+   "source": "14 CFR 91.215・91.225（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#4df79da6",
+   "sec": "law.airspace",
+   "text": "「remain outside the Class Charlie airspace（外で待て）」と言われたら、入りません（AIM 3-2-4）。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#b0868dca",
+   "sec": "law.airspace",
+   "text": "日本の航空法は、空域を Class の文字ではなく、名前で定めます。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 12〜14 項（空域を航空交通管制区・管制圏・情報圏の名前で定義）。e-Gov の写し sources/egov/articles/kokuho/2.json",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#98eeeacc",
+   "sec": "law.airspace",
+   "text": "航空交通管制区（管制区、control area）は、地表か水面から 200 m 以上の空域のうち、告示で指定したものです（航空法第 2 条第 12 項）。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 12 項（地表又は水面から二百メートル以上の高さの空域で告示で指定するもの）。e-Gov の写し sources/egov/articles/kokuho/2.json",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#35e34707",
+   "sec": "law.airspace",
+   "text": "航空交通管制圏（管制圏、control zone）は、告示で指定した空港等（空港、airport）とその上空の空域です（同条第 13 項）。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 13 項。e-Gov の写し sources/egov/articles/kokuho/2.json（令和 7 年 12 月 1 日施行の版）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#3e5cfcc5",
+   "sec": "law.airspace",
+   "text": "航空交通情報圏（情報圏、information zone）は、管制圏のほかの、告示で指定した空港等とその上空の空域です（同条第 14 項）。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 14 項（前項に規定する空港等以外の告示で指定する空港等）。e-Gov の写し sources/egov/articles/kokuho/2.json",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.airspace#796f3f31",
+   "sec": "law.airspace",
+   "text": "コールサインを言わない答えでは、交信は確立していません（AIM 3-2-4）。",
+   "tag": "参考値",
+   "source": "AIM 3-2-4（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#8ae2b699",
+   "sec": "law.vfr",
+   "text": "図：VFR で守る雲からの距離と視程（14 CFR 91.155）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#e59addbc",
+   "sec": "law.vfr",
+   "text": "Class C・D と 10,000 ft MSL 未満の Class E では、視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft（覚え方 3-152）",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)（Class C・D・10,000 ft MSL 未満の E：3 SM、500 below・1,000 above・2,000 horizontal）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#653efedb",
+   "sec": "law.vfr",
+   "text": "Class C・D と、10,000 ft MSL 未満の Class E では、飛行視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft です。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#d8e62a89",
+   "sec": "law.vfr",
+   "text": "SM（statute mile：法定マイル）は約 1.6 km です。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（1 statute mile = 1.609344 km。R.nist811）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#63d8ff82",
+   "sec": "law.vfr",
+   "text": "空港のために地表まで設定された管制空域（Class B・C・D・E の地表区域）では、さらに次の決まりがあります（91.155(c)(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#185637d1",
+   "sec": "law.vfr",
+   "text": "雲高（シーリング、ceiling）が 1,000 ft 未満なら、VFR で雲の下を飛べません。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)（\"when the ceiling is less than 1,000 feet\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#56630c6c",
+   "sec": "law.vfr",
+   "text": "雲高は、BKN（ブロークン）か OVC（オーバーキャスト）と報告された、いちばん低い雲の層の高さです（14 CFR 1.1）。",
+   "tag": "条文",
+   "source": "14 CFR 1.1 の Ceiling（\"the lowest layer of clouds or obscuring phenomena that is reported as broken, overcast, or obscuration\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#be289b12",
+   "sec": "law.vfr",
+   "text": "地上視程が 3 SM 未満なら、VFR で離着陸できません。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(d)(1)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#940f0d52",
+   "sec": "law.vfr",
+   "text": "雲に入らず、飛行視程 1 SM 以上で飛びます。",
+   "tag": "条文",
+   "source": "14 CFR 91.157(b)(2)(3)（clear of clouds、flight visibility at least 1 statute mile）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#2ed17f47",
+   "sec": "law.vfr",
+   "text": "日の出から日没までのほかは、IFR で飛べる資格と、IFR の装備が要ります（91.157）。",
+   "tag": "条文",
+   "source": "14 CFR 91.157（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#475f9a35",
+   "sec": "law.vfr",
+   "text": "Class B ｜ 3 SM ｜ 雲に入らない（Clear of clouds） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#baf7ed4d",
+   "sec": "law.vfr",
+   "text": "Class C ｜ 3 SM ｜ 500 ft 下 / 1,000 ft 上 / 2,000 ft 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#46a4883b",
+   "sec": "law.vfr",
+   "text": "Class D ｜ 3 SM ｜ 500 ft 下 / 1,000 ft 上 / 2,000 ft 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#8276b22c",
+   "sec": "law.vfr",
+   "text": "Class E（10,000 ft MSL 未満） ｜ 3 SM ｜ 500 ft 下 / 1,000 ft 上 / 2,000 ft 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#be613203",
+   "sec": "law.vfr",
+   "text": "Class E（10,000 ft MSL 以上） ｜ 5 SM ｜ 1,000 ft 下 / 1,000 ft 上 / 1 SM 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#6f71ff87",
+   "sec": "law.vfr",
+   "text": "Class G（地上 1,200 ft 以下）昼 ｜ 1 SM ｜ 雲に入らない ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#565f516a",
+   "sec": "law.vfr",
+   "text": "Class G（地上 1,200 ft 以下）夜 ｜ 3 SM ｜ 500 / 1,000 / 2,000 ft（場周経路の特例あり） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#bf844645",
+   "sec": "law.vfr",
+   "text": "Class G（地上 1,200 ft 超・10,000 ft MSL 未満）昼 ｜ 1 SM ｜ 500 ft 下 / 1,000 ft 上 / 2,000 ft 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#8e4ec536",
+   "sec": "law.vfr",
+   "text": "Class G（同）夜 ｜ 3 SM ｜ 500 ft 下 / 1,000 ft 上 / 2,000 ft 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#bde794d8",
+   "sec": "law.vfr",
+   "text": "Class G（地上 1,200 ft 超・10,000 ft MSL 以上） ｜ 5 SM ｜ 1,000 ft 下 / 1,000 ft 上 / 1 SM 水平 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の表（91.155(b) の Class G の夜の場周の特例）。図 vfrMinima（教科書の今の表。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#a815129c",
+   "sec": "law.vfr",
+   "text": "91.155 は、雲から離れる距離で書いています。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)（\"at a distance from clouds that is less than …\"：雲からの距離で書く）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#241e01ec",
+   "sec": "law.vfr",
+   "text": "「雲の下 500 ft」は、「機体の上 500 ft の中に雲がない」と同じです。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の「500 feet below・1,000 feet above・2,000 feet horizontal」を機体を中心に言い直した（同じ距離。W19 の言いかえ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#e7b424ec",
+   "sec": "law.vfr",
+   "text": "「雲の上 1,000 ft」は、「機体の下 1,000 ft の中に雲がない」と同じです。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の「500 feet below・1,000 feet above・2,000 feet horizontal」を機体を中心に言い直した（同じ距離。W19 の言いかえ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#491c5460",
+   "sec": "law.vfr",
+   "text": "左は雲を中心に「雲の下 500 ft・雲の上 1,000 ft」、右は機体を中心に「機体の上 500 ft・下 1,000 ft・横 2,000 ft の範囲に雲がない」と言います。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の「500 feet below・1,000 feet above・2,000 feet horizontal」を機体を中心に言い直した（同じ距離。W19 の言いかえ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#2120903b",
+   "sec": "law.vfr",
+   "text": "上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E）",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)（Class C・D・10,000 ft MSL 未満の Class E の行）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#231795a8",
+   "sec": "law.vfr",
+   "text": "3-152：視程 3 SM、雲の下 500・上 1,000・横 2,000 ft（Class C・D・10,000 ft 未満の E）",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#4c5beefd",
+   "sec": "law.vfr",
+   "text": "空港の地表区域では、雲高 1,000 ft・地上視程 3 SM 以上でないと VFR で離着陸できない",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)(d)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#aa4a1f3d",
+   "sec": "law.vfr",
+   "text": "「雲の下 500 ft」と「機体の上 500 ft に雲がない」は同じ決まり",
+   "tag": "条文",
+   "source": "14 CFR 91.155(a) の「500 feet below・1,000 feet above・2,000 feet horizontal」を機体を中心に言い直した（同じ距離。W19 の言いかえ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#0b2a4135",
+   "sec": "law.vfr",
+   "text": "VMC（管制空域の低い所） ｜ Class C・D と 10,000 ft MSL 未満の Class E：飛行視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft（14 CFR 91.155(a)） ｜ 3,000 m 未満で管制区・管制圏・情報圏を飛ぶとき：飛行視程 5,000 m、上方 150 m・下方 300 m・水平 600 m の範囲に雲がない（航空法施行規則第 5 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の vmc（米国の欄 14 CFR 91.155(a)、日本の欄 航空法施行規則第 5 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#8835b2bf",
+   "sec": "law.vfr",
+   "text": "空港での離着陸 ｜ 地表まで管制空域の空港：雲高 1,000 ft 未満なら雲の下を VFR で飛ばない。",
+   "tag": "条文",
+   "source": "FL.jur の vmc.ad（米国の欄 14 CFR 91.155(c)(d)、日本の欄 航空法施行規則第 5 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#694d7d3e",
+   "sec": "law.vfr",
+   "text": "離着陸と場周には地上視程 3 SM（報告がなければ飛行視程 3 SM）（14 CFR 91.155(c)(d)） ｜ 管制圏・情報圏の空港などで離着陸するとき：地上視程 5,000 m 以上・雲高 300 m 以上（管制圏の空港で告示で指定したものは 8,000 m・450 m。どの空港かは〔要確認〕）（航空法施行規則第 5 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の vmc.ad（米国の欄 14 CFR 91.155(c)(d)、日本の欄 航空法施行規則第 5 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#681debc0",
+   "sec": "law.vfr",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#9d88595d",
+   "sec": "law.vfr",
+   "text": "日本の航空法施行規則第 5 条は、前の図の右の言い方（機体の上方・下方・水平の範囲に雲がない）で書いています。",
+   "tag": "条文",
+   "source": "航空法施行規則第 5 条第 2 号イ（2）（「航空機からの垂直距離が上方に百五十メートル、下方に三百メートルである範囲内に雲がないこと」：機体を中心に書く）。e-Gov の写し sources/egov/articles/kokuho-kisoku/5.json（令和 8 年 10 月 1 日施行の版）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#11486ba4",
+   "sec": "law.vfr",
+   "text": "考えてみよう：Class D の空港の METAR（定時の飛行場の実況、METAR）が「BKN008 5SM」。",
+   "tag": "参考値",
+   "source": "考えてみようの仮定の METAR（BKN008 5SM）",
+   "kind": "例題",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#03639157",
+   "sec": "law.vfr",
+   "text": "雲高が 800 ft で、1,000 ft 未満です（91.155(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#db974b69",
+   "sec": "law.vfr",
+   "text": "視程は 5 SM でも、雲高の条件を満たしていません。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)（雲高 1,000 ft）・(d)（地上視程 3 SM）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.vfr#45fc324e",
+   "sec": "law.vfr",
+   "text": "管制承認があれば、特別有視界飛行方式で飛べることがあります（91.157）。",
+   "tag": "条文",
+   "source": "14 CFR 91.157（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#db944dd1",
+   "sec": "law.special",
+   "text": "運用中の制限空域や TFR には、許可なしに入りません（AIM 3-4・3-5）",
+   "tag": "条文",
+   "source": "14 CFR 91.133(a)・91.137〜91.145、AIM 3-4・3-5（教科書の図 specialUseAirspace のキャプション）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#f1fc1901",
+   "sec": "law.special",
+   "text": "Warning Area（W：警告空域） ｜ 海岸から 3 NM より沖の、制限空域と同じような危険がある空域 ｜",
+   "tag": "参考値",
+   "source": "AIM 3-4-4（\"extending from three nautical miles outward from the coast of the U.S.\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#08fc4c66",
+   "sec": "law.special",
+   "text": "フロリダの東海岸では、ロケットの打ち上げに合わせた飛行の制限が、ノータムで出ます（91.143）。",
+   "tag": "条文",
+   "source": "14 CFR 91.143（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#cec34b03",
+   "sec": "law.special",
+   "text": "機体を確かめ、向きを変えさせ、交信するためです（AIM 5-6-13）。",
+   "tag": "参考値",
+   "source": "AIM 5-6-13（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#7c61fb29",
+   "sec": "law.special",
+   "text": "121.5 MHz（緊急の周波数）で呼び、自分の名前・位置・飛行の目的を伝えます。",
+   "tag": "参考値",
+   "source": "AIM 5-6-13（\"making a general call on guard frequencies (121.5 or 243.0 MHz), giving the identity, position, and nature of the flight\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#633c62b9",
+   "sec": "law.special",
+   "text": "特別有視界 ｜ 管制の許可を受け、雲から離れ、飛行視程 1 SM 以上。",
+   "tag": "条文",
+   "source": "FL.jur の svfr（米国の欄 14 CFR 91.157、日本の欄 航空法第 94 条ただし書・航空法施行規則第 198 条の 4。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#63d4dae9",
+   "sec": "law.special",
+   "text": "離着陸は地上視程 1 SM 以上。",
+   "tag": "条文",
+   "source": "FL.jur の svfr（米国の欄 14 CFR 91.157、日本の欄 航空法第 94 条ただし書・航空法施行規則第 198 条の 4。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#abea882d",
+   "sec": "law.special",
+   "text": "日の出から日没までのほかは、計器飛行の資格と装備が要る（14 CFR 91.157） ｜ 国土交通大臣の許可を受け、雲から離れ、飛行視程 1,500 m 以上、地表か水面を見続け、管制機関などと常時連絡を保つ（許可に別の条件があればそれに従う）（航空法第 94 条ただし書・航空法施行規則第 198 条の 4） ｜",
+   "tag": "条文",
+   "source": "FL.jur の svfr（米国の欄 14 CFR 91.157、日本の欄 航空法第 94 条ただし書・航空法施行規則第 198 条の 4。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#70635bb8",
+   "sec": "law.special",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.special#0298259f",
+   "sec": "law.special",
+   "text": "打ち上げの TFR（一時的な飛行制限）が出ていないかを、ノータムで確かめます（91.143・91.137〜）。",
+   "tag": "条文",
+   "source": "14 CFR 91.143・91.137（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#2e913482",
+   "sec": "law.rules",
+   "text": "図：衝突を避ける進路権の決まり（米国の 14 CFR 91.113）。",
+   "tag": "条文",
+   "source": "14 CFR 91.113（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#39e787e3",
+   "sec": "law.rules",
+   "text": "進路権の決まり（91.113）",
+   "tag": "条文",
+   "source": "14 CFR 91.113。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#0efd8d26",
+   "sec": "law.rules",
+   "text": "ほかの飛行機を見て避けます（91.113(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.113(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#1e46567f",
+   "sec": "law.rules",
+   "text": "種類が違うときは、気球 ＞ グライダー ＞ ほかの機を引いている（曳航）機・給油している機 ＞ 飛行船 ＞ ほかの動力機 の順です（米国の 2025 年の改正の順）。",
+   "tag": "条文",
+   "source": "14 CFR 91.113(d)(1)〜(4)（2025 年 7 月 24 日の Amdt. 91-381 の後の文：気球・滑空機・曳航か給油の機・飛行船・ほかの動力機）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#14083e75",
+   "sec": "law.rules",
+   "text": "低く飛びすぎない高さ（91.119）",
+   "tag": "条文",
+   "source": "14 CFR 91.119。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#ea8b0a9a",
+   "sec": "law.rules",
+   "text": "人の多い町や、屋外の集まりの上：半径 2,000 ft 以内のいちばん高い障害物から、1,000 ft 上です。",
+   "tag": "条文",
+   "source": "14 CFR 91.119(b)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#3bb27a76",
+   "sec": "law.rules",
+   "text": "それ以外：地上から 500 ft です。",
+   "tag": "条文",
+   "source": "14 CFR 91.119(c)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#bcb5c942",
+   "sec": "law.rules",
+   "text": "海の上や人の少ない所では、人・船・車・建物から 500 ft 離れます。",
+   "tag": "条文",
+   "source": "14 CFR 91.119(c)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#8c6ed8da",
+   "sec": "law.rules",
+   "text": "速度の制限（91.117）",
+   "tag": "条文",
+   "source": "14 CFR 91.117。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#edd15393",
+   "sec": "law.rules",
+   "text": "10,000 ft MSL 未満では、指示対気速度（IAS：indicated airspeed）で 250 kt 以下です。",
+   "tag": "条文",
+   "source": "14 CFR 91.117(a)（\"below 10,000 feet MSL at an indicated airspeed of more than 250 knots\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#f1fc61c2",
+   "sec": "law.rules",
+   "text": "Class C・D の主な空港から 4 NM 以内で地上 2,500 ft 以下と、Class B の下では、200 kt 以下です。",
+   "tag": "条文",
+   "source": "14 CFR 91.117(b)(c)（Class C・D の主な空港から 4 NM・地上 2,500 ft 以下、Class B の下：200 kt）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#89b30007",
+   "sec": "law.rules",
+   "text": "燃料の予備（91.151）",
+   "tag": "条文",
+   "source": "14 CFR 91.151。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#62fe39b4",
+   "sec": "law.rules",
+   "text": "最初の着陸予定地まで飛び、そのあと普通の巡航速度で昼は 30 分、夜は 45 分飛べる燃料が要ります。",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)(1)(2)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#25d5c12b",
+   "sec": "law.rules",
+   "text": "Class D の空港では、入る前に管制塔と交信を確立し、その空域にいる間は保ちます（91.129(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.129(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#298e6c53",
+   "sec": "law.rules",
+   "text": "地上滑走（タキシー、taxi）・離陸・着陸には、管制塔の許可が要ります（91.129(i)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.129(i)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#cdc93909",
+   "sec": "law.rules",
+   "text": "管制塔のない空港（Class G・E）に着陸するときは、標示がなければ、旋回はすべて左回りです（91.126(b)・91.127(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.126(b)・91.127(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#ffd3dbd1",
+   "sec": "law.rules",
+   "text": "進路権があっても、見張りと衝突を避ける義務はみんなにある（91.113(b)）",
+   "tag": "条文",
+   "source": "14 CFR 91.113(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#5f86d959",
+   "sec": "law.rules",
+   "text": "追い越す機は右へ（14 CFR 91.113(c)〜(f)） ｜ 滑空機 → 物件を曳航している航空機 → 飛行船 → 飛行機・回転翼航空機・動力で推進している滑空機 の順（気球の項はない）。",
+   "tag": "条文",
+   "source": "FL.jur の row（米国の欄 14 CFR 91.113(c)〜(f)、日本の欄 航空法施行規則第 180 条〜第 186 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#d9d1ae1a",
+   "sec": "law.rules",
+   "text": "進路権のある機は進路と速度を保つ（航空法施行規則第 180 条〜第 186 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の row（米国の欄 14 CFR 91.113(c)〜(f)、日本の欄 航空法施行規則第 180 条〜第 186 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#5b208340",
+   "sec": "law.rules",
+   "text": "密集地は半径 2,000 ft 内の最も高い障害物から 1,000 ft。",
+   "tag": "条文",
+   "source": "FL.jur の msa（米国の欄 14 CFR 91.119、日本の欄 航空法第 81 条・航空法施行規則第 174 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#ec8a33b6",
+   "sec": "law.rules",
+   "text": "それ以外は地表から 500 ft（水上と人家のまばらな所は、人・船・車・建物から 500 ft）（14 CFR 91.119） ｜ 動力装置だけが止まっても地上の人や物件に危険なく着陸できる高度と比べて、高いほう。",
+   "tag": "条文",
+   "source": "FL.jur の msa（米国の欄 14 CFR 91.119、日本の欄 航空法第 81 条・航空法施行規則第 174 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#098d29f2",
+   "sec": "law.rules",
+   "text": "密集地は水平 600 m 内の最も高い障害物の上端から 300 m。",
+   "tag": "条文",
+   "source": "FL.jur の msa（米国の欄 14 CFR 91.119、日本の欄 航空法第 81 条・航空法施行規則第 174 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#caabeca0",
+   "sec": "law.rules",
+   "text": "人家のない地域と広い水面は人や物件から 150 m。",
+   "tag": "条文",
+   "source": "FL.jur の msa（米国の欄 14 CFR 91.119、日本の欄 航空法第 81 条・航空法施行規則第 174 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#11ddf35d",
+   "sec": "law.rules",
+   "text": "そのほかは地表か水面から 150 m（航空法第 81 条・航空法施行規則第 174 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の msa（米国の欄 14 CFR 91.119、日本の欄 航空法第 81 条・航空法施行規則第 174 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#04119ea3",
+   "sec": "law.rules",
+   "text": "速度 ｜ 10,000 ft MSL 未満は指示対気速度 250 kt 以下。",
+   "tag": "条文",
+   "source": "FL.jur の speed（米国の欄 14 CFR 91.117、日本の欄 航空法第 82 条の 2・航空法施行規則第 179 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#e1f93e25",
+   "sec": "law.rules",
+   "text": "Class C・D の主空港から 4 NM 内で地表から 2,500 ft 以下と、Class B の下は 200 kt 以下（14 CFR 91.117） ｜ 管制圏と、管制圏に接続する進入管制区のうち告示で指定する空域で、指示対気速度 250 kt 以下（高さでは決めない）（航空法第 82 条の 2・航空法施行規則第 179 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur の speed（米国の欄 14 CFR 91.117、日本の欄 航空法第 82 条の 2・航空法施行規則第 179 条。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#783ff6ee",
+   "sec": "law.rules",
+   "text": "VFR の燃料 ｜ 最初の着陸予定地まで飛び、さらに巡航速度で昼は 30 分・夜は 45 分飛べる燃料（風と予報を考える）（14 CFR 91.151） ｜ 燃料の量を法令で決めるのは、航空運送事業の機と計器飛行方式の飛行だけ。",
+   "tag": "条文",
+   "source": "FL.jur の fuel.vfr（米国の欄 14 CFR 91.151、日本の欄 航空法第 63 条・航空法施行規則第 153 条・航空法第 73 条の 2・航空法施行規則第 164 条の 15。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#6e3d1a1d",
+   "sec": "law.rules",
+   "text": "訓練では、学校の規程の量に従う（航空法第 63 条・航空法施行規則第 153 条・航空法第 73 条の 2・航空法施行規則第 164 条の 15） ｜",
+   "tag": "条文",
+   "source": "FL.jur の fuel.vfr（米国の欄 14 CFR 91.151、日本の欄 航空法第 63 条・航空法施行規則第 153 条・航空法第 73 条の 2・航空法施行規則第 164 条の 15。W06 が一次資料で確かめた値（確度 confirmed）。囲みが描く文で、W19 は書いていない）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#a619dca9",
+   "sec": "law.rules",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法施行規則（令和 8 年 10 月 1 日施行）・航空法（令和 7 年 12 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur が描く e-Gov の版と確認日（FL.jur の LAWS。W05・W06 が e-Gov で確かめた）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#02a27c8e",
+   "sec": "law.rules",
+   "text": "右にいる相手に進路権があります（91.113(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.113(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
+   "by": "W19",
+   "note": "W19（2026-10-30）：drafts/law.claims.json から。章 law を登録するコミットで取り込む。確かめ役の署名は事実確認役（W19 と別）"
+  }
+ ]
+}

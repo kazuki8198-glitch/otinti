@@ -1,0 +1,1516 @@
+{
+ "unit": "W18",
+ "patches": [
+  {
+   "id": "kiso08.1",
+   "status": "done",
+   "where": "navb.earth（from。航法の 3 つの問い（今どこ・どこへ・この先）の表、地文航法・推測航法・無線航法を組み合わせて予想と見えたものを比べ続ける）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.2",
+   "status": "done",
+   "where": "navb.earth（from。緯度・経度・緯線・経線・本初子午線、度・分・秒、28°30′ ＝ 28.5°（28.30° ではない）、機器の書き方にそろえる：図 navbLatLon）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.3",
+   "status": "done",
+   "where": "navb.earth（from。緯度 1′ ≈ 1 NM・緯度 1° は約 59.7〜60.3 NM、経度 1′ は緯度 60° で約 0.5 NM）と navb.calc（from。NM と kt で割ると時間、小数の時間）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.4",
+   "status": "done",
+   "where": "navb.earth（from。縮尺 1:500,000 で 1 cm ≈ 2.70 NM・区分航空図 1 インチ 6.86 NM、プロッター、画面の拡大で情報は増えない、投影法、中ほどの経線で向きを測る：図 navbProjections）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.5",
+   "status": "done",
+   "where": "navb.north（from。真北・磁北・コンパスの北、偏差（国土地理院の「偏角」は bk.jp）と自差、E/W で書き W は足し E は引く（基礎教材の東を正とする式は「ここを混同しない」で同じ答えと示した）、米国の自差表は FOR/STEER、bk.jur('sbas')：図 navbNorths）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.6",
+   "status": "done",
+   "where": "navb.wind（from。航路・針路・航跡の 3 つの向き、TAS と GS、IAS は風の計算にそのまま使わない）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.7",
+   "status": "done",
+   "where": "navb.wind（from。修正しない例：機首 090°・TAS 100 kt・風 360°/20 kt → 航跡 約 101°・GS 約 102 kt、偏流角：図 navbWindFix の A）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.8",
+   "status": "done",
+   "where": "navb.wind（from。風向は吹いて来る向き・矢印は反対向き、向かい風成分と横風成分（cos・sin の表）、北の基準をそろえる：図 navbComponents）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.9",
+   "status": "done",
+   "where": "navb.wind（from。偏流修正：真航路 090° → 真針路 約 078.5°・GS 約 98 kt（80 kt ではない）、風力三角形（太字の定義・図 windTriangle）、もっと深く（偏流角と偏流修正角）・計算演習：図 navbWindFix の B）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.10",
+   "status": "done",
+   "where": "navb.calc（from。時間（分）＝ 距離 ÷ GS × 60、60 NM で 40 分 → 50 分、区間の平均の GS、所要時間と到達予定時刻：図 navbTimeFuel）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.11",
+   "status": "done",
+   "where": "navb.calc（from。区間の燃料 ＝ 燃料消費率 × 時間（基礎教材の L/h を US gal/h の例題 9.0 gal/h に）、区間の燃料と積む燃料は別、使用可能燃料、予備の法令の決まりは国と飛行の種類で違う（K.navigation.K1））",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso08.cover",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の分を置いた：summary:navb（章のねらいに「この章でできるようになること」を書き直した）。summary:navp の分は W34（行は開いたまま）"
+  },
+  {
+   "id": "kiso08.q1",
+   "status": "done",
+   "where": "written:navb 問 1",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q2",
+   "status": "done",
+   "where": "written:navb 問 2",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q3",
+   "status": "done",
+   "where": "written:navb 問 3",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q4",
+   "status": "done",
+   "where": "written:navb 問 4",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q5",
+   "status": "done",
+   "where": "written:navb 問 5",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）。偏差・自差を E/W で書き、W は足し E は引く（RULINGS R.deviation-sign）"
+  },
+  {
+   "id": "kiso08.q6",
+   "status": "done",
+   "where": "written:navb 問 6",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q7",
+   "status": "done",
+   "where": "written:navb 問 7",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q8",
+   "status": "done",
+   "where": "written:navb 問 8",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q9",
+   "status": "done",
+   "where": "written:navb 問 9",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q10",
+   "status": "done",
+   "where": "written:navb 問 10",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）"
+  },
+  {
+   "id": "kiso08.q11",
+   "status": "done",
+   "where": "written:navb 問 11",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。合本の言葉と数字で書き直した（文は写していない）。燃料を L から US gal（9.0 gal/h）に直した。K.navigation.K1〔安全〕：答えに「予備の量に法令の決まりがあるかは、国と飛行の種類で違う」と perf.fuel（fuel.vfr の囲み）へのリンクを書いた（日本の自家用・訓練の VFR に法定量があるとは読めない）"
+  },
+  {
+   "id": "ch08-fig8-2",
+   "status": "done",
+   "where": "FIG.navbLatLon（navb.earth。暗い板の地球の線と、28°N〜29°N・82°W〜81°W の格子に点 P（28°30′N・81°30′W））",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい（W18 は 390 px の画像で見た）"
+  },
+  {
+   "id": "ch08-fig8-3",
+   "status": "done",
+   "where": "FIG.navbNorths（navb.north。真北・磁北・コンパスの北と、TH 090° → MH → CH の鎖。偏差は FL.physics.MAGVAR_W、自差 2°E は例）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい（W18 は 390 px の画像で見た）"
+  },
+  {
+   "id": "ch08-fig8-5",
+   "status": "done",
+   "where": "FIG.navbWindFix の A（navb.wind。修正しないときの速度の矢印を縮尺どおりに）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。図 8-5 と 8-6 を 1 枚の 2 段にまとめた。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい（W18 は 390 px の画像で見た）"
+  },
+  {
+   "id": "ch08-fig8-6",
+   "status": "done",
+   "where": "FIG.navbWindFix の B（navb.wind。航路 090° を保つときの速度の矢印を縮尺どおりに）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。図 8-5 と 8-6 を 1 枚の 2 段にまとめた。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい（W18 は 390 px の画像で見た）"
+  },
+  {
+   "id": "ch08-fig8-4",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。外す理由のとおり使わなかった（K.navigation.K3）。修正しない例と修正した例は FIG.navbWindFix で縮尺どおりに描いた。外すことの確かめは W21"
+  },
+  {
+   "id": "ch08-photo4",
+   "status": "done",
+   "where": "navb.calc（bk.photo('ch08-photo4')：フライトコンピューターの段落のあと）",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "K.navigation.K1",
+   "status": "fixed",
+   "verified": true,
+   "by": "W18",
+   "where": "drafts/navb.js navb.calc（「区間の燃料と、積む燃料は別」：予備の量に法令の決まりがあるかは国と飛行の種類で違う、米国の VFR は perf.fuel へのリンク。bk.jp：航空法第 63 条が燃料の量を決めるのは航空運送事業と計器飛行方式の飛行、自家用・訓練の VFR に法令の最低量はなく、機長が出発前に確かめ学校の規程の量を積む）と written:navb 問 11（kiso08.q11 の答え）",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。航空法第 63 条は e-Gov の写し（sources/egov/articles/kokuho/63.json、令和 7 年 12 月 1 日施行の版）で確かめた。日本の欄の中身は FL.jur fuel.vfr の日本の欄（W06・W12）と同じ。〔安全〕の行なので、安全レビュー（W27・W36）の署名を待つ"
+  },
+  {
+   "id": "K.navigation.K3",
+   "status": "fixed",
+   "verified": true,
+   "by": "W18",
+   "where": "drafts/navb.js navb.wind（図 ch08-fig8-4 は使わない。修正しない A と航路を保つ B を FIG.navbWindFix に縮尺どおり描き、キャプションと本文で A は修正しない例と書いた）",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む"
+  },
+  {
+   "id": "K.wb-perf.K4",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。kiso08 の分（「法定予備燃料などは別に評価」）は navb.calc と written:navb 問 11 で直した（K.navigation.K1 と同じ書き方）。行は W16 の持ち物（kiso06・kiso12 の分）"
+  },
+  {
+   "id": "R.fuel-reserve",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。kiso08.11・kiso08.q11 の分を裁定のとおり書き直した（navb.calc の bk.jp に日本は事業と IFR だけ、米国の数字は perf.fuel の囲み fuel.vfr へのリンクで、手で写していない）。nav.log・kiso08.q25 の分は W29・W34（行は W08 の持ち物）"
+  },
+  {
+   "id": "R.deviation-sign",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。navb.north も裁定のとおり：偏差と自差を E/W で書き W は足し E は引く、米国の自差表は FOR/STEER をそのまま読む（PHAK 第 16 章 図 16-12 の例の一部）、東を＋とする式でも答えは同じと「ここを混同しない」に書いた"
+  },
+  {
+   "id": "U.msas",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。navb.north に bk.jur('sbas') を置いた（偏差の数字は FL.jur から描く。MSAS で使える進入の種類は〔要確認〕のまま、本文には書いていない）"
+  },
+  {
+   "id": "C.wind-triangle",
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。住所 navb.wind に完全な説明と太字の定義「風力三角形（wind triangle）」（FL.terms の正式名）を 1 回書いた。偏流修正角の太字もここ。呼び戻す側：nav.plan（W29）は今も偏流修正角・偏差・自差を太字で定義している（check-concepts の definition-repeated）ので、W29 が 3 行以内の思い出そう（bk.recall と navb.wind・navb.north へのリンク）にする。basics.speed（W10 の持ち物・W24）からのリンクは、序部から第 1 部への後ろへのリンクなので「予告」つきで（navb の登録のあと：決まり 13）"
+  },
+  {
+   "id": "PA.I.D.K3",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "PA.VI.A.K5",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.1.6.5.1",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.1",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.3",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.5",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.6",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.1.7",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.2.1",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.2.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.2.3",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.2.4",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "cpl.3.1.2.5",
+   "missing": [
+    "jair.fpl"
+   ],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した（残りはほかの単位）"
+  },
+  {
+   "id": "cpl.3.1.3.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ir.1.1.1.1",
+   "missing": [
+    "ifr.pbn"
+   ],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した（残りはほかの単位）"
+  },
+  {
+   "id": "ir.1.1.1.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.1.2.5.5",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.1",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.3",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.5",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.6",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.1.7",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.2.1",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.2.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.2.3",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.2.4",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "id": "ppl.3.1.2.5",
+   "missing": [
+    "jair.fpl"
+   ],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した（残りはほかの単位）"
+  },
+  {
+   "id": "ppl.3.1.3.2",
+   "missing": [],
+   "by": "W18",
+   "note": "W18（2026-10-30）：章 navb の下書き drafts/navb.js（図は drafts/navb-figs.js、主張は drafts/navb.claims.json）。このパッチは、章を登録するコミットで取り込む。この章の節に jcab／faa を書いた（drafts/navb.js）。missing からこの章の節を外した"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#a1071cc3",
+   "sec": "navb.earth",
+   "text": "右の格子の点 P は 28°30′N・81°30′W で、小数の度では 28.5°N・81.5°W です（模式図）",
+   "tag": "参考値",
+   "source": "図の例の座標（架空の点 P。換算は 計算（W18 が検算：scratch の python。2026-10-30）：30 ÷ 60 ＝ 0.5）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#4cc25218",
+   "sec": "navb.earth",
+   "text": "赤道が 0°、北極と南極が 90° で、北は N、南は S を付けます（Bowditch 105）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 105 Coordinates（緯度は赤道 0° から極 90°、N・S）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#67869192",
+   "sec": "navb.earth",
+   "text": "東と西にそれぞれ 180° まで測り、E か W を付けます（Bowditch 105）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 105 Coordinates（経度は本初子午線から東西へ 180° まで、E・W）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#d82d2ee6",
+   "sec": "navb.earth",
+   "text": "たとえば、米国のワシントン D.C. は、およそ北緯 39°・西経 77° にあります（PHAK 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-3 Latitude and Longitude（Washington, D.C., approximately 39° N latitude, 77° W longitude）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#357728be",
+   "sec": "navb.earth",
+   "text": "角度の 1° は 60′（分）、1′ は 60″（秒）です。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 1705 Time and Longitude Arc の表（1° ＝ 60′、1′ ＝ 60″）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#70a2e535",
+   "sec": "navb.earth",
+   "text": "28°30′N ＝ 28 ＋ 30 ÷ 60 ＝ 28.5°N",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：28 ＋ 30 ÷ 60 ＝ 28.5",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#d8f90e91",
+   "sec": "navb.earth",
+   "text": "0.30° は 18′ なので、28.30° は 28°18′ だからです。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：0.30 × 60 ＝ 18′",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#c47f5f92",
+   "sec": "navb.earth",
+   "text": "だから、緯度 1° はおよそ 60 NM です（Bowditch 106）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 106 Distance on the Earth（the nautical mile the length of one minute of latitude）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#1bba2daa",
+   "sec": "navb.earth",
+   "text": "そのため、緯度 1° の長さは、赤道の近くの約 59.7 NM から、極の近くの約 60.3 NM まで変わります（Bowditch 204）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 204 Coordinates（the length of a degree of geodetic latitude … from about 59.7 nautical miles at the equator to about 60.3 nautical miles at the poles）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#9b3b8159",
+   "sec": "navb.earth",
+   "text": "航法の計算では、緯度 1′ を 1 NM と考えてかまいません。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 106（For most purposes, considering the nautical mile the length of one minute of latitude introduces no significant error）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#cddc18ec",
+   "sec": "navb.earth",
+   "text": "経度 1′ の東西の距離は、赤道ではおよそ 1 NM、緯度 60° ではおよそ 0.5 NM です（緯度の cos を掛けた値）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 105（departure decreases with increased latitude）と 計算（W18 が検算：scratch の python。2026-10-30）：cos 0° ＝ 1、cos 60° ＝ 0.5",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#d9cc442e",
+   "sec": "navb.earth",
+   "text": "1：500,000 なら、図の上の 1 cm は地面の 500,000 cm、つまり 5 km です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：500,000 cm ＝ 5 km",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#f14a1f3a",
+   "sec": "navb.earth",
+   "text": "これは約 2.70 NM です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：5,000 m ÷ 1,852 m ≈ 2.70（1 NM ＝ 1,852 m：Bowditch 106・NIST SP 811）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#9b5d95d2",
+   "sec": "navb.earth",
+   "text": "米国の区分航空図（セクショナルチャート、sectional chart）は 1：500,000 で、1 インチが 6.86 NM（約 8 SM）です（PHAK 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-2 Sectional Charts（1:500,000、1 inch = 6.86 NM or approximately 8 SM）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#e82e7913",
+   "sec": "navb.earth",
+   "text": "1：250,000 の図なら、1 インチは 3.43 NM です（PHAK 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-2 VFR Terminal Area Charts（1:250,000、1 inch = 3.43 NM）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#814ead10",
+   "sec": "navb.earth",
+   "text": "地球は 24 時間で 360° 回るので、1 時間に 15° 回ります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-3 Time Zones（the Earth revolves at the rate of 15° an hour）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#e279a1c9",
+   "sec": "navb.earth",
+   "text": "経度 15° で 1 時間、1° で 4 分です（Bowditch 1705）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 1705 Time and Longitude Arc（1h = 15°、4m = 1°）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#16df4607",
+   "sec": "navb.earth",
+   "text": "平均の太陽は、1 時間に 15° 動きます（Bowditch 1702）。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 1702 Solar Time（the speed of the mean sun along the celestial equator is taken as 15° per hour）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#07fa7df5",
+   "sec": "navb.earth",
+   "text": "ふだんの時計の時刻は、経度 15° ごとに分けた時間帯の時刻です。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 1708 Civil Time vs. Mean Solar Time and Time Zones（1 hour time zone segments, spaced 15 degrees of longitude apart、UTC からの整数時間）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#05093b58",
+   "sec": "navb.earth",
+   "text": "西経 81° の地点で、地方時の正午です。",
+   "tag": "参考値",
+   "source": "計算演習の問いの仮定（架空の 2 地点）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#119d23f7",
+   "sec": "navb.earth",
+   "text": "このとき、西経 75° の地点の地方時は何時ですか。",
+   "tag": "参考値",
+   "source": "計算演習の問いの仮定（架空の 2 地点）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#2d70a60b",
+   "sec": "navb.earth",
+   "text": "経度の差は 81 − 75 ＝ 6° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：81 − 75 ＝ 6",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#0ed6849e",
+   "sec": "navb.earth",
+   "text": "1° は 4 分なので、6 × 4 ＝ 24 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：6 × 4 ＝ 24 分（1° ＝ 4 分：Bowditch 1705）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#50e41bcf",
+   "sec": "navb.earth",
+   "text": "西経 75° の地点は東にあるので、時刻は進んでいて 12:24 です。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 1702（the place to the eastward having the later time）と 計算（W18 が検算：scratch の python。2026-10-30）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#fab3bc21",
+   "sec": "navb.earth",
+   "text": "28°30′ は 28.5°。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：30 ÷ 60 ＝ 0.5（ここが大切の短い形）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#4ee87a8f",
+   "sec": "navb.earth",
+   "text": "28.30° と書かない",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：28.30° ＝ 28°18′（ここが大切の短い形）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#a406565e",
+   "sec": "navb.earth",
+   "text": "緯度 1′ はほぼ 1 NM。",
+   "tag": "参考値",
+   "source": "NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻（NEW_R.bowditch。2026-10-30 に読んだ） 106（ここが大切の短い形）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#bf48c130",
+   "sec": "navb.earth",
+   "text": "距離は NM、速さは kt で組にし、1 NM は 1,852 m です。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811：1 nautical mile ＝ 1,852 m）・Bowditch 106（exactly 1,852 meters）。basics.units の思い出そう",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#dd90622b",
+   "sec": "navb.earth",
+   "text": "考えてみよう：北緯 60° で、東西に経度 30′ 離れた 2 点の距離は、およそ何 NM？",
+   "tag": "参考値",
+   "source": "考えてみようの問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#3c745133",
+   "sec": "navb.earth",
+   "text": "およそ 15 NM です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：30 × cos 60° ＝ 15",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.earth#3857d612",
+   "sec": "navb.earth",
+   "text": "緯度 60° では、経度 1′ の距離が赤道の約半分の約 0.5 NM なので、30 × 0.5 ＝ 15 NM です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：30 × 0.5 ＝ 15（経度 1′ ≈ cos(緯度) NM：Bowditch 105）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#e12c8057",
+   "sec": "navb.north",
+   "text": "真北から 090° の向きは、磁北からは 096°、コンパスでは 094° です（偏差 6°W はこの教材の値、自差 2°E は例。W は足し、E は引く）",
+   "tag": "教材値",
+   "source": "FL.physics.MAGVAR_W（この教材の偏差 6°W）と図の例の自差 2°E。計算（W18 が検算：scratch の python。2026-10-30）：090 ＋ 6 ＝ 096、096 − 2 ＝ 094。W は足し E は引く：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-7〜16-8",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#66a4e742",
+   "sec": "navb.north",
+   "text": "表はふつう 30° ごとです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-8 Deviation（usually at intervals of 30°）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#0870f4f5",
+   "sec": "navb.north",
+   "text": "真針路 ｜ 090° ｜ 風を修正したあとの、真北からの機首の向き ｜",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-9（TH ± V = MH ± D = CH の順。表の見出しの例の値は例題）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#c5d0ad69",
+   "sec": "navb.north",
+   "text": "偏差 6°W（教材値） ｜ 090 ＋ 6 ＝ 096°（磁針路） ｜ W は足す ｜",
+   "tag": "教材値",
+   "source": "FL.physics.MAGVAR_W（6°W）。計算（W18 が検算：scratch の python。2026-10-30）：090 ＋ 6 ＝ 096。west is best（add）：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-8",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#ab6e9ad3",
+   "sec": "navb.north",
+   "text": "自差 2°E（例） ｜ 096 − 2 ＝ 094°（コンパス針路） ｜ E は引く ｜",
+   "tag": "参考値",
+   "source": "自差 2°E は例（仮定の値）。計算（W18 が検算：scratch の python。2026-10-30）：096 − 2 ＝ 094。E は引く：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-8 と RULINGS R.deviation-sign",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#d58af1f7",
+   "sec": "navb.north",
+   "text": "答えが 360° を超えたら 360 を引き、0° より小さくなったら 360 を足します。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）（方位は 000°〜360°：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-5 Measurement of Direction）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#a6a6a09b",
+   "sec": "navb.north",
+   "text": "真針路 355°・偏差 7°W なら、355 ＋ 7 ＝ 362 なので、磁針路は 002° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：355 ＋ 7 ＝ 362 → 002",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#8d703500",
+   "sec": "navb.north",
+   "text": "FOR（磁針路） ｜ N（000°） ｜ 030° ｜ 060° ｜ E（090°） ｜",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-8 Figure 16-12 Compass deviation card（For (Magnetic) N 30 60 E）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#26051ea7",
+   "sec": "navb.north",
+   "text": "STEER（コンパス） ｜ 000° ｜ 028° ｜ 057° ｜ 086° ｜",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-8 Figure 16-12 Compass deviation card（Steer (Compass) 0 28 57 86）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#21ce354d",
+   "sec": "navb.north",
+   "text": "この表なら、磁針路 090° で飛ぶには、コンパスで 086° に合わせます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） Figure 16-12（For E → Steer 86）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#bcdb11bc",
+   "sec": "navb.north",
+   "text": "6°W を引いてしまうと、正しい向きから 12° ずれます。",
+   "tag": "教材値",
+   "source": "FL.physics.MAGVAR_W（6°W）。計算（W18 が検算：scratch の python。2026-10-30）：096 と 084 の差 ＝ 12",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#bcfb9fc8",
+   "sec": "navb.north",
+   "text": "Sanford の磁気偏差は約 7°W（2026 年）（AIM 1-1-18・NOAA WMM-2025） ｜ SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。",
+   "tag": "参考値",
+   "source": "FL.jur sbas の描いた文（flight-lab/src/book-jur.js。W06 が NOAA WMM-2025・国土交通省 航空局の資料 3-10 で確かめ、R1 の W12 と factcheck2-R1 が二人目。数字は手で書いていない）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#b3b95b7c",
+   "sec": "navb.north",
+   "text": "磁気偏差は約 6°W（那覇）〜約 10.5°W（稚内）（2026 年）（国土交通省 航空局「MSAS（衛星航法補強システム）」（資料 3-10）・NOAA WMM-2025） ｜",
+   "tag": "参考値",
+   "source": "FL.jur sbas の描いた文（flight-lab/src/book-jur.js。W06 が NOAA WMM-2025・国土交通省 航空局の資料 3-10 で確かめ、R1 の W12 と factcheck2-R1 が二人目。数字は手で書いていない）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#2aeb18ff",
+   "sec": "navb.north",
+   "text": "考えてみよう：真針路 355°、偏差 7°W、自差 1°E。",
+   "tag": "参考値",
+   "source": "考えてみようの問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#0698c5e1",
+   "sec": "navb.north",
+   "text": "355 ＋ 7 ＝ 362 なので、360 を引いて、磁針路は 002° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：355 ＋ 7 ＝ 362 → 002",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.north#ce7bdc27",
+   "sec": "navb.north",
+   "text": "自差の 1°E を引いて、コンパス針路は 001° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：002 − 1 ＝ 001",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#5541315e",
+   "sec": "navb.wind",
+   "text": "図：同じ北からの風 20 kt で、A は機首を 090° に向けたまま飛んだとき、B は機首を風上へ向けて東向きの線を保ったときの速度の矢印です（縮尺どおり。水色は空気に対する速度、黄色は風、緑は地面に対する速度）",
+   "tag": "参考値",
+   "source": "図の例（仮定の値）。計算（W18 が検算：scratch の python。2026-10-30）（縮尺 2.3 px/kt）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#2a3f79ea",
+   "sec": "navb.wind",
+   "text": "図の A は、機首を真東（090°）に向け、TAS 100 kt で飛んだ例です。",
+   "tag": "参考値",
+   "source": "例の仮定（TAS 100 kt・針路 090°）。基礎教材 kiso08.7 と同じ値",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#81a2151b",
+   "sec": "navb.wind",
+   "text": "北から 20 kt の風で、空気ごと南へ運ばれます。",
+   "tag": "参考値",
+   "source": "例の仮定（風 360°/20 kt）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#175cca0c",
+   "sec": "navb.wind",
+   "text": "1 時間で東へ 100 NM、南へ 20 NM 動くので、航跡は約 101°、GS は約 102 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：atan2(100, −20) → 101.3°、√(100² ＋ 20²) ≈ 102.0。二つの運動の合成：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-9",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#1274225d",
+   "sec": "navb.wind",
+   "text": "この例の偏流角は約 11° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：atan(20/100) ≈ 11.3°",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#fc376d9d",
+   "sec": "navb.wind",
+   "text": "風と航路の角度 ｜ 0° ｜ 30° ｜ 45° ｜ 60° ｜ 90° ｜",
+   "tag": "参考値",
+   "source": "表の見出し（角度の例）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#aad2bb6d",
+   "sec": "navb.wind",
+   "text": "向かい風成分（風速 20 kt） ｜ 20 kt ｜ 17 kt ｜ 14 kt ｜ 10 kt ｜ 0 kt ｜",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × cos θ（20・17.3・14.1・10・0）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#df223b87",
+   "sec": "navb.wind",
+   "text": "横風成分（風速 20 kt） ｜ 0 kt ｜ 10 kt ｜ 14 kt ｜ 17 kt ｜ 20 kt ｜",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × sin θ（0・10・14.1・17.3・20）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#35346be4",
+   "sec": "navb.wind",
+   "text": "角度が 90° を超えると、向かい風成分は負の値になり、追い風になります。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：cos θ ＜ 0（θ ＞ 90°）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#77cb9182",
+   "sec": "navb.wind",
+   "text": "図：風 030°/15 kt を、航路 090° に沿う向かい風成分と、航路を横切る横風成分に分けたもの（縮尺どおり）。",
+   "tag": "参考値",
+   "source": "図の例（FIG.windTriangle と同じ仮定の風）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#9515f692",
+   "sec": "navb.wind",
+   "text": "たとえば航路 090°・風 030°/15 kt なら、角度は 60° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：090 − 030 ＝ 60",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#e5214a39",
+   "sec": "navb.wind",
+   "text": "向かい風成分は 15 × 0.5 ＝ 7.5 kt、左からの横風成分は約 13 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：15 × cos 60° ＝ 7.5、15 × sin 60° ≈ 13.0",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#f3dbdcb2",
+   "sec": "navb.wind",
+   "text": "図の B は、航路 090°・TAS 100 kt・北から 20 kt の例です。",
+   "tag": "参考値",
+   "source": "例の仮定（基礎教材 kiso08.9 と同じ値）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#ca748006",
+   "sec": "navb.wind",
+   "text": "南へ流す 20 kt を打ち消すために、空気に対する速さのうち、20 kt 分を北向きに使います。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：北向きの成分 20 kt で南向きの 20 kt を打ち消す",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#0ce3957b",
+   "sec": "navb.wind",
+   "text": "sin（偏流修正角）＝ 横風成分 ÷ TAS ＝ 20 ÷ 100 ＝ 0.2 → 偏流修正角 ≈ 11.5°",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：asin(0.2) ≈ 11.54°",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#342ca458",
+   "sec": "navb.wind",
+   "text": "機首は左へ約 11.5° 向けるので、真針路は 090 − 11.5 ≈ 078.5° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：090 − 11.54 ≈ 078.5。風が左（北）からなら左へ修正：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-9",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#22e230a5",
+   "sec": "navb.wind",
+   "text": "東向きに残る速さは 100 × cos 11.5° ≈ 98 kt で、この例では GS も約 98 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：100 × cos 11.54° ≈ 97.98",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#578af5d1",
+   "sec": "navb.wind",
+   "text": "同じ風でも、修正しない A の GS は約 102 kt、航路を保つ B は約 98 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）（101.98 と 97.98）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#4395b5b2",
+   "sec": "navb.wind",
+   "text": "真横からの 20 kt を TAS から引いた 80 kt ではありません。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：100 − 20 ＝ 80（誤った計算の値として）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#b723abc3",
+   "sec": "navb.wind",
+   "text": "図：風力三角形（真航路 090°・真対気速度 105 kt・風 030°/15 kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。",
+   "tag": "参考値",
+   "source": "FIG.windTriangle の既存のキャプション（book-figs.js。計算（W18 が検算：scratch の python。2026-10-30）：WCA −7.1°、GS 96.7 kt）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#d768578d",
+   "sec": "navb.wind",
+   "text": "上の図は、真航路 090°・TAS 105 kt・風 030°/15 kt を、縮尺どおりに描いたものです。",
+   "tag": "参考値",
+   "source": "FIG.windTriangle の仮定（計算機 wca の初期値と同じ）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#462fb462",
+   "sec": "navb.wind",
+   "text": "偏流修正角は左へ約 7°、GS は約 97 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：asin(15 × sin(−60°) ÷ 105) ≈ −7.1°、105 × cos 7.1° − 15 × cos 60° ≈ 96.7 kt",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#8b32dce3",
+   "sec": "navb.wind",
+   "text": "修正しない A の偏流角は約 11.3° で、tan から求めます（20 ÷ 100 ＝ 0.2）。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：atan(0.2) ≈ 11.31°",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#30500686",
+   "sec": "navb.wind",
+   "text": "航路を保つ B の偏流修正角は約 11.5° で、sin から求めます。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：asin(0.2) ≈ 11.54°",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#ab93540e",
+   "sec": "navb.wind",
+   "text": "20 kt・100 kt なら 12° で、正しい 11.5° に近い値です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60 × 20 ÷ 100 ＝ 12",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#de097742",
+   "sec": "navb.wind",
+   "text": "sin の値を角度（ラジアン）とみなし、1 ラジアンの約 57° を 60 で近似した式です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：1 rad ＝ 57.3°（小角近似 sin x ≈ x）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#01f30a94",
+   "sec": "navb.wind",
+   "text": "真航路 180°、TAS 110 kt、風 230°/20 kt（真北が基準）です。",
+   "tag": "参考値",
+   "source": "計算演習の問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#fc689475",
+   "sec": "navb.wind",
+   "text": "風と航路の角度は 230 − 180 ＝ 50° で、風は右前から吹いています。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：230 − 180 ＝ 50",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#e16e6e66",
+   "sec": "navb.wind",
+   "text": "横風成分は 20 × sin 50° ≈ 15.3 kt、向かい風成分は 20 × cos 50° ≈ 12.9 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：20 × sin 50° ≈ 15.32、20 × cos 50° ≈ 12.86",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#17f715f4",
+   "sec": "navb.wind",
+   "text": "sin（偏流修正角）＝ 15.3 ÷ 110 ≈ 0.139 なので、偏流修正角は右へ約 8° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：15.32 ÷ 110 ≈ 0.1393、asin → 8.01°",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#eef4aa5f",
+   "sec": "navb.wind",
+   "text": "真針路は 180 ＋ 8 ＝ 188° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：180 ＋ 8 ＝ 188",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#e16b8644",
+   "sec": "navb.wind",
+   "text": "GS は 110 × cos 8° − 12.9 ≈ 96 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：110 × cos 8.01° − 12.86 ≈ 96.07",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#448fff33",
+   "sec": "navb.wind",
+   "text": "考えてみよう：TAS 100 kt で東へ向かう航路に、真後ろから 20 kt の風が吹いている。",
+   "tag": "参考値",
+   "source": "考えてみようの問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#e719ad67",
+   "sec": "navb.wind",
+   "text": "横風成分がないので、偏流修正角は 0° です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：横風の成分 20 × sin 180° ＝ 0",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.wind#3aec6a42",
+   "sec": "navb.wind",
+   "text": "追い風なので、GS は 100 ＋ 20 ＝ 120 kt です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：100 ＋ 20 ＝ 120（tailwind：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-9 Figure 16-13 の考え方）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#b77c6c80",
+   "sec": "navb.calc",
+   "text": "図：同じ 60 NM の区間でも、GS が 90 kt から 72 kt に下がると、時間は 40 分から 50 分に延び、燃料も増えます（燃料消費率 9.0 gal/h の例題）",
+   "tag": "参考値",
+   "source": "図の例（仮定の値）。計算（W18 が検算：scratch の python。2026-10-30）：60 ÷ 90 × 60 ＝ 40、60 ÷ 72 × 60 ＝ 50、9.0 × 40 ÷ 60 ＝ 6.0、9.0 × 50 ÷ 60 ＝ 7.5",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#f94fda59",
+   "sec": "navb.calc",
+   "text": "60 NM を GS 90 kt で飛ぶと、60 ÷ 90 × 60 ＝ 40 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60 ÷ 90 × 60 ＝ 40（T ＝ D/GS：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-11）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#207da94e",
+   "sec": "navb.calc",
+   "text": "風が強まって GS が 72 kt になると、60 ÷ 72 × 60 ＝ 50 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60 ÷ 72 × 60 ＝ 50",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#0927ec7d",
+   "sec": "navb.calc",
+   "text": "GS は 20% 減っただけですが、時間は 25% 延びます。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：72 ÷ 90 ＝ 0.8、50 ÷ 40 ＝ 1.25",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#a5adfdcf",
+   "sec": "navb.calc",
+   "text": "0.5 時間は 30 分、0.75 時間は 45 分です（PHAK 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-11 Converting Minutes to Equivalent Hours（30 minutes is 0.5 hour、0.75 hour equals 45 minutes）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#c6bcd2e7",
+   "sec": "navb.calc",
+   "text": "0.3 時間は 18 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：0.3 × 60 ＝ 18",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#115d7e43",
+   "sec": "navb.calc",
+   "text": "0.67 時間を 67 分と読むのは間違いで、約 40 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：0.67 × 60 ≈ 40.2",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#27a20598",
+   "sec": "navb.calc",
+   "text": "燃料消費率（燃料流量、fuel consumption rate）は、1 時間に使う燃料の量です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-11 Fuel Consumption（fuel consumption in gasoline-fueled aircraft is measured in gallons per hour）。名前は FL.terms fuel-consumption",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#b457812a",
+   "sec": "navb.calc",
+   "text": "例題として、燃料消費率を 9.0 gal/h とします。",
+   "tag": "参考値",
+   "source": "例題の仮定の値（9.0 gal/h。どの機体の値でもない）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#225aa26e",
+   "sec": "navb.calc",
+   "text": "40 分の区間なら 9.0 × 40 ÷ 60 ＝ 6.0 gal、50 分なら 7.5 gal です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：9.0 × 40 ÷ 60 ＝ 6.0、9.0 × 50 ÷ 60 ＝ 7.5（fuel = time × rate：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） p.16-12）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#0f043b36",
+   "sec": "navb.calc",
+   "text": "風で 10 分延びると、燃料は 1.5 gal 増えます。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：7.5 − 6.0 ＝ 1.5",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#1412bf96",
+   "sec": "navb.calc",
+   "text": "航空ガソリン（AVGAS）は、1 US gal あたり約 6 lb として計算します（FAA Weight and Balance Handbook 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（R.wb の PDF。2026-10-30 に読んだ） 第 7 章 p.7-7（Because aviation gasoline weighs 6 pounds per gallon）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#b5b5dbed",
+   "sec": "navb.calc",
+   "text": "15 ℃（59 °F）で、航空ガソリン 1 US gal は 6.01 lb、水 1 US gal は 8.33 lb です（FAA Weight and Balance Handbook 図 3-4）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（R.wb の PDF。2026-10-30 に読んだ） 第 3 章 図 3-4 Standard fuels and weights（AVGAS 6.01 lb/gal・Water 8.33 lb/gal at 59 °F）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#5ec82839",
+   "sec": "navb.calc",
+   "text": "だから航空ガソリンの比重は約 0.72 で、1 L あたり約 0.72 kg です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：6.01 ÷ 8.33 ≈ 0.72（比重の求め方：sg × 8.345 ＝ lb/gal：FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（R.wb の PDF。2026-10-30 に読んだ） p.3-4）、6.01 lb × 0.45359237 ÷ 3.785411784 L ≈ 0.72 kg/L（NIST SP 811）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#ad94938d",
+   "sec": "navb.calc",
+   "text": "燃料は冷えると重くなり、0 ℃（32 °F）では 1 US gal が 6.14 lb です（FAA Weight and Balance Handbook 図 3-4）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（R.wb の PDF。2026-10-30 に読んだ） 第 3 章 図 3-4（AVGAS 6.14 lb/gal at 32 °F）。32 °F ＝ 0 ℃・59 °F ＝ 15 ℃（換算）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#31032c58",
+   "sec": "navb.calc",
+   "text": "比の面では、「60 NM を 40 分」と「90 NM を 60 分」が同じ比なので、GS 90 kt と読めます。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60/40 ＝ 90/60（比の面：FAA PHAK FAA-H-8083-25C 第 16 章（R.phak16 の PDF。2026-10-30 に読んだ） Figure 16-18 the computational … side of a mechanical flight computer (E6B)）",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#b8df60b2",
+   "sec": "navb.calc",
+   "text": "60 NM を GS 90 kt で飛ぶなら、答えは 1 時間より短いはずです。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60 NM ÷ 90 kt ＝ 0.67 h ＜ 1 h",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#e0b24f35",
+   "sec": "navb.calc",
+   "text": "1420Z に出発点の上空を通り、45 NM 先のチェックポイントへ GS 108 kt で向かいます。",
+   "tag": "参考値",
+   "source": "計算演習の問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#8e7c6c8a",
+   "sec": "navb.calc",
+   "text": "到達予定時刻と、燃料消費率 9.0 gal/h のときの区間の燃料を求めてください。",
+   "tag": "参考値",
+   "source": "計算演習の問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#1099c046",
+   "sec": "navb.calc",
+   "text": "45 ÷ 108 × 60 ＝ 25 分なので、ETA は 1445Z です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：45 ÷ 108 × 60 ＝ 25、1420 ＋ 25 分 ＝ 1445",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#5b886a82",
+   "sec": "navb.calc",
+   "text": "燃料は 9.0 × 25 ÷ 60 ＝ 3.75 gal で、約 3.8 gal です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：9.0 × 25 ÷ 60 ＝ 3.75",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#ec7bd84a",
+   "sec": "navb.calc",
+   "text": "答えを、見当の数と比べたか（60 NM を 90 kt なら 1 時間より短い）",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：60 ÷ 90 ＝ 0.67 h ＜ 1 h",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#3a79594c",
+   "sec": "navb.calc",
+   "text": "0.3 時間は 18 分",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：0.3 × 60 ＝ 18（ここが大切の短い形）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#5e8679ab",
+   "sec": "navb.calc",
+   "text": "航空ガソリンは 1 US gal 約 6 lb、比重 約 0.72",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（R.wb の PDF。2026-10-30 に読んだ） 第 7 章 p.7-7（6 lb/gal）と 図 3-4 からの計算（比重 ≈ 0.72）。ここが大切の短い形",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#25533685",
+   "sec": "navb.calc",
+   "text": "よくある間違い：0.67 時間を 67 分と読むことと、L と US gal を混ぜることです。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：0.67 h ≈ 40 分（よくある間違いの例）",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#75a928ff",
+   "sec": "navb.calc",
+   "text": "1 US gal は約 3.785 L なので、取り違えると、燃料の量が 4 倍近く違います。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811：1 U.S. gallon ＝ 3.785412 L）。basics.units の表と同じ",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#98294ca0",
+   "sec": "navb.calc",
+   "text": "日本では、航空法第 63 条が燃料の量を決めているのは、航空運送事業と計器飛行方式（IFR：instrument flight rules）の飛行です。",
+   "tag": "条文",
+   "source": "航空法第 63 条（e-Gov の写し textbook/rewrite/sources/egov/articles/kokuho/63.json、令和 7 年 12 月 1 日施行の版、2026-10-27 確認）：「航空運送事業の用に供する場合又は計器飛行方式により飛行しようとする場合においては、国土交通省令で定める量の燃料を携行しなければ…」。FL.jur fuel.vfr の日本の欄と同じ",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#f5956cce",
+   "sec": "navb.calc",
+   "text": "1 US gal は約 3.785 L、1 lb は約 0.454 kg です。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811：1 U.S. gallon ＝ 3.785412 L、1 lb ＝ 0.45359237 kg）。basics.units の思い出そう",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#5f37f3bb",
+   "sec": "navb.calc",
+   "text": "考えてみよう：残り 30 NM、GS 100 kt、燃料消費率 9.0 gal/h。",
+   "tag": "参考値",
+   "source": "考えてみようの問いの仮定",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#c1e48cec",
+   "sec": "navb.calc",
+   "text": "30 ÷ 100 × 60 ＝ 18 分です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：30 ÷ 100 × 60 ＝ 18",
+   "kind": "例題",
+   "by": "W18"
+  },
+  {
+   "op": "add",
+   "id": "navb.calc#e2fd19ad",
+   "sec": "navb.calc",
+   "text": "燃料は 9.0 × 18 ÷ 60 ＝ 2.7 gal です。",
+   "tag": "参考値",
+   "source": "計算（W18 が検算：scratch の python。2026-10-30）：9.0 × 18 ÷ 60 ＝ 2.7",
+   "kind": "例題",
+   "by": "W18"
+  }
+ ]
+}

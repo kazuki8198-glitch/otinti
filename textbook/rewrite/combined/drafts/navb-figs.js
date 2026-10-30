@@ -158,7 +158,7 @@
       const OB = [24, 306], HB = [OB[0] + tas * k * Math.cos(wca * DEG), OB[1] - tas * k * Math.sin(wca * DEG)], GB = [HB[0], OB[1]];
       s += L(OB[0], OB[1], 392, OB[1], C.mut, 1.2, '5 4') + T(390, OB[1] - 8, '航路 090°', { c: C.mut, fs: 12, a: 'end' });
       s += A(OB[0], OB[1], HB[0].toFixed(1), HB[1].toFixed(1), C.cy, 3) + A(HB[0].toFixed(1), HB[1].toFixed(1), GB[0].toFixed(1), GB[1], C.am, 3) + A(OB[0], OB[1], GB[0].toFixed(1), GB[1], C.gr, 3);
-      s += T(170, 244, `TAS ${tas} kt・機首 約 ${(90 - wca).toFixed(1)}°`, { c: C.cy, fs: 12, b: 1 });
+      s += T(170, 244, `TAS ${tas} kt・機首 約 ${(90 - wca).toFixed(1).padStart(5, '0')}°`, { c: C.cy, fs: 12, b: 1 });
       s += T(HB[0] + 10, 282, `風 360°/${ws} kt`, { c: C.am, fs: 12, b: 1, a: 'start' });
       s += arcDir(OB[0], OB[1], 74, 90 - wca, 90, C.rd, 2) + T(30, 274, `風上へ 約 ${wca.toFixed(1)}°`, { c: C.rd, fs: 12, b: 1, a: 'start' });
       s += T(140, 326, `GS 約 ${Math.round(gsFix)} kt（東へ）`, { c: C.gr, fs: 12, b: 1 });
@@ -173,12 +173,12 @@
       s += A(30, 170, 372, 170, C.gr, 3) + T(372, 160, `航路 ${pad3(tc)}°（進む向き）`, { c: C.gr, fs: 12, b: 1, a: 'end' });
       s += A(W0[0], W0[1], W1[0].toFixed(1), W1[1].toFixed(1), C.am, 3);
       s += A(W0[0], W0[1], W0[0] - head * k, W0[1], C.rd, 2.5, '5 3') + A(W0[0] - head * k, W0[1], W1[0].toFixed(1), W1[1].toFixed(1), C.cy, 2.5, '5 3');
-      s += T(W0[0] - head * k / 2, W0[1] - 10, `向かい風の成分 ${head.toFixed(1)} kt`, { c: C.rd, fs: 12, b: 1 });
-      s += T(W0[0] - head * k - 8, 92, `横風の成分 約 ${Math.round(cross)} kt`, { c: C.cy, fs: 12, b: 1, a: 'end' });
+      s += T(W0[0] - head * k / 2, W0[1] - 10, `向かい風成分 ${head.toFixed(1)} kt`, { c: C.rd, fs: 12, b: 1 });
+      s += T(W0[0] - head * k - 8, 92, `横風成分 約 ${Math.round(cross)} kt`, { c: C.cy, fs: 12, b: 1, a: 'end' });
       s += T(W0[0] - 12, 100, `風 ${pad3(wd)}°/${ws} kt`, { c: C.am, fs: 12, b: 1, a: 'start', halo: 1 });
       s += T(200, 200, `風と航路の角度 θ ＝ ${pad3(tc)}° − ${pad3(wd)}° ＝ ${tc - wd}°`, { c: C.ink, fs: 12 });
       s += T(200, 220, `${ws} × cos ${tc - wd}° ＝ ${head.toFixed(1)} kt・${ws} × sin ${tc - wd}° ≈ ${Math.round(cross)} kt`, { c: C.ink, fs: 12 });
-      return svg(400, 232, s, `図：風 ${pad3(wd)}°/${ws} kt を、航路 ${pad3(tc)}° に沿う向かい風の成分と、航路を横切る横風の成分に分けたもの（縮尺どおり）。風の矢印は、風が流れて行く向きに描きます`);
+      return svg(400, 232, s, `図：風 ${pad3(wd)}°/${ws} kt を、航路 ${pad3(tc)}° に沿う向かい風成分と、航路を横切る横風成分に分けたもの（縮尺どおり）。風の矢印は、風が流れて行く向きに描きます`);
     },
     // ---------------------------------------------------------------- navb.wind (3) — REDRAWN under its own name: FIG.windTriangle
     // (book-figs.js; nav.plan uses it too). The same drawing, word for word; only the caption names the triangle with FL.terms'

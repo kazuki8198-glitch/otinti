@@ -65,7 +65,7 @@ export function createFlyMode(ctx) {
   const A44 = P.AIRCRAFT.find(a => a.id === 'pa44');
   const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, A44, { reg: 'N452SY' }) };
   let live = lives.pa28, liveId = 'pa28';
-  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44 });
+  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44, quality: ctx.quality });
   live.root.add(cockpit.root);
   for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
   const todayType = () => (ctx.aircraft ? ctx.aircraft() : 'pa28') || 'pa28';

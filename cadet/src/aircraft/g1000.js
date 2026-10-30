@@ -1,5 +1,5 @@
 // CADET — aircraft/g1000.js : the G1000-type glass panel of the 3D Archer, drawn on canvases.
-//  - the PFD and the MFD: FLIGHT LAB's own drawPFD / drawMFD (logical 640×400) on 1024×640 textures, redrawn on a
+//  - the PFD and the MFD: FLIGHT LAB's own drawPFD / drawMFD (logical 1280×800) on 2048×1280 textures, redrawn on a
 //    schedule by the cockpit (PFD 30 Hz, MFD 10 Hz) — black without power (the NXi's buses: the PFD on the essential
 //    bus, BATT MASTR or EMERG BATT ARM; the MFD on the avionics bus, AVION MASTER too: cockpit.js update());
 //  - the softkey labels shown along the bottom of each screen, above the 12 keys of the bezel (redrawn only when the
@@ -20,8 +20,8 @@ const SANS = '"Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
 // A 10.4" display unit: the screen (4:3) with the softkey labels along its bottom (the strip), 12 keys under it,
 // the knobs in the two side columns (NAV / HDG / ALT on the left, COM / CRS-BARO / RANGE / keys / FMS on the right).
 export const BEZEL = { w: 0.27, h: 0.21, depth: 0.02, screenW: 0.21, screenH: 0.1575, screenY: 0.012 };
-BEZEL.stripH = BEZEL.screenW * 32 / 512;                                     // the label strip: 512 × 32 px
-BEZEL.imageH = BEZEL.screenW * 400 / 640;                                    // the display itself: 640 × 400 (16:10)
+BEZEL.stripH = BEZEL.screenW * 64 / 1024;                                    // the label strip: 1024 × 64 px
+BEZEL.imageH = BEZEL.screenW * 800 / 1280;                                   // the display itself: 1280 × 800 (16:10)
 BEZEL.screenBot = BEZEL.screenY - BEZEL.screenH / 2;
 BEZEL.keyY = BEZEL.screenBot - 0.0145;
 export const KEY_X = i => -BEZEL.screenW / 2 + (i + 0.5) * BEZEL.screenW / 12;
@@ -62,11 +62,14 @@ export const SOFTKEYS = {
 export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av && av.pfdMenu === 'PFD' ? SOFTKEYS.pfdMenu : SOFTKEYS.pfdTop);
 
 // ---------------------------------------------------------------- the canvases and their textures
-const SCR_W = 1024, SCR_H = 640, LW = 640, LH = 400;
-const DYN_W = 512, DYN_H = 192;
+const SCR_W = 2048, SCR_H = 1280, LW = 1280, LH = 800;
+const DYN_W = 1024, DYN_H = 384;
+// the frame the standby's page is drawn in (its letter sizes are tuned for it; the region below is scaled onto
+// it, as the PFD's and MFD's drawings are onto their canonical 640-wide frame — see FLIGHT LAB's avionics.js)
+const G5_W = 160, G5_H = 120;
 // regions of the small canvas: the two label strips, the G5's screen (its 0.072 × 0.054 m — 4:3, the unit's 320 × 240
-// display — at 160 × 120 px), a white patch (lamps take its colour)
-export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, g5: [0, 64, 160, 120], white: [420, 100, 16, 16] };
+// display — at its full 320 × 240 px), a white patch (lamps take its colour)
+export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 1024, 64], mfd: [0, 64, 1024, 64] }, g5: [0, 128, 320, 240], white: [840, 200, 32, 32] };
 export const dynUV = ([x, y, w, h]) => [x / DYN_W, 1 - (y + h) / DYN_H, (x + w) / DYN_W, 1 - y / DYN_H];   // [u0, v0, u1, v1]
 
 const FONT_S = `700 11px ${SANS}`, FONT_L = `700 14px ${SANS}`;
@@ -151,22 +154,27 @@ export function createGlass(FL, makeCanvas) {
   }
 
   // the softkey labels: 12 slots; a used key in white (cyan while its function is on), an unused one dim grey
+  // drawn in the strip's own 512 × 32 frame (the label sizes are tuned for it) and scaled onto the region: the
+  // region doubled with the displays, the labels' proportions did not
   function strip(which, av, powered) {
-    const [x0, y0, w, h] = DYN.strip[which], g = dyn.g, sw = w / 12;
-    g.fillStyle = '#000'; g.fillRect(x0, y0, w, h);
-    if (!powered) return;
-    const keys = softkeysOf(which, av);
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let i = 0; i < 12; i++) {
-      const k = keys[i], label = typeof k.label === 'function' ? k.label(av) : k.label, cx = x0 + (i + 0.5) * sw;
-      g.fillStyle = '#2a3038'; g.fillRect(x0 + i * sw + 1, y0 + 4, sw - 2, h - 6);            // the label box, as on the display
-      if (!label) continue;
-      const on = k.on && av && k.on(av);
-      g.fillStyle = !k.act ? '#6c737c' : on ? '#33d6ff' : '#f2f4f7';
-      g.font = label.length > 7 ? FONT_S : FONT_L;
-      g.fillText(label, cx, y0 + h / 2 + 1, sw - 3);
-      if (on) { g.fillStyle = '#33d6ff'; g.fillRect(x0 + i * sw + 4, y0 + h - 4, sw - 8, 2); }
+    const [x0, y0, w, h] = DYN.strip[which], g = dyn.g, sw = 512 / 12;
+    g.setTransform(w / 512, 0, 0, h / 32, x0, y0);
+    g.fillStyle = '#000'; g.fillRect(0, 0, 512, 32);
+    if (powered) {
+      const keys = softkeysOf(which, av);
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      for (let i = 0; i < 12; i++) {
+        const k = keys[i], label = typeof k.label === 'function' ? k.label(av) : k.label, cx = (i + 0.5) * sw;
+        g.fillStyle = '#2a3038'; g.fillRect(i * sw + 1, 4, sw - 2, 32 - 6);            // the label box, as on the display
+        if (!label) continue;
+        const on = k.on && av && k.on(av);
+        g.fillStyle = !k.act ? '#6c737c' : on ? '#33d6ff' : '#f2f4f7';
+        g.font = label.length > 7 ? FONT_S : FONT_L;
+        g.fillText(label, cx, 32 / 2 + 1, sw - 3);
+        if (on) { g.fillStyle = '#33d6ff'; g.fillRect(i * sw + 4, 32 - 4, sw - 8, 2); }
+      }
     }
+    g.setTransform(1, 0, 0, 1, 0, 0);
   }
   // (pfdOn, mfdOn: each display's power — its bus)
   function drawStrips(av, pfdOn, mfdOn = pfdOn) {
@@ -198,7 +206,8 @@ export function createGlass(FL, makeCanvas) {
   function drawStandby(o, alt, baro, hpa, V) {
     if (!dyn) return;
     stats.standby++;
-    const g = dyn.g, R = DYN.g5, x0 = R[0], y0 = R[1], W = R[2], H = R[3], v = V || V_DEF;
+    const g = dyn.g, R = DYN.g5, x0 = 0, y0 = 0, W = G5_W, H = G5_H, v = V || V_DEF;
+    g.setTransform(R[2] / G5_W, 0, 0, R[3] / G5_H, R[0], R[1]);      // the page in its 160 × 120 frame, scaled onto the region
     const ias = Math.max(0, o.ias || 0), pitch = clamp(o.pitch || 0, -60, 60), bank = o.bank || 0;
     const hdg = ((AV.trueToMag(o.hdgTrue || 0, P.MAGVAR_W) % 360) + 360) % 360;
     const cx = x0 + W * 0.5, cy = y0 + 66, K = 2.2, rb = 40;                    // the attitude's centre; px a degree of pitch; the bank scale's radius
@@ -281,6 +290,7 @@ export function createGlass(FL, makeCanvas) {
     if (baroText.v !== baro || baroText.hpa !== hpa) { baroText.v = baro; baroText.hpa = hpa; baroText.text = hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2); }
     g.fillStyle = G5C.cyan; g.font = font(700, 9); g.textAlign = 'center'; g.fillText(baroText.text, ax + AW / 2, by + 7.5, AW - 2);
     g.restore();
+    g.setTransform(1, 0, 0, 1, 0, 0);
     dyn.texture.needsUpdate = true;
   }
   // its screen dark (the G5 off with the PFD)

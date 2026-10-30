@@ -36,7 +36,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import { clearGlassMaterial } from '../render/materials.js';
+import { clearGlassMaterial, tickGlassRain } from '../render/materials.js';
 import { NOISE } from '../render/glsl.js';
 import { createGlass, BEZEL, KNOBS, KEYS, KEY_X, softkeysOf, DYN, dynUV } from './g1000.js';
 import { modelMeshes } from './archer-model.js';
@@ -275,7 +275,7 @@ PED.n = PED.prof.map((p, j, pr) => { const a = pr[Math.max(0, j - 1)], b = pr[Ma
 const BRAKE = { x: -0.11, y: 0.024, z: PZ + 0.012, ang: 30 * DEG };
 
 // ---------------------------------------------------------------- surfaces (sRGB colour, roughness, metalness, detail kind)
-// kinds: 0 smooth, 1 textured paint, 2 leather, 3 carpet, 4 grained vinyl, 5 woven headliner
+// kinds: 0 smooth, 1 textured paint, 2 leather, 3 carpet, 4 grained vinyl, 5 woven headliner, 6 pebbled grip
 // The Archer TX's light scheme (Piper's TX photos: cool greys, no warm cast): the panel, the quadrant, the pedestal and
 // the console matte black, the display bezels a shade lighter (the TX panel photo: panel #141614, bezel #1b1d1c — that
 // photo's exposure: a matte black paint reflects 3–5 %, so the panel is lifted to ~1.4 % linear, or it renders as a void
@@ -297,7 +297,7 @@ const S = {
   pedal: { c: 0xa7aaad, r: 0.75, k: 4 }, postAlu: { c: 0xa9adb1, r: 0.5, m: 0.2 }, screw: { c: 0x3a3d41, r: 0.35, m: 0.7 },
   chrome: { c: 0xc8ccd1, r: 0.16, m: 1 }, alu: { c: 0x9ba1a7, r: 0.34, m: 0.9 }, steel: { c: 0x5d6268, r: 0.4, m: 0.8 },
   black: { c: 0x1b1c1e, r: 0.35 }, rubber: { c: 0x151515, r: 0.9 }, red: { c: 0xb3231c, r: 0.42 }, white: { c: 0xe8e9ea, r: 0.4 },
-  yoke: { c: 0x2a2c2f, r: 0.45, k: 4 }, grip: { c: 0x26282b, r: 0.6, k: 2 }, cbBody: { c: 0x0e0e0f, r: 0.45 }, slot: { c: 0x050506, r: 0.9 },
+  yoke: { c: 0x2a2c2f, r: 0.45, k: 4 }, grip: { c: 0x26282b, r: 0.6, k: 6 }, cbBody: { c: 0x0e0e0f, r: 0.45 }, slot: { c: 0x050506, r: 0.9 },
   lens: { c: 0xf2efe6, r: 0.2 }, caseBlack: { c: 0x0c0c0d, r: 0.5 },
   blue: { c: 0x1f4f9a, r: 0.42 },                           // (M6) the Seminole's propeller levers' knobs
 };
@@ -305,7 +305,7 @@ const S = {
 // handle's a lighter satin charcoal (the LX Steel photo: its ribs read by their sheen against the black console); a light
 // satin metal for small bright parts that must read in the cabin's dim light (a full metal there shows only the
 // environment: S.postAlu's note) — the flap handle's button, the dome lights' rings, the outlets' bezels
-const GRIPBLK = { ...S.black, r: 0.55, k: 2 }, FLAPGRIP = { c: 0x2e3033, r: 0.45, k: 2 }, SATIN = { c: 0xc6cacf, r: 0.38, m: 0.25 };
+const GRIPBLK = { ...S.black, r: 0.55, k: 6 }, FLAPGRIP = { c: 0x2e3033, r: 0.45, k: 6 }, SATIN = { c: 0xc6cacf, r: 0.38, m: 0.25 };
 
 // ---------------------------------------------------------------- geometry helpers (everything ends non-indexed)
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
@@ -411,15 +411,27 @@ const WALLS = {
 // the bench's cushion and back; the console between the front seats (its full height to where its face slopes down —
 // FCON.zt —, then the face's lower half); the baggage floor
 const AO_OCC = [
-  [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.25, 0.25, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
+  [-0.42, 0.42, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.25, 0.25, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
   [-0.51, -0.07, FLOOR, -0.095, -0.94, -0.245], [-0.51, -0.07, -0.15, 0.56, -0.30, -0.02], [-0.48, -0.10, 0.49, 0.69, -0.13, 0.01],
   [0.07, 0.51, FLOOR, -0.095, -0.94, -0.245], [0.07, 0.51, -0.15, 0.56, -0.30, -0.02], [0.10, 0.48, 0.49, 0.69, -0.13, 0.01],
   [-0.52, 0.52, FLOOR, -0.085, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.54, 0.74, 0.95], [-0.07, 0.07, FLOOR, FCON.y1 - 0.01, FCON.zt - 0.02, FCON.z1],
   [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT], [-0.065, 0.065, FLOOR, (FLOOR + FCON.y1) / 2, FCON.z0 + 0.03, FCON.zt - 0.02],
   // the glareshield's bowed ends, either side of its middle box (the second box above): stepped down with the bow —
-  // appended, not inserted: tools/aircraft/cockpit_seats.py reads the seats' boxes by their places in this list
-  [-0.42, -0.25, 0.44, 0.49, -1.31, -1.02], [0.25, 0.42, 0.44, 0.49, -1.31, -1.02],
-  [-0.56, -0.42, 0.415, 0.48, -1.22, -1.02], [0.42, 0.56, 0.415, 0.48, -1.22, -1.02],
+  // appended, not inserted: tools/aircraft/cockpit_seats.py reads the seats' boxes by their places in this list.
+  // Each step's top is the roll's top at its inner (highest) edge with the middle box's margin over it (~1 cm), its
+  // bottom the roll's underside at its outer (lowest) edge: the ends' boxes used to span the whole end at the middle
+  // step's heights, which left a slab of phantom shade over the dropped ends and a leak under them
+  [-0.42, -0.25, 0.44, 0.487, -1.31, -1.02], [0.25, 0.42, 0.44, 0.487, -1.31, -1.02],
+  [-0.50, -0.42, 0.402, 0.484, -1.22, -1.02], [0.42, 0.50, 0.402, 0.484, -1.22, -1.02],
+  // (graphics stage A4) the panel's own stepped sides, and what the first box above used to cover at full height over
+  // the corners: the panel's top edge falls with the same bow (panelTopY), so past |x| 0.42 the straight box shaded
+  // air above the lowered corners — each step's top is its span's highest frame top with the first box's margin
+  // (PTOP + 0.01 over 0.457); and the A-pillars' cheeks, which fill the corners against the windshield's base and
+  // were missing here altogether, so the sky leaked through them onto the panel's corners
+  [-0.50, -0.42, PBOT - 0.01, 0.472, FIRE, PZ], [0.42, 0.50, PBOT - 0.01, 0.472, FIRE, PZ],
+  [-0.56, -0.50, PBOT - 0.01, 0.461, FIRE, PZ], [0.50, 0.56, PBOT - 0.01, 0.461, FIRE, PZ],
+  [-0.56, -0.50, 0.388, 0.472, -1.22, -1.02], [0.50, 0.56, 0.388, 0.472, -1.22, -1.02],
+  [-0.558, -0.498, 0.420, 0.4515, -1.185, -1.028], [0.498, 0.558, 0.420, 0.4515, -1.185, -1.028],
 ];
 // the overhead air duct's fairing along the roof's centreline aft of the overhead switch panel (POH VB-2266 7.23: the
 // outlets overhead at each seat, the duct fed by the blower; the brochure photo through the door: a raised centre
@@ -482,7 +494,12 @@ function skyVis(px, py, pz, nx, ny, nz) {
   }
   return open / AO_N;
 }
-const aoOf = vis => 0.16 + 0.84 * Math.min(1, vis * 2.2);
+// (graphics stage A4: the curve used to run at one slope to saturation at a visibility of 0.45, so everything that
+// saw half the sky — the walls by the windows and the middle of the cabin alike — took the sky's full light and
+// the fall of the light from the windows read flat. The slope is kept where the shade is (under 0.3 the curve is
+// the old one, so the deep shade and the mid-tones do not move) and eased above it, reaching full light only at
+// 0.75: the bright band by the glass is spread out instead of clipped)
+const aoOf = vis => 0.16 + 0.84 * (vis <= 0.3 ? vis * 2.2 : Math.min(1, 0.66 + (vis - 0.3) * 0.75));
 // bake into the 4th component of cdMat (multiplied with the surface's own factor); a cache for repeated vertices
 function bakeAO(g, cache) {
   const p = g.attributes.position, n = g.attributes.normal, m = g.attributes.cdMat;
@@ -553,8 +570,11 @@ function addBand(B, twin) {
 
 // ---------------------------------------------------------------- materials
 // the cabin's material: colour per vertex, roughness / metalness / detail kind / occlusion per vertex (cdMat), a fine
-// procedural surface detail by kind (paint, leather grain, carpet pile, vinyl grain, woven cloth) that fades out before
-// it can alias, and the occlusion applied to the sky's light only (the sun is shadowed by the shadow map)
+// procedural surface detail by kind (paint, leather grain, carpet pile, vinyl grain, woven cloth, the grips' coarser
+// pebble) that fades out before it can alias, and the occlusion applied to the sky's light only (the sun is shadowed
+// by the shadow map). The detail's strength is the caller's quality preset (opts.quality.cockpitDetail, as the
+// ground's detail follows groundDetail): full at high and ultra, weaker at medium, off at low — the heights are in
+// metres and the normal is perturbed from the height's screen-space gradient, so no texture is involved
 const VERT = (sh) => {
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', '#include <common>\nattribute vec4 cdMat; varying vec4 vMat; varying vec3 vOP; varying vec3 vON;')
@@ -567,12 +587,16 @@ const AO_FRAG = /* glsl */`
     float dotNVo = saturate( dot( geometryNormal, geometryViewDir ) );
     reflectedLight.indirectSpecular *= computeSpecularOcclusion( dotNVo, ambientOcclusion, material.roughness );
   #endif`;
-function kitMaterial() {
+function kitMaterial(detail = 1) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 1, envMapIntensity: 1 });
+  const uDetail = { value: detail };
+  m.userData.uDetail = uDetail;
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.uCdDetail = uDetail;
     VERT(sh);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
+        uniform float uCdDetail;
         varying vec4 vMat; varying vec3 vOP; varying vec3 vON;
         ${NOISE}
         float cdH = 0.0, cdR = 1.0;
@@ -594,10 +618,11 @@ function kitMaterial() {
           else if (kind == 3) { freq = 800.0; n = cdNoise(dp * freq) * 0.55 + cdNoise(dp * 95.0) * 0.45; amp = 0.00025; alb = 0.32; cdR = 1.0; }
           else if (kind == 4) { freq = 420.0; n = cdNoise(dp * freq); amp = 0.00004; alb = 0.035; cdR = 0.9 + 0.2 * n; }
           else if (kind == 5) { freq = 1400.0; vec2 q = dp * freq; n = 0.5 + 0.25 * (sin(q.x) * sin(q.y * 0.97)) + 0.25 * cdNoise(dp * 180.0); amp = 0.00004; alb = 0.08; cdR = 1.0; }
+          else if (kind == 6) { freq = 190.0; n = cdNoise(dp * freq) * 0.6 + cdNoise(dp * freq * 2.7) * 0.4; amp = 0.00022; alb = 0.13; cdR = 0.7 + 0.6 * n; }
           float fade = freq > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length(fwidth(dp)) * freq) : 0.0;
-          diffuseColor.rgb *= 1.0 + alb * (n - 0.5) * 2.0 * mix(0.35, 1.0, fade);
-          cdH = n * amp * fade;
-          cdR = mix(1.0, cdR, fade);
+          diffuseColor.rgb *= 1.0 + alb * (n - 0.5) * 2.0 * mix(0.35, 1.0, fade) * uCdDetail;
+          cdH = n * amp * fade * uCdDetail;
+          cdR = mix(1.0, cdR, fade * uCdDetail);
         }`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = clamp(vMat.x * cdR, 0.04, 1.0);')
       .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = vMat.y;')
@@ -708,46 +733,51 @@ function cowlMaterial(twin = false) {
 // the ink's colour is the decal's vertex colour, and a placard's ground is a plate of its own under the ink. Its scale
 // (pixels per millimetre) is the largest at which everything fits; an item's res scales it for itself (print too small
 // to be read from the seat even zoomed in — the breakers' labels, the wall's placard seen edge-on — at fewer pixels).
+// 4096 × 1024 since graphics stage A2 (2026-10-30; it was 1024 × 256): four times the density each way, so the panel's
+// print stays sharp in the close-up view. Every item is laid out in millimetres and every draw works in fractions of
+// its own box, so raising the canvas and the density (ATLAS_K) scales the whole atlas as one picture.
 const SANS = '"Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
-const ATLAS_W = 1024, ATLAS_H = 256, INK = 0xeeeeea;
+const ATLAS_W = 4096, ATLAS_H = 1024, ATLAS_K = 16, INK = 0xeeeeea;
 // the panel's own backlit print (the dimmers, the breakers, carb heat: Piper's TX photo — cyan-green, lit by day too)
 const GLOW = { col: 0x6fe6cf, lit: 1.12 };
 class Atlas {
-  constructor(W, H) { this.W = W; this.H = H; this.k = 4; this.used = 0; this.items = []; }
+  constructor(W, H) { this.W = W; this.H = H; this.k = ATLAS_K; this.used = 0; this.items = []; }
   // a region of w × h millimetres; draw(g, w, h) in pixels
   add(wmm, hmm, draw, res = 1) {
     const it = { wmm, hmm, res, x: 0, y: 0, w: 0, h: 0, draw };
     this.items.push(it);
     return it;
   }
-  // tallest first, each where it rests lowest on the skyline of those before it (then leftmost), 3 px apart, at k
-  // pixels per mm: does it fit?
+  // tallest first, each where it rests lowest on the skyline of those before it (then leftmost), apart by a gap that
+  // scales with k (¾ of a pixel per mm, margins of ½), at k pixels per mm: does it fit? (The gaps and margins were
+  // 3 px and 2 px at the old k of 4; scaling them with k keeps the layout the same picture at any density.)
   packAt(k) {
-    let sky = [{ x: 2, y: 2, w: this.W - 2 }], top = 0;
+    const mg = k / 2, gap = k * 0.75;
+    let sky = [{ x: mg, y: mg, w: this.W - mg }], top = 0;
     for (const it of [...this.items].sort((a, b) => b.hmm * b.res - a.hmm * a.res || b.wmm * b.res - a.wmm * a.res)) {
       it.w = Math.max(2, Math.round(it.wmm * k * it.res)); it.h = Math.max(2, Math.round(it.hmm * k * it.res));
       let bx = -1, by = Infinity;
-      for (let i = 0; i < sky.length && sky[i].x + it.w + 2 <= this.W; i++) {
+      for (let i = 0; i < sky.length && sky[i].x + it.w + mg <= this.W; i++) {
         let y = 0;
-        for (let j = i; j < sky.length && sky[j].x < sky[i].x + it.w + 3; j++) y = Math.max(y, sky[j].y);
+        for (let j = i; j < sky.length && sky[j].x < sky[i].x + it.w + gap; j++) y = Math.max(y, sky[j].y);
         if (y < by) { by = y; bx = sky[i].x; }
       }
       if (bx < 0) { this.used = Infinity; return false; }
-      it.x = bx; it.y = by; top = Math.max(top, by + it.h + 3);
-      const x1 = bx + it.w + 3, next = [];                    // (the skyline: its new step over [bx, x1), what it covers cut away)
+      it.x = bx; it.y = by; top = Math.max(top, by + it.h + gap);
+      const x1 = bx + it.w + gap, next = [];                    // (the skyline: its new step over [bx, x1), what it covers cut away)
       for (const s of sky) {
         if (s.x + s.w <= bx || s.x >= x1) { next.push(s); continue; }
         if (s.x < bx) next.push({ x: s.x, y: s.y, w: bx - s.x });
         if (s.x + s.w > x1) next.push({ x: x1, y: s.y, w: s.x + s.w - x1 });
       }
-      next.push({ x: bx, y: by + it.h + 3, w: x1 - bx }); next.sort((a, b) => a.x - b.x);
+      next.push({ x: bx, y: by + it.h + gap, w: x1 - bx }); next.sort((a, b) => a.x - b.x);
       sky = [];
       for (const s of next) { const l = sky[sky.length - 1]; if (l && l.y === s.y && l.x + l.w === s.x) l.w += s.w; else sky.push(s); }
     }
-    this.used = (top - 1) / this.H;
+    this.used = (top - k / 4) / this.H;
     return this.used <= 1;
   }
-  pack(kMax = 4) { for (this.k = kMax; this.k > 1.5 && !this.packAt(this.k); this.k -= 0.05); return this; }
+  pack(kMax = ATLAS_K) { for (this.k = kMax; this.k > kMax * 0.375 && !this.packAt(this.k); this.k -= kMax / 80); return this; }
   get full() { return this.used > 1; }
   uv(it) { return [it.x / this.W, 1 - (it.y + it.h) / this.H, (it.x + it.w) / this.W, 1 - it.y / this.H]; }
   render(cv) {
@@ -843,7 +873,12 @@ export function buildCockpit(FL, A, opts = {}) {
   const atlas = new Atlas(ATLAS_W, ATLAS_H);
   // ink from the atlas on a quad of w × h mm at p (turned by r), in the colour col; lit: backlit at night
   const decal = (wmm, hmm, draw, p, r, { lit = 1, rough = 0.55, col = INK, res = 1, it: had = null } = {}) => {
-    const it = had || atlas.add(wmm, hmm, draw, res), g = withCol(withMat(quad(wmm / 1000, hmm / 1000, [0, 0, 1, 1], p, r), rough, 0, lit), col);
+    // (graphics stage A4) at night the panel's light is strongest round the instruments and falls off towards the
+    // pedestal's foot, the side walls and the back of the cabin: a backlit print's level follows where it sits.
+    // lit 0 stays unlit, and a level over 1 (the panel's own print, GLOW: its day term is max(z − 1, 0)) is left
+    // alone — those prints are all on the panel's face, where the fall is least
+    const lv = lit > 0 && lit <= 1 ? lit * Math.min(1, Math.max(0.4, 1.12 - 0.7 * Math.hypot(p[0], p[1] - 0.26, p[2] - PZ))) : lit;
+    const it = had || atlas.add(wmm, hmm, draw, res), g = withCol(withMat(quad(wmm / 1000, hmm / 1000, [0, 0, 1, 1], p, r), rough, 0, lv), col);
     g.userData = { it }; (B.variant ? B.decalsV[B.variant] : B.decals).push(g);
     return it;
   };
@@ -1121,8 +1156,8 @@ export function buildCockpit(FL, A, opts = {}) {
         : /^(COM1|COM2|NAV1|NAV2)$/.test(name) ? () => avc('MON', name) : () => info('このボタンはこの飛行では使いません');
       control({ id: 'audio.' + name.replace(/[^A-Z0-9]/g, ''), label: `オーディオ ${name}`, kind: 'button', size: [0.026, 0.0125, 0.016], pos: [x, y, z + 0.004], act });
     }));
-    add(at(knurled(0.0085, 0.008, 24), [cx, cy - 0.080, PZ + 0.022]), S.knob);
-    add(at(knurled(0.0055, 0.008, 18), [cx, cy - 0.080, PZ + 0.029]), S.knob);
+    add(at(knurled(0.0085, 0.008, 32), [cx, cy - 0.080, PZ + 0.022]), S.knob);
+    add(at(knurled(0.0055, 0.008, 26), [cx, cy - 0.080, PZ + 0.029]), S.knob);
     label('VOL', [cx, cy - 0.066, PZ + 0.0182], { size: 1.4 });
     add(at(rbox(0.03, 0.007, 0.005, 0.0015), [cx, cy - 0.097, PZ + 0.019]), S.red);
     label('DISPLAY BACKUP', [cx, cy - 0.097, PZ + 0.0216], { size: 1.1, wmm: 28 });
@@ -1136,7 +1171,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(slab(rectPts(x - hw, y - hh, x + hw, y + hh), 0.007, [[rectPts(x - sw - 0.001, sy - sh - 0.001, x + sw + 0.001, sy + sh + 0.001), 0.002]], G5.depth - 2 * bev, zf, bev, 3, 1), S.bezel);
     add(at(new THREE.PlaneGeometry(G5.screenW + 0.006, G5.screenH + 0.006), [x, sy, zf - 0.0045]), S.caseBlack);
     B.unlit.push(quad(G5.screenW, G5.screenH, dynUV(DYN.g5), [x, sy, zf - 0.0035]));
-    add(at(knurled(0.0062, 0.009, 16), [x + 0.032, y - 0.0335, zf + 0.0045]), S.knob);
+    add(at(knurled(0.0062, 0.009, 26), [x + 0.032, y - 0.0335, zf + 0.0045]), S.knob);
     add(at(cylZ(0.0028, 0.0028, 0.002, 10), [x - 0.032, y - 0.0335, zf + 0.001]), S.key);
     control({ id: 'stby.g5', label: '予備の計器 G5（姿勢・速度・高度・方位）', kind: 'button', size: [G5.w + 0.004, G5.h + 0.004, 0.024], pos: [x, y, PZ + 0.012], aim: [x, sy, zf - 0.0035],
       act: () => info('予備の計器（G5）：PFD が使えないときの姿勢・速度・高度・方位。PFD と同じ気圧設定で読みます') });
@@ -1318,7 +1353,7 @@ export function buildCockpit(FL, A, opts = {}) {
     { const { y, x: dx } = SEM.dim;
       bracketIt = decal(88, 6, bracketDraw, [(dx[0] + dx[2]) / 2, y + 0.0165, PZ + 0.0002], null, { ...GLOW, it: bracketIt });
       [['SWITCH', 'switch', 'スイッチと文字の照明'], ['PANEL', 'panel', 'パネルの照明'], ['AVIONICS', 'avionics', '画面の明るさ']].forEach(([name, id, ja], i) => {
-        add(at(knurled(0.0085, 0.012, 20), [dx[i], y, PZ + 0.006]), S.knob);
+        add(at(knurled(0.0085, 0.012, 28), [dx[i], y, PZ + 0.006]), S.knob);
         label(name, [dx[i], y + 0.0118, PZ + 0.0002], { size: 1.25, wmm: 12, ...GLOW });
         control({ id: 'dim.' + id, label: `${ja}の調光（DIMMING ${name}）`, kind: 'knob', cyl: [0.0105, 0.015], pos: [dx[i], y, PZ + 0.0075], aim: [dx[i], y, PZ + 0.012],
           act: () => info(`${ja}の調光：この飛行では変えません（明るさは時刻に合わせてあります）`) });
@@ -1461,7 +1496,7 @@ export function buildCockpit(FL, A, opts = {}) {
     bracketIt = decal(88, 6, bracketDraw, [(DIM.x[0] + DIM.x[2]) / 2, y + 0.0165, PZ + 0.0002], null, { ...GLOW, it: bracketIt });
     [['SWITCH', 'switch', 'スイッチと文字の照明'], ['PANEL', 'panel', 'パネルの照明'], ['AVIONICS', 'avionics', '画面の明るさ']].forEach(([name, id, ja], i) => {
       const x = DIM.x[i];
-      add(at(knurled(0.0085, 0.012, 20), [x, y, PZ + 0.006]), S.knob);
+      add(at(knurled(0.0085, 0.012, 28), [x, y, PZ + 0.006]), S.knob);
       label(name, [x, y + 0.0118, PZ + 0.0002], { size: 1.25, wmm: 12, ...GLOW });
       control({ id: 'dim.' + id, label: `${ja}の調光（DIMMING ${name}）`, kind: 'knob', cyl: [0.0105, 0.015], pos: [x, y, PZ + 0.0075], aim: [x, y, PZ + 0.012],
         act: () => info(`${ja}の調光：この飛行では変えません（明るさは時刻に合わせてあります）`) });
@@ -1584,7 +1619,7 @@ export function buildCockpit(FL, A, opts = {}) {
       add(at(new THREE.BoxGeometry(0.006, 0.006, LEVER.len), [x, LEVER.y, LEVER.z + LEVER.len / 2]), S.steel, part);
       add(at(knob, [kx, LEVER.y, LEVER.z + LEVER.len + 0.012]), s, part);
     };
-    lever(-0.005, 'throttle', cylX(0.0145, 0.062, 18), S.black, -0.012);
+    lever(-0.005, 'throttle', cylX(0.0145, 0.062, 28), S.black, -0.012);
     lever(0.045, 'mixture', star(0.016, 0.014, 8), S.red);
     const lp = (x, a) => [x, LEVER.y + Math.sin(a) * (LEVER.len + 0.012), LEVER.z + Math.cos(a) * (LEVER.len + 0.012)];
     control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.066, 0.034, 0.034], pos: lp(-0.012, 0), aim: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
@@ -1600,7 +1635,7 @@ export function buildCockpit(FL, A, opts = {}) {
     // / ON right of the slot (the TX photo's ALT AIR slot: CLOSE / ALT AIR / OPEN)
     add(at(new THREE.BoxGeometry(0.008, 0.077, 0.0015), [CARB.x, CARB.y, PZ + 0.0008]), S.slot);
     add(at(new THREE.BoxGeometry(0.004, 0.004, 0.03), [CARB.x, CARB.y, CARB.z + CARB.len - 0.02]), S.steel, 'carb');
-    add(at(cylZ(0.0065, 0.0068, 0.009, 14), [CARB.x, CARB.y, CARB.z + CARB.len]), S.white, 'carb');
+    add(at(cylZ(0.0065, 0.0068, 0.009, 22), [CARB.x, CARB.y, CARB.z + CARB.len]), S.white, 'carb');
     label('OFF', [CARB.x + 0.0135, CARB.y + 0.031, PZ + 0.0002], { size: 2.1, ...GLOW });
     label(['CARB', 'HEAT'], [CARB.x + 0.0135, CARB.y, PZ + 0.0002], { size: 1.9, ...GLOW });
     label('ON', [CARB.x + 0.0135, CARB.y - 0.031, PZ + 0.0002], { size: 2.1, ...GLOW });
@@ -1623,7 +1658,7 @@ export function buildCockpit(FL, A, opts = {}) {
     // (on the plate, turned to its slope at profile point j: off its face by d)
     const onPlate = (g, j, x, d) => at(g, [x, pr[j][1] + N[j][1] * d, pr[j][0] + N[j][0] * d], [Math.atan2(-N[j][1], N[j][0]), 0, 0]);
     const wx = PED.x + hw - 0.016, kj = 3;
-    add(at(knurled(0.019, 0.012, 24).rotateY(Math.PI / 2), [wx, pr[kj][1] - N[kj][1] * 0.008, pr[kj][0] - N[kj][0] * 0.008]), S.knob);
+    add(at(knurled(0.019, 0.012, 32).rotateY(Math.PI / 2), [wx, pr[kj][1] - N[kj][1] * 0.008, pr[kj][0] - N[kj][0] * 0.008]), S.knob);
     add(onPlate(new THREE.PlaneGeometry(0.018, 0.046), kj, wx, 0.0005), S.slot);
     add(onPlate(new THREE.BoxGeometry(0.014, 0.026, 0.008), 1, wx, 0.004), S.caseBlack);
     add(onPlate(new THREE.PlaneGeometry(0.009, 0.0016), 1, wx, 0.0082), S.white);
@@ -1689,7 +1724,7 @@ export function buildCockpit(FL, A, opts = {}) {
       add(at(new THREE.BoxGeometry(0.005, 0.005, LV.len), [x, LV.y, LV.z + LV.len / 2]), S.steel, part);
       add(at(knob, [kx, LV.y, LV.z + LV.len + 0.011]), sf, part);
     };
-    lever(TWIN_LV.thrL, 'thrL', cylX(0.0125, 0.02, 16), S.black); lever(TWIN_LV.thrR, 'thrR', cylX(0.0125, 0.02, 16), S.black);
+    lever(TWIN_LV.thrL, 'thrL', cylX(0.0125, 0.02, 26), S.black); lever(TWIN_LV.thrR, 'thrR', cylX(0.0125, 0.02, 26), S.black);
     lever(TWIN_LV.propL, 'propL', ribbed(0.018, 0.021, 0.024), S.blue); lever(TWIN_LV.propR, 'propR', ribbed(0.018, 0.021, 0.024), S.blue);
     lever(TWIN_LV.mixL, 'mixL', star(0.0105, 0.017, 7), S.red); lever(TWIN_LV.mixR, 'mixR', star(0.0105, 0.017, 7), S.red);
     const lp = (x, a) => [x, LV.y + Math.sin(a) * (LV.len + 0.012), LV.z + Math.cos(a) * (LV.len + 0.012)];
@@ -1737,7 +1772,7 @@ export function buildCockpit(FL, A, opts = {}) {
         add(at(rbox(0.006, 0.026, 0.002, 0.0015), [x, -0.171, plate(-0.171) + 0.0006]), S.slot);
         add(at(new THREE.BoxGeometry(0.0045, 0.0045, len), [x, (py + ky) / 2, (pzv + kz) / 2], [th, 0, 0]), S.steel, 'cowlFlaps');
         add(at(new THREE.BoxGeometry(0.008, 0.003, 0.009), [x, ky + 0.019, kz - 0.016], [th, 0, 0]), S.chrome, 'cowlFlaps');
-        add(at(cylZ(0.0125, 0.0095, 0.026, 16), [x, ky, kz]), S.knob, 'cowlFlaps');
+        add(at(cylZ(0.0125, 0.0095, 0.026, 24), [x, ky, kz]), S.knob, 'cowlFlaps');
       }
       const py2 = -0.19, cx = (cowl.x[0] + cowl.x[1]) / 2;
       placard(['PULL - CLOSE', 'L   COWL   R', 'FLAP', 'PUSH - OPEN'], 30, 22, [cx, py2, plate(py2)], { r: [-Math.atan2(0.003, 0.095), 0, 0], res: 0.7 });
@@ -1750,8 +1785,8 @@ export function buildCockpit(FL, A, opts = {}) {
     { const { x, y, len } = GEAR, k = [x, y, PZ + len + 0.004];
       add(at(cylZ(0.0062, 0.0068, 0.004, 14), [x, y, PZ + 0.002]), S.chrome);
       add(at(new THREE.BoxGeometry(0.0042, 0.0042, len), [x, y, PZ + len / 2]), S.chrome, 'gearLever');
-      add(at(cylX(0.0145, 0.011, 18), k), S.rubber, 'gearLever');
-      add(at(cylX(0.0058, 0.0118, 10), k), S.steel, 'gearLever');
+      add(at(cylX(0.0145, 0.011, 26), k), S.rubber, 'gearLever');
+      add(at(cylX(0.0058, 0.0118, 16), k), S.steel, 'gearLever');
       label(['UP 109', 'KIAS MAX'], [x - 0.022, y + 0.021, PZ + 0.0002], { size: 1.15, ...GLOW });
       label('GEAR', [x - 0.022, y, PZ + 0.0002], { size: 1.6, ...GLOW });
       label(['DOWN 140', 'KIAS MAX'], [x - 0.022, y - 0.021, PZ + 0.0002], { size: 1.15, ...GLOW });
@@ -2124,13 +2159,16 @@ export function buildCockpit(FL, A, opts = {}) {
   // the dome lights (DOME): a shallow frosted lens (near-white, rough) in a chrome ring on the headliner, square to its
   // arch there; set 5.5 mm under the arch, the ring's skirt going up into it (the cloth sags there: the lens never behind
   // it). The ring and the outlets' bezels in a light satin metal (SATIN): a full metal reflects only the environment,
-  // which the cabin's dim light turns dark olive with a blue edge (as S.postAlu notes)
+  // which the cabin's dim light turns dark olive with a blue edge (as S.postAlu notes). The lenses are kept apart
+  // (domeLens, below): they take the shell's material with an emissive of their own at the assembly, so at night the
+  // lamps the LIGHT DOME rheostats feed can be seen to be on
+  const domeLens = [];
   for (const sd of [-1, 1]) {
     const x = sd * DOME.x, y = roofY(x), n = new THREE.Vector3(-x / (HWT * HWT), -(y - WTOP) / (ROOF - WTOP) ** 2, 0).normalize(), R = DOME.r, rise = 0.0065;
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n), c = new THREE.Vector3(x, y, DOME.z).addScaledVector(n, 0.0055);
     const Rs = (R * R + rise * rise) / (2 * rise), th = Math.asin(R / Rs);                      // (the lens: a cap of a sphere, rise high)
     add(new THREE.LatheGeometry([[R + DOME.ring + 0.001, -0.009], [R + DOME.ring, 0.0005], [R + 0.004, 0.003], [R - 0.0005, 0.0012]].map(([r, h]) => new THREE.Vector2(r, h)), 18).applyQuaternion(q).translate(c.x, c.y, c.z), SATIN);
-    add(new THREE.SphereGeometry(Rs, 16, 2, 0, Math.PI * 2, 0, th).translate(0, 0.0012 - Rs * Math.cos(th), 0).applyQuaternion(q).translate(c.x, c.y, c.z), { c: 0xf4f4f2, r: 0.75 });
+    domeLens.push(add(new THREE.SphereGeometry(Rs, 16, 2, 0, Math.PI * 2, 0, th).translate(0, 0.0012 - Rs * Math.cos(th), 0).applyQuaternion(q).translate(c.x, c.y, c.z), { c: 0xf4f4f2, r: 0.75 }));
   }
 
   // ============================================================ the glass: windshield and side windows (no shadows, no AO)
@@ -2193,8 +2231,14 @@ export function buildCockpit(FL, A, opts = {}) {
   root.add(cabin);
   const meshes = [], mats = [], texs = [];
   const mesh = (geo, mat, name, { cast = true, receive = true } = {}) => { const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = cast; m.receiveShadow = receive; meshes.push(m); return m; };
-  const kitMat = kitMaterial(); mats.push(kitMat);
-  cabin.add(mesh(mergeGeometries(B.kit), kitMat, 'cockpit-shell'));
+  const kitMat = kitMaterial(opts.quality ? (opts.quality.cockpitDetail ?? 1) : 1); mats.push(kitMat);
+  cabin.add(mesh(mergeGeometries(B.kit.filter(g => !domeLens.includes(g))), kitMat, 'cockpit-shell'));
+  // the dome lights' lenses (kept out of the shell's merge above; baked with it, so by day they are the shell's):
+  // the same material with a warm emissive, whose strength update() sets with the night — the lamps read as on,
+  // brightest overhead, which is where the cabin's night gradient falls from
+  const domeMat = kitMaterial(opts.quality ? (opts.quality.cockpitDetail ?? 1) : 1);
+  domeMat.emissive.set(0xffe9c4); domeMat.emissiveIntensity = 0; mats.push(domeMat);
+  cabin.add(mesh(mergeGeometries(domeLens), domeMat, 'cockpit-dome'));
 
   // the atlas (labels and placards), the compass card's uv into it
   atlas.pack();
@@ -2219,7 +2263,7 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // glass
-  const glassMat = clearGlassMaterial({ tint: 0x0b1216, env: 1.2 }); mats.push(glassMat);
+  const glassMat = clearGlassMaterial({ tint: 0x0b1216, env: 1.2, rain: true }); mats.push(glassMat);
   const glassGeo = mergeGeometries(B.glass.map(g => { const n = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal') n.deleteAttribute(k); return n; }));
   const glassMesh = mesh(glassGeo, glassMat, 'cockpit-glass', { cast: false, receive: false }); glassMesh.renderOrder = 2; glassMesh.userData.noAO = true;
   cabin.add(glassMesh);
@@ -2401,11 +2445,14 @@ export function buildCockpit(FL, A, opts = {}) {
     if (!(dt >= 0)) dt = 0; else if (dt > 0.25) dt = 0.25;
     const s = o.s || null, av = o.av || (o.L ? o.L.av : null);
     cur.s = s; cur.av = av; cur.L = o.L || null;
+    // (B2) the rain on the glass: the amount is the title's weather (render/materials.js setGlassRain, eased
+    // there), the airflow over the windshield is the indicated airspeed
+    tickGlassRain(dt, s && s.out ? s.out.ias || 0 : 0);
     poseRockers(dt);
     const nt = clamp(o.night || 0, 0, 1);
     if (nt !== night) {
       night = nt;
-      decalMat.emissiveIntensity = 0.7 * nt; printMat.emissiveIntensity = 0.7 * nt;
+      decalMat.emissiveIntensity = 0.7 * nt; printMat.emissiveIntensity = 0.7 * nt; domeMat.emissiveIntensity = 1.5 * nt;
       pfdMat.color.setScalar(1 - 0.45 * nt); mfdMat.color.setScalar(1 - 0.45 * nt); unlitMat.color.setScalar(1 - 0.35 * nt);
     }
     if (!s) return;

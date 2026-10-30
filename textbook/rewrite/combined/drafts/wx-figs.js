@@ -27,10 +27,12 @@
 //                          (stable layer, wind, cap cloud, lenticular clouds at the wave crests, the rotor under the first
 //                          crest near ridge level: AWH 16.2, 16.2.5, 16.2.7, figure 16-15). A schematic: heights and the
 //                          number of waves are not to scale.
-//   new     wxIcing        wx.ice — the basic course's ch07-fig7-10 redrawn: what icing needs (visible moisture, air at
-//                          or below 0 °C — most icing between 0 and −20 °C: AWH 20.3.4 — and an airframe at or below 0 °C,
-//                          which a cold-soaked airframe can be in air slightly above 0 °C: AWH 20.3.4) and the two shapes
-//                          on a leading edge: rime grows forward, clear ice forms horns (AWH 20.3.1, 20.3.2).
+//   new     wxIcing        wx.ice — the basic course's ch07-fig7-10 redrawn: what icing needs (visible moisture and an
+//                          airframe surface colder than 0 °C — usually in sub-zero air, but a cold-soaked airframe also in
+//                          air slightly above 0 °C: AWH 20.3.4; so expect icing in visible moisture at +2 °C or colder:
+//                          AIM 7-1-19) and the two shapes on a leading edge, the air flowing from the left: rime grows
+//                          forward, clear ice forms horns (AWH 20.3.1, 20.3.2). (revise-wx: was three boxes with "air at
+//                          or below 0 °C", which the factcheck N10 / reader I1 / expert E-M1 found at odds with the text.)
 //   new     wxInfoMap      wx.info — a made-up surface analysis chart (isobars, H and L, and the four kinds of fronts with
 //                          NOAA JetStream's colours and symbols: cold = blue with triangles, warm = red with half-moons,
 //                          stationary = alternating red and blue, occluded = purple with both; the symbols point the way the
@@ -119,6 +121,9 @@
       const f = frame(400, 300, 0, 35, 0, 9, [0, 10, 20, 30], [0, 2, 4, 6, 8], '温度（℃）', '高さ（1,000 ft）', { l: 50, r: 14, t: 14, b: 40 });
       const T0 = 30, D0 = 21, lcl = (T0 - D0) / 2.5, tl = T0 - 3 * lcl, env = h => T0 - 2.5 * h, parcel = h => h <= lcl ? T0 - 3 * h : tl - 2 * (h - lcl), lfc = lcl + (env(lcl) - tl) / 0.5;
       let s = f.s;
+      // shaded: below the level of free convection the parcel is colder (blue, returns); above it warmer (red: the CAPE area)
+      s += `<path d="M${f.X(T0)} ${f.Y(0)} L${f.X(tl).toFixed(1)} ${f.Y(lcl).toFixed(1)} L${f.X(env(lfc)).toFixed(1)} ${f.Y(lfc).toFixed(1)} Z" fill="${C.cy}" fill-opacity="0.22"/>`;
+      s += `<path d="M${f.X(env(lfc)).toFixed(1)} ${f.Y(lfc).toFixed(1)} L${f.X(parcel(9)).toFixed(1)} ${f.Y(9).toFixed(1)} L${f.X(env(9)).toFixed(1)} ${f.Y(9).toFixed(1)} Z" fill="${C.rd}" fill-opacity="0.8"/>`;
       s += P([[f.X(env(0)), f.Y(0)], [f.X(env(9)), f.Y(9)]], C.am, 3) + T(f.X(env(8.6)) + 6, f.Y(8.6), '周りの空気', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
       s += P([[f.X(T0), f.Y(0)], [f.X(tl), f.Y(lcl)]], C.cy, 3) + P([[f.X(tl), f.Y(lcl)], [f.X(parcel(9)), f.Y(9)]], C.cy, 3, 'none', '7 4');
       s += P([[f.X(D0), f.Y(0)], [f.X(tl), f.Y(lcl)]], C.gr, 2);
@@ -127,7 +132,7 @@
       s += T(f.X(D0) - 6, f.Y(0) - 8, `露点 ${D0}℃`, { c: C.gr, a: 'end', fs: 12, halo: 1 }) + T(f.X(T0) + 4, f.Y(0) - 8, `${T0}℃`, { c: C.cy, a: 'start', fs: 12, halo: 1 });
       s += TL(f.X(23), f.Y(5.6), ['空気塊：雲の外は', '1,000 ft で 3℃', '雲の中は 2℃（点線）'], { c: C.cy, a: 'start', fs: 12, lh: 15, halo: 1 });
       s += TL(f.X(1), f.Y(5.6), ['周りの空気は', '1,000 ft で 2.5℃'], { c: C.am, a: 'start', fs: 12, lh: 15, halo: 1 });
-      return svg(400, 300, s, `図：持ち上げた空気塊と周りの空気の温度を比べる（計算演習と同じ仮の日）。雲の底は ${fmt(lcl * 1000)} ft です。約 ${fmt(lfc * 1000)} ft までは空気塊のほうが冷たいので戻ろうとし（安定）、それより上では暖かいので自分で上がります（不安定）。条件付き不安定の例です`);
+      return svg(400, 300, s, `図：断熱図を簡単にしたもの（気温と高さの図。計算演習と同じ仮の日）。持ち上げた空気塊の線（青）と、周りの空気の線（橙）を比べます。雲の底は ${fmt(lcl * 1000)} ft です。約 ${fmt(lfc * 1000)} ft までは空気塊のほうが冷たいので戻ろうとし（安定、青く塗った所）、それより上では暖かいので自分で上がります（不安定）。その上で 2 本の線にはさまれた部分（赤）の面積が CAPE です。条件付き不安定の例です`);
     },
     // ---------------------------------------------------------------- wx.turb (1) — ch07-fig7-9 redrawn
     wxMountainWave() {
@@ -157,16 +162,16 @@
     },
     // ---------------------------------------------------------------- wx.ice (1) — ch07-fig7-10 redrawn
     wxIcing() {
-      let s = BOX(8, 8, 120, 62, C.cy, '目に見える水分', ['雲・雨・霧雨'], { fs: 12 }) + T(140, 44, '＋', { c: C.ink, b: 1, fs: 16 });
-      s += BOX(152, 8, 120, 62, C.vi, '0℃ 以下の空気', ['多くは 0〜−20℃'], { fs: 12 }) + T(284, 44, '＋', { c: C.ink, b: 1, fs: 16 });
-      s += BOX(296, 8, 96, 62, C.am, '冷たい機体', ['0℃ 以下'], { fs: 12 });
-      s += A(200, 76, 200, 96, C.ink, 2) + BOX(110, 100, 180, 30, C.rd, '過冷却水滴が当たって凍る', [], { fs: 12, ty: 20 });
+      let s = BOX(8, 8, 150, 76, C.cy, '目に見える水分', ['雲・雨・霧雨', '（過冷却水滴）'], { fs: 12 }) + T(171, 51, '＋', { c: C.ink, b: 1, fs: 16 });
+      s += BOX(184, 8, 208, 76, C.am, '0℃ より冷たい機体の表面', ['ふつうは氷点下の空気の中', '冷えた機体は 0℃ 少し上でも'], { fs: 12 });
+      s += A(200, 88, 200, 104, C.ink, 2) + BOX(110, 108, 180, 30, C.rd, '過冷却水滴が当たって凍る', [], { fs: 12, ty: 20 });
+      s += T(200, 156, '空気の流れ →', { c: C.mut, fs: 12 });
       // two leading edges
       const edge = (x, y) => `<path d="M${x} ${y} C ${x - 4} ${y - 22} ${x + 30} ${y - 30} ${x + 120} ${y - 22} L${x + 150} ${y - 16} L${x + 150} ${y + 6} L${x + 120} ${y + 10} C ${x + 30} ${y + 18} ${x - 4} ${y + 14} ${x} ${y} Z" fill="#9fb3c8"/>`;
-      s += edge(30, 196) + `<path d="M30 190 C 18 186 16 200 30 204 C 24 200 22 192 30 190 Z" fill="#f2f6fa"/><path d="M28 192 L12 196 L28 200 Z" fill="#f2f6fa"/>`;
+      s += edge(30, 196) + `<path d="M30 187 C 13 183 11 203 30 207 C 22 201 20 193 30 187 Z" fill="#f2f6fa"/><path d="M28 190 L5 196 L28 202 Z" fill="#f2f6fa"/>`;
       s += edge(226, 196) + `<path d="M232 176 L214 168 L224 182 Z M232 216 L214 224 L224 210 Z" fill="#cfe8ff" fill-opacity="0.9"/><path d="M226 182 C 218 190 218 202 226 210" stroke="#cfe8ff" stroke-width="5" fill="none"/>`;
-      s += TL(96, 232, ['粗い氷（rime）', '小さな水滴がすぐ凍る', '前へ育つ'], { c: C.ink, fs: 12, lh: 15 }) + TL(292, 232, ['透明な氷（clear）', '大きな水滴が流れて凍る', '角（ホーン）ができる'], { c: C.ink, fs: 12, lh: 15 });
-      return svg(400, 280, s, '図：着氷に要るもの（模式図）。目に見える水分・0℃ 以下の空気・冷たい機体がそろうと、過冷却水滴が当たって凍ります。粗い氷は前へ育ち、透明な氷は流れて角（ホーン）をつくり、空気の流れを大きく乱します');
+      s += TL(96, 232, ['rime ice（白く粗い）', '小さな水滴がすぐ凍る', '前へ育つ'], { c: C.ink, fs: 12, lh: 15 }) + TL(292, 232, ['clear ice（透明）', '大きな水滴が流れて凍る', '角（ホーン）ができる'], { c: C.ink, fs: 12, lh: 15 });
+      return svg(400, 280, s, '図：着氷に要るもの（模式図）。目に見える水分の中で、過冷却水滴が 0℃ より冷たい機体の表面に当たると凍ります。ふつうは氷点下の空気の中ですが、冷えた機体なら空気が 0℃ より少し高くても付くので、運航では雲や雨の中で外気温 +2℃ 以下なら着氷を予想します。rime ice は前へ育ち、clear ice は流れて角（ホーン）をつくり、空気の流れを大きく乱します');
     },
     // ---------------------------------------------------------------- wx.info (1) — a made-up surface analysis
     wxInfoMap() {

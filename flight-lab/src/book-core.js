@@ -174,6 +174,17 @@
     nzCompass: { label: 'Civil Aviation Authority of New Zealand, Flight Instructor Guide — Compass use（南半球の磁気コンパスの誤差の覚え方 ONUS・SAND）', url: 'https://www.aviation.govt.nz/licensing-and-certification/pilots/flight-training/flight-instructor-guide/compass-use' },
     // Part 1 rewritten (R2): the sources the chapter perf, wb added (drafts/perfwb.js's NEW_R; one entry for a URL two drafts cite)
     afh6: { label: 'FAA Airplane Flying Handbook（FAA-H-8083-3C）第 6 章 Takeoffs and Departure Climbs（離陸をやめる点を先に決める）', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf' },
+    // Part 1 rewritten (R2): the sources the chapter wx added (drafts/wx.js's NEW_R; one entry for a URL two drafts cite)
+    phak12: { label: "FAA Pilot's Handbook of Aeronautical Knowledge（FAA-H-8083-25C）第 12 章 Weather Theory（安定な空気と不安定な空気・積雲の底の見積もり・霧の種類・霜）", url: 'https://www.faa.gov/sites/faa.gov/files/14_phak_ch12.pdf' },
+    nhcClimo: { label: 'NOAA National Hurricane Center「Tropical Cyclone Climatology」（大西洋のハリケーンの季節）', url: 'https://www.nhc.noaa.gov/climo/' },
+    noaaWxmaps: { label: 'NOAA JetStream「Weather Maps」（前線の記号と色）', url: 'https://www.noaa.gov/jetstream/wxmaps' },
+    nwsGlossary: { label: 'NOAA National Weather Service Glossary（Showalter Index・potential temperature・equivalent potential temperature）', url: 'https://forecast.weather.gov/glossary.php?word=showalter' },
+    jmaTaf: { label: '気象庁「飛行場に関する気象情報」（運航用飛行場予報 TAF：全国 40 空港・1 日 4 回・発表から 30 時間）', url: 'https://www.jma.go.jp/jma/kishou/know/kouku/3_yohou/31_hikoujou/31_hikoujou.html' },
+    nwsFrost: { label: 'NOAA National Weather Service Omaha/Valley「Freeze and Frost Dates」（霜ができ始める気温と風）', url: 'https://www.weather.gov/oax/freeze' },
+    jmaTech337: { label: '気象庁「配信資料に関する技術情報（気象編）第 337 号」（2011 年。シグメットの強度「強い」を SEV と書く）', url: 'https://www.data.jma.go.jp/suishin/jyouhou/pdf/337.pdf' },
+    jmaTech362: { label: '気象庁「配信資料に関する技術情報（気象編）第 362 号」（2012 年。国内悪天予想図の MOD（並）・MOD TO SEV（並から強））', url: 'https://www.data.jma.go.jp/suishin/jyouhou/pdf/362.pdf' },
+    jmaKosa: { label: '気象庁「黄砂に関する基礎知識」', url: 'https://www.jma.go.jp/jma/kishou/know/env/kosahp/4-4kosa.html' },
+    jmaSigmet: { label: '気象庁「空域に関する気象情報」（日本の SIGMET）', url: 'https://www.jma.go.jp/jma/kishou/know/kouku/3_yohou/32_kuuiki/32_kuuiki.html' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

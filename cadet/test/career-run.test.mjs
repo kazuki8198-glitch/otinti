@@ -146,7 +146,7 @@ test('career run: from the first day to the first solo — every gate in order, 
   assert.deepEqual(f.log, log); assert.deepEqual(f.flown, flown);
   assert.equal(f.career.state.solo.day, st.solo.day);
 });
-const FLY_KINDS = ['flight', 'checkride', 'solo'];
+const FLY_KINDS = ['flight', 'checkride', 'solo', 'night'];
 // what the game does with a lesson's hooks to the career (main.js onHook): the pace, a section heard, an answer
 function careerHook(career, n, a) {
   if (n === 'pace') career.setPace(a);
@@ -191,16 +191,16 @@ test('career run M6: from the morning after the first solo to the graduation —
         r.start('chief'); for (let k = 0; k < 100 && r.running; k++) { const v = r.view(); if (v.choices.length) r.choose(0); else r.next(); }
         assert.ok(hooked, 'the ceremony\'s speech heard to its end');
         career.graduate(); graduated = true;
-      } else if (['flight', 'xc', 'checkride'].includes(it.kind)) {
+      } else if (['flight', 'xc', 'checkride', 'night'].includes(it.kind)) {
         assert.ok(career.decision(w.decision, w));
-        const plan = it.kind === 'flight' ? planFor(FL, it.id) : planFor(FL, null, { check: CHECKS[it.id] });
+        const plan = it.kind === 'flight' || it.kind === 'night' ? planFor(FL, it.id) : planFor(FL, null, { check: CHECKS[it.id] });
         if (it.kind === 'flight') assert.equal(plan.aircraft, STAGE[st.chapter].aircraft, `${it.id} in the ${plan.aircraft}`);
         const r = playDay(FL, { plan, anomalies: [], seed: st.day });
         assert.equal(r.day.phase, 'debrief', `day ${st.day} ${plan.lessons.join(' ')}: ${r.phases.join(' ')}`);
         for (const L of r.got) SC.noteLesson(prog, L);
         const pass = r.got.every(L => L.passed);
         assert.ok(pass, `day ${st.day} ${plan.lessons.join(' ')}: ${r.got.map(L => `${L.def.id} ${L.grade}`).join(', ')}`);
-        if (it.kind === 'flight') career.done('flight', it.id); else career.check(it.id, pass);
+        if (it.kind === 'flight') career.done('flight', it.id); else if (it.kind === 'night') career.done('night', it.id); else career.check(it.id, pass);
       } else if (it.kind === 'study') career.done('study', it.id);
       // (chapter 1's evenings, and its Sunday: the event talked through — content/dialog/ch1-events.js)
       else if (it.kind === 'event') {

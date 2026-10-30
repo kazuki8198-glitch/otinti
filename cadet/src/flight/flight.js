@@ -79,15 +79,15 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
 
   // ---------------------------------------------------------------- starts (as app.js startLesson / startFree)
   // the stick sensitivity and the automatic rudder come from the player's preferences unless given
-  function startLesson(id, levelId = 'intro', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud, wind = null } = {}) {
+  function startLesson(id, levelId = 'intro', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud, wind = null, oatDev = null, gainCap = ctl.prefs.gainCap } = {}) {
     const def = SC.lesson(id); if (!def || !def.steps) return null;
-    const nl = SC.startLesson(id, levelId, { sens, autoRud, ...(wind ? { wind } : {}) });
+    const nl = SC.startLesson(id, levelId, { sens, autoRud, oatDev, gainCap, ...(wind ? { wind } : {}) });
     nl.s.opts.assist = false;
     return begin(nl);
   }
-  function startFree(startId = 'rwy', aircraft = 'pa28', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud, assist = ctl.prefs.assist, wind = 'light' } = {}) {
+  function startFree(startId = 'rwy', aircraft = 'pa28', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud, assist = ctl.prefs.assist, wind = 'light', oatDev = null, gainCap = ctl.prefs.gainCap } = {}) {
     const W = typeof wind === 'object' && wind ? wind : WINDS[wind] || WINDS.light;
-    return begin(SC.startFree(startId, aircraft, { sens, autoRud, assist, wind: W }));
+    return begin(SC.startFree(startId, aircraft, { sens, autoRud, assist, wind: W, oatDev, gainCap }));
   }
   // a free flight standing still on any paved point (the apron stand): FLIGHT LAB's placeOnRunway at n / e / heading,
   // not on the runway, with the parking brake set
@@ -97,7 +97,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     const s = nl.s;
     s.q = P.qFromHPB(hdgTrue, 0, 0);
     s.pos = [e, P.GROUND_M - s.WHEEL_BOTTOM + 0.02, -n];         // (the wheels just touching)
-    s.flapIdx = 0; s.flapDeg = 0; s.thr = 0; s.trim = 0; s.brake = false; s.gearDown = true; s.gearPos = 1;
+    s.flapIdx = 0; s.flapDeg = 0; s.thr = 0; s.trim = 0; s.trimTgt = null; s.brake = false; s.gearDown = true; s.gearPos = 1;
     s.onGround = true; s.airTime = 0; s.wasOnRunway = false; s.lastRwyT = s.t;
     s.contacts = s.WHEELS.map(() => true);
     s.rpm = P.rpmFor(s.A, 0, 0); for (const en of s.eng) en.rpm = s.rpm;
@@ -243,7 +243,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
       const r = answerAtc(+code.slice(-1) - 1);
       return r ? { kind: 'atc', ok: r.ok, text: (r.ok ? '正解。' : `不正解。正しくは「${ourCall(r.right)}」。`) + r.why } : null;
     }
-    const a = actionForKey(code, shift); if (!a) return null;
+    const a = ctl.actionFor(code, shift); if (!a) return null;
     return { kind: 'action', name: a, text: ctl.action(L, a), tone: ctl.kind };
   }
   function abort(reason = '中止') { if (L && !L.free) SC.abort(L, reason); }

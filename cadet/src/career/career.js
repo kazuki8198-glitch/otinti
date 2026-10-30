@@ -172,6 +172,12 @@ export function dateOf(day) {
 }
 const WD = ['日', '月', '火', '水', '木', '金', '土'];
 export const dateText = (day) => { const t = dateOf(day); return `${t.y} 年 ${t.m} 月 ${t.d} 日（${WD[t.wd]}）`; };
+// the day of the year (1–365) of a career day: the sun is drawn for this date, so the sunrise and the sunset
+// drift with the career's calendar (April's start to the autumn's end) instead of sitting at one fixed date
+export function dayOfYear(day) {
+  const t = dateOf(day);
+  return Math.round((Date.UTC(t.y, t.m - 1, t.d) - Date.UTC(t.y, 0, 1)) / 86400000) + 1;
+}
 export const isOff = (day) => day > 1 && dateOf(day).wd === 0;
 
 // ---- the weather: one kind a day, from the seed. What it means for flying (a student before the first solo flies
@@ -190,6 +196,15 @@ export const WEATHER = {
   // plan, the cloud from 800 ft to 4,000 ft)
   lowCloud: { ja: '低い雲（計器気象状態）', fly: { am: false, pm: false }, decision: 'cancel', why: '雲の底が 800 ft、視程 3 SM。有視界では飛べない天気です。',
     ifr: { fly: { am: true, pm: true }, decision: 'go', why: '雲の底は 800 ft ですが、計器飛行方式の飛行計画で、教官と一緒なら飛べます。雲の中の ILS は、今日しか練習できない本物です。' } },
+  // a southerly day: perfectly flyable, but the wind is down runway 36 — the runway in use becomes 18, and the
+  // dispatcher's minima conversation carries the tailwind judgement (36 would give an 8 kt tailwind, past the
+  // student limit of no tailwind at all; on 18 it is an 8 kt headwind)
+  southFlow: { ja: '南風（滑走路 18 を使用）', fly: { am: true, pm: true }, decision: 'go', why: '南風 190°・8 kt です。滑走路 36 のままだと追い風 8 kt で、訓練生の制限（追い風は不可）を超えます。今日の使用滑走路は 18。18 なら向かい風 8 kt で、基準内です。場周は 18 の左場周になります。' },
+  // the forecast bust (late chapters only, seeded): the TAF promises a VFR day and the morning is fine — a
+  // front arrives half a day early. The morning's right call is to fly early; the afternoon METAR tells the
+  // truth the TAF didn't. The debrief line is the dispatcher's, kept for the evening.
+  forecastBust: { ja: '予報外れ（午後に前線が来る）', fly: { am: true, pm: false }, decision: 'early', why: 'TAF は終日、有視界の予報です。ただ、西の空が暗くなってきています。前線が予報より早く近づいているかもしれません。午前のうちに飛んで、空が変わる前に戻りましょう。',
+    debrief: '予報外れでした。TAF は終日 VFR と言っていましたが、前線が半日早く来ました。天気は予報どおりにはならないことがある。その前提で、午前の早めの判断が正解でした。' },
 };
 // what the weather means for today's flying: the chapter and the flight change it (the instrument chapter flies in low
 // cloud with an instructor or the check pilot; alone, never)
@@ -204,16 +219,27 @@ export function weatherFor(seed, day, o = {}) {
   const { force } = o;
   const r = rng((seed * 7919 + day * 104729) >>> 0), r2 = rng((seed * 131 + day * 7) >>> 0);
   const x = r();
-  let kind = x < 0.54 ? 'good' : x < 0.6 ? 'amLowCloud' : x < 0.71 ? 'amFog' : x < 0.82 ? 'pmStorm' : x < 0.87 ? 'pmWind' : x < 0.95 ? 'crosswind' : 'storm';
+  let kind = x < 0.47 ? 'good' : x < 0.54 ? 'southFlow' : x < 0.6 ? 'amLowCloud' : x < 0.71 ? 'amFog' : x < 0.82 ? 'pmStorm' : x < 0.87 ? 'pmWind' : x < 0.95 ? 'crosswind' : 'storm';
   // (M6: the instrument chapter's days bring low cloud too, about one in five)
   if (o.ifr && kind === 'good' && r2() < 0.22) kind = 'lowCloud';
+  // (the forecast bust: late chapters only, and only when the caller says the day may bust — its own seed, so
+  // no other day's draws move)
+  if (o.bustOk && kind === 'good' && rng((seed * 31 + day * 17) >>> 0)() < 0.18) kind = 'forecastBust';
   if (force) kind = force;
   const W = WEATHER[kind];
-  const tempC = 17 + Math.floor(r() * 9), dewC = tempC - 4 - Math.floor(r() * 6), qnh = 29.92;
+  // QNH varies day to day (29.55–30.25 inHg): the METAR, the ATIS and the altimeter the cadet must set all
+  // carry the day's own value — a setting left at 29.92 is wrong by up to a few hundred feet
+  let tempC = 17 + Math.floor(r() * 9); const qnh = Math.round((29.55 + r() * 0.7) * 100) / 100;
+  let dewC = tempC - 4 - Math.floor(r() * 6);
+  // (B3.4) airframe icing rides on SOME low-cloud days only: a seeded modifier (its own seed, so no other
+  // day moves), in the cold end of the year, when the day turns properly cold — the cloud band is then at
+  // icing temperature. Ordinary lowCloud days are exactly as they were.
+  let icing = false;
+  if (kind === 'lowCloud' && dayOfYear(day) >= 295 && rng((seed * 57 + day * 91) >>> 0)() < 0.6) { icing = true; tempC = -1 + Math.floor(rng((seed * 57 + day * 91 + 5) >>> 0)() * 4); dewC = tempC - 1; }
   // (a METAR's temperature / dew point: the dew point never above the temperature)
   const td = (t, d) => `${pad2(t)}/${pad2(Math.min(d, t))}`;
   const z = (h) => `${pad2(h)}53Z`, q = `A${String(Math.round(qnh * 100))}`;
-  const wind = kind === 'crosswind' ? '09016G24KT' : kind === 'lowCloud' ? '03006KT' : '36005KT';
+  const wind = kind === 'crosswind' ? '09016G24KT' : kind === 'lowCloud' ? '03006KT' : kind === 'southFlow' ? '19008KT' : '36005KT';
   const m = {
     good: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW035 ${td(tempC - 3, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT045 ${td(tempC, dewC)} ${q}` },
     amFog: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 1/2SM FG VV002 ${td(tempC - 5, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM FEW030 ${td(tempC, dewC)} ${q}` },
@@ -223,6 +249,8 @@ export function weatherFor(seed, day, o = {}) {
     amLowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 5SM BR OVC006 ${td(tempC - 4, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT035 ${td(tempC, dewC)} ${q}` },
     pmWind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${td(tempC - 2, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 09018G26KT 10SM SCT040 ${td(tempC + 1, dewC)} ${q}` },
     storm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 18012G22KT 2SM TSRA BKN015CB ${td(tempC - 4, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 20015G28KT 1 1/2SM +TSRA OVC012CB ${td(tempC - 5, tempC - 6)} ${q}` },
+    southFlow: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW035 ${td(tempC - 3, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT040 ${td(tempC, dewC)} ${q}` },
+    forecastBust: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 36005KT 10SM FEW035 ${td(tempC - 3, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 24018G30KT 3SM TSRA BKN020CB ${td(tempC - 4, dewC + 2)} ${q}` },
   }[kind];
   const taf = {
     good: 'TAF KLAB … 01005KT P6SM FEW035 FM1800 03008KT P6SM SCT045',
@@ -233,8 +261,25 @@ export function weatherFor(seed, day, o = {}) {
     lowCloud: 'TAF KLAB … 03006KT 3SM BR BKN008 OVC015 FM2000 03008KT 5SM BR OVC012',
     amLowCloud: 'TAF KLAB … 00000KT 5SM BR OVC006 FM1500 01005KT P6SM SCT035',
     pmWind: 'TAF KLAB … 01005KT P6SM FEW040 FM1900 09018G26KT P6SM SCT040',
+    southFlow: 'TAF KLAB … 19008KT P6SM FEW035',
+    forecastBust: 'TAF KLAB … 01005KT P6SM FEW035 FM1800 03008KT P6SM SCT045',
   }[kind];
-  return { kind, ja: W.ja, fly: { ...W.fly }, decision: W.decision, why: W.why, metar: m, taf, tempC, dewC, qnh, ...(W.ifr ? { ifr: W.ifr } : {}) };
+  return { kind, ja: W.ja, fly: { ...W.fly }, decision: W.decision, why: icing ? W.why + ' 今日は雲の中が着氷する温度です（気温氷点近く）。計器飛行では、氷の付着に注意してください。' : W.why, metar: m, taf, tempC, dewC, qnh, ...(W.ifr ? { ifr: W.ifr } : {}), ...(W.debrief ? { debrief: W.debrief } : {}), ...(icing ? { icing: true } : {}) };
+}
+
+// ---- the weather as it stands at a clock hour: the day's parameters move with the day, they do not jump at
+// the slot boundaries. The morning fog thins towards late morning; the morning's low cloud lifts towards
+// noon. → { fog (the sky's fog fraction 0..1), ceilingFt (null: no ceiling that matters), visSM }
+export function weatherAt(W, hours) {
+  const h = hours;
+  const lerp = (a, b, f) => a + (b - a) * Math.min(1, Math.max(0, f));
+  switch (W && W.kind) {
+    case 'amFog': { const f = Math.min(1, Math.max(0, (11.5 - h) / 3.8)); return { fog: 0.85 * f, ceilingFt: null, visSM: lerp(10, 0.5, f) }; }
+    case 'amLowCloud': { const c = h <= 8 ? 600 : h >= 12 ? 3500 : 600 + (h - 8) / 4 * 2900; return { fog: c < 1000 ? 0.55 : c < 2000 ? 0.25 : 0, ceilingFt: Math.round(c), visSM: c < 1000 ? 5 : 10 }; }
+    case 'lowCloud': return { fog: 0.55, ceilingFt: 800, visSM: 3 };
+    case 'forecastBust': return h < 12.5 ? { fog: 0, ceilingFt: null, visSM: 10 } : { fog: 0.3, ceilingFt: 2000, visSM: 3 };
+    default: return { fog: 0, ceilingFt: null, visSM: 10 };
+  }
 }
 
 // ---- the day's wind, at the surface and aloft: ONE field for the day (the nav log planned in the morning is
@@ -256,6 +301,13 @@ export function surfaceWindOf(metar) {
 export function windsAloftFor(W) {
   const surf = surfaceWindOf(W && W.metar && W.metar.pm);
   return { surfFrom: surf.from, surfKt: surf.kt, from: (surf.from + 30) % 360 || 360, kt: surf.kt >= 1 ? surf.kt * 2 : 10, altFt: NAV_ALT_FT };
+}
+// the runway in use for the day: the wind chooses it. A southerly surface wind (140–230°, at least 4 kt) puts
+// 18 in use; anything else keeps 36. Scripted career lessons keep their own runway (their starts and scripts
+// are 36's); the day's traffic, the free flying and the ATIS follow this.
+export function activeRunway(W) {
+  const s = surfaceWindOf(W && W.metar && W.metar.pm);
+  return s.kt >= 4 && s.from >= 140 && s.from <= 230 ? '18' : '36';
 }
 
 // ---- the state
@@ -388,7 +440,7 @@ export function prologueFlags(state) {
 // where: the room (academy-spec's ids; 'apron' for the aircraft); who: the person it is with
 export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   const day = state.day, out = [];
-  const W = weather || weatherFor(state.seed, day, forcedWeather(state, prog));
+  const W = weather || weatherFor(state.seed, day, dayOpts(state, prog));
   if (isOff(day)) {
     const off = [{ slot: 'am', kind: 'off', title: '休日', where: null, who: null }], w = CH1_EVENTS.find(e => e.id === 'week');
     // (chapter 1's Sunday: the week's review with 朝日, if the cadet likes)
@@ -468,6 +520,14 @@ function laterSchedule(state, prog, W, out) {
   // failed, nothing more is due today and the test comes back tomorrow)
   if ((!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day) || (ex && ex.pass && today(`exam:${S.exam}`))) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
   if (!(ex && ex.pass)) return out;
+  // (B5.1-M) the final chapter's night flight: with the review lesson and the written test behind them,
+  // one evening is given to the pattern after dark — the field's lights, the PAPI, the circuit flown on
+  // them — before the examiner's check. It waits for a flyable day like any flight, and once flown (or
+  // flown today) it is not offered again.
+  if (state.chapter === 'ch6' && !state.done['night:t2']) {
+    out.push({ slot: 'evening', kind: 'night', id: 't2', title: '夜間飛行：場周経路（t2）', where: 'apron', who: 'instructor' });
+    return out;
+  }
   return checkItems(state, C, S.check, W2, out, false);
 }
 function checkItems(state, C, id, W, out, flown) {
@@ -480,6 +540,10 @@ function checkItems(state, C, id, W, out, flown) {
   out.push({ slot: W.fly.am || flown ? 'am' : 'pm', kind: 'checkride', id, title: C.title, where: 'apron', who: C.who });
   return out;
 }
+
+// the options a day's weather is drawn with: the forced kinds, and whether the day may be a forecast bust
+// (the twin and final chapters only — a cadet far enough along to be judged on a forecast that lies)
+const dayOpts = (state, prog) => ({ ...forcedWeather(state, prog), bustOk: !!(STAGE[state.chapter] && state.chapter !== 'ch3' && state.chapter !== 'ch4') });
 
 // the first day of flying and the first solo are not spoiled by the weather (the instructor picks a good day)
 function forcedWeather(state, prog) {
@@ -536,7 +600,7 @@ export function createCareer({ store = null, seed } = {}) {
     get day() { return st.day; }, get slot() { return st.slot; }, get chapter() { return st.chapter; },
     get hours() { return SLOT_HOURS[st.slot]; },
     date: () => dateText(st.day),
-    weather: (prog) => weatherFor2(weatherFor(st.seed, st.day, forcedWeather(st, prog)), st.chapter, 'flight'),
+    weather: (prog) => weatherFor2(weatherFor(st.seed, st.day, dayOpts(st, prog)), st.chapter, 'flight'),
     schedule: (prog, o = {}) => schedule(st, prog, { ...o, weather: o.weather || C.weather(prog) }),
     gate: (prog, trust) => gate(st, prog, trust),
     // the work of the day done (kind:id), the tests' scores, the ground lessons

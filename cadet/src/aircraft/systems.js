@@ -37,6 +37,7 @@ export const NOCATCH = {
   prime: 'エンジンが冷えているので、プライマーを 2〜3 回押してからかけます。',
   flooded: 'プライマーの押しすぎで、燃料が多すぎます。スロットルを半分ほど開けて、もう一度かけます（かかったらすぐに戻す）。',
   starter: 'スターターは長く回し続けないようにします。少し待ってから、もう一度。',
+  hot: 'スターターを回しすぎて、熱で回らなくなりました。1分ほど冷ましてから、もう一度かけます。',
 };
 
 // createSystems(sw) → the systems for one aircraft; sw: the cockpit's switches (changed here only for the key's spring
@@ -46,27 +47,54 @@ export function createSystems(sw) {
   // (M7) a fault the run-up finds: { dropL } a left magneto (a fouled plug or the magneto itself) dropping more than the
   // limit; null: none
   let fault = null;
-  const st = { eng: 'off', dead: false, crankT: 0, primes: 0, warm: false, rpm: 0, lineT: LINE_FUEL_S, oil: 0, oilT: null, starterTried: false, reason: '' };
+  const st = { eng: 'off', dead: false, crankT: 0, primes: 0, warm: false, rpm: 0, lineT: LINE_FUEL_S, oil: 0, oilT: null, starterTried: false, reason: '', crankHeat: 0, crankLock: false, crankHeld: 0, oilQ: 7 };
   // the electrical model: one battery (17 Ah), one alternator (55 A from about 1,000 rpm, through the master).
   // The loads are the switches' own (avionics, lights, the fuel pump, the starter while it cranks); the bus
   // voltage and the charge/discharge current are what the MFD shows. A flat battery turns nothing: no starter,
   // and (through fly-mode passing the voltage on) dark screens. An alternator failure is a day's fault, set the
   // way the magneto fault is (setElecFault); the battery then carries the panel for a while and the volts sag.
-  const elec = { batt: 1, volts: 12.6, amps: 0, altFail: false, flat: false };
+  // The bus, in two stages (E1/E2). The switches are split: BAT connects the battery, ALT the alternator
+  // (sw.master is the legacy combined switch: where bat/alt are not set separately it speaks for both, and
+  // where they are, it is kept as their OR for older readers). ALT off, engine running: everything works and
+  // the battery discharges on a timer. BAT off, ALT on: the bus is powered with no buffer (the ammeter reads
+  // nothing — there is no battery in circuit). On the battery alone, when the charge falls below 45 % the
+  // second stage sheds: the MFD and the heavy non-essentials (landing/taxi lights, pitot heat) drop off, the
+  // avionics load falls to the essential bus (PFD + comm, about 4 A), and the PFD stays alive until the
+  // battery is flat — so shedding early, and switching the avionics master off, buys real PFD time. The
+  // standby instruments have their own battery: they live while it lasts, even with the main bus dead.
+  const elec = { batt: 1, standby: 1, volts: 12.6, amps: 0, altFail: false, flat: false, gen: 0, load: 0, batOn: false, altOn: false, shed: 0, pfdOn: false, mfdOn: false, standbyOn: true };
   let hobbs = 471.2;                                       // (this airframe's meter; session only — nothing saves it)
+  // (the split switches are the cockpit's own: the presets never grow them, so a caller driving the legacy
+  // master alone — a checklist, a test — is never overridden by a stale bat/alt left in the object)
+  const batOnF = () => (sw.bat != null ? !!sw.bat : !!sw.master);
+  const altOnF = () => (sw.alt != null ? !!sw.alt : !!sw.master);
   function elecUpdate(dt, rpmNow, cranking) {
-    const gen = sw.master && !elec.altFail ? clamp((rpmNow - 500) / 500, 0, 1) * 55 : 0;
+    const batOn = batOnF(), altOn = altOnF();
+    if (sw.bat != null && sw.alt != null) sw.master = batOn || altOn;   // (the legacy switch mirrors the split ones)
+    const gen = altOn && !elec.altFail ? clamp((rpmNow - 500) / 500, 0, 1) * 55 : 0;
+    const onBat = gen <= 1 && batOn;
+    const shed = onBat && elec.batt < 0.45 ? 1 : 0;
     let load = 0;
-    if (sw.avionics) load += 9; if (sw.beacon) load += 2; if (sw.nav) load += 2.5; if (sw.strobe) load += 1.5;
-    if (sw.landing) load += 9; if (sw.taxi) load += 6; if (sw.pitot) load += 4; if (sw.fuelPump) load += 2.5;
+    if (sw.avionics) load += shed ? 4 : 9;                  // (shed: the essential bus only — the PFD and the comm radio)
+    if (sw.beacon) load += 2; if (sw.nav) load += 2.5; if (sw.strobe) load += 1.5;
+    if (!shed) { if (sw.landing) load += 9; if (sw.taxi) load += 6; if (sw.pitot) load += 4; }
+    if (sw.fuelPump) load += 2.5;
     if (cranking) load += 65;
+    if (!batOn && !altOn) load = 0;
     let net = gen - load;
-    if (net > 0 && elec.batt >= 1) net *= 0.06;            // (a full battery takes only a trickle)
+    if (!batOn) net = 0;                                     // (no battery in circuit: nothing charges or discharges)
+    if (net > 0 && elec.batt >= 1) net *= 0.06;              // (a full battery takes only a trickle)
     elec.batt = clamp(elec.batt + net * dt / (17 * 3600), 0, 1);
     const dead = elec.batt <= 0.001 && gen <= 1;
-    elec.volts = dead ? 0 : gen > 1 ? 13.9 + 0.3 * (gen / 55) : 11.3 + 1.5 * elec.batt;
-    elec.amps = dead ? 0 : Math.round(net);
+    elec.volts = dead ? 0 : gen > 1 ? 13.9 + 0.3 * (gen / 55) : batOn ? 11.3 + 1.5 * elec.batt : 0;
+    elec.amps = dead || !batOn ? 0 : Math.round(net);
     elec.flat = elec.batt <= 0.02;
+    elec.gen = Math.round(gen); elec.load = Math.round(load); elec.batOn = batOn; elec.altOn = altOn; elec.shed = shed;
+    elec.pfdOn = gen > 1 || (batOn && !dead);
+    elec.mfdOn = elec.pfdOn && !shed;
+    if (gen > 1) elec.standby = Math.min(1, elec.standby + dt / 3600);
+    else if (!elec.pfdOn) elec.standby = Math.max(0, elec.standby - dt / (2.5 * 3600));   // (the standby battery carries its instruments for about two and a half hours)
+    elec.standbyOn = elec.standby > 0.02;
   }
   // oil temperature (°F, the holder is st or one twin engine): minutes behind power, cooling slowly stopped;
   // until the first update it is the day's outside air
@@ -89,17 +117,23 @@ export function createSystems(sw) {
   // set, so every engine gets the same mag / mixture / selector.
   function sync(s) {
     if (!s || !s.eng) return;
-    for (const e of s.eng) { e.mag = sw.mag; e.mix = sw.mixture; e.sel = sw.fuelSel; }
+    for (const e of s.eng) { e.mag = sw.mag; e.mix = sw.mixture; }   // (not e.sel: the selector reaches the engines through the physics' shared control below, at the physics' own timing)
+    // the twin's own selectors and crossfeed, where the cockpit has them: each engine's valve is its own
+    // control (no shared timing to preserve), so they are written straight to the engines
+    if (s.eng.length > 1 && sw.fuelSelL !== undefined && sw.fuelSelR !== undefined) { s.eng[0].sel = sw.fuelSelL; s.eng[1].sel = sw.fuelSelR; }
+    if (sw.xfeed !== undefined) s.xfeed = !!sw.xfeed;
   }
   // (M6) the twin: the same switches (one key, one primer, the mixtures together); START turns the starter of the
   // first engine not yet running — the left, then the right; each catches as the Archer's does
-  const twin = [{ eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0, oil: 0, oilT: null }, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0, oil: 0, oilT: null }];
+  const twin = [{ eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0, oil: 0, oilT: null, crankHeat: 0, crankLock: false, crankHeld: 0, oilQ: 8 }, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0, oil: 0, oilT: null, crankHeat: 0, crankLock: false, crankHeld: 0, oilQ: 8 }];
+  let lastSel = null;   // (the selector value last written to the physics' shared control: a change since is the other surface's move)
   const twinState = () => (twin.every(t => t.eng === 'run') ? 'run' : twin.some(t => t.eng === 'crank') ? 'crank' : twin.some(t => t.eng === 'run') ? 'half' : twin.some(t => t.eng === 'stopping') ? 'stopping' : 'off');
   // the aircraft as left on the apron: switches off, the engine stopped and still
   function setCold(s) {
     Object.assign(sw, COLD);
+    if (sw.bat !== undefined || sw.alt !== undefined) { sw.bat = false; sw.alt = false; }   // (the split switches off too, where the cockpit has them)
     st.eng = 'off'; st.dead = false; st.crankT = 0; st.primes = 0; st.warm = false; st.rpm = 0; st.lineT = LINE_FUEL_S; st.oil = 0; st.oilT = null; st.reason = '';
-    elec.batt = 1; elec.volts = 12.6; elec.amps = 0; elec.flat = false;   // (a serviced battery; an alternator fault set for the day stays set)
+    elec.batt = 1; elec.volts = 12.6; elec.amps = 0; elec.flat = false; elec.standby = 1; st.oilQ = 7; st.crankHeat = 0; st.crankLock = false; for (const t of twin) { t.oilQ = 8; t.crankHeat = 0; t.crankLock = false; }   // (a serviced battery and full sumps; an alternator fault set for the day stays set)
     if (s) { cut(s, true); sync(s); for (const e of s.eng) { e.rpm = 0; } s.rpm = 0; }
     for (const t of twin) Object.assign(t, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0, oil: 0, oilT: null });
   }
@@ -108,8 +142,8 @@ export function createSystems(sw) {
     Object.assign(sw, RUNNING);
     st.eng = 'run'; st.dead = false; st.crankT = 0; st.warm = true; st.lineT = LINE_FUEL_S; st.reason = '';
     if (s) { if (s.eng.some(e => e.cut)) cut(s, false); sync(s); st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; }
-    for (const t of twin) Object.assign(t, { eng: 'run', crankT: 0, catchAt: Infinity, oil: 65, oilT: 190 });
-    st.oil = 70; st.oilT = 190; elec.altFail = false;
+    for (const t of twin) Object.assign(t, { eng: 'run', crankT: 0, catchAt: Infinity, oil: 65, oilT: 190, oilQ: 8 });
+    st.oil = 70; st.oilT = 190; st.oilQ = 7; elec.altFail = false;
   }
   // a new physics state for the same aircraft (a lesson started where the cadet is: FLIGHT LAB's state, running): the
   // switches stay as the cadet set them; the engine runs on (or, if it was not running, everything is set running)
@@ -140,13 +174,22 @@ export function createSystems(sw) {
     // the engine's controls, mirrored into the physics' shared controls too (its mixture, its feeding tank and its
     // carburettor heat are real there): leaning in the cruise, a dry selected tank and carburettor ice on a humid
     // day all answer to these — the same switches, so the two surfaces never disagree
-    s.mix = sw.mixture; s.fuelSel = sw.fuelSel; s.carbHeat = sw.carbHeat;
+    if (lastSel !== null && s.fuelSel !== lastSel && (s.fuelSel === 'L' || s.fuelSel === 'R' || s.fuelSel === 'OFF' || s.fuelSel === 'BOTH')) sw.fuelSel = s.fuelSel;   // (the other surface moved the selector — a FLIGHT LAB checklist, a lesson's hand: the switches follow it, so the two never disagree)
+    s.mix = sw.mixture; s.carbHeat = sw.carbHeat;
+    if (s.eng.length > 1 && sw.fuelSelL !== undefined && sw.fuelSelR !== undefined) lastSel = s.fuelSel;   // (the twin's per-engine selectors: the shared control is not theirs to pin)
+    else { s.fuelSel = sw.fuelSel; lastSel = s.fuelSel; }
+    // the electric boost pump and the pitot heat answer to the bus as it was left last frame: the pump runs
+    // while the bus can feed it; shed (stage 2) or a flat bus stills it, and the pitot heat with it
+    const busLive = (elec.gen || 0) > 1 || (elec.batOn && !elec.flat);
+    s.boostPump = !!sw.fuelPump && busLive;
+    s.pitotHeat = !!sw.pitot && busLive && !elec.shed;
     if (s.eng.length > 1) return twinUpdate(dt, s);
-    const e = s.eng[0], master = !!sw.master;
+    const e = s.eng[0], master = batOnF();   // (the starter answers to the BAT switch; sw.master where the split switches are not in use)
     if (st.eng === 'off' || st.eng === 'stopping') {
       if (sw.mag === 'START') {
         if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
         else if (elec.batt <= 0.02) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'バッテリーが上がっています。外部電源か整備を呼んでください。'); } }
+        else if (st.crankLock) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'スターターが熱を持っています。1分ほど冷ましてから、もう一度。'); } }
         else { st.eng = 'crank'; st.crankT = 0; st.catchAt = catchTime(s); emit('crank'); }
       } else st.starterTried = false;
       // the propeller winds down (the physics' windmilling rpm in the air)
@@ -155,11 +198,16 @@ export function createSystems(sw) {
       if (st.rpm <= 0.5 && st.eng === 'stopping') st.eng = 'off';
       st.oil = Math.max(0, st.oil - 60 * dt);
     }
+    // starter duty (EN5): cranking heats the motor (about 30 s of it, in total, is the limit); it cools over
+    // about a minute, and a hot starter locks out until it has cooled below the latch
+    if (st.crankHeat < 0.4) st.crankLock = false;
+    if (st.eng !== 'crank') { st.crankHeld = 0; st.crankHeat = Math.max(0, st.crankHeat - dt / 45); }   // (it cools only while it rests)
     if (st.eng === 'crank') {
-      st.crankT += dt;
+      st.crankT += dt; st.crankHeld += dt; st.crankHeat = Math.min(1.2, st.crankHeat + dt / 30);
       // the starter drags the propeller round, slowed at each compression
       st.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(st.crankT * 2 * Math.PI * 4));
-      if (sw.mag !== 'START' || !master) { st.eng = 'off'; }
+      if (st.crankHeat >= 1 && !st.crankLock) { st.crankLock = true; sw.mag = 'BOTH'; st.eng = 'off'; emit('nocatch', NOCATCH.hot); }
+      else if (sw.mag !== 'START' || !master) { st.eng = 'off'; }
       else if (st.crankT >= st.catchAt) {
         st.eng = 'run'; st.warm = true; st.primes = 0; st.lineT = LINE_FUEL_S;
         cut(s, false); if (e) e.rpm = CATCH_RPM; st.rpm = CATCH_RPM;
@@ -189,19 +237,23 @@ export function createSystems(sw) {
         const r = e ? e.rpm || 0 : 0, k = clamp((r - 700) / 1300, 0, 1.25);
         const drop = (sw.mag === 'L' ? (fault && fault.dropL) || RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * k + (sw.carbHeat ? RUNUP.carb * k : 0);
         st.rpm = Math.max(0, r - drop);
-        st.oil += (clamp(55 + r * 0.012, 0, 85) - st.oil) * Math.min(1, dt * 1.5);
+        st.oilQ = Math.max(0, st.oilQ - 0.08 * dt / 3600 * (0.5 + clamp((st.rpm - 650) / 2000, 0, 1)));   // (oil is used as it runs: the gauge's mirror of the physics' quantity)
+        let oTgt = clamp(55 + r * 0.012, 0, 85);
+        if (st.oilQ < 2.5) oTgt *= clamp(0.3 + 0.7 * (st.oilQ / 2.5), 0.3, 1) * (r > 2000 ? 0.8 : 1);   // (low oil: the pressure sags, worst at high rpm)
+        st.oil += (oTgt - st.oil) * Math.min(1, dt * 1.5);
       }
     }
     oilTemp(st, dt, s, st.eng === 'run', (st.rpm - 650) / 2000);
     elecUpdate(dt, st.rpm, st.eng === 'crank');
     if (st.eng === 'run') hobbs += dt / 3600;
+    collectAlerts(s);
     return events;
   }
   // the twin, engine by engine (the stops — mixture, magnetos, fuel — stop both: the switches are shared). The
   // propellers cycled in the run-up (the levers pulled back to the feather detent's edge and pushed forward again,
   // sw.propCycleT counting down): the rpm sags about 400 and comes back
   function twinUpdate(dt, s) {
-    const master = !!sw.master;
+    const master = batOnF();
     let cyc = 0;
     if (sw.propCycleT > 0) {
       sw.propCycleT = Math.max(0, sw.propCycleT - dt);
@@ -213,13 +265,17 @@ export function createSystems(sw) {
       if (k < 0) sw.mag = 'BOTH';
       else if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
       else if (elec.batt <= 0.02) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'バッテリーが上がっています。外部電源か整備を呼んでください。'); } }
+      else if (twin[k].crankLock) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'スターターが熱を持っています。1分ほど冷ましてから、もう一度。'); } }
       else if (twin[k].eng !== 'crank') { twin[k].eng = 'crank'; twin[k].crankT = 0; twin[k].catchAt = catchTime(s); emit('crank', k ? '右エンジン' : '左エンジン'); }
     } else st.starterTried = false;
     twin.forEach((t, k) => {
       const e = s.eng[k];
+      if (t.crankHeat < 0.4) t.crankLock = false;
+      if (t.eng !== 'crank') { t.crankHeld = 0; t.crankHeat = Math.max(0, t.crankHeat - dt / 45); }
       if (t.eng === 'crank') {
-        t.crankT += dt; t.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(t.crankT * 2 * Math.PI * 4));
-        if (sw.mag !== 'START' || !master) t.eng = 'off';
+        t.crankT += dt; t.crankHeld += dt; t.crankHeat = Math.min(1.2, t.crankHeat + dt / 30); t.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(t.crankT * 2 * Math.PI * 4));
+        if (t.crankHeat >= 1 && !t.crankLock) { t.crankLock = true; sw.mag = 'BOTH'; t.eng = 'off'; emit('nocatch', NOCATCH.hot); }
+        else if (sw.mag !== 'START' || !master) t.eng = 'off';
         else if (t.crankT >= t.catchAt) {
           t.eng = 'run'; st.warm = true; st.primes = 0; st.lineT = LINE_FUEL_S;
           cut(s, false, k); if (e) e.rpm = CATCH_RPM; t.rpm = CATCH_RPM;
@@ -257,23 +313,48 @@ export function createSystems(sw) {
     st.oil += ((on ? clamp(55 + st.rpm * 0.012, 0, 85) : 0) - st.oil) * Math.min(1, dt * 1.5);
     // each engine's own oil (the MFD's L/R pair): pressure off its own gauge rpm, temperature behind its power
     for (const t of twin) {
-      if (t.eng === 'run') t.oil += (clamp(55 + t.rpm * 0.012, 0, 85) - t.oil) * Math.min(1, dt * 1.5);
-      else t.oil = Math.max(0, t.oil - 60 * dt);
+      if (t.eng === 'run') {
+        t.oilQ = Math.max(0, t.oilQ - 0.08 * dt / 3600 * (0.5 + clamp((t.rpm - 650) / 2000, 0, 1)));
+        let oTgt = clamp(55 + t.rpm * 0.012, 0, 85);
+        if (t.oilQ < 2.5) oTgt *= clamp(0.3 + 0.7 * (t.oilQ / 2.5), 0.3, 1) * (t.rpm > 2000 ? 0.8 : 1);
+        t.oil += (oTgt - t.oil) * Math.min(1, dt * 1.5);
+      } else t.oil = Math.max(0, t.oil - 60 * dt);
       oilTemp(t, dt, s, t.eng === 'run', (t.rpm - 650) / 2000);
     }
     elecUpdate(dt, Math.max(twin[0].rpm, twin[1].rpm), twin.some(t => t.eng === 'crank'));
     if (on) hobbs += dt / 3600;
+    collectAlerts(s);
     return events;
+  }
+  // (A5) the alert state: every caution and warning the aircraft has to tell, collected from the same
+  // thresholds the real annunciators use, de-duplicated by id and sorted — warnings first, then by id, so
+  // the list is stable frame to frame. The avionics draw it; here it is state only. Also on s.out.alerts.
+  let alertsArr = [];
+  function collectAlerts(s) {
+    const A = [];
+    const running = s && s.eng ? s.eng.map(e => !!e.run) : [];
+    const oils = s && s.eng && s.eng.length > 1 ? twin.map(t => t.oil) : [st.oil];
+    if (running.some((r, i) => r && (oils[i] || 0) < 30)) A.push({ id: 'OIL PRESS', level: 'warn', text: 'OIL PRESS LOW' });
+    if (s && s.fuel) { if (s.fuel[0] < 3) A.push({ id: 'FUEL L', level: 'caution', text: 'FUEL L LOW' }); if (s.fuel[1] < 3) A.push({ id: 'FUEL R', level: 'caution', text: 'FUEL R LOW' }); }
+    if (st.crankHeld > 10 || twin.some(t => (t.crankHeld || 0) > 10)) A.push({ id: 'STARTER', level: 'caution', text: 'STARTER ENGAGED' });
+    if (st.crankLock || twin.some(t => t.crankLock)) A.push({ id: 'STARTER HOT', level: 'caution', text: 'STARTER HOT' });
+    if (elec.altFail && running.some(Boolean)) A.push({ id: 'ALTERNATOR', level: 'caution', text: 'ALTERNATOR FAIL' });
+    if (elec.volts > 0 && elec.volts < 12 && elec.batOn && (running.some(Boolean) || (s && !s.onGround))) A.push({ id: 'LOW VOLTS', level: 'caution', text: 'LOW VOLTS' });
+    if (s && s.eng && s.eng.some(e => e.run && (e.fuelPress || 0) < 0.25)) A.push({ id: 'FUEL PRESS', level: 'caution', text: 'FUEL PRESS LOW' });
+    if (s && !s.onGround && s.out && s.out.agl != null && s.out.agl < 2000 && s.A && s.A.gear && !s.A.gear.fixed && (s.gearPos || 0) < 0.999) A.push({ id: 'GEAR', level: 'warn', text: 'GEAR UNSAFE' });
+    A.sort((a, b) => (a.level === b.level ? 0 : a.level === 'warn' ? -1 : 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    alertsArr = A; if (s && s.out) s.out.alerts = A;
   }
   return {
     sw, st, setCold, setRunning, adopt, prime, update, catchTime,
     setFault(f) { fault = f && f.dropL > 0 ? { dropL: +f.dropL } : null; }, get fault() { return fault; },
     setElecFault(on) { elec.altFail = !!on; }, get elecFault() { return elec.altFail; },
     get elec() { return elec; }, get oilT() { return st.oilT; }, get hobbs() { return hobbs; },
-    get twin() { return twin.map(t => ({ eng: t.eng, rpm: t.rpm, oil: t.oil, oilT: t.oilT })); }, get runningL() { return twin[0].eng === 'run'; },
+    get twin() { return twin.map(t => ({ eng: t.eng, rpm: t.rpm, oil: t.oil, oilT: t.oilT, oilQ: t.oilQ, crankHeat: t.crankHeat })); }, get runningL() { return twin[0].eng === 'run'; },
+    get alerts() { return alertsArr; }, get starterHot() { return !!(st.crankLock || twin.some(t => t.crankLock)); }, get oilQ() { return st.oilQ; },
     twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
-    get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },
+    get powered() { return batOnF() || altOnF(); }, get avionicsOn() { return !!((batOnF() || altOnF()) && sw.avionics); },
   };
 }

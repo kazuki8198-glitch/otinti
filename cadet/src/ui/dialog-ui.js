@@ -50,6 +50,8 @@ const CSS = `
 #dlg .dlg-ja { margin: 4px 0 0; font-size: calc(14px * var(--sub-k, 1)); line-height: 1.6; color: var(--ink-dim, #a9b7c6); white-space: pre-line; overflow-wrap: anywhere; }
 #dlg .dlg-box.narr .dlg-text { color: var(--ink-dim, #a9b7c6); font-style: italic; }
 #dlg .dlg-cue { min-height: 1.5em; margin-top: 2px; text-align: right; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
+/* the subtitles off (a setting): the words go, the choices and the question field stay — a talk is still playable */
+#dlg .dlg-box.nosub .dlg-chip, #dlg .dlg-box.nosub .dlg-text, #dlg .dlg-box.nosub .dlg-ja, #dlg .dlg-box.nosub .dlg-cue { display: none; }
 #dlg .dlg-cue.wait { animation: dlg-pulse 1.6s ease-in-out infinite; }
 #dlg .dlg-keys { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: flex-end; margin-top: 4px; }
 #dlg .dlg-keys[hidden] { display: none; }
@@ -388,7 +390,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     } catch (e) { /* no voice this time */ }
   }
   try { if (win.speechSynthesis) win.speechSynthesis.getVoices(); } catch (e) { /* starts loading the voice list */ }
-  const offSettings = settings && typeof settings.onChange === 'function' ? settings.onChange((k, v) => { if (k === 'voice' && !v) hush(); }) : null;
+  const offSettings = settings && typeof settings.onChange === 'function' ? settings.onChange((k, v) => { if (k === 'voice' && !v) hush(); if (k === 'subtitles') box.classList.toggle('nosub', v === false); }) : null;
 
   // ---- show / hide the subtitle
   function show(view) {
@@ -420,6 +422,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     gen++; cur = v;
     const narr = v.speaker === 'narrator' || !v.name;
     box.classList.toggle('narr', narr);
+    box.classList.toggle('nosub', !!(settings && typeof settings.get === 'function' && settings.get('subtitles') === false));
     for (const t of ['key', 'note', 'think']) box.classList.toggle(`t-${t}`, view.tag === t);   // (the class: the line's kind)
     chip.hidden = narr; chip.textContent = v.name;
     const ink = v.color ? inkOn(v.color) : null;

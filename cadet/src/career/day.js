@@ -136,7 +136,10 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   const intent = PLAN.lessons.some(id => startKind(FL, id) === 'area') ? 'area' : 'pattern';
   // the weather the lessons fly in (FLIGHT LAB's: their wind and altimeter), for the ATIS
   const L1 = SC.startLesson(PLAN.lessons[0], 'intro'), wm = /^(\d+) at (\d+)$/.exec(L1.windStr || '');
-  const radio = dayRadio({ ...weather, windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: L1.s.qnh, intent, solo: PLAN.solo && !PLAN.xc, xc: !!PLAN.xc });
+  // the day's own QNH (the career weather's — it varies now): the ATIS reads it, and fly-mode sets the
+  // flight's air to it, so the altimeter setting the cadet makes is the day's, not a constant
+  const dayQnh = weather.qnh != null ? weather.qnh : L1.s.qnh;
+  const radio = dayRadio({ ...weather, windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: dayQnh, intent, solo: PLAN.solo && !PLAN.xc, xc: !!PLAN.xc });
   const atc = createAtc(radio, { seed });
   const AIRCRAFT = PLAN.aircraft || 'pa28', CHECKLISTS = AIRCRAFT === 'pa44' ? CHECKLISTS_SEMINOLE : CHECKLISTS_ARCHER;
   const walk = createWalkaround({ seed, anomalies, aircraft: AIRCRAFT });
@@ -144,10 +147,16 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
     trust: 0, notes: [], auto: { list: 0, taxi: 0 }, leftOn: [],
-    fault: fault === 'mag' ? { kind: 'mag', asked: false, tries: 0, decided: null, drop: 0 } : fault === 'carb' ? { kind: 'carb' } : null,   // 'carb': a humid day — carburettor ice in flight, found on the instruments, not in the run-up
+    fault: fault === 'mag' ? { kind: 'mag', asked: false, tries: 0, decided: null, drop: 0 } : fault === 'carb' ? { kind: 'carb' } : fault === 'pitot' ? { kind: 'pitot' } : fault === 'gear' ? { kind: 'gear' } : fault === 'pump' ? { kind: 'pump' } : null,   // 'carb': a humid day — carburettor ice in flight, found on the instruments, not in the run-up; 'pitot': a day in visible moisture (the tube blocks with the heat off); 'gear': the Seminole's transit stalls (the emergency handle is the way down); 'pump': an engine-driven fuel pump on its way out
     // an alternator-failure day: nothing to find on the ground — the bus sags in flight (systems.setElecFault);
     // the day only carries the flag, fly-mode watches the voltage and the logbook notes it
     elecFault: !!elecFault,
+    // (gap audit v2, B4.1) the clearance state UNDER the radio scripts: the scripted sequences SET these
+    // flags as they complete; the world checks them when the cadet actually moves. Forgiving by design:
+    // a tower call-out, a forced go-around instruction and a debrief remark — never a failed day.
+    atcState: { atisCopied: '', atisCurrent: radio.weather.info, taxi: false, lineup: false, takeoff: false, landing: false, freqChange: false, closed: false,
+      noClearTakeoff: 0, noClearLanding: 0, staleAtis: false, nearMiss: [], trafficGA: 0 },
+    _og: true, _lWarn: false, _atisAdvanced: false,
   };
   // what happened since the last update() (a phase entered from outside it — a lesson ended, the cadet boarded —
   // is told at the next one)
@@ -156,11 +165,32 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   // a step by its id: a lesson's own (its title from FLIGHT LAB's syllabus), or one of STEPS
   const info = (id) => STEPS[id] || { label: `課目 ${id}：${(lessonOf(FL, id) || {}).title || id}`, lesson: id };
   // enter the step at index k (or the next step with this id: a step entered from outside, a crash's debrief)
+  const INFO_WORDS = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliett', 'Kilo', 'Lima', 'Mike', 'November', 'Oscar', 'Papa', 'Quebec', 'Romeo', 'Sierra', 'Tango', 'Uniform', 'Victor', 'Whiskey', 'Xray', 'Yankee', 'Zulu'];
+  // (B4.4) the ATIS is a broadcast, not a step: its letter advances once in the day (the weather slot's
+  // second half — by the time the cadet comes back, a new information is out). A copy made before that is
+  // stale, and the tower says so on the return call.
+  function advanceAtis() {
+    const A = st.atcState; if (st._atisAdvanced) return; st._atisAdvanced = true;
+    const i = INFO_WORDS.indexOf(A.atisCurrent); if (i < 0) return;
+    A.atisCurrent = INFO_WORDS[(i + 1) % INFO_WORDS.length];
+    if (A.atisCopied && A.atisCopied !== A.atisCurrent && !A.staleAtis) {
+      A.staleAtis = true;
+      emit({ type: 'atc', kind: 'staleAtis', en: `${radio.call.short}, LAB Tower, information ${A.atisCurrent} is now current. Verify you have ${A.atisCurrent}.` });
+    }
+  }
+  // listen to the broadcast again (any time): the lines heard, with the CURRENT letter; copying afresh
+  // clears the staleness. The game wires this to tuning the ATIS frequency.
+  function listenAtis() {
+    const A = st.atcState; A.atisCopied = A.atisCurrent;
+    const en = radio.atisText.replace(`information ${radio.weather.info}`, `information ${A.atisCurrent}`).replace(`have information ${radio.weather.info}`, `have information ${A.atisCurrent}`);
+    return { en, letter: A.atisCurrent };
+  }
   function enter(phase, k) {
     if (k == null) { k = steps.indexOf(phase, st.step + 1); if (k < 0) k = steps.indexOf(phase); }
     const from = st.phase; st.phase = phase; st.step = k;
     const ph = info(phase);
     st.list = ph.list || null; st.i = 0;
+    if (phase === 'back') advanceAtis();
     if (ph.radio) atc.start(ph.radio, phase === 'exit' || phase === 'groundIn' ? st.exit : undefined);
     emit({ type: 'phase', from, to: phase });
   }
@@ -240,7 +270,37 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     if (F && !F.decided && !F.asked && st.phase === 'runup' && st.memo.dropL > RUNUP.maxDrop) {
       F.asked = true; F.drop = st.memo.dropL; emit({ type: 'fault', kind: F.kind, drop: F.drop, tries: F.tries });
     }
-    for (const e of atc.update(dt)) emit({ ...e, type: 'radio', kind: e.type });
+    for (const e of atc.update(dt)) {
+      if (e.type === 'done') {                       // (B4.1) a completed script SETS the clearance state
+        const A = st.atcState;
+        if (e.seq === 'atis') A.atisCopied = A.atisCurrent;
+        else if (e.seq === 'ground') A.taxi = true;
+        else if (e.seq === 'tower') A.lineup = true;
+        else if (e.seq === 'takeoff' || e.seq === 'stopgo') A.takeoff = true;
+        else if (e.seq === 'final') A.landing = true;
+        else if (e.seq === 'leave') A.freqChange = true;
+        else if (e.seq === 'closed') A.closed = true;
+      }
+      emit({ ...e, type: 'radio', kind: e.type });
+    }
+    // (B4.1) acting without the state, outside the lessons (a lesson's own clearances are FLIGHT LAB's):
+    // a departure with no takeoff clearance, or an approach with no landing clearance. The tower calls
+    // out; the debrief remembers. Training-forgiving: no day failure.
+    if (c.onGround != null && info(st.phase).lesson) st._og = c.onGround;   // (keep the edge detector honest across lessons)
+    if (c.onGround != null && !info(st.phase).lesson) {
+      const A = st.atcState;
+      if (st._og && c.onGround === false) {
+        if (!A.takeoff) { A.noClearTakeoff++; st.trust -= 4; emit({ type: 'atc', kind: 'noClearTakeoff', en: `${radio.call.short}, LAB Tower, you departed without a takeoff clearance.` }); }
+        A.takeoff = false; st._lWarn = false;
+      }
+      if (!st._og && c.onGround === true) A.landing = false;
+      if (c.onGround === false && c.pos && c.pos.a < -250 && c.pos.a > -3200 && Math.abs(c.pos.c) < 80 && !A.landing && !st._lWarn
+        && ['return', 'pattern', 'recycle', 'transit'].includes(st.phase)) {
+        st._lWarn = true; A.noClearLanding++; st.trust -= 3;
+        emit({ type: 'atc', kind: 'noClearLanding', en: `${radio.call.short}, LAB Tower, go around, you have no landing clearance.` });
+      }
+      st._og = c.onGround;
+    }
     const ph = info(st.phase);
     if (ph.list) tick(c);
     if (F && F.asked && !F.decided && st.phase === 'runup') return events.splice(0);      // (waiting for the decision)
@@ -290,6 +350,13 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     enter('taxiIn', steps.indexOf('taxiIn'));
     return F.decided;
   }
+  // (B4.2) the traffic's events the game saw (fly-mode routes them here): a near miss is a see-and-avoid
+  // entry for the debrief; a trainer's go-around caused by the cadet is counted, not blamed by name
+  function noteTraffic(kind, w) {
+    const A = st.atcState;
+    if (kind === 'nearMiss') { if (!A.nearMiss.includes(w)) A.nearMiss.push(w); }
+    else if (kind === 'trafficGoAround') A.trafficGA++;
+  }
   function debriefRead() { if (st.phase === 'debrief') enter('done'); }
   function abortTo(phase) { if (steps.includes(phase)) enter(phase, steps.lastIndexOf(phase)); }
 
@@ -307,10 +374,11 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     if (st.crash) trust -= 6;
     const landings = lessons.filter(l => l.done && !l.crashed && l.end === 'stopped').length;
     return { walk: w, radio: r, lessons, plan: { main: PLAN.main, solo: !!PLAN.solo, xc: !!PLAN.xc, check: !!PLAN.check, aircraft: PLAN.aircraft || 'pa28', lessons: PLAN.lessons.slice() }, solo: !!PLAN.solo, landings,
+      atcState: { copied: st.atcState.atisCopied, current: st.atcState.atisCurrent, noClearTakeoff: st.atcState.noClearTakeoff, noClearLanding: st.atcState.noClearLanding, staleAtis: st.atcState.staleAtis, nearMiss: st.atcState.nearMiss.slice(), trafficGA: st.atcState.trafficGA },
       incursion: st.incursion, crash: st.crash || '', fault: st.fault && st.fault.decided ? { ...st.fault } : null, transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level: flownLevel };
   }
   return {
-    radio, atc, walk, st, steps, plan: PLAN, info, nextLesson, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next, decideFault,
+    radio, atc, walk, st, steps, plan: PLAN, info, nextLesson, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next, decideFault, qnh: dayQnh, listenAtis, noteTraffic,
     setLevel(lv) { if (['intro', 'basic', 'precision'].includes(lv)) flownLevel = lv; },
     get phase() { return st.phase; }, get label() { return info(st.phase).label; }, get level() { return flownLevel; },
   };

@@ -80,6 +80,9 @@ export function createSky(renderer, scene, quality) {
 
   const state = { hours: 9.5, day: 285, el: 30, dir: new THREE.Vector3(0, 1, 0), lightsOn: 0, half: 90, overcast: 0 };
   function applyQuality(q) {
+    // a shadow size of 0 turns the sun's shadows off (the settings' advanced switch); the map is left alone
+    sun.castShadow = !(q.shadow === 0);
+    if (q.shadow === 0) return;
     sun.shadow.mapSize.set(q.shadow, q.shadow);
     if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     sun.shadow.radius = q.shadowRadius; state.half = q.shadowHalf;

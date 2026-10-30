@@ -211,8 +211,16 @@ export function installSorajima(FL) {
     const F = [0, 0, 0], M = [0, 0, 0];
     const V = Math.hypot(vb[0], vb[1], vb[2]) || 1, sb = vb[0] / V;
     let clw = 0, stw = 0, eps = 0;
+    // (the downwash weakens in ground effect: near the ground the wing bends the air less, so the tail
+    // flies at a different angle than it does upstairs — the pitch change pilots feel in the flare. The
+    // tuning runs pass no height and keep the free-air value. The share is small on purpose: the model's
+    // trim was tuned in free air, and the textbook-size reduction (~40% at the surface) pitches the nose
+    // down through the flare harder than the airframe answers — the landing ladder measured 476 fpm and
+    // a nose-wheel touchdown at full share, a bounce at 15%, clean at this 7%)
+    let geEps = 1;
+    if (o.hgt) { const tp = E.pcs.find(p => p.kind === 1); if (tp) { const hh = Math.max(o.hgt(tp), 0.3) / P.b, gg = (16 * hh * hh) / (1 + 16 * hh * hh); geEps = 0.93 + 0.07 * gg; } }
     const aS0 = P.aStall - P.flapStall * o.flapF;
-    for (let pass = 0; pass < 2; pass++) for (const p of E.pcs) {
+    for (let pass = 0; pass < 2; pass++) for (let pi = 0; pi < E.pcs.length; pi++) { const p = E.pcs[pi];
       if ((p.kind === 0) !== (pass === 0)) continue;              // wing first: its lift sets the downwash on the tail
       const r = p.r;
       let vx = vb[0] + w[1] * r[2] - w[2] * r[1], vy = vb[1] + w[2] * r[0] - w[0] * r[2], vz = vb[2] + w[0] * r[1] - w[1] * r[0];
@@ -233,7 +241,12 @@ export function installSorajima(FL) {
         cdi = P.K * ge;
       } else if (p.kind === 1) { a += E.it - eps; slope = E.at; dcl = E.ke * o.elev; aS = 0.32; cdi = 0.09; }
       else { slope = E.af; dcl = E.kr * o.rud; aS = 0.36; cdi = 0.09; }
-      const over = Math.max(a - aS, -aS - 0.06 - a), st = smoothstep(0, 0.07, over);
+      const over = Math.max(a - aS, -aS - 0.06 - a);
+      let st = smoothstep(0, 0.07, over);
+      // (the stall's memory, when the caller keeps it (o.stH, the flight only — the tuning runs stay pure):
+      // separated flow lets go quickly and reattaches slowly, so the blend the piece flies with lags the
+      // angle — a recovery has to hold the nose down a moment, not just touch it)
+      if (o.stH) { const cur = o.stH[pi] || 0, tau = st > cur ? 0.06 : 0.4; st = o.stH[pi] = cur + (st - cur) * Math.min(1, (o.dt || 0) / tau); }
       const lin = cl0 + slope * a + dcl * (1 - 0.5 * st);
       const CL = lerp(lin, 1.15 * Math.sin(2 * a), st), sa = Math.sin(a);
       const CD = cdi * lin * lin * (1 - st) + st * 1.25 * sa * sa;
@@ -246,15 +259,28 @@ export function installSorajima(FL) {
       M[0] += (p.kind === 0 ? 0 : r[1]) * fz - r[2] * fy; M[1] += r[2] * fx - r[0] * fz; M[2] += r[0] * fy - r[1] * fx;
       p.cl = CL; p.st = st; p.a = a;
       if (p.kind === 0) { clw += CL * p.S; stw += st * p.S; }
-      if (pass === 0) eps = E.deps * (clw / P.S) / P.CLa;
+      if (pass === 0) eps = E.deps * (clw / P.S) / P.CLa * geEps;
     }
     return { F, M, CLw: clw / P.S, stallW: stw / P.S };
   }
 
   // the derived aircraft: inertia, wheels, the points that must not touch the ground, the propeller's arms, the pieces
-  function deriveAircraft(A, mass) {
+  function deriveAircraft(A, mass, load) {
     const P = { ...A.phys, mass: mass || A.phys.mass }, m = P.mass;
-    const I = [m * (0.18 * P.L) ** 2, m * (0.19 * (P.L + P.b) / 2) ** 2, m * (0.12 * P.b) ** 2];
+    // (the load's centre of gravity moves the longitudinal stability, not only the trim: the static margin is
+    // the distance from the CG to the neutral point and Cma = −CLa × that margin, so a CG behind the standard
+    // load's shrinks Cma (less stable in pitch, the lesson the W&B page teaches) and one ahead of it grows it,
+    // by CLa per mean chord of travel; the trim follows the CG by the nudge applyLoading always applied. The
+    // spread of the load about its CG (load.spreadIn, inches) likewise stretches the pitch/yaw inertia a
+    // little — mass carried far aft is harder to pitch. No load, or the standard load, changes nothing at all.)
+    if (load && Number.isFinite(load.cgIn)) {
+      const dIn = load.cgIn - refCgOf(A);
+      P.Cma = A.phys.Cma + A.phys.CLa * dIn / (P.c / 0.0254);
+      P.Cm0 = A.phys.Cm0 + clamp(dIn * 0.0025, -0.015, 0.015);
+    }
+    let iMul = 1;
+    if (load && Number.isFinite(load.spreadIn)) { const rs = refSpreadOf(A); if (rs > 0) iMul = clamp(0.7 + 0.3 * (load.spreadIn * load.spreadIn) / (rs * rs), 0.9, 1.35); }
+    const I = [m * (0.18 * P.L) ** 2 * iMul, m * (0.19 * (P.L + P.b) / 2) ** 2, m * (0.12 * P.b) ** 2 * iMul];
     const wr = A.gear.wheelR, bottom = A.gear.nose[1] - wr, zn = A.gear.nose[2], zm = A.gear.mains[0][2];
     const Fn = m * G * zm / (zm - zn), Fm = m * G * -zn / (zm - zn) / (A.gear.mains.length * 2);
     const defl = clamp(wr * 0.38, 0.05, 0.22);
@@ -356,7 +382,7 @@ export function installSorajima(FL) {
   // attitude and power for a steady state (speed kt, climb fpm, or full / idle / dead engine), from the model's own equations:
   // what a real instructor quotes as the starting attitude and power ("pitch + power = performance")
   function steadyState(s, kt, fpm, o = {}) {
-    const P = s.AC, A = s.A, atm = atmos((o.altFt ?? 3000) / FT), W = P.mass * G;
+    const P = s.AC, A = s.A, atm = atmos((o.altFt ?? 3000) / FT, o.oatDev ?? s.oatDev ?? 0), W = P.mass * G;   // (the day's air, as flown: the instructor's numbers breathe the same density the flight does)
     const flapF = A.wing.flap ? FLAP_DEG[o.flaps || 0] / 30 : 0, gear = A.gear.fixed ? 1 : (o.gear ? 1 : 0);
     const V = kt / KT / Math.sqrt(atm.sigma), q = 0.5 * atm.rho * V * V, n = 1 / Math.cos((o.bank || 0) * DEG);
     const cl0 = P.CL0 + P.flapCL * flapF, pw = Math.max(0, 1.132 * atm.sigma - 0.132), ne = o.oei ? 0.5 : 1;
@@ -420,7 +446,7 @@ export function installSorajima(FL) {
     if (!s.assistOn) {
       s.gI = 0; s.bI = 0;
       const vr = A.v.cruise / KT, spd = Math.max(V, 12);
-      const pMax = Math.min(1, sens.pMax * clamp(vr / spd, 1, 2.6)), rMax = Math.min(1, sens.rMax * clamp(vr / spd, 1, 2));
+      const pMax = Math.min(1, sens.pMax * clamp(vr / spd, 1, s.opts.gainCap ?? 1.7)), rMax = Math.min(1, sens.rMax * clamp(vr / spd, 1, 2));
       const kg = s.onGround ? 1 : s.airTime < 3 ? 1 - s.airTime / 3 : 0;     // full elevator for the rotation, blended out after lift-off
       const lin = Math.max(clamp(0.45 + (vr / spd - 1) * 0.35, 0.45, 0.8), 0.45 + 0.35 * kg);
       const shape = (x, a) => a * x + (1 - a) * x * x * x;
@@ -489,7 +515,9 @@ export function installSorajima(FL) {
   // aircraft rolls further and climbs slower, a solo one, without the instructor's weight, climbs better),
   // and the trim: a centre of gravity away from the standard load's asks for a different elevator trim
   // (AC.Cm0 shifted by the same amount everywhere trim is quoted; a nudge, never more, inside the
-  // envelope). The stall speeds derive() quotes (vs0 / vs1) scale with √weight. Outside the limits the
+  // envelope) — and, with it, the stability itself: Cma follows the static margin the CG leaves
+  // (deriveAircraft's load), so an aft load is genuinely less stable in pitch, as the W&B lesson says.
+  // The stall speeds derive() quotes (vs0 / vs1) scale with √weight. Outside the limits the
   // before-takeoff checklist refuses (FLIGHT LAB's school.js): overweight, nose-heavy or tail-heavy is a
   // load to fix on the ground, not a flight to make.
   const LB_KG = 0.45359237, PERSON_KG = 77, FUEL_KG_GAL = 6 * LB_KG;   // a standard adult (170 lb); avgas at 6 lb/US gal
@@ -525,9 +553,12 @@ export function installSorajima(FL) {
     const cgIn = mom / kg, lb = kg / LB_KG, problems = [];
     if (lb > W.mtowLb) problems.push('over');
     if (cgIn < W.fwdIn) problems.push('nose'); else if (cgIn > W.aftIn) problems.push('tail');
-    return { kg, lb, cgIn, mtowLb: W.mtowLb, fwdIn: W.fwdIn, aftIn: W.aftIn, ok: !problems.length, problems, fuelGal: fg.slice(), loading: L, emptyKg };
+    // (the load's spread about its own CG, inches: how far the carried mass sits from the middle — the inertia's share of the loading)
+    const spreadIn = Math.sqrt((emptyKg * (W.emptyArm - cgIn) ** 2 + L.front * PERSON_KG * (W.frontArm - cgIn) ** 2 + L.rear * PERSON_KG * (W.rearArm - cgIn) ** 2 + L.bagKg * (W.bagArm - cgIn) ** 2 + (fg[0] + fg[1]) * FUEL_KG_GAL * (W.fuelArm - cgIn) ** 2) / kg);
+    return { kg, lb, cgIn, spreadIn, mtowLb: W.mtowLb, fwdIn: W.fwdIn, aftIn: W.aftIn, ok: !problems.length, problems, fuelGal: fg.slice(), loading: L, emptyKg };
   }
   const refCgOf = A => { const w = computeWB(A, stdLoading()); return w ? w.cgIn : 0; };
+  const refSpreadOf = A => { const w = computeWB(A, stdLoading()); return w ? w.spreadIn : 0; };
   // put a load on the aircraft: the tanks filled as the load says ('std' leaves them as they are), the state
   // re-derived at the real mass (inertia, wheel springs, the elements' tuning), the trim shifted for the CG.
   // Returns the computeWB result; the state keeps it as s.wb (and the load as s.loading).
@@ -537,8 +568,7 @@ export function installSorajima(FL) {
     if (L.fuel !== 'std') { const per = fuelPerTank(A, L.fuel); s.fuel = [per, per]; }
     const wb = computeWB(A, L, s.fuel);
     s.loading = L; s.wb = wb;
-    const d = deriveAircraft(A, wb.kg);
-    d.AC.Cm0 = A.phys.Cm0 + clamp((wb.cgIn - refCgOf(A)) * 0.0025, -0.015, 0.015);   // the CG's trim: ≈ 0.03 of elevator per 4 in at cruise (the trim helpers quote the same Cm0, so they agree)
+    const d = deriveAircraft(A, wb.kg, { cgIn: wb.cgIn, spreadIn: wb.spreadIn });   // (the CG works inside the derivation now: the trim — ≈ 0.03 of elevator per 4 in at cruise, quoted by the same Cm0 everywhere — and the stability and inertia with it)
     Object.assign(s, { AC: d.AC, WHEELS: d.WHEELS, WHEEL_BOTTOM: d.WHEEL_BOTTOM, HARDPTS: d.HARDPTS, TAILSKID: d.TAILSKID });
     if (!s.contacts || s.contacts.length !== d.WHEELS.length) s.contacts = d.WHEELS.map(() => false);
     return wb;
@@ -548,13 +578,14 @@ export function installSorajima(FL) {
   function newState(o = {}) {
     const s = {
       t: 0, pos: [0, GROUND_M + 1.4, 0], vel: [0, 0, 0], q: [0, 0, 0, 1], w: [0, 0, 0],
-      thr: 0, elev: 0, ail: 0, rud: 0, trim: 0, brake: false, pIn: 0, rIn: 0, flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1,
+      thr: 0, elev: 0, ail: 0, rud: 0, trim: 0, trimTgt: null, brake: false, pIn: 0, rIn: 0, flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1,
       rpm: 0, propAng: 0, onGround: false, mainContact: false, airTime: 0, crashed: false, crashReason: '',
       alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, vs: 0, contacts: [],
       keyHold: true, pTgt: null, pRate: 0, dead: false,
       opts: { sens: 'low', assist: false, autoRud: false, levelT: 0 },
-      wind: { fromDeg: 0, kt: 0, gust: 0.4 }, qnh: 29.92, oatDev: 0,
-      mix: 1, fuelSel: 'L', carbHeat: false, carbRisk: 0,   // the engine's own controls: the mixture lever (1 = full rich), the tank selector, the carburettor heat, and how humid the day is (0 = carburettor ice cannot form; a lesson sets it)
+      wind: { fromDeg: 0, kt: 0, gust: 0.4 }, qnh: 29.92, oatDev: 0, surfaceWet: 0,
+      mix: 1, fuelSel: 'L', carbHeat: false, carbRisk: 0,
+      pitotHeat: false, pitotRisk: 0, pitotIce: 0, staticBlocked: false, altStatic: false, boostPump: false, xfeed: false, gearFault: false, gearEmerg: false, gearEmergT: 0, fuelUsed: 0, _iasFrz: null, _altFrz: null,   // (systems depth: pitot/static icing and blockage, the boost pump, the twin's crossfeed, a gear fault and its emergency extension, the fuel totalizer)   // the engine's own controls: the mixture lever (1 = full rich), the tank selector, the carburettor heat, and how humid the day is (0 = carburettor ice cannot form; a lesson sets it)
       _mixCmd: 1, _selCmd: 'L',   // the shared controls as last followed by every engine's own switches (see the engine systems in step): moving s.mix / s.fuelSel moves them all; an engine's own mag / mix / sel can still be set one by one
       fuel: [0, 0], fuelFlow: 0,
       eng: [], events: [], td: null, out: {}, wasOnRunway: false, lastRwyT: -99, seed: o.seed || 1,
@@ -568,7 +599,7 @@ export function installSorajima(FL) {
     Object.assign(s, { A, AC: d.AC, WHEELS: d.WHEELS, WHEEL_BOTTOM: d.WHEEL_BOTTOM, HARDPTS: d.HARDPTS, TAILSKID: d.TAILSKID });
     s.contacts = d.WHEELS.map(() => false);
     s.fuel = [A.fuelCap * 0.8, A.fuelCap * 0.8];
-    s.eng = Array.from({ length: A.engines1 || 1 }, (_, i) => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, egt: 70, carbIce: 0, feed: i ? 1 : 0, feedOk: true, mixK: 1, powK: 1, rough: 0, manIn: 0, ff: 0, ffK: 1, shaftW: 0, lev: 1, iceNoted: false }));
+    s.eng = Array.from({ length: A.engines1 || 1 }, (_, i) => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, egt: 70, carbIce: 0, feed: i ? 1 : 0, feedOk: true, mixK: 1, powK: 1, rough: 0, manIn: 0, ff: 0, ffK: 1, shaftW: 0, lev: 1, iceNoted: false, magBad: null, pumpFail: false, fuelPress: 0, pressT: 0, oilQ: (A.fuelCap > 30 ? 8 : 7), cyl: null }));
     s.gearDown = true; s.gearPos = 1;
     return s;
   }
@@ -579,10 +610,15 @@ export function installSorajima(FL) {
     if (s.crashed) { derive(s); return s; }
     const A = s.A, AC = s.AC;
     s.t += dt;
+    // (a trim commanded by the T key runs in like a wheel being wound, not a jump: the trim state eases
+    // towards trimTgt at a finite rate and the target clears on arrival. Anything that sets s.trim
+    // directly — the wheel itself, a reset, a placement — clears the target and snaps)
+    if (s.trimTgt != null) { const d = s.trimTgt - s.trim, m = 0.6 * dt; if (Math.abs(d) <= m) { s.trim = s.trimTgt; s.trimTgt = null; } else s.trim += Math.sign(d) * m; }
     if ((s.opts.levelT || 0) > 0) s.opts.levelT -= dt;
     s.flapDeg += clamp(FLAP_DEG[s.flapIdx] - s.flapDeg, -8 * dt, 8 * dt);
     if (A.gear.fixed) { s.gearDown = true; s.gearPos = 1; }
-    else if (!(s.onGround && !s.gearDown)) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 6, 0, 1);
+    else if (s.gearEmerg) { s.gearDown = true; s.gearEmergT += dt; if (s.gearEmergT > 1.2) s.gearPos = clamp(s.gearPos + dt / 3, 0, 1); }   // (the emergency free-fall extension: a beat while it lets go, then it drops; it cannot be retracted afterwards)
+    else if (!(s.onGround && !s.gearDown)) { const tgt = s.gearDown ? (s.gearFault ? 0.55 : 1) : 0; s.gearPos = clamp(s.gearPos + clamp(tgt - s.gearPos, -dt / 6, dt / 6), 0, 1); }   // (a gear fault: the transit stalls part-way and never locks — no greens)
     const flapF = A.wing.flap ? s.flapDeg / 30 : 0;
     const atm = atmos(s.pos[1], s.oatDev), rho = atm.rho;
     const ground = groundAt(s.pos[0], s.pos[2]);
@@ -606,9 +642,21 @@ export function installSorajima(FL) {
     for (const e of s.eng) {
       e.lev = e.mix ?? 1;
       const mag = e.mag || 'BOTH', sel = e.sel || 'L';
-      e.feed = sel === 'OFF' ? -1 : sel === 'R' ? 1 : 0;
+      // the feed (which tank's fuel reaches this engine). The Archer: its selector names a tank (L / R / OFF).
+      // The Seminole (the PA-44's system, simplified and stated here): each engine has its own selector valve
+      // (ON / OFF — a legacy non-OFF value counts as ON) at its own tank, plus one crossfeed valve. Selector ON:
+      // the engine drinks its own tank. Selector OFF, crossfeed open, the other side's selector ON: it drinks
+      // the other tank — both engines on one tank, which is the single-engine crossfeed drill. Both selectors
+      // ON: each engine its own tank, crossfeed open or not. Both OFF: nothing feeds either engine.
+      if (s.eng.length > 1) { const on = s.eng.map(x => (x.sel || 'ON') !== 'OFF'); const i = s.eng.indexOf(e); e.feed = on[i] ? i : (s.xfeed && on[1 - i] ? 1 - i : -1); }
+      else e.feed = sel === 'OFF' ? -1 : sel === 'R' ? 1 : 0;
       if (e.feed >= 0 && s.fuel[e.feed] > 0) e.lineT = LINE_FUEL_S; else e.lineT = Math.max(0, (e.lineT ?? LINE_FUEL_S) - dt);
       e.feedOk = (e.feed >= 0 && s.fuel[e.feed] > 0) || e.lineT > 0;
+      // fuel pressure (0..1, a teaching scale): the engine-driven pump while the engine turns, or the electric
+      // boost pump. A failed engine-driven pump (the 'pump' fault) leaves the boost pump as the only source —
+      // and at low rpm without it the pressure sags away: the starvation the checklist's pump steps exist for
+      const pTgtP = !e.run ? (s.boostPump ? 0.35 : 0) : e.pumpFail ? (s.boostPump ? 0.85 : ((e.rpm || 0) > 1200 ? 0.3 : 0)) : 1;
+      e.fuelPress = (e.fuelPress || 0) + (pTgtP - (e.fuelPress || 0)) * Math.min(1, dt * 2);
       const stop = e.failed || e.cut ? 1 : mag === 'OFF' ? 2 : e.lev <= MIX_CUT ? 3 : !e.feedOk ? 4 : 0;
       if (stop) { e.on = false; e.crankT = 0; }
       else if (e.on === false && mag === 'START' && e.lev >= MIX_RICH) { e.crankT = (e.crankT || 0) + dt; if (e.crankT >= CATCH_S) { e.on = true; e.crankT = 0; } }
@@ -665,6 +713,17 @@ export function installSorajima(FL) {
           if ((e.carbIce || 0) > 0.45) e.rough = Math.max(e.rough, 0.7);
         }
         e.powK = e.mixK * carbK;
+        // one magneto (the key at L or R): a real engine is weaker on a single ignition source — about 3 % of
+        // power gone, a slightly hotter exhaust, a rougher note; a bad magneto (e.magBad names its side, set by
+        // the day's fault) roughens hard at run-up rpm and above whenever it is in circuit
+        const mag = e.mag || 'BOTH';
+        let magEgt = 0;
+        if (mag === 'L' || mag === 'R') { e.powK *= 0.97; e.rough = clamp(e.rough + 0.3, 0, 1); magEgt = 18; }
+        if (e.magBad && (mag === 'BOTH' || mag === e.magBad)) { e.powK *= 0.96; if ((e.rpm || 0) > 1700) e.rough = Math.max(e.rough, 0.55); }
+        // a failed engine-driven fuel pump with the boost pump off: the pressure falls away and the engine
+        // starves (it stops, and restarts when the boost pump brings the pressure back)
+        if (e.pumpFail && e.fuelPress < 0.08) { e.pressT = (e.pressT || 0) + dt; if (e.pressT > 2.5) { e.on = false; e.powK = 0; } } else e.pressT = 0;
+        if (e.pumpFail) { e.powK *= clamp((e.fuelPress || 0) * 1.3, 0.05, 1); if ((e.fuelPress || 0) < 0.3) e.rough = Math.max(e.rough, 0.6); }
         Ti = propThrust(AC, th, ua, pw, nE) * e.powK - (1 - th) * 2.5 * ua * AC.mass / 1000 / nE;
         if (e.rough > 0) Ti *= 1 + e.rough * 0.05 * Math.sin(s.t * 39 + i * 2.4);   // an over-lean or iced engine shakes its thrust
         e.shaftW = (0.04 + 0.96 * th) * pw * P1 / 0.85 * e.powK;
@@ -672,7 +731,7 @@ export function installSorajima(FL) {
         // EGT (°F): it peaks at a strength of about 0.86 — lean of best power, as the POH's graph shows — and falls
         // away rich (unburned fuel cooling the charge) and leaner (less to burn); a first-order lag, seconds.
         const pf = (0.04 + 0.96 * th) * pw * e.mixK;
-        const egtT = 980 + 300 * pf + 330 * Math.pow(Math.max(pf, 0), 0.7) * Math.exp(-(((mStr - 0.86) / 0.15) ** 2));
+        const egtT = 980 + 300 * pf + 330 * Math.pow(Math.max(pf, 0), 0.7) * Math.exp(-(((mStr - 0.86) / 0.15) ** 2)) + magEgt;
         e.egt = (e.egt == null ? egtT : e.egt) + (egtT - (e.egt == null ? egtT : e.egt)) * Math.min(1, dt / 2.5);
         // Manifold pressure (inHg): the ambient pressure less what the throttle plate holds back — nearly ambient at
         // full throttle, about 10 inHg at idle; it falls with altitude because the ambient does.
@@ -689,16 +748,18 @@ export function installSorajima(FL) {
     // --- moments not from the lifting pieces (pilot convention: roll right, pitch up, yaw right)
     const p = -s.w[2], qq = s.w[0], r = -s.w[1], hv = 0.25 * rho * V;
     const elevEff = clamp(s.elev + s.trim, -1, 1);
-    let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p - Tasym, Rl = 0, Ng = 0;
+    let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p - Tasym, Rl = 0, Ng = 0, Gp = 0;
     if (nE === 2) Rl += -Tasym * 0.08;                         // the running engine's slipstream lifts its wing: roll toward the dead engine
+    if (nE === 2) Rl += -(s.fuel[0] - s.fuel[1]) * 2.72 * G * 1.05;   // fuel imbalance (the twin: independent tanks, so a split that grows is a real handling factor — the heavier tank's weight, 2.72 kg a gallon, on a metre's arm; the Archer's one selector and its BOTH position keep it a non-event there, and it is left out)
     {
       const Pr = AC.prop, Tp = Math.max(T, 0);
-      s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
+      s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35) + Pr.a1 * 0.35 * clamp(beta, -0.25, 0.25))) + Pr.fin * qd;   // (P-factor: the alpha term, and a sideslip share — the disc met at an angle either way pushes the nose toward the wind)
       Nx += s.nProp;
       if (!A.sora) Rl += -EL.finYZ * (-Tp * Pr.a0 + Pr.fin * qd);             // the slipstream's swirl on the fin and the fin offset: side forces above the CG
       const om = Math.max(s.rpm, 300) * Math.PI / 30;
       Rl += -(s.shaftP || 0) / om * Pr.tq + Pr.rig * qd;        // engine torque reaction (partly rigged out): rolls left
       Ng = Pr.Ip * om * qq * (A.counterRotating ? 0 : 1);       // gyroscopic precession: pitch up -> yaw right
+      Gp = 0.18 * Pr.Ip * om * r * (A.counterRotating ? 0 : 1);        // …and its mirror from the same cross product: yaw right -> pitch down (taken off Mp below; at a modest share of the disc's inertia — at the whole rotating group's value, the one Ng was tuned around, gusty yaw in the flare kicks the nose harder than the pitch axis answers: the crosswind lesson's touchdown measured 320 fpm at full share, 300 at this one, ground turbulence included)
     }
     // the automatic rudder (ball kept centred), for the assist and for keyboard pilots who want it
     const autoR = s.assistOn || s.opts.autoRud;
@@ -713,10 +774,16 @@ export function installSorajima(FL) {
     const rudEff = clamp(s.rud + s.rudAuto, -1, 1);
     // --- aerodynamics: the lifting pieces, with turbulence that varies across the span
     const upB = qrot(qi, [0, 1, 0]), hCG = s.pos[1] - ground.h;
-    const gA = (s.wind.gust ?? 1) * Math.min(1, Math.max(agl, 0) / 300 + 0.4) * 0.9 * smoothstep(3, 40, agl);
+    // (the air near the ground is not calm: the profile used to fade the gusts out entirely below 3 m,
+    // exactly where the flare happens — now a floor of the turbulence remains at the surface, and a
+    // mechanical share rides on the surface wind itself (the wake of the ground and its obstacles),
+    // strongest in the last metres and gone by 60 m up)
+    const gA = (s.wind.gust ?? 1) * Math.min(1, Math.max(agl, 0) / 300 + 0.4) * 0.9 * (0.12 + 0.88 * smoothstep(3, 40, agl))
+      + (s.wind.gust ?? 1) * (s.wind.kt / KT) * 0.0005 * Math.exp(-Math.max(agl, 0) / 20);
     const gW = perlin(s.t * 0.9, 23.1) * gA / (AC.b / 2), gT = perlin(s.t * 0.7, 41.9) * gA * 0.2;
     const ae = aeroElements(EL, AC, vb, s.w, rho, {
       flapF, elev: elevEff, ail: s.ail, rud: rudEff, dq: 240 * runShare * Math.sqrt(AC.mass / 1000),
+      stH: s._stH && s._stH.length === EL.pcs.length ? s._stH : (s._stH = new Float32Array(EL.pcs.length)), dt,
       hgt: pc => hCG + pc.r[0] * upB[0] + pc.r[1] * upB[1] + pc.r[2] * upB[2],
       gust: pc => { const gg = pc.kind === 0 ? gW * pc.r[0] : pc.kind === 1 ? gT : 0; return [upB[0] * gg, upB[1] * gg, upB[2] * gg]; },
     });
@@ -728,7 +795,7 @@ export function installSorajima(FL) {
     { const ln = Math.hypot(vb[1], vb[2]) || 1, qs = Math.max(qd * AC.S, 1e-6);
       s.liftN = (ae.F[1] * -vb[2] + ae.F[2] * vb[1]) / ln; s.dragN = -(F[0] * vb[0] + F[1] * vb[1] + (F[2] + T) * vb[2]) / Math.max(V, 1e-3);
       s.CL = ae.CLw; s.CD = s.dragN / qs; s.ge = ge; }
-    const Mp = ae.M[0] + qd * AC.S * AC.c * (AC.Cm0 + EL.dCma * Math.sin(alpha) + EL.dCmF * flapF) + hv * AC.S * AC.c * AC.c * EL.dCmq * qq;
+    const Mp = ae.M[0] + qd * AC.S * AC.c * (AC.Cm0 + EL.dCma * Math.sin(alpha) + EL.dCmF * flapF) + hv * AC.S * AC.c * AC.c * EL.dCmq * qq - Gp;
     let Lr = -ae.M[2] + hv * AC.S * AC.b * AC.b * (EL.dClp * p + EL.dClr * r) + Rl;
     if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.012 * stallW * perlin(s.t * 1.3, 12.5);        // buffet
     const Nr = -ae.M[1] + hv * AC.S * AC.b * AC.b * EL.dCnr * r + Nx + Ng;
@@ -738,6 +805,19 @@ export function installSorajima(FL) {
     const gsp = Math.hypot(s.vel[0], s.vel[2]);
     const steer = clamp(s.rud + s.rIn * 0.5, -1, 1) * lerp(32, 4, clamp(gsp / 25, 0, 1)) * DEG;
     const noseOff = s.WHEELS[0].off, crashPen = Math.max(0.5, A.gear.wheelR * 1.4);
+    // (the brakes are a travel now, not a switch: s.brake 0..1 (an old boolean still reads as full or off),
+    // split left/right when s.brakeL / s.brakeR are given — or, for the keyboard pilot (s.opts.diffBrake
+    // unless refused), by the rudder held with the brakes at taxi pace. A wet surface (s.surfaceWet 0..1)
+    // shrinks the tyre's grip; stomp past the grip and the wheel locks and slides, gripping less)
+    const wetF = lerp(1, 0.55, clamp(s.surfaceWet || 0, 0, 1));
+    const bAmt = clamp(s.brake === true ? 1 : +s.brake || 0, 0, 1);
+    let bL = s.brakeL != null ? clamp(+s.brakeL || 0, 0, 1) : bAmt, bR = s.brakeR != null ? clamp(+s.brakeR || 0, 0, 1) : bAmt;
+    if (s.brakeL == null && s.brakeR == null && s.opts.diffBrake !== false && bAmt > 0) {
+      const sp = clamp(s.rud, -1, 1) * 0.6 * clamp(1 - gsp / 15, 0, 1);
+      if (sp > 0) { bR = clamp(bAmt * (1 + sp), 0, 1); bL = clamp(bAmt * (1 - sp), 0, 1); }
+      else if (sp < 0) { bL = clamp(bAmt * (1 - sp), 0, 1); bR = clamp(bAmt * (1 + sp), 0, 1); }
+    }
+    s.wheelLock = false;
     let yLoad = F[1];
     const contact = (off, k, c, kind, name) => {
       const rw = qrot(s.q, off), cp = vadd(s.pos, rw), g = groundAt(cp[0], cp[2]), pen = g.h - cp[1];
@@ -753,9 +833,15 @@ export function installSorajima(FL) {
       if (off === noseOff) fb = [Math.sin(steer), 0, -Math.cos(steer)];
       let fwd = qrot(s.q, fb); fwd = vnorm(vsub(fwd, vscale(g.n, vdot(fwd, g.n))));
       const lat = vnorm(vcross(g.n, fwd)), vl = vdot(vc, fwd), vt = vdot(vc, lat);
-      const mu = kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6;
-      const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + (s.brake && off !== noseOff ? (g.paved ? 0.42 : 0.3) : 0);
-      const Ft = clamp(-vt * 9 * AC.mass, -mu * Fn, mu * Fn), Fl = clamp(-vl * 6 * AC.mass, -rr * Fn, rr * Fn);
+      const mu = (kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6) * (kind === 'wheel' ? wetF : 1);
+      let bCoef = 0, locked = false;
+      if (kind === 'wheel' && off !== noseOff) {
+        const bw = off[0] < 0 ? bL : bR;
+        bCoef = bw * (g.paved ? 0.42 : 0.3);
+        if (bw > 0.85 && mu < 0.6) { locked = true; bCoef *= 0.65; s.wheelLock = true; }   // (past the grip the tyre stops turning, and a sliding wheel brakes worse than a rolling one at its limit)
+      }
+      const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + bCoef;
+      const Ft = clamp(-vt * 9 * AC.mass, -(locked ? mu * 0.6 : mu) * Fn, (locked ? mu * 0.6 : mu) * Fn), Fl = clamp(-vl * 6 * AC.mass, -rr * Fn, rr * Fn);
       const Fc = vadd(vadd(vscale(g.n, Fn), vscale(fwd, Fl)), vscale(lat, Ft));
       Fw[0] += Fc[0]; Fw[1] += Fc[1]; Fw[2] += Fc[2];
       const tq = vcross(rw, Fc); Tw[0] += tq[0]; Tw[1] += tq[1]; Tw[2] += tq[2];
@@ -810,6 +896,33 @@ export function installSorajima(FL) {
       if (e.ff > 0 && e.feed >= 0 && s.fuel[e.feed] > 0) s.fuel[e.feed] = Math.max(0, s.fuel[e.feed] - e.ff * dt / 3600);
     }
     s.fuelFlow = ffT;
+    s.fuelUsed = (s.fuelUsed || 0) + ffT * dt / 3600;          // (the totalizer: everything burned since it was last zeroed)
+    // oil quantity and pressure, and the per-cylinder temperatures (this copy carries no gauge oil of its
+    // own — CADET's systems module keeps the cockpit's — but the state is the physics', as in FLIGHT LAB)
+    { const oatF = (atm.T - 273.15) * 9 / 5 + 32;
+      for (const e of s.eng) {
+        if (e.oilT == null) e.oilT = oatF;
+        if (e.run) e.oilQ = Math.max(0, (e.oilQ == null ? 7 : e.oilQ) - 0.08 * dt / 3600 * (0.5 + thrOf(e)));
+        let pTgt = e.run ? clamp(55 + e.rpm * 0.012, 0, 85) : 0;
+        if (e.run && (e.oilQ == null ? 7 : e.oilQ) < 2.5) pTgt *= clamp(0.3 + 0.7 * ((e.oilQ == null ? 7 : e.oilQ) / 2.5), 0.3, 1) * (e.rpm > 2000 ? 0.8 : 1);
+        e.oilP = (e.oilP || 0) + (pTgt - (e.oilP || 0)) * Math.min(1, dt * 1.5);
+        const tTgt = e.run ? 130 + 70 * clamp(thrOf(e), 0, 1) : oatF;
+        e.oilT += (tTgt - e.oilT) * dt / (e.run ? 240 : 600);
+        if (!e.cyl) e.cyl = [0, 1, 2, 3].map(() => ({ egt: e.egt || 70, cht: oatF }));
+        const egtSp = [0.96, 1.0, 1.07, 1.03], chtSp = [0.97, 1.0, 1.06, 1.02];
+        e.cyl.forEach((c, ci) => {
+          c.egt += ((e.egt || 70) * egtSp[ci] - c.egt) * Math.min(1, dt / 2.5);
+          const chtT = oatF + (e.run ? (215 + 195 * clamp(thrOf(e), 0, 1)) * chtSp[ci] : 0);
+          const tau = chtT > c.cht ? 150 : (thrOf(e) < 0.35 && u > 30 ? 45 : 240);
+          c.cht += (chtT - c.cht) * dt / tau;
+        });
+      } }
+    // pitot ice: in visible moisture (a lesson or a day sets s.pitotRisk, as with carburettor ice; the band is
+    // around freezing) with the heat off, the tube blocks over a minute or two; the heat prevents it, and
+    // melts an existing blockage back off in tens of seconds
+    { const oatC = atm.T - 273.15;
+      if (s.pitotHeat) s.pitotIce = Math.max(0, (s.pitotIce || 0) - dt / 20);
+      else if ((s.pitotRisk || 0) > 0 && oatC > -12 && oatC < 6) s.pitotIce = Math.min(1, (s.pitotIce || 0) + dt * s.pitotRisk / 90); }
     runwayChecks(s);
     derive(s);
     return s;
@@ -852,11 +965,21 @@ export function installSorajima(FL) {
     const wnd = windNow(s), va = vsub(s.vel, wnd), V = vlen(va);
     const vb = qrot(qconj(s.q), va);
     o.tas = V * KT; o.ias = V * Math.sqrt(atm.sigma) * KT * (vb[2] < 0 ? 1 : 0);
+    // the pitot side as the instruments suffer it: a partly blocked tube leaks the reading away; a fully
+    // blocked one freezes it where it was (the classic trap: a speed that will not change with pitch or power)
+    o.pitotIce = s.pitotIce || 0; o.pitotBlocked = (s.pitotIce || 0) >= 0.999;
+    if (o.pitotBlocked) { if (s._iasFrz == null) s._iasFrz = o.ias; o.ias = s._iasFrz; }
+    else { s._iasFrz = null; if (o.pitotIce > 0) o.ias *= 1 - 0.8 * o.pitotIce; }
+    o.staticBlocked = !!s.staticBlocked && !s.altStatic; o.altStatic = !!s.altStatic;
     o.gs = Math.hypot(s.vel[0], s.vel[2]) * KT;
     o.trk = o.gs > 1 ? wrap360(Math.atan2(s.vel[0], -s.vel[2]) / DEG) : a.hdg;
     o.hdgTrue = a.hdg; o.pitch = a.pitch; o.bank = a.bank;
     o.vsi = s.vel[1] * 196.85;
     o.altTrue = s.pos[1] * FT; o.agl = (s.pos[1] + s.WHEEL_BOTTOM - GROUND_M) * FT;
+    // the static side: a blocked port freezes the altimeter and the vertical-speed indicator where they were;
+    // the alternate static source (the cabin) unfreezes them, reading about 80 ft high for the lower pressure
+    if (o.staticBlocked) { if (s._altFrz == null) s._altFrz = o.altTrue; o.altTrue = s._altFrz; o.vsi = 0; } else s._altFrz = null;
+    if (s.altStatic && s.staticBlocked) o.altTrue += 80;
     o.alpha = V > 2 ? Math.atan2(-vb[1], -vb[2]) / DEG : 0;
     o.beta = V > 2 ? Math.asin(clamp(vb[0] / V, -1, 1)) / DEG : 0;
     const flapF = A.wing.flap ? s.flapDeg / 30 : 0;
@@ -874,6 +997,15 @@ export function installSorajima(FL) {
     const pwD = Math.max(0, 1.132 * atm.sigma - 0.132);
     o.powerPct = engineRunning(s) ? Math.round(s.eng.reduce((a, e) => a + (e.run ? (0.04 + 0.96 * (e.thr != null ? e.thr : s.thr)) * pwD * (e.mixK == null ? 1 : e.mixK) : 0), 0) / s.eng.length * 100) : 0;
     o.egts = s.eng.map(e => Math.round(e.egt || 0)); o.egt = o.egts[0];
+    o.oilQ = s.eng.map(e => Math.round((e.oilQ == null ? 7 : e.oilQ) * 10) / 10);
+    o.lowOilPress = s.eng.some(e => e.run && (e.oilP || 0) < 30);
+    o.fuelPress = Math.round((s.eng[0] ? s.eng[0].fuelPress || 0 : 0) * 100) / 100; o.fuelPresses = s.eng.map(e => Math.round((e.fuelPress || 0) * 100) / 100);
+    o.fuelUsed = Math.round((s.fuelUsed || 0) * 10) / 10; o.fuelRemain = Math.round((s.fuel[0] + s.fuel[1]) * 10) / 10;
+    o.enduranceH = (s.fuelFlow || 0) > 0.2 ? Math.round(o.fuelRemain / s.fuelFlow * 10) / 10 : null;
+    o.cyl = (s.eng[0] && s.eng[0].cyl) ? s.eng[0].cyl.map(c => ({ egt: Math.round(c.egt), cht: Math.round(c.cht) })) : [];
+    o.cyls = s.eng.map(e => (e.cyl || []).map(c => ({ egt: Math.round(c.egt), cht: Math.round(c.cht) })));
+    o.cht = o.cyl.length ? Math.round(o.cyl.reduce((a, c) => a + c.cht, 0) / o.cyl.length) : 0; o.chts = o.cyls.map(cs => cs.length ? Math.round(cs.reduce((a, c) => a + c.cht, 0) / cs.length) : 0);
+    o.gearFault = !!s.gearFault; o.gearEmerg = !!s.gearEmerg; o.xfeed = !!s.xfeed;
     o.manIns = s.eng.map(e => Math.round((e.manIn || 0) * 10) / 10); o.manIn = o.manIns[0];
     o.rough = Math.max(0, ...s.eng.map(e => e.rough || 0));
     o.carbIce = Math.max(0, ...s.eng.map(e => e.carbIce || 0));
@@ -893,8 +1025,9 @@ export function installSorajima(FL) {
   function resetState(s) {
     s.vel = [0, 0, 0]; s.w = [0, 0, 0]; s.onGround = false; s.mainContact = false; s.crashed = false; s.crashReason = '';
     s.events = []; s.td = null; s.tailTouch = false; s.firstWheel = -1; s.gLoad = 1; s.pTgt = null; s.pHI = 0; s.gI = 0; s.bI = 0;
-    s.trimHold = 0; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null;
-    s.eng.forEach((e, i) => Object.assign(e, { failed: false, feather: false, cut: false, thr: null, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, carbIce: 0, iceNoted: false }));
+    s.trimHold = 0; s.trimTgt = null; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null; s._stH = null;
+    s.eng.forEach((e, i) => Object.assign(e, { failed: false, feather: false, cut: false, thr: null, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, carbIce: 0, iceNoted: false, magBad: null, pumpFail: false, pressT: 0 }));
+    s.pitotIce = 0; s.staticBlocked = false; s._iasFrz = null; s._altFrz = null; s.gearFault = false; s.gearEmerg = false; s.gearEmergT = 0;
     s._mixCmd = s.mix; s._selCmd = s.fuelSel;   // the reset engines are in the running configuration above; the shared controls command them again when they next move
   }
   // on the runway, stopped, `along` metres past the threshold

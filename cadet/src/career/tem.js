@@ -25,6 +25,8 @@ export const THREATS = [
     plan: '雲が上がるのを待つ。場周の高度（1,000 ft）より低い雲の下では飛ばない', not: '今朝は雲が高いです' },
   { id: 'fog', ja: '朝の霧', when: o => o.weather === 'amFog', why: '朝は霧で視程が 1/2 SM です',
     plan: '視程が上がるまで待つ。予報どおりに上がらなければ、その日は飛ばない', not: '今朝は霧が出ていません' },
+  { id: 'bust', ja: '予報外れの前線', when: o => o.weather === 'forecastBust', why: 'TAF は終日 VFR ですが、西の空が暗く、前線が予報より早く近づいています',
+    plan: '午前のうちに飛んで、空が変わる前に戻る。飛んでいる間に空が変わり始めたら、課目の途中でも帰る', not: '今日は予報どおりの空です' },
   { id: 'tired', ja: '自分の疲れ', when: o => o.fatigue >= 45, why: '疲れが残っています。判断も手も、いつもより遅れます',
     plan: '手順をいつもより声に出して確かめる。迷ったら早めに、安全なほうを選ぶ', not: '今日はよく休めています' },
   { id: 'check', ja: '審査の緊張', when: o => o.check, why: '今日は審査です。緊張すると、いつもの手順が抜けます',
@@ -48,6 +50,7 @@ export const THREATS_EN = {
   pmwind: { ja: 'a strong afternoon crosswind', why: 'The TAF has the crosswind picking up from 15:00', plan: 'fly in the morning and come back early; if it has picked up for the landing, remember the crosswind limit', not: 'The afternoon wind is forecast light' },
   ceiling: { ja: 'low morning cloud', why: 'This morning the cloud base is 600 ft', plan: 'wait for the cloud to lift; no flying under cloud lower than the pattern altitude (1,000 ft)', not: 'This morning the cloud is high' },
   fog: { ja: 'morning fog', why: 'This morning the fog has the visibility at 1/2 SM', plan: 'wait for the visibility to improve; if it doesn\'t lift as forecast, no flying today', not: 'There\'s no fog this morning' },
+  bust: { ja: 'a front ahead of its forecast', why: 'The TAF says VFR all day, but the western sky is darkening — a front may arrive ahead of its forecast', plan: 'fly in the morning and be back before the sky changes; if it starts to change while we fly, we come back, even mid-lesson', not: 'Today the sky is doing what the forecast said' },
   tired: { ja: 'your own fatigue', why: 'You\'re still tired; your judgement and your hands will lag', plan: 'say the steps out loud more than usual; when in doubt, choose the safe way early', not: 'You\'re well rested today' },
   check: { ja: 'check-ride nerves', why: 'Today is a check; nerves make you skip the usual steps', plan: 'do it the everyday way; never skip the checklist, say each item out loud', not: 'Today isn\'t a check day' },
   nav: { ja: 'navigating alone (getting lost)', why: 'Today you fly alone to places you don\'t know', plan: 'start from the last place you were sure of; use the VOR and DME; keep a margin of fuel and time', not: 'Today we stay in the pattern and the practice area' },
@@ -63,14 +66,20 @@ const byId = Object.fromEntries(THREATS.map(t => [t.id, t]));
 // { threat: { id, ja, why, plan }, options: [three names], right (the index of today's), others: [the two not today's,
 // each with why not] } — the order of the options from the day (the same day, the same order)
 export function temFor(o) {
-  const today = THREATS.find(t => t.when(o));
+  let today = THREATS.find(t => t.when(o));
+  // (B3.3) on a storm day the threat is not abstract: the cell is already standing in the west — the why
+  // and the plan name it (and the English with it)
+  if (o.cb && today.id === 'storm') today = { ...today,
+    why: 'TAF に午後の雷雨（TEMPO TSRA）。西の空には、もう積乱雲がひとつ育っています',
+    plan: '午前のうちに飛んで、13 時までに戻る。西の積乱雲には近づかない（大きく離れる）。育ち始めたら、課目の途中でも帰ります',
+    cbEn: { why: 'The TAF has thunderstorms this afternoon (TEMPO TSRA) — and one cumulonimbus is already standing in the west', plan: 'fly in the morning and be back by 13:00; give the cell in the west a wide berth, and come back even mid-lesson if it builds' } };
   const others = THREATS.filter(t => t !== today && t.id !== 'traffic' && !t.when(o));
   const k = Math.abs((o.day | 0) * 7 + 3) % Math.max(1, others.length), two = [others[k], others[(k + 3) % others.length]].filter((t, i, a) => t && a.indexOf(t) === i);
   while (two.length < 2) two.push(others.find(t => !two.includes(t)));
   const right = Math.abs((o.day | 0) * 5 + 1) % 3, opts = two.slice();
   opts.splice(right, 0, today);
   const E = (t) => THREATS_EN[t.id];
-  return { threat: { id: today.id, ja: today.ja, why: today.why, plan: today.plan, en: { threat: E(today).ja, why: E(today).why, plan: E(today).plan } }, options: opts.map(t => t.ja), right,
+  return { threat: { id: today.id, ja: today.ja, why: today.why, plan: today.plan, en: { threat: E(today).ja, why: today.cbEn ? today.cbEn.why : E(today).why, plan: today.cbEn ? today.cbEn.plan : E(today).plan } }, options: opts.map(t => t.ja), right,
     others: opts.map(t => (t === today ? '' : t.not)), othersEn: opts.map(t => (t === today ? '' : E(t).not)) };
 }
 export const threatOf = (id) => byId[id] || null;

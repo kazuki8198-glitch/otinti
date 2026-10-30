@@ -20,7 +20,7 @@ test('career: the weather — the same for the same seed and day, all five kinds
   assert.deepEqual(weatherFor(7, 12), weatherFor(7, 12));
   const kinds = new Set(), n = {};
   for (let d = 1; d <= 400; d++) { const w = weatherFor(3, d); kinds.add(w.kind); n[w.kind] = (n[w.kind] || 0) + 1; }
-  assert.deepEqual([...kinds].sort(), Object.keys(WEATHER).filter(k => k !== 'lowCloud').sort());   // (low cloud: the instrument chapter's)
+  assert.deepEqual([...kinds].sort(), Object.keys(WEATHER).filter(k => k !== 'lowCloud' && k !== 'forecastBust').sort());   // (low cloud: the instrument chapter's; the bust: the late chapters', caller-gated)
   assert.ok(n.good > 180 && n.good < 300, JSON.stringify(n));
   const g = weatherFor(3, 2, { force: 'good' });
   assert.match(g.metar.am, /36005KT 10SM/); assert.equal(g.decision, 'go'); assert.deepEqual(g.fly, { am: true, pm: true });
@@ -200,6 +200,7 @@ test('career M6: after the first solo, chapter 3 the next morning; each later ch
         else if (it.kind === 'exam') C.exam(it.id, 90);
         else if (it.kind === 'navlog') C.done('navlog', 'xc');
         else if (it.kind === 'xc' || it.kind === 'checkride') C.check(it.id, true);
+        else if (it.kind === 'night') C.done('night', it.id);
       }
       if (process.env.DBG) console.log(ch, C.state.day, sch.map(x => `${x.slot}:${x.kind}:${x.id}`).join(" "));
       if (!(C.state.checks[S.check] && C.state.checks[S.check].pass)) C.sleep();
@@ -215,8 +216,10 @@ test('career M6: after the first solo, chapter 3 the next morning; each later ch
     if (ch !== 'ch6') { assert.ok(C.advanceChapter(prog, 70)); }
   }
   // chapter 6 done: the graduation the next morning (the lobby), then days off
+  // (the night flight's extra day can put that morning on a Sunday — the ceremony then waits a day)
   assert.equal(C.chapter, 'ch6');
-  const g = C.schedule(prog, { trust: 70 });
+  let g = C.schedule(prog, { trust: 70 });
+  if (g[0] && g[0].kind === 'off') { C.sleep(); g = C.schedule(prog, { trust: 70 }); }
   assert.deepEqual(g.map(x => x.kind), ['graduation']);
   C.graduate(); C.sleep();
   assert.deepEqual(C.schedule(prog, { trust: 70 }).map(x => x.kind), ['off']);

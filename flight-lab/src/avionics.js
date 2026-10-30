@@ -123,6 +123,13 @@
       comSel: 'COM1', navSel: 'NAV1',
       hdgBug: 360, altSel: 3000, baro: 29.92, baroUnit: 'IN', crs: 360,
       cdi: 'GPS',                 // GPS → VOR1/LOC1 → VOR2/LOC2 → GPS (the CDI softkey)
+      obs: false,                 // GPS OBS mode: hold on the active waypoint with the CRS course (the OBS softkey)
+      brg1: null, brg2: null,     // HSI bearing pointers: null | 'NAV1' | 'NAV2' | 'GPS'
+      xpdrIdent: 0,               // seconds of IDENT left (the IDENT softkey; read by radio scoring as av.xpdrIdent > 0)
+      fplEdit: false, fplCursor: 1, fplPick: 0,   // the FPL page's editor: cursor row, the catalog pick (FMS/ENT/CLR)
+      nrstSel: 0,                 // the NRST page's cursor
+      proc: null,                 // a loaded procedure (A2-lite): { name: 'ILS 36', missed: bool } | null
+      _ack: {},                   // CAS: the alert ids the pilot has seen on the ALERTS page
       xpdr: { code: 1200, mode: 'ALT', entry: '' },   // the transponder: the code ATC assigns, set from the XPDR menu
       pfdMenu: 'TOP',             // the PFD's softkey level: TOP / PFD / ALTUNIT / XPDR
       wind: true, mfdPage: 'MAP', mfdRangeIdx: 4, mapNorthUp: true,
@@ -153,9 +160,37 @@
       case 'CDI': av.cdi = av.cdi === 'GPS' ? 'NAV1' : av.cdi === 'NAV1' ? 'NAV2' : 'GPS'; return `CDI ${cdiName(av)}`;
       case 'MIC': av.audio.mic = av.audio.mic === 'COM1' ? 'COM2' : 'COM1'; return `MIC ${av.audio.mic}（送信はできません）`;
       case 'MON': av.audio.monitor[dir] = !av.audio.monitor[dir]; return `${dir} 受信 ${av.audio.monitor[dir] ? 'ON' : 'OFF'}`;
-      case 'MFD_PAGE': av.mfdPage = av.mfdPage === 'MAP' ? 'FPL' : 'MAP'; return `MFD ${av.mfdPage}`;
+      case 'MFD_PAGE': { const pages = ['MAP', 'FPL', 'ENGINE', 'SYSTEM', 'NRST']; av.mfdPage = pages[(pages.indexOf(av.mfdPage) + 1) % pages.length]; return `MFD ${av.mfdPage}`; }
       case 'MFD_MAP': av.mfdPage = 'MAP'; return 'MFD MAP';
       case 'MFD_FPL': av.mfdPage = 'FPL'; return 'MFD FPL';
+      case 'MFD_ENG': av.mfdPage = 'ENGINE'; return 'MFD ENGINE';
+      case 'MFD_SYS': av.mfdPage = 'SYSTEM'; return 'MFD SYSTEM';
+      case 'MFD_NRST': av.mfdPage = 'NRST'; return 'MFD NRST — 最寄り';
+      case 'NRST_SEL': av.nrstSel = clamp((av.nrstSel || 0) + dir, 0, WAYPOINTS.filter(p => p.kind !== 'ref').length - 1); return `NRST ${WAYPOINTS.filter(p => p.kind !== 'ref')[av.nrstSel].id}`;
+      // the FPL editor (the bezel's ENT / CLR, the FMS knob as the cursor): ENT enters the editor, then
+      // inserts the catalog pick at the cursor; CLR deletes the point at the cursor (the plan keeps ≥2)
+      case 'FPL_PICK': { const cat = fplCatalog(); av.fplPick = (av.fplPick + dir + cat.length) % cat.length; return `挿入先 ${cat[av.fplPick]}`; }
+      case 'FPL_INSERT': { if (!av.fplEdit) return ''; const cat = fplCatalog(), id = cat[av.fplPick]; const at = clamp(av.fplCursor, 0, av.fpl.wps.length);
+        av.fpl.wps.splice(at, 0, id); if (at <= av.fpl.active) av.fpl.active++; av.direct = null; return `${id} を挿入（${av.fpl.wps.length} 点）`; }
+      case 'FPL_DEL': { if (!av.fplEdit || av.fpl.wps.length <= 2) return av.fplEdit ? '計画は2点以上で' : ''; const at = clamp(av.fplCursor, 0, av.fpl.wps.length - 1);
+        const [gone] = av.fpl.wps.splice(at, 1); if (at < av.fpl.active) av.fpl.active--; av.fpl.active = clamp(av.fpl.active, 1, av.fpl.wps.length - 1);
+        av.fplCursor = clamp(av.fplCursor, 0, av.fpl.wps.length - 1); av.direct = null; return `${gone} を削除`; }
+      case 'KEY_ENT': {
+        if (av.mfdPage === 'NRST') { const list = av._nrts && av._nrts.length ? av._nrts : fplCatalog(); const id = list[clamp(av.nrstSel || 0, 0, list.length - 1)]; if (id) { av.direct = id; av.directFrom = null; av.mfdPage = 'MAP'; return `D→ ${id}`; } return ''; }
+        if (av.mfdPage === 'FPL') { if (!av.fplEdit) { av.fplEdit = true; av.fplCursor = av.fpl.active; return 'FPL 編集：FMS で点と挿入先、ENT で挿入、CLR で削除'; } return control(av, 'FPL_INSERT'); }
+        return ''; }
+      case 'KEY_CLR': {
+        if (av.fplEdit) return control(av, 'FPL_DEL');
+        if (av.mfdPage === 'NRST') { av.mfdPage = 'MAP'; return 'MFD MAP'; }
+        if (av.direct) { av.direct = null; av.directFrom = null; return 'D→ 解除'; }
+        return ''; }
+      // one hand-built procedure (A2-lite): the fictional ILS 36 at LAB, loaded from the PROC key; pressing
+      // PROC again in the approach sequences the missed approach (direct to the hold point, 3,000 ft), a
+      // third press unloads it. There is no procedure database behind this — it is the one approach LAB has.
+      case 'PROC': {
+        if (!av.proc) { av.proc = { name: 'ILS 36', missed: false }; av.nav1.act = 109900; av.cdi = 'NAV1'; return 'PROC：ILS 36 をロード（LOC 109.90）'; }
+        if (!av.proc.missed) { av.proc.missed = true; av.direct = 'LABED'; av.directFrom = null; av.crs = 360; if (av.altSel < 3000) av.altSel = 3000; return 'ミストアプローチ：LAB-D へ直行・3,000 ft へ上昇'; }
+        av.proc = null; return 'PROC 解除'; }
       case 'RANGE': av.mfdRangeIdx = clamp(av.mfdRangeIdx + dir, 0, RANGES.length - 1); return `RANGE ${RANGES[av.mfdRangeIdx]} NM`;
       case 'NORTH_UP': av.mapNorthUp = !av.mapNorthUp; return av.mapNorthUp ? 'MAP NORTH UP' : 'MAP TRACK UP';
       case 'PFD_MENU': av.pfdMenu = dir; return `PFD ${dir}`;
@@ -164,11 +199,57 @@
         if (x.entry.length === 4) { x.code = parseInt(x.entry, 10); x.entry = ''; return `XPDR ${String(x.code).padStart(4, '0')} セット`; } return `XPDR ${x.entry}`; }
       case 'XPDR_BKSP': av.xpdr.entry = av.xpdr.entry.slice(0, -1); return `XPDR ${av.xpdr.entry || String(av.xpdr.code).padStart(4, '0')}`;
       case 'XPDR_MODE': { const modes = ['ALT', 'ON', 'STBY']; av.xpdr.mode = modes[(modes.indexOf(av.xpdr.mode) + 1) % modes.length]; return `XPDR ${av.xpdr.mode}`; }
+      case 'XPDR_IDENT': av.xpdrIdent = 18; return 'XPDR IDENT — 18秒';
+      case 'OBS': av.obs = !av.obs; return `OBS ${av.obs ? 'ON（CRS でコース）' : 'OFF'}`;
+      case 'BRG1': { const srcs = [null, 'NAV1', 'GPS']; av.brg1 = srcs[(srcs.indexOf(av.brg1) + 1) % srcs.length]; return `BRG1 ${av.brg1 || 'OFF'}`; }
+      case 'BRG2': { const srcs = [null, 'NAV2', 'GPS']; av.brg2 = srcs[(srcs.indexOf(av.brg2) + 1) % srcs.length]; return `BRG2 ${av.brg2 || 'OFF'}`; }
+      case 'ALERTS': av.pfdMenu = av.pfdMenu === 'ALERTS' ? 'TOP' : 'ALERTS'; return av.pfdMenu === 'ALERTS' ? 'ALERTS — 警告一覧' : 'ALERTS 閉じる';
       case 'WIND': av.wind = !av.wind; return `WIND ${av.wind ? 'ON' : 'OFF'}`;
       case 'DIRECT': av.direct = dir || null; av.directFrom = null; return dir ? `D→ ${dir}` : 'D→ 解除';
-      case 'FPL_NEXT': av.fpl.active = clamp(av.fpl.active + dir, 1, av.fpl.wps.length - 1); av.direct = null; return `ACTIVE LEG → ${av.fpl.wps[av.fpl.active]}`;
+      case 'FPL_NEXT': {
+        // the FMS knob's meaning follows the page: on NRST it walks the cursor, in the FPL editor it walks
+        // the edit cursor, everywhere else it advances the active leg (its original job)
+        if (av.mfdPage === 'NRST') return control(av, 'NRST_SEL', dir);
+        if (av.mfdPage === 'FPL' && av.fplEdit) { av.fplCursor = clamp(av.fplCursor + dir, 0, av.fpl.wps.length - 1); return `カーソル ${av.fpl.wps[av.fplCursor]}`; }
+        av.fpl.active = clamp(av.fpl.active + dir, 1, av.fpl.wps.length - 1); av.direct = null; return `ACTIVE LEG → ${av.fpl.wps[av.fpl.active]}`; }
       default: return '';
     }
+  }
+  // the transponder's effective mode: ALT on the ground answers as GND (the GTX behaviour the radio syllabus
+  // assumes), whatever the knob says; STBY / ON pass through
+  const xpdrEffMode = (av, onGround) => (av.xpdr && av.xpdr.mode === 'ALT' && onGround ? 'GND' : av.xpdr ? av.xpdr.mode : 'ALT');
+  // ---------------------------------------------------------------- the CAS (crew alerting) collector
+  // One place that turns the aircraft's state into the alert stack the PFD draws. When the systems model
+  // provides o.alerts (an array of strings, or { id, tier: 'WARN'|'CAUT', text }), it is authoritative;
+  // until then the stack is derived from the signals that already exist (the bus, the oil, the tanks).
+  function collectAlerts(av, o, d) {
+    o = o || {};
+    if (Array.isArray(o.alerts)) return o.alerts.map(a => (typeof a === 'string' ? { id: a, tier: 'CAUT', text: a }
+      : { id: (a && (a.id || a.text)) || 'ALERT', tier: a && (a.tier === 'WARN' || a.level === 'warn') ? 'WARN' : 'CAUT', text: (a && a.text) || String((a && a.id) || 'ALERT') }));
+    const out = [];
+    const engs = d && d.eng && d.eng.length ? d.eng : [{ run: true, rpm: fin(o.rpm) }];
+    const anyRun = engs.some(e => e.run);
+    if (fin(o.volts, 99) < 12.2 && fin(o.amps, 0) < -0.5) out.push({ id: 'LOW VOLTS', tier: 'CAUT', text: 'LOW VOLTS — 電圧低下' });
+    const oilP = o.oilP || [];
+    if (anyRun && oilP.length && oilP.some(v => fin(v, 99) < 25)) out.push({ id: 'LOW OIL PRESSURE', tier: 'WARN', text: 'LOW OIL PRESSURE — 油圧低下' });
+    const fuel = o.fuel || [];
+    if (fuel.length > 1) {
+      if (fin(fuel[0], 99) < 3) out.push({ id: 'LOW FUEL L', tier: 'CAUT', text: 'LOW FUEL L — 左タンク残りわずか' });
+      if (fin(fuel[1], 99) < 3) out.push({ id: 'LOW FUEL R', tier: 'CAUT', text: 'LOW FUEL R — 右タンク残りわずか' });
+    }
+    // (the systems model's fuel pressure is a 0..1 teaching scale: 1 normal, 0.85 boost-pump only,
+    // 0.3 sagging — under half is a starving engine, not a number of psi)
+    if (o.fuelPress != null && anyRun && fin(o.fuelPress, 99) < 0.5) out.push({ id: 'LOW FUEL PRESSURE', tier: 'CAUT', text: 'LOW FUEL PRESS — 燃料圧低下' });
+    return out;
+  }
+  // the catalog the FPL editor and the NRST page work from: every fictional point that can be flown to
+  const fplCatalog = () => WAYPOINTS.filter(p => p.kind !== 'ref').map(p => p.id);
+  // the NRST list: the catalog sorted by distance from pos, with bearing (mag) and distance for the page
+  function nrstList(av, pos, varW) {
+    if (!pos) return fplCatalog().map(id => ({ id, brg: null, dis: null }));
+    return WAYPOINTS.filter(p => p.kind !== 'ref')
+      .map(p => ({ id: p.id, name: p.name, brg: trueToMag(neBearing(pos, p), varW), dis: neDistNm(pos, p) }))
+      .sort((a, b) => a.dis - b.dis);
   }
   function cdiName(av) {
     if (av.cdi === 'GPS') return 'GPS';
@@ -202,6 +283,12 @@
       const finalLeg = av.direct ? true : av.fpl.active >= av.fpl.wps.length - 1;
       out.cdiScale = B && B.kind === 'apt' && finalLeg && out.dis != null && out.dis <= 5 ? 0.3 : out.dis != null && out.dis > 30 ? 2.0 : 1.0;
       out.dots = out.xtk != null ? cdiGps(out.xtk, out.cdiScale) : 0; out.toFrom = 'TO'; out.flag = gpsFail ? 'NO GPS' : B ? '' : 'NO LEG';
+      // OBS: the needle resolves against the selected course TO the waypoint, as a VOR's would — the leg's
+      // geometry stops mattering and the CRS knob flies the intercept / the hold
+      if (av.obs && B && !gpsFail) {
+        const radial = trueToMag(neBearing(B, pos), varW), v = cdiVor(radial, av.crs);
+        out.dots = v.dots; out.toFrom = v.toFrom; out.crs = av.crs; out.obs = true;
+      }
     } else {
       const r = av[av.cdi.toLowerCase()], aid = NAVAIDS.find(x => x.freq === r.act);
       if (!aid) { out.flag = 'NO SIGNAL'; out.dots = 0; out.toFrom = ''; }
@@ -223,6 +310,7 @@
         }
       }
     }
+    av._nrts = nrstList(av, pos, varW).map(x => x.id);   // (the NRST page's order, for its ENT key)
     return out;
   }
 
@@ -354,6 +442,21 @@
     g.restore();
     // track (magenta diamond on the rose)
     g.save(); g.rotate(trkMag * DEG); poly(g, [[0, -hr + 2], [-5, -hr + 9], [0, -hr + 16], [5, -hr + 9]], C.magenta); g.restore();
+    // the bearing pointers (BRG1: a single arrow, BRG2: a double one) at the bearing TO their source —
+    // a tuned VOR/LOC, or the GPS's active waypoint (its bearing is the nav solution's own)
+    const brgPtr = (srcKind, dbl) => {
+      if (!srcKind) return;
+      let b = null;
+      if (srcKind === 'GPS') b = nav.brg;
+      else if (d.pos) { const r = av[srcKind.toLowerCase()], aid = r && NAVAIDS.find(x => x.freq === r.act); if (aid && aid.n != null) b = trueToMag(neBearing(d.pos, aid), d.varW); }
+      if (b == null || !Number.isFinite(b)) return;
+      g.save(); g.rotate(b * DEG);
+      line(g, 0, -hr + 26, 0, hr - 34, dbl ? '#8fd8ff' : C.cyan, 1.8);
+      poly(g, [[0, -hr + 20], [-5, -hr + 30], [5, -hr + 30]], dbl ? '#8fd8ff' : C.cyan);
+      if (dbl) poly(g, [[0, -hr + 30], [-5, -hr + 40], [5, -hr + 40]], '#8fd8ff');
+      g.restore();
+    };
+    if (!ahrsFail) { brgPtr(av.brg1, false); brgPtr(av.brg2, true); }
     g.restore();
     poly(g, [[hx, hy - hr + 4], [hx - 7, hy - hr - 8], [hx + 7, hy - hr - 8]], C.white);   // lubber line
     // aircraft symbol in the middle of the HSI
@@ -369,7 +472,13 @@
     if (av.xpdr) { const editing = av.xpdr.entry.length > 0;
       box(g, hx + hr + 6, hy - hr + 16, 92, 22, '#000', C.line);
       txt(g, `XPDR ${editing ? (av.xpdr.entry + '---').slice(0, 4) : String(av.xpdr.code).padStart(4, '0')}`, hx + hr + 52, hy - hr + 27, 13, editing ? C.cyan : C.green);
-      if (av.xpdr.mode !== 'ALT') txt(g, av.xpdr.mode, hx + hr + 104, hy - hr + 27, 10, C.yellow, 'left'); }
+      // the effective mode (ALT answers as GND on the ground), IDENT while it lasts, and the pressure
+      // altitude the transponder reports (the altitude at the standard setting, for the ATC cross-check)
+      const eff = xpdrEffMode(av, o.onGround);
+      if (eff !== 'ALT') txt(g, eff, hx + hr + 104, hy - hr + 27, 10, C.yellow, 'left');
+      if (av.xpdrIdent > 0) { av.xpdrIdent = Math.max(0, av.xpdrIdent - 1 / 30); if (Math.floor(av.xpdrIdent * 2) % 2 === 0) txt(g, 'IDNT', hx + hr + 104, hy - hr + 27, 10, C.magenta, 'left'); }
+      txt(g, `PA ${Math.round((fin(o.altTrue) + (29.92 - fin(d.qnh, 29.92)) * FT_PER_INHG) / 100) * 100}`, hx + hr + 52, hy - hr + 47, 10, C.grey);
+    }
     if (nav.flag) txt(g, nav.flag, hx, hy + hr * 0.55, 13, C.yellow);
     // --- the glide slope (LOC with a glide path) ---
     if (nav.gsDots != null && av.cdi !== 'GPS') {
@@ -429,8 +538,24 @@
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
     else if (!allRun) { box(g, cx - 100, cy + 100, 200, 22, '#3a2a0d', C.yellow); txt(g, `${engs[0].run ? 'R' : 'L'} ENGINE INOP — 片発`, cx, cy + 111, 13, C.yellow, 'center', 700, jp); }
-    // the bus is sagging and nothing is charging it (an alternator failure, or everything off a tired battery)
-    if (fin(o.volts, 99) < 12.2 && fin(o.amps, 0) < -0.5) { box(g, cx - 80, cy + 130, 160, 22, '#3a2a0d', C.yellow); txt(g, 'LOW VOLTS — 電圧低下', cx, cy + 141, 13, C.yellow, 'center', 700, jp); }
+    // --- the CAS stack: every alert the collector raises, warning (red) over caution (amber), newest
+    // system first; the ALERTS page lists them all and acknowledges them (av._alertsUnacked feeds the key)
+    const alerts = collectAlerts(av, o, d);
+    if (av.pfdMenu === 'ALERTS') for (const a of alerts) (av._ack || (av._ack = {}))[a.id] = true;
+    av._alertsUnacked = alerts.some(a => !(av._ack || {})[a.id]) ? 1 : 0;
+    alerts.slice(0, 3).forEach((a, i) => {
+      const warn = a.tier === 'WARN', yy = cy + 130 + i * 24;
+      box(g, cx - 110, yy, 220, 22, warn ? '#3a0d0d' : '#3a2a0d', warn ? C.red : C.yellow);
+      txt(g, a.text, cx, yy + 11, 12, warn ? C.red : C.yellow, 'center', 700, jp);
+    });
+    if (alerts.length > 3) txt(g, `+ ${alerts.length - 3} ALERTS`, cx, cy + 130 + 3 * 24 + 8, 11, C.yellow);
+    // --- the ALERTS page: the whole stack, tier-coloured, over the attitude (BACK / ALERTS で戻る) ---
+    if (av.pfdMenu === 'ALERTS') {
+      box(g, cx - 200, 44, 400, Math.min(H - 190, 74 + Math.max(1, alerts.length) * 26), '#05070a', C.line);
+      txt(g, 'ALERTS — 警告一覧', cx, 62, 15, C.white, 'center', 800, jp);
+      if (!alerts.length) txt(g, 'NO ALERTS — 警告はありません', cx, 96, 13, C.green, 'center', 700, jp);
+      alerts.forEach((a, i) => { const warn = a.tier === 'WARN'; txt(g, `${warn ? '■ WARNING' : '■ CAUTION'}  ${a.text}`, cx - 184, 92 + i * 26, 13, warn ? C.red : C.yellow, 'left', 700, jp); });
+    }
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();
@@ -486,7 +611,11 @@
     // --- the page area ---
     const px = ew, pw = W - ew;
     if (av.fail && av.fail.gps) { g.fillStyle = '#000'; g.fillRect(px, 0, pw, H); txt(g, 'GPS 信号なし — 地図・位置は使えません', px + pw / 2, H / 2, 16, C.yellow, 'center', 700, jp); txt(g, 'VOR（NAV1）と DME で位置を確かめる', px + pw / 2, H / 2 + 24, 13, C.grey, 'center', 600, jp); }
-    else if (av.mfdPage === 'FPL') drawFPL(g, px, 0, pw, H, d); else drawMap(g, px, 0, pw, H, d);
+    else if (av.mfdPage === 'FPL') drawFPL(g, px, 0, pw, H, d);
+    else if (av.mfdPage === 'ENGINE') drawEnginePage(g, px, 0, pw, H, d);
+    else if (av.mfdPage === 'SYSTEM') drawSystemPage(g, px, 0, pw, H, d);
+    else if (av.mfdPage === 'NRST') drawNrstPage(g, px, 0, pw, H, d);
+    else drawMap(g, px, 0, pw, H, d);
     // data bar (both pages)
     box(g, px, 0, pw, 26, '#05070a', null);
     const fld = (lab, v, x, col = C.magenta) => { txt(g, lab, x, 13, 11, C.grey, 'left'); txt(g, v, x + 34, 13, 13, col, 'left', 700); };
@@ -530,6 +659,31 @@
     }
     // a fictional VOR
     for (const n of NAVAIDS) if (n.type === 'VOR') { const [sx, sy] = toScr(n.n, n.e); poly(g, [[sx - 6, sy - 4], [sx, sy - 7], [sx + 6, sy - 4], [sx + 6, sy + 4], [sx, sy + 7], [sx - 6, sy + 4]], null, C.green, 1.5); txt(g, n.id, sx + 9, sy + 9, 10, C.green, 'left'); }
+    // the fictional airspace: a 10 NM ring round LAB, and the practice area's boundary through its points
+    {
+      const lab = wpt('LABRW');
+      if (lab) { const [lx, ly] = toScr(lab.n, lab.e);
+        g.save(); g.strokeStyle = 'rgba(51,214,255,0.5)'; g.lineWidth = 1.2; if (g.setLineDash) g.setLineDash([7, 5]);
+        g.beginPath(); g.arc(lx, ly, 10 * ppn, 0, 7); g.stroke();
+        const pa = ['LABEA', 'LABEB', 'LABEC', 'LABED'].map(wpt).filter(Boolean);
+        if (pa.length === 4) { g.beginPath(); pa.forEach((p, i) => { const [sx, sy] = toScr(p.n, p.e); i ? g.lineTo(sx, sy) : g.moveTo(sx, sy); }); g.closePath(); g.stroke(); }
+        if (g.setLineDash) g.setLineDash([]);
+        g.restore();
+        txt(g, 'LAB AIRSPACE', lx + 10 * ppn * 0.72, ly - 10 * ppn * 0.72, 10, 'rgba(51,214,255,0.8)', 'left');
+      }
+    }
+    // traffic (CADET hands the pattern traffic's poses in as d.traffic: { n, e, altFt?, hdg? }); the
+    // standalone has none and simply draws nothing
+    if (Array.isArray(d.traffic)) for (const t of d.traffic) {
+      if (!t || !Number.isFinite(t.n) || !Number.isFinite(t.e)) continue;
+      const [sx, sy] = toScr(t.n, t.e);
+      if (sx < x0 - 20 || sx > x0 + w + 20 || sy < y0 || sy > y0 + h) continue;
+      const rel = ((t.hdg != null ? fin(t.hdg) : fin(o.hdgTrue)) - (av.mapNorthUp ? 0 : up)) * DEG;
+      g.save(); g.translate(sx, sy); g.rotate(rel);
+      poly(g, [[0, -8], [2.5, 0], [8, 4], [8, 6.5], [2.5, 4], [1.5, 8], [-1.5, 8], [-2.5, 4], [-8, 6.5], [-8, 4], [-2.5, 0]], '#dfe7ee', '#000', 0.8);
+      g.restore();
+      if (t.altFt != null && Number.isFinite(t.altFt)) txt(g, `${Math.round(t.altFt / 100)}`, sx + 10, sy - 6, 10, '#dfe7ee', 'left');
+    }
     // the aircraft
     const trkRel = (av.mapNorthUp ? fin(o.hdgTrue) : fin(o.hdgTrue) - up) * DEG;
     g.save(); g.translate(cx, cy); g.rotate(trkRel);
@@ -558,10 +712,117 @@
       txt(g, dis == null ? '--:--' : eteFmt(eteSec(cum, o.gs)), cols[3], yy, 14, act ? C.magenta : C.white);
     }
     if (av.direct) { const yy = y0 + 96 + ids.length * 30 + 10; box(g, x0 + 10, yy - 13, w - 20, 26, '#2a0f28', C.magenta); txt(g, `D→ ${av.direct}  ${d.nav.dis == null ? '' : fin(d.nav.dis).toFixed(1) + ' NM'}`, x0 + 30, yy, 14, C.magenta, 'left'); }
-    txt(g, '飛行計画は教材用の架空訓練点です。実際の飛行計画には使えません。', x0 + w / 2, y0 + h - 30, 11, C.grey, 'center', 500, jp);
+    // the editor: the cursor row outlined, and the pick + key guide along the bottom
+    if (av.fplEdit) {
+      const cy2 = y0 + 96 + clamp(av.fplCursor, 0, ids.length - 1) * 30;
+      box(g, x0 + 10, cy2 - 13, w - 20, 26, null, C.cyan, 1.5);
+      const cat = fplCatalog();
+      txt(g, `編集：FMS＝カーソル移動 · D→キー＝挿入先 [ ${cat[av.fplPick] || ''} ] · ENT＝挿入 · CLR＝削除`, x0 + w / 2, y0 + h - 30, 11, C.cyan, 'center', 600, jp);
+    } else if (av.proc) txt(g, `PROC：${av.proc.name}${av.proc.missed ? ' — MISSED APPROACH（LAB-D で保持）' : ' ロード済み'}`, x0 + w / 2, y0 + h - 30, 11, C.magenta, 'center', 700, jp);
+    else txt(g, '飛行計画は教材用の架空訓練点です。実際の飛行計画には使えません。', x0 + w / 2, y0 + h - 30, 11, C.grey, 'center', 500, jp);
+  }
+  // per-cylinder data, however the systems model hands it over: [{ egt: [], cht: [] } | [{egt, cht}, …], …]
+  function normCyl(cyl) {
+    if (!Array.isArray(cyl)) return null;
+    const out = [];
+    for (const e of cyl) {
+      if (Array.isArray(e)) out.push(e.map(c => ({ egt: fin(c && (c.egt != null ? c.egt : c.e)), cht: fin(c && (c.cht != null ? c.cht : c.c)) })));
+      else if (e && Array.isArray(e.egt)) out.push(e.egt.map((v, i) => ({ egt: fin(v), cht: fin(e.cht && e.cht[i]) })));
+    }
+    return out.length && out.every(e => e.length) ? out : null;
+  }
+  function drawEnginePage(g, x0, y0, w, h, d) {
+    const o = d.o, av = d.av;
+    g.fillStyle = '#05070a'; g.fillRect(x0, y0, w, h);
+    txt(g, 'ENGINE — エンジン', x0 + w / 2, y0 + 44, 14, C.white, 'center', 700, jp);
+    // the systems model publishes o.cyls per engine (o.cyl is engine 1's flat array): prefer the former
+    const cylIn = Array.isArray(o.cyls) && o.cyls.length ? o.cyls
+      : Array.isArray(o.cyl) && o.cyl.length ? (Array.isArray(o.cyl[0]) || (o.cyl[0] && Array.isArray(o.cyl[0].egt)) ? o.cyl : [o.cyl]) : null;
+    const cyl = normCyl(cylIn), engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }];
+    if (cyl) {
+      // bar graphs per cylinder: EGT (cyan) with the leaned peak marked, CHT (green → amber → red)
+      av._egtPeak = av._egtPeak || [];
+      cyl.forEach((eng, ei) => {
+        const yy = y0 + 78 + ei * 150, hot = Math.max(...eng.map(c => c.egt));
+        if (engs[ei] && engs[ei].run) av._egtPeak[ei] = Math.max(av._egtPeak[ei] || 0, hot);
+        const peak = av._egtPeak[ei] || hot, bw = (w - 150) / Math.max(4, eng.length);
+        txt(g, engs.length > 1 ? (ei ? 'RIGHT' : 'LEFT') : 'ENGINE', x0 + 26, yy, 12, C.grey, 'left', 700);
+        eng.forEach((c, ci) => {
+          const bx = x0 + 60 + ci * bw;
+          box(g, bx, yy + 8, bw * 0.36, 64, '#1b222b', null); g.fillStyle = C.cyan; g.fillRect(bx, yy + 8 + 64 * (1 - clamp(c.egt / 1800, 0, 1)), bw * 0.36, 64 * clamp(c.egt / 1800, 0, 1));
+          box(g, bx + bw * 0.45, yy + 8, bw * 0.36, 64, '#1b222b', null); g.fillStyle = c.cht > 450 ? C.red : c.cht > 400 ? C.yellow : C.green; g.fillRect(bx + bw * 0.45, yy + 8 + 64 * (1 - clamp(c.cht / 500, 0, 1)), bw * 0.36, 64 * clamp(c.cht / 500, 0, 1));
+          txt(g, `${ci + 1}`, bx + bw * 0.4, yy + 84, 11, C.grey);
+        });
+        // the peak tick on the hottest cylinder's EGT bar: lean until the needle falls this far from it
+        const hi = eng.findIndex(c => c.egt === hot), hx = x0 + 60 + hi * bw, hy = yy + 8 + 64 * (1 - clamp(peak / 1800, 0, 1));
+        line(g, hx - 3, hy, hx + bw * 0.36 + 3, hy, C.white, 2);
+        txt(g, `EGT 最熱 ${Math.round(hot)} °F · PEAK ${Math.round(peak)} · ${Math.round(hot - peak)} °F`, x0 + 26, yy + 106, 12, C.cyan, 'left');
+        txt(g, `CHT 最熱 ${Math.round(Math.max(...eng.map(c => c.cht)))} °F`, x0 + w * 0.55, yy + 106, 12, C.green, 'left');
+      });
+      txt(g, '左の棒：EGT（水色）／右の棒：CHT。PEAK は運転中に記録した最熱 EGT（リーン補助）。', x0 + w / 2, y0 + h - 30, 10, C.grey, 'center', 500, jp);
+    } else {
+      // no per-cylinder model (yet): the honest per-engine numbers, and '—' where there are none
+      const egts = o.egts && o.egts.length ? o.egts : [o.egt || 0], manIns = o.manIns && o.manIns.length ? o.manIns : [o.manIn || 0];
+      const rows = [
+        ['RPM', engs.map(e => `${Math.round(fin(e.rpm))}`).join(' / ')],
+        ['EGT °F', egts.map(v => `${Math.round(fin(v))}`).join(' / ')],
+        ...(engs.length > 1 ? [['MAN IN', manIns.map(v => fin(v).toFixed(1)).join(' / ')]] : []),
+        ['OIL PSI', (o.oilP || []).length ? (o.oilP || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
+        ['OIL °F', (o.oilT || []).length ? (o.oilT || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
+        ['FFLOW GPH', fin(o.fuelFlow).toFixed(1)],
+        ['FUEL PRESS', o.fuelPress == null ? '—' : `${Math.round(fin(o.fuelPress) * 100)} %（定格比）`],
+        ['CHT', '— （気筒別の温度モデルなし）'],
+      ];
+      rows.forEach(([lab, val], i) => { const yy = y0 + 84 + i * 34; txt(g, lab, x0 + 30, yy, 13, C.grey, 'left', 600, jp); txt(g, val, x0 + w - 30, yy, 15, val.startsWith('—') ? C.grey : C.white, 'right', 700, jp); });
+    }
+  }
+  function drawSystemPage(g, x0, y0, w, h, d) {
+    const o = d.o, av = d.av;
+    g.fillStyle = '#05070a'; g.fillRect(x0, y0, w, h);
+    txt(g, 'SYSTEM — 電気・燃料', x0 + w / 2, y0 + 44, 14, C.white, 'center', 700, jp);
+    const amps = fin(o.amps, 0);
+    const bus = o.elecState || (o.volts == null ? '—' : amps > 0.5 ? 'オルタネーター充電中' : amps < -0.5 ? 'バッテリーのみ（放電中）' : '均衡');
+    const fuel = o.fuel || [], tot = fuel.reduce((a, v) => a + fin(v), 0), cap = (d.fuelCap || 24) * Math.max(1, fuel.length);
+    if (tot > 0 && av._fuelInit == null) av._fuelInit = tot;               // (the totalizer latches its start)
+    const used = av._fuelInit != null ? Math.max(0, av._fuelInit - tot) : 0;
+    const ff = fin(o.fuelFlow), endH = ff > 0.2 ? tot / ff : null;
+    const rows = [
+      ['VOLTS', o.volts == null ? '—' : fin(o.volts).toFixed(1), o.volts != null && fin(o.volts) < 12.2 ? C.yellow : C.white],
+      ['AMPS', o.amps == null ? '—' : `${amps > 0 ? '+' : ''}${Math.round(amps)}`, amps < 0 ? C.yellow : C.white],
+      ['BUS', bus, C.white],
+      ['FUEL TOTAL', `${tot.toFixed(1)} GAL`, C.white],
+      ['FUEL USED', av._fuelInit == null ? '—' : `${used.toFixed(1)} GAL`, C.white],
+      ['ENDURANCE', endH == null ? '--:--' : eteFmt(endH * 3600), C.white],
+      ['XPDR', av.xpdr ? `${String(av.xpdr.code).padStart(4, '0')} ${xpdrEffMode(av, o.onGround)}` : '—', C.green],
+      ...(o.hobbs != null ? [['HOBBS', fin(o.hobbs).toFixed(1), C.white]] : []),
+    ];
+    rows.forEach(([lab, val, col], i) => { const yy = y0 + 84 + i * 32; txt(g, lab, x0 + 30, yy, 13, C.grey, 'left', 600, jp); txt(g, val, x0 + w - 30, yy, 15, col, 'right', 700, jp); });
+    // the tanks as bars under the numbers
+    fuel.forEach((v, i) => { const yy = y0 + 84 + rows.length * 32 + 12 + i * 30;
+      txt(g, i ? 'FUEL R' : 'FUEL L', x0 + 30, yy, 12, C.grey, 'left', 600, jp);
+      box(g, x0 + 110, yy - 7, w - 170, 12, '#1b222b', null); g.fillStyle = fin(v) < 3 ? C.yellow : C.green; g.fillRect(x0 + 110, yy - 7, (w - 170) * clamp(fin(v) / (cap / Math.max(1, fuel.length)), 0, 1), 12);
+      txt(g, `${fin(v).toFixed(1)}`, x0 + w - 30, yy, 13, C.white, 'right', 700); });
+  }
+  function drawNrstPage(g, x0, y0, w, h, d) {
+    const av = d.av, pos = d.pos;
+    g.fillStyle = '#05070a'; g.fillRect(x0, y0, w, h);
+    txt(g, 'NEAREST — 最寄りの訓練点', x0 + w / 2, y0 + 44, 14, C.white, 'center', 700, jp);
+    const cols = [x0 + 30, x0 + w * 0.5, x0 + w * 0.68, x0 + w * 0.86];
+    ['WPT', 'BRG', 'DIS', 'ETE'].forEach((c, i) => txt(g, c, cols[i], y0 + 70, 12, C.grey, i ? 'center' : 'left'));
+    const list = nrstList(av, pos, d.varW), sel = clamp(av.nrstSel || 0, 0, list.length - 1);
+    list.forEach((p, i) => {
+      const yy = y0 + 96 + i * 30;
+      if (i === sel) box(g, x0 + 10, yy - 13, w - 20, 26, '#0d2a3a', C.cyan);
+      txt(g, p.id, cols[0], yy, 14, i === sel ? C.cyan : C.white, 'left', 700);
+      txt(g, p.brg == null ? '---' : hdgFmt(p.brg) + '°', cols[1], yy, 14);
+      txt(g, p.dis == null ? '--.-' : p.dis.toFixed(1), cols[2], yy, 14);
+      txt(g, p.dis == null ? '--:--' : eteFmt(eteSec(p.dis, d.o.gs)), cols[3], yy, 14);
+    });
+    txt(g, 'FMS＝カーソル · ENT＝その点へ DIRECT', x0 + w / 2, y0 + h - 30, 11, C.cyan, 'center', 600, jp);
   }
 
   FL.avionics = { trueToMag, magToTrue, hdgDiff, hdgFmt, wrap360, wrap180, indicatedAlt, inhgToHpa, hpaToInhg, FT_PER_INHG, tune, fmtCom, fmtNav, validCom,
     COM_MIN, COM_MAX, COM_STEP, ORIGIN, neToLatLon, latLonToNe, gcDistNm, gcBearing, neDistNm, neBearing, xtkNm, atkToGoNm, eteSec, eteFmt,
-    cdiGps, cdiVor, cdiLoc, gsDots, WAYPOINTS, wpt, NAVAIDS, createAvionics, control, cdiName, navSolve, RANGES, drawPFD, drawMFD, COLORS: C };
+    cdiGps, cdiVor, cdiLoc, gsDots, WAYPOINTS, wpt, NAVAIDS, createAvionics, control, cdiName, navSolve, RANGES, drawPFD, drawMFD, COLORS: C,
+    collectAlerts, xpdrEffMode, nrstList, fplCatalog };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

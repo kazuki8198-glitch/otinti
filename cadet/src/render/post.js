@@ -56,6 +56,54 @@ const AerialShader = {
     }`,
 };
 
+// precipitation, drawn in screen space at the end of the chain: falling streaks whose slant follows the
+// wind of the moment, a faint grey veil, droplets standing on the glass towards the edges of the frame, and
+// the lightning flash (a whole-frame lift that decays). uPrecip 0..1 is the day's rain; everything scales
+// with it, so a dry day costs one no-op pass.
+const RainShader = {
+  name: 'CadetRain',
+  uniforms: { tDiffuse: { value: null }, uPrecip: { value: 0 }, uTime: { value: 0 }, uFlash: { value: 0 }, uAspect: { value: 1 }, uFrost: { value: 0 } },
+  vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform float uPrecip, uTime, uFlash, uAspect, uFrost;
+    varying vec2 vUv;
+    float hash(float n) { return fract(sin(n) * 43758.5453); }
+    void main() {
+      vec4 col = texture2D(tDiffuse, vUv);
+      if (uPrecip > 0.003) {
+        vec2 uv = vec2(vUv.x * uAspect, vUv.y);
+        float streak = 0.0;
+        for (int i = 0; i < 2; i++) {
+          float fi = float(i);
+          vec2 g = uv * vec2(60.0 + fi * 37.0, 2.6 + fi * 1.3);
+          g.x += uv.y * (0.35 + fi * 0.12);                                  // the slant of falling rain
+          float colId = floor(g.x), sp = 0.7 + hash(colId * 7.1 + fi * 31.0);
+          float fall = fract(g.y + uTime * (1.6 + fi * 0.7) * sp);
+          float head = smoothstep(0.0, 0.12, fall) * smoothstep(0.55, 0.12, fall);
+          float lane = smoothstep(0.5, 0.05, abs(fract(g.x) - 0.5));
+          streak += head * lane * (0.5 - fi * 0.18);
+        }
+        col.rgb += vec3(0.75, 0.82, 0.9) * streak * 0.16 * uPrecip;
+        col.rgb = mix(col.rgb, vec3(dot(col.rgb, vec3(0.333))) * vec3(0.92, 0.97, 1.05) + vec3(0.02), uPrecip * 0.10);
+        // droplets on the glass: still specks, denser towards the frame's edges, twinkling slowly
+        vec2 dg = vec2(vUv.x * uAspect, vUv.y) * 90.0;
+        vec2 cell = floor(dg), f = fract(dg) - 0.5;
+        float h = hash(cell.x * 12.9 + cell.y * 78.2);
+        vec2 c = (vec2(hash(cell.x + 4.7), hash(cell.y + 9.1)) - 0.5) * 0.6;
+        float drop = smoothstep(0.16, 0.05, length(f - c)) * step(0.72, h);
+        float edge = smoothstep(0.25, 0.75, length(vUv - 0.5));
+        col.rgb += vec3(0.5, 0.58, 0.66) * drop * edge * uPrecip * (0.10 + 0.05 * sin(uTime * 0.7 + h * 40.0));
+      }
+      if (uFlash > 0.003) col.rgb += vec3(0.75, 0.8, 0.95) * uFlash * 0.55;
+      if (uFrost > 0.003) {
+        // airframe ice on the glass: a white creep from the frame's edges inward, and a general milkiness
+        float fr = smoothstep(0.30, 0.80, length(vUv - 0.5));
+        col.rgb = mix(col.rgb, vec3(0.82, 0.88, 0.96), uFrost * (fr * 0.6 + 0.07));
+      }
+      gl_FragColor = col;
+    }`,
+};
+
 export function createPipeline(container, quality) {
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false, alpha: false });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -68,6 +116,7 @@ export function createPipeline(container, quality) {
   const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 42000);
   const scene = new THREE.Scene();
   let composer = null, aerial = null, gtao = null, bloom = null, depthTex = null, dpr = 1, baseExposure = 0.62, indoor = 0;
+  let rain = null, precipK = 0, flashK = 0, frostK = 0;      // the day's precipitation, the lightning flash, the glass's frost
   // the exposure: outdoors it follows the sun (more at dusk and under the moon); inside a lit room it tends to a fixed
   // value whatever the time of day (the ceiling lights, not the sky, decide how bright the room is)
   const INDOOR_EXPOSURE = 1.8;
@@ -116,6 +165,8 @@ export function createPipeline(container, quality) {
     }
     bloom = null;
     if (q.bloom && !dbg.has('nobloom')) { bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), 0.07, 0.2, 8.0); composer.addPass(bloom); }
+    rain = new ShaderPass(RainShader); rain.uniforms.uPrecip.value = precipK; rain.uniforms.uAspect.value = size.x / Math.max(1, size.y);
+    composer.addPass(rain);
     composer.addPass(new OutputPass());
   }
 
@@ -152,6 +203,7 @@ export function createPipeline(container, quality) {
 
   function render() {
     renderer.info.reset();
+    if (rain) { rain.uniforms.uTime.value = performance.now() / 1000; rain.uniforms.uFlash.value = flashK; rain.uniforms.uFrost.value = frostK; flashK *= 0.82; }
     const u = aerial.uniforms;
     u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uCamWorld.value.copy(camera.matrixWorld);
     u.tDepth.value = composer.readBuffer.depthTexture;
@@ -163,6 +215,11 @@ export function createPipeline(container, quality) {
   build(quality); resize(Math.min(window.devicePixelRatio || 1, quality.maxDpr));
   return {
     renderer, scene, camera, render, resize, setHaze,
+    // precipitation 0..1 (the day's rain: the streaks, the veil, the droplets) and the lightning flash
+    setPrecip(k) { precipK = Math.max(0, Math.min(1, +k || 0)); if (rain) rain.uniforms.uPrecip.value = precipK; },
+    setFrost(k) { frostK = Math.max(0, Math.min(1, +k || 0)); },
+    flash() { flashK = 1; },
+    get precip() { return precipK; },
     // the eye adapting indoors: 0 outdoors, 1 inside a lit room
     setIndoor(k, isLit = 1) { indoor = Math.max(0, Math.min(1, k)); lit = Math.max(0, Math.min(1, +isLit)); renderer.toneMappingExposure = exposure(); },
     // compile the scene's shaders as the game draws them: into the pipeline's buffer (no tone mapping, linear colour),

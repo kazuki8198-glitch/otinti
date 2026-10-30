@@ -1,6 +1,9 @@
 // CADET — world/landmarks.js : FLIGHT LAB's teaching landmarks (fictional): the coloured towers at the training points
 // LAB-A … LAB-F and the LAB VOR (a Doppler VOR: a raised round counterpoise with a ring of antennas).
 // Positions from FL.avionics (the same points the lessons and the G1000-type map use). NOT FOR NAVIGATION.
+// (B1.2/B1.3-lite) the world beyond the field: a small town on the cross-country route (instanced houses, a
+// church, a school), a river bending between two lakes past it, and the northern mountains — silhouettes
+// only, no colliders, a handful of draw calls for the depth they give the horizon.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -40,6 +43,65 @@ export function buildLandmarks(L, FL) {
     const steel = new THREE.MeshStandardMaterial({ color: 0x9aa1a8, roughness: 0.4, metalness: 0.7 });
     for (const [k, mat] of [['white', white], ['steel', steel]]) { const m = new THREE.Mesh(mergeGeometries(parts[k].map(g => g.toNonIndexed())), mat); m.castShadow = true; m.receiveShadow = true; v.add(m); }
     group.add(v);
+  }
+
+  // ---------------------------------------------------------------- the town, the river, the mountains
+  const rngT = (s0) => { let s = s0 >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+  const TOWN = { n: 8000, e: -30000 };                       // on the LAB → LAB-B route, at cross-country distance
+  {
+    const r = rngT(20261030);
+    const [tx, , tz] = L.toLocal(TOWN.n, TOWN.e);
+    const town = new THREE.Group(); town.position.set(tx, G, tz); town.name = 'town';
+    // the houses and shops: one instanced box, ninety-odd of them in a loose grid with jitter
+    const N = 92, box = new THREE.BoxGeometry(1, 1, 1); box.translate(0, 0.5, 0);
+    const inst = new THREE.InstancedMesh(box, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 }), N);
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
+    const palette = [0xd8cfc0, 0xc9b8a3, 0xb7c0c8, 0xd0b48f, 0xa8b39a, 0xc4cdd4].map(h => new THREE.Color(h));
+    for (let i = 0; i < N; i++) {
+      const gx = (i % 10 - 4.5) * 62 + (r() - 0.5) * 30, gz = (Math.floor(i / 10) - 4.5) * 58 + (r() - 0.5) * 28;
+      const w = 11 + r() * 12, d = 10 + r() * 10, h = 6 + r() * 12;
+      E.set(0, (r() - 0.5) * 0.24, 0); Q.setFromEuler(E); V.set(gx, 0, gz); SC.set(w, h, d);
+      M.compose(V, Q, SC); inst.setMatrixAt(i, M); inst.setColorAt(i, palette[(r() * palette.length) | 0]);
+    }
+    inst.instanceMatrix.needsUpdate = true; if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    town.add(inst);
+    // the church: a tower and a spire, the town's landmark from the air
+    const churchMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.8 });
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(7, 24, 7), churchMat); tower.position.set(6, 12, -4); town.add(tower);
+    const spire = new THREE.Mesh(new THREE.ConeGeometry(5.4, 12, 4), new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: 0.7 }));
+    spire.position.set(6, 30, -4); spire.rotation.y = Math.PI / 4; town.add(spire);
+    const nave = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 8), churchMat); nave.position.set(17, 4, -4); town.add(nave);
+    // the school: one long low block, lighter than the houses
+    const school = new THREE.Mesh(new THREE.BoxGeometry(34, 8, 13), new THREE.MeshStandardMaterial({ color: 0xdcd6c2, roughness: 0.85 }));
+    school.position.set(-30, 4, 26); town.add(school);
+    group.add(town);
+  }
+  {
+    // the river: a ribbon bending from the western lake to the LAB-B lake, passing south of the town
+    const pts = [[6000, -36500], [7600, -34100], [9200, -31200], [10900, -28400], [12500, -26000]].map(([n, e]) => L.toLocal(n, e));
+    const W2 = 34, pos = [], idx = [];
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i], q = pts[Math.min(i + 1, pts.length - 1)], q0 = pts[Math.max(i - 1, 0)];
+      let dx = q[0] - q0[0], dz = q[2] - q0[2]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+      pos.push(p[0] - dz * W2, G + 0.35, p[2] + dx * W2, p[0] + dz * W2, G + 0.35, p[2] - dx * W2);
+      if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const river = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x39586e, roughness: 0.25, metalness: 0.1 }));
+    river.name = 'river'; group.add(river);
+  }
+  {
+    // the northern mountains: a merged ridge of broad cones at the horizon, unlit and hazed by distance —
+    // a depth cue only (nothing collides, nothing lands there)
+    const r = rngT(777), cones = [];
+    for (let i = 0; i < 8; i++) {
+      const n = 37000 + r() * 5000, e = -58000 + i * 8200 + r() * 2600, h = 900 + r() * 900, rad = 5200 + r() * 2600;
+      const [x, , z] = L.toLocal(n, e);
+      const c = new THREE.ConeGeometry(rad, h, 7); c.translate(x, G + h / 2 - 30, z); cones.push(c);
+    }
+    const ridge = new THREE.Mesh(mergeGeometries(cones.map(c => c.toNonIndexed())), new THREE.MeshBasicMaterial({ color: 0x8799b0 }));
+    ridge.name = 'mountains'; group.add(ridge);
   }
   return { group };
 }

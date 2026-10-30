@@ -249,3 +249,134 @@ test('failures on the displays: AHRS failure flags the attitude and heading, GPS
   av.fail = { ahrs: true }; A.drawPFD(g, 640, 420, panel(s, av));
   assert.ok(texts.some(t => /AHRS|ATT FAIL|姿勢/.test(t)), texts.filter(t => /FAIL|AHRS/.test(t)).join(','));
 });
+
+test('CAS: the collector derives the stack from live signals, and o.alerts wins when provided', () => {
+  const av = A.createAvionics();
+  const calm = A.collectAlerts(av, { volts: 14.1, amps: 12, oilP: [70], fuel: [20, 20] }, { eng: [{ run: true }] });
+  assert.deepEqual(calm, [], 'a healthy aircraft raises nothing');
+  const low = A.collectAlerts(av, { volts: 11.4, amps: -8, oilP: [70], fuel: [20, 20] }, { eng: [{ run: true }] });
+  assert.deepEqual(low.map(a => a.id), ['LOW VOLTS']);
+  const bad = A.collectAlerts(av, { volts: 14, amps: 5, oilP: [10], fuel: [2, 20] }, { eng: [{ run: true }] });
+  assert.deepEqual(bad.map(a => a.id), ['LOW OIL PRESSURE', 'LOW FUEL L']);
+  assert.equal(bad[0].tier, 'WARN');
+  const given = A.collectAlerts(av, { alerts: ['X CUSTOM', { id: 'Y', tier: 'WARN', text: 'Y TEXT' }] }, { eng: [{ run: true }] });
+  assert.deepEqual(given.map(a => a.text), ['X CUSTOM', 'Y TEXT'], 'a provided stack is authoritative');
+  // the PFD draws the stack and the ALERTS page acknowledges it
+  const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  const d = panel(s, av); d.o = { ...d.o, volts: 11.2, amps: -9 };
+  A.drawPFD(g, 640, 420, d);
+  assert.ok(texts.some(t => /LOW VOLTS/.test(t)), 'the stack is drawn on the PFD');
+  assert.equal(av._alertsUnacked, 1, 'unacknowledged until the page is opened');
+  A.control(av, 'ALERTS'); A.drawPFD(g, 640, 420, d);
+  assert.equal(av._alertsUnacked, 0, 'opening the ALERTS page acknowledges');
+});
+
+test('OBS: the GPS needle resolves against the selected course to the waypoint', () => {
+  const av = A.createAvionics(), o = { gs: 100, trk: 0, hdgTrue: 0, altTrue: 3000 };
+  A.control(av, 'DIRECT', 'LABEA');                       // LABEA at n 9000, e -34000
+  const wptPos = { n: 9000, e: -34000 };
+  // south of the waypoint on its 360 radial (bearing from wpt to aircraft = 180): OBS 360 → TO, centred
+  const south = { n: wptPos.n - 3 * 1852, e: wptPos.e };
+  let n = A.navSolve(av, south, o, 6, P.LAB_RWY);
+  assert.equal(n.obs, undefined); assert.ok(Math.abs(n.dots) < 0.6, 'the plain GPS needle follows the leg');
+  A.control(av, 'OBS'); av.crs = 6;                       // (the inbound course along the 186° magnetic radial the aircraft sits on)
+  n = A.navSolve(av, south, o, 6, P.LAB_RWY);
+  assert.equal(n.obs, true); assert.equal(n.toFrom, 'TO'); assert.ok(Math.abs(n.dots) < 0.3, `OBS centred on course, got ${n.dots}`);
+  av.crs = 96; n = A.navSolve(av, south, o, 6, P.LAB_RWY);
+  assert.ok(Math.abs(n.dots) > 1.5, 'a 90° OBS course deflects the needle hard');
+  A.control(av, 'OBS'); n = A.navSolve(av, south, o, 6, P.LAB_RWY); assert.equal(n.obs, undefined);
+});
+
+test('transponder: GND is the effective ALT on the ground, IDENT runs 18 s, PA is reported', () => {
+  const av = A.createAvionics();
+  assert.equal(A.xpdrEffMode(av, true), 'GND'); assert.equal(A.xpdrEffMode(av, false), 'ALT');
+  av.xpdr.mode = 'STBY'; assert.equal(A.xpdrEffMode(av, true), 'STBY');
+  av.xpdr.mode = 'ALT';
+  A.control(av, 'XPDR_IDENT'); assert.equal(av.xpdrIdent, 18);
+  const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  const d = panel(s, av); d.o = { ...d.o, onGround: true };
+  A.drawPFD(g, 640, 420, d);
+  assert.ok(texts.includes('GND'), 'the window shows GND on the ground');
+  assert.ok(texts.some(t => /^PA /.test(t)), 'the pressure altitude is shown for the cross-check');
+  assert.ok(av.xpdrIdent < 18, 'IDENT counts down as the PFD redraws');
+});
+
+test('MFD pages: ENGINE / SYSTEM / NRST render, the totalizer counts down, per-cylinder bars take over when provided', () => {
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); if (k === 'fillText') return; }), set: (t, k, v) => { assert.ok(!(typeof v === 'number' && Number.isNaN(v))); t[k] = v; return true; } });
+  const av = A.createAvionics(), s = P.newState();
+  const d = panel(s, av);
+  d.traffic = [{ n: 4000, e: -30000, altFt: 2500, hdg: 90 }];
+  for (const p of ['MAP', 'FPL', 'ENGINE', 'SYSTEM', 'NRST']) { av.mfdPage = p; A.drawMFD(g, 1100, 800, d); }
+  assert.ok(texts.some(t => /ENGINE/.test(t)) && texts.some(t => /SYSTEM/.test(t)) && texts.some(t => /NEAREST/.test(t)), 'the new pages are real');
+  // the totalizer: latch at the first reading, then count the burn
+  av.mfdPage = 'SYSTEM'; d.o = { ...d.o, fuel: [20, 20], fuelFlow: 10 };
+  A.drawMFD(g, 1100, 800, d); assert.equal(av._fuelInit, 40);
+  d.o = { ...d.o, fuel: [18, 17.5] }; texts.length = 0; A.drawMFD(g, 1100, 800, d);
+  assert.ok(texts.some(t => /4\.5/.test(t)), 'FUEL USED counts the burn');
+  // per-cylinder data replaces the fallback rows
+  av.mfdPage = 'ENGINE'; texts.length = 0;
+  d.o = { ...d.o, cyl: [{ egt: [1350, 1380, 1400, 1390], cht: [380, 395, 410, 400] }] };
+  A.drawMFD(g, 1100, 800, d);
+  assert.ok(texts.some(t => /PEAK/.test(t)), 'the lean page shows its peak');
+  assert.equal(av._egtPeak[0], 1400);
+});
+
+test('NRST: the list sorts by distance and ENT flies direct to the cursor point', () => {
+  const av = A.createAvionics(), s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  A.navSolve(av, P.ne(s), s.out, 6, P.LAB_RWY);           // (stashes the sorted order)
+  const list = A.nrstList(av, P.ne(s), 6);
+  assert.equal(list[0].id, 'LABRW', 'on the field, the airport is nearest');
+  assert.ok(list.every((p, i) => i === 0 || list[i - 1].dis <= p.dis), 'sorted by distance');
+  av.mfdPage = 'NRST'; A.control(av, 'NRST_SEL', 1);
+  A.control(av, 'KEY_ENT');
+  assert.equal(av.direct, list[1].id); assert.equal(av.mfdPage, 'MAP');
+});
+
+test('FPL editing: ENT enters the editor, insert/delete reshape the plan and the leg follows', () => {
+  const av = A.createAvionics(), s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  av.mfdPage = 'FPL';
+  A.control(av, 'KEY_ENT'); assert.equal(av.fplEdit, true);
+  const before = av.fpl.wps.length, cat = A.fplCatalog();
+  av.fplPick = cat.indexOf('LABEC'); av.fplCursor = 1;
+  A.control(av, 'FPL_INSERT');
+  assert.equal(av.fpl.wps.length, before + 1); assert.equal(av.fpl.wps[1], 'LABEC');
+  assert.equal(av.fpl.active, 2, 'the active leg still points at the same target');
+  A.control(av, 'FPL_DEL');
+  assert.equal(av.fpl.wps.length, before); assert.equal(av.fpl.active, 1);
+  // the knob walks the edit cursor while editing, the leg otherwise
+  A.control(av, 'FPL_NEXT', 1); assert.equal(av.fplCursor, 2);
+  A.control(av, 'KEY_CLR'); assert.equal(av.fpl.wps.length, before - 1, 'CLR deletes while editing');
+  const n = A.navSolve(av, P.ne(s), s.out, 6, P.LAB_RWY);
+  assert.ok(n.dtk != null, 'the edited plan still solves');
+});
+
+test('PROC: the fictional ILS 36 loads, sequences its missed approach, and unloads', () => {
+  const av = A.createAvionics();
+  A.control(av, 'PROC');
+  assert.equal(av.proc.name, 'ILS 36'); assert.equal(av.cdi, 'NAV1'); assert.equal(av.nav1.act, 109900);
+  const R = P.LAB_RWY, [pn, pe] = P.rwyToNE(R, -4000, 0);   // 4 km out on the centre line, on the glide path
+  const o = { altTrue: R.elevFt + (300 + 4000) * Math.tan(3 * Math.PI / 180) * 3.28084, gs: 70, trk: R.trueHdg, hdgTrue: R.trueHdg };
+  const n = A.navSolve(av, { n: pn, e: pe }, o, P.MAGVAR_W, R);
+  assert.equal(n.src, 'LOC1'); assert.ok(n.gsDots != null && Math.abs(n.gsDots) < 0.1, 'the loaded procedure flies the glide slope');
+  A.control(av, 'PROC');
+  assert.equal(av.proc.missed, true); assert.equal(av.direct, 'LABED'); assert.ok(av.altSel >= 3000);
+  A.control(av, 'PROC'); assert.equal(av.proc, null);
+});
+
+test('systems-model shapes: o.cyls bars render, the 0..1 fuel pressure reads as a ratio and only sagging raises the CAS', () => {
+  const av = A.createAvionics(), s = P.newState();
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  const d = panel(s, av);
+  d.o = { ...d.o, cyls: [[{ egt: 1300, cht: 370 }, { egt: 1420, cht: 405 }, { egt: 1380, cht: 390 }, { egt: 1350, cht: 380 }]], fuelPress: 1 };
+  av.mfdPage = 'ENGINE'; A.drawMFD(g, 1100, 800, d);
+  assert.equal(av._egtPeak[0], 1420, 'the per-engine cylinder bars take over from o.cyls');
+  assert.deepEqual(A.collectAlerts(av, { volts: 14, amps: 5, oilP: [70], fuel: [20, 20], fuelPress: 1 }, { eng: [{ run: true }] }), [], 'full pressure: no alert');
+  assert.deepEqual(A.collectAlerts(av, { volts: 14, amps: 5, oilP: [70], fuel: [20, 20], fuelPress: 0.85 }, { eng: [{ run: true }] }).map(a => a.id), [], 'boost-pump-only pressure is not an alert');
+  assert.deepEqual(A.collectAlerts(av, { volts: 14, amps: 5, oilP: [70], fuel: [20, 20], fuelPress: 0.3 }, { eng: [{ run: true }] }).map(a => a.id), ['LOW FUEL PRESSURE'], 'a sagging pressure is');
+});

@@ -50,17 +50,18 @@ export const KEYS = [
 const K = (label, act = null, on = null) => ({ label, act, on });
 const DIM = l => K(l);
 export const SOFTKEYS = {
-  pfdTop: [K(''), DIM('INSET'), K('PFD', () => ['PFD_MENU', 'PFD']), DIM('OBS'), K('CDI', () => ['CDI', 1]), DIM('DME'), K('XPDR', () => ['XPDR', 1], av => av.pfdMenu === 'XPDR'),
-    DIM('IDENT'), DIM('TMR/REF'), DIM('NRST'), K(''), DIM('ALERTS')],
-  pfdMenu: [DIM('SYN VIS'), DIM('DFLTS'), K('WIND', () => ['WIND', 1], av => av.wind),
+  pfdTop: [K(''), DIM('INSET'), K('PFD', () => ['PFD_MENU', 'PFD']), K('OBS', () => ['OBS', 1], av => !!av.obs), K('CDI', () => ['CDI', 1]), K('BRG1', () => ['BRG1', 1], av => !!av.brg1), K('XPDR', () => ['XPDR', 1], av => av.pfdMenu === 'XPDR'),
+    K('IDENT', () => ['XPDR_IDENT', 1], av => (av.xpdrIdent || 0) > 0), K('BRG2', () => ['BRG2', 1], av => !!av.brg2), DIM('NRST'), K(''), K('ALERTS', () => ['ALERTS', 1], av => av.pfdMenu === 'ALERTS' || !!av._alertsUnacked)],
+  pfdMenu: [K('NAV', () => ['AP_NAV', 1], av => !!(av.ap && av.ap.on && av.ap.nav)), K('APR', () => ['AP_APR', 1], av => !!(av.ap && av.ap.on && av.ap.apr)), K('WIND', () => ['WIND', 1], av => av.wind),
     K('AP', () => ['AP', 1], av => !!(av.ap && av.ap.on)), K('HDG', () => ['AP_HDG', 1], av => !!(av.ap && av.ap.on && av.ap.hdg)),
-    K('ALT', () => ['AP_ALT', 1], av => !!(av.ap && av.ap.on && av.ap.alt)), DIM('BRG2'), K(''),
-    K('ALT UNIT', () => ['ALT_UNIT', 1], av => av.baroUnit === 'HPA'), K('STD BARO', () => ['STD_BARO', 1]), K('BACK', () => ['PFD_MENU', 'TOP']), DIM('ALERTS')],
+    K('ALT', () => ['AP_ALT', 1], av => !!(av.ap && av.ap.on && av.ap.alt)), K('VS', () => ['AP_VS', 1], av => !!(av.ap && av.ap.on && av.ap.vs)),
+    K('LVL', () => ['AP_LVL', 1], av => !!(av.ap && av.ap.on && av.ap.lvl)), K('FD', () => ['FD', 1], av => !!(av.fd && av.fd.on)),
+    K('ALT UNIT', () => ['ALT_UNIT', 1], av => av.baroUnit === 'HPA'), K('STD BARO', () => ['STD_BARO', 1]), K('BACK', () => ['PFD_MENU', 'TOP'])],
   // the transponder's own row: the code's digits (0–7, four set it), the mode, backspace, back; the last slot
   // shows what is being typed, or the code in use
   xpdr: [...[0, 1, 2, 3, 4, 5, 6, 7].map(d => K(`${d}`, () => ['XPDR_DIGIT', d])), K('MODE', () => ['XPDR_MODE', 1], av => av.xpdr && av.xpdr.mode !== 'ALT'),
     K('⌫', () => ['XPDR_BKSP', 1]), K('BACK', () => ['XPDR', 1]), K(av => (av.xpdr ? (av.xpdr.entry || String(av.xpdr.code).padStart(4, '0')) : '----'))],
-  mfd: [DIM('ENGINE'), K(''), K('MAP', () => ['MFD_MAP', 1], av => av.mfdPage === 'MAP'), K('FPL', () => ['MFD_FPL', 1], av => av.mfdPage === 'FPL'), K(''),
+  mfd: [K('ENGINE', () => ['MFD_ENG', 1], av => av.mfdPage === 'ENGINE'), K('SYSTEM', () => ['MFD_SYS', 1], av => av.mfdPage === 'SYSTEM'), K('MAP', () => ['MFD_MAP', 1], av => av.mfdPage === 'MAP'), K('FPL', () => ['MFD_FPL', 1], av => av.mfdPage === 'FPL'), K('NRST', () => ['MFD_NRST', 1], av => av.mfdPage === 'NRST'),
     K(av => (av.mapNorthUp ? 'NORTH UP' : 'TRACK UP'), () => ['NORTH_UP', 1]), K(''), K('PREV LEG', () => ['FPL_NEXT', -1]), K('NEXT LEG', () => ['FPL_NEXT', 1]),
     K(''), DIM('DCLTR'), DIM('SHW CHRT')],
 };
@@ -129,6 +130,7 @@ export function createGlass(FL, makeCanvas) {
   function fill(s, av, eng) {
     Object.assign(d.o, s.out); d.o.onGround = s.onGround;
     d.av = av; d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
+    d.traffic = av && Array.isArray(av.trafficPos) ? av.trafficPos : null;   // (CADET's pattern traffic, when fly-mode hands it over)
     d.nav = AV.navSolve(av, d.pos, s.out, P.MAGVAR_W, P.LAB_RWY);
     d.qnh = s.qnh; d.V = s.A.v; d.fuelCap = s.A.fuelCap;
     d.eng = s.eng.length > 1 ? ENG : ENG1;
@@ -149,7 +151,18 @@ export function createGlass(FL, makeCanvas) {
     if (!sc || !s || !av) return;
     stats[which]++;
     sc.g.setTransform(SCR_W / LW, 0, 0, SCR_H / LH, 0, 0);
-    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else { AV.drawPFD(sc.g, LW, LH, fill(s, av, eng)); drawApStrip(sc.g, LW, av); }
+    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng));
+    else {
+      AV.drawPFD(sc.g, LW, LH, fill(s, av, eng)); drawApStrip(sc.g, LW, av);
+      // the flight director's command bars (av.fd, from the autopilot's own laws): a magenta bar the
+      // pilot — or the AP — flies the aircraft symbol into; it rolls and pitches against the attitude
+      if (av.fd && av.fd.on && s.out) {
+        const g = sc.g, cx = LW * 0.47, cy = LH * 0.36, ppd = LH * 0.0115, u = LW / 640;
+        g.save(); g.translate(cx, cy + (s.out.pitch - av.fd.pitch) * ppd); g.rotate((av.fd.bank - s.out.bank) * Math.PI / 180);
+        g.strokeStyle = '#ff4fd8'; g.lineWidth = Math.max(2, 3 * u); g.beginPath();
+        g.moveTo(-52 * u, 0); g.lineTo(-14 * u, 0); g.lineTo(0, 10 * u); g.lineTo(14 * u, 0); g.lineTo(52 * u, 0); g.stroke(); g.restore();
+      }
+    }
     sc.g.setTransform(1, 0, 0, 1, 0, 0);
     sc.texture.needsUpdate = true;
   }

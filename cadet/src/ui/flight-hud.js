@@ -626,10 +626,11 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   put(dDet, make('summary', '', null, '採点の詳細'), dDetBody);
   const dNote = make('p', 'fh-note', null, 'この結果は訓練の記録に保存されました。正式な飛行日誌（logbook）ではなく、飛行時間には数えません。');
   const bRetry = make('button', '', { type: 'button', 'data-act': 'retry' }), bFree = make('button', '', { type: 'button', 'data-act': 'free' }, '自由に飛ぶ');
+  const bReplay = make('button', '', { type: 'button', 'data-act': 'replay' }, '飛行を再生');
   const bRet = make('button', '', { type: 'button', 'data-act': 'return' }, '駐機場へ戻る');
   const retryTxt = doc.createTextNode('もう一度');
   put(bRetry, retryTxt, make('kbd', '', null, 'R'));
-  const dBtns = put(make('div', 'fh-btns'), bRetry, bFree, bRet);
+  const dBtns = put(make('div', 'fh-btns'), bRetry, bFree, bReplay, bRet);
   const cbody = put(make('div', 'fh-cbody'), hero, dStats, dAdv, dDet, dNote);
   put(card, cbody, dBtns);
   put(deb, card);
@@ -817,7 +818,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (!debOpen) return;
     const cb = debCb || {};
     hideDebrief();
-    const fn = act === 'retry' ? cb.onRetry : act === 'free' ? cb.onFree : cb.onReturn;
+    const fn = act === 'retry' ? cb.onRetry : act === 'free' ? cb.onFree : act === 'replay' ? cb.onReplay : cb.onReturn;
     if (typeof fn === 'function') fn();
   }
   dBtns.addEventListener('click', (e) => { const b = e.target.closest('button[data-act]'); if (b) choose(b.dataset.act); });
@@ -825,9 +826,9 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const typing = t => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
   const otherModal = () => Array.from(doc.querySelectorAll('[aria-modal="true"]')).some(n => n !== card && !n.closest('[hidden]') && n.getClientRects().length > 0);
   function onKey(e) {
-    if (!debOpen || e.code !== 'KeyR' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || bRetry.hidden || typing(e.target) || otherModal()) return;
-    e.preventDefault(); e.stopPropagation();
-    choose('retry');
+    if (!debOpen || e.repeat || e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || otherModal()) return;
+    if (e.code === 'KeyR' && !bRetry.hidden) { e.preventDefault(); e.stopPropagation(); choose('retry'); return; }
+    if (e.code === 'KeyP' && !bReplay.hidden) { e.preventDefault(); e.stopPropagation(); choose('replay'); }
   }
   if (keys) win.addEventListener('keydown', onKey, true);
   const onResize = () => { sizeDirty = true; layoutN++; measureSub(); };
@@ -862,6 +863,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (destroyed) return;
     clearTimeout(subTimer);
     if (!line) { subt.classList.remove('show'); measureSub(); return; }
+    // the subtitles off (a setting): the instructor's line is not shown (his voice, if on, still speaks)
+    if (settings && typeof settings.get === 'function' && settings.get('subtitles') === false) { subt.classList.remove('show'); measureSub(); return; }
     text(subName, name || ''); shown(subName, !!name);
     if (color) subt.style.setProperty('--sp', color); else subt.style.removeProperty('--sp');
     text(subText, String(line));
@@ -909,8 +912,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (!D.results.length) put(dDetBody, make('p', '', null, '採点できる項目がありませんでした。'));
     dDet.open = false; dDet.hidden = D.free; dNote.hidden = D.free;
     // the buttons there is something to do for; what to do next: try again after a miss, fly on after a pass
-    const has = { retry: typeof debCb.onRetry === 'function', free: typeof debCb.onFree === 'function', ret: typeof debCb.onReturn === 'function' };
-    bRetry.hidden = !has.retry; bFree.hidden = !has.free; bRet.hidden = !has.ret; dBtns.hidden = !(has.retry || has.free || has.ret);
+    const has = { retry: typeof debCb.onRetry === 'function', free: typeof debCb.onFree === 'function', ret: typeof debCb.onReturn === 'function', replay: typeof debCb.onReplay === 'function' };
+    bRetry.hidden = !has.retry; bFree.hidden = !has.free; bRet.hidden = !has.ret; bReplay.hidden = !has.replay; dBtns.hidden = !(has.retry || has.free || has.ret || has.replay);
     retryTxt.textContent = lab.retry || (D.free ? 'もう一度飛ぶ' : 'もう一度');
     bFree.textContent = lab.free || '自由に飛ぶ'; bRet.textContent = lab.return || '駐機場へ戻る';
     const first = sum.passed && has.free ? bFree : has.retry ? bRetry : has.free ? bFree : bRet;

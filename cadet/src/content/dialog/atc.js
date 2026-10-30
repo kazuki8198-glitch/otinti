@@ -37,7 +37,8 @@ const CX = { A2: 'Alpha Two', A3: 'Alpha Three' };
 // (intent: 'area' — out to the practice area and back; 'pattern' — take-offs and landings in the circuit. solo: the
 // first solo — the tower is told it is a student's first)
 export function dayRadio(weather) {
-  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', intent: 'area', solo: false, xc: false, ifr: false, ...weather };
+  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', intent: 'area', solo: false, xc: false, ifr: false, runway: '36', ...weather };
+  const RWY_SAY = W.runway === '18' ? 'one eight' : 'three six';
   const pattern = W.intent === 'pattern';
   const goEn = pattern ? 'for closed traffic' : 'VFR to the practice area', goJa = pattern ? '場周経路' : '訓練空域';
   const windSay = W.windKt < 3 ? 'wind calm' : `wind ${digits(String(Math.round(W.windMag) || 360).padStart(3, '0'))} at ${digits(Math.round(W.windKt))}`;
@@ -50,12 +51,12 @@ export function dayRadio(weather) {
   const skyEn = W.ifr ? 'Visibility three, mist. Ceiling eight hundred broken, one thousand five hundred overcast' : 'Visibility one zero. Few clouds at three thousand five hundred';
   const skyJa = W.ifr ? '視程 3 SM、もや。雲底 800 ft（BKN）、1,500 ft に OVC' : '視程 10 SM。3,500 ft に少しの雲';
   const ATIS = `LAB information ${info}. ${cap(digits(W.zulu))} Zulu. ${cap(windSay)}. ${skyEn}. `
-    + `Temperature ${digits(W.tempC)}, dew point ${digits(String(W.dewC).padStart(2, '0'))}. Altimeter ${qnhSay}. ${W.ifr ? 'I L S runway three six approach in use. ' : ''}Landing and departing runway three six. `
+    + `Temperature ${digits(W.tempC)}, dew point ${digits(String(W.dewC).padStart(2, '0'))}. Altimeter ${qnhSay}. ${W.ifr ? 'I L S runway three six approach in use. ' : ''}Landing and departing runway ${RWY_SAY}. `
     + `Advise on initial contact you have information ${info}.`;
   const X = {};
   // ① ATIS: listen, then what to set
   X.atis = { station: 'ATIS', freq: FREQ.atis, kind: 'listen',
-    hear: [{ who: 'ATIS', en: ATIS, ja: `LAB の情報 ${info.charAt(0)}。${W.zulu.slice(0, 2)}:${W.zulu.slice(2)} UTC。${windJa}。${skyJa}。気温 ${W.tempC}℃・露点 ${W.dewC}℃。高度計 ${qnhTxt}。離着陸の滑走路 36。最初の交信で ${info.charAt(0)} を聞いたと伝えよ。` }],
+    hear: [{ who: 'ATIS', en: ATIS, ja: `LAB の情報 ${info.charAt(0)}。${W.zulu.slice(0, 2)}:${W.zulu.slice(2)} UTC。${windJa}。${skyJa}。気温 ${W.tempC}℃・露点 ${W.dewC}℃。高度計 ${qnhTxt}。離着陸の滑走路 ${W.runway}。最初の交信で ${info.charAt(0)} を聞いたと伝えよ。` }],
     q: 'ATIS の高度計規正値は？（高度計の BARO に合わせる値）',
     choices: [{ en: qnhTxt, ok: true }, { en: (W.qnh + 0.1).toFixed(2), why: '数字は 1 桁ずつ読まれます。もう一度聞いてみましょう。' }, { en: swapped(qnhTxt, W.qnh), why: `数字の順番に気を付けて。「${qnhSay}」は ${qnhTxt} です。` }],
     note: `高度計を ${qnhTxt} に合わせ、表示が飛行場の標高（55 ft）に近いことを確かめます。`, time: 30 };
@@ -207,4 +208,44 @@ export function dayRadio(weather) {
     back: ['twr_back', 'twr_straight'], final: ['twr_final', 'twr_land'], exit: ['twr_exit'], groundIn: ['gnd_in', 'gnd_in_rb'],
   };
   return { exchanges: X, sequences, weather: W, atisText: ATIS, call: CALL, freq: FREQ };
+}
+
+// ---------------------------------------------------------------- uncontrolled ops (gap audit v2, B4.3)
+// READY TO WIRE: there is no second field in the world yet, so nothing in the day flow runs these. They
+// are a complete CTAF self-announce set in the same exchange shape as dayRadio (createAtc can run them
+// unchanged: sequences.ctaf), keyed to the area flag CTAF_AREA — when an uncontrolled field exists (the
+// world branch's second field), a day step with radio 'ctaf' in that area plays them. The field is a
+// fictional uncontrolled strip at the practice area's edge: Minami Field, runway 27, CTAF 122.9 (the
+// textbook's comm chapter teaches this same flow: announce early, announce often, nobody answers).
+export const CTAF_AREA = 'ctaf';
+export const CTAF = { freq: '122.9', field: 'Minami', rwy: '27' };
+export function ctafRadio() {
+  const F = CALL.full, S = CALL.short, T = `${CTAF.field} traffic`;
+  const mk = (q, ok, wrongs, note) => ({ station: 'CTAF', freq: CTAF.freq, kind: 'call', q,
+    choices: [{ en: ok, ok: true }, ...wrongs], note, time: 30 });
+  const X = {};
+  X.ctaf_10 = mk('無管制の飛行場へ 10 マイル。最初の自家通報は？',
+    `${T}, ${F}, one zero miles south of ${CTAF.field}, two thousand five hundred, inbound for landing runway two seven, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, landing runway two seven.`, why: '最初の通報はコールサインを省略せず、位置・高度・意図・滑走路を全部言います（AIM 4-1-9）。誰も答えはしません。' },
+     { en: `${CTAF.field} Tower, ${F}, inbound for landing.`, why: '無管制の飛行場に管制塔はありません。相手は「その空域の交通（traffic）」です。' }],
+    '答える者はいません。聞いている他機のために言うのです。');
+  X.ctaf_dw = mk('ダウンウインドに入ります。自家通報は？',
+    `${T}, ${S}, entering left downwind runway two seven, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, downwind.`, why: '入るレグと滑走路番号を言います。' },
+     { en: `LAB Tower, ${S}, entering downwind.`, why: 'ここは無管制です。LAB の管制塔ではなく、その場の交通へ。' }],
+    '場周の他機は、この通報であなたの位置を知ります。');
+  X.ctaf_base = mk('ベースへ曲がります。',
+    `${T}, ${S}, turning left base runway two seven, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, base.`, why: '曲がるレグと滑走路を言います。' }],
+    '');
+  X.ctaf_fin = mk('ファイナルに入ります。',
+    `${T}, ${S}, final runway two seven, full stop, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, cleared to land runway two seven.`, why: '無管制では「許可」は存在しません。自分の位置と意図（full stop）を言います。' },
+     { en: `${T}, ${S}, final.`, why: '滑走路番号と着陸の意図（full stop か touch and go か）を付けます。' }],
+    '先行機がいれば、その後ろに着く間隔も自分で取ります。');
+  X.ctaf_clear = mk('滑走路を出ました。最後の通報は？',
+    `${T}, ${S}, clear of runway two seven, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, clear.`, why: '出た滑走路の番号を言います。' }],
+    'これで場周の他機は、滑走路が空いたことを知ります。');
+  return { exchanges: X, sequences: { ctaf: ['ctaf_10', 'ctaf_dw', 'ctaf_base', 'ctaf_fin', 'ctaf_clear'] }, call: CALL, freq: { ctaf: CTAF.freq }, area: CTAF_AREA };
 }

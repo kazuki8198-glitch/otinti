@@ -291,7 +291,7 @@ test('the key: apart from the settings and the save; remembered in this browser 
   const s = createSettings(DEFAULTS, store);
   s.set('aiTutor', true); s.set('aiModel', 'claude-opus-5-5');
   assert.ok(!store.getItem('cadet.settings').includes(KEY));
-  assert.ok(!Object.keys(DEFAULTS).some(x => /key/i.test(x)), 'no key in the settings');
+  assert.ok(!Object.keys(DEFAULTS).some(x => /(secret|token|password|api_?key|aikey)/i.test(x)), 'no key in the settings');   // (keyBinds — the keyboard's bindings — is not the API key; the guard is for credentials)
   const arch = exportArchive({ career: { day: 1 }, talk: createDialogState(), logbook: [], progress: {}, records: {} });
   assert.ok(!String(arch).includes(KEY));
   k.clear();

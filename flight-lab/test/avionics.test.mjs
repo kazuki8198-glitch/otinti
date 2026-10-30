@@ -368,6 +368,22 @@ test('PROC: the fictional ILS 36 loads, sequences its missed approach, and unloa
   A.control(av, 'PROC'); assert.equal(av.proc, null);
 });
 
+test('PROC_RNAV: the fictional RNAV (GPS) RWY 36 loads with its minima, flies its LPV path, and sequences its missed approach', () => {
+  const P36 = A.procedureById('RNAV36');
+  assert.deepEqual([P36.fafDistNm, P36.fafAltFt, P36.daFt, P36.mdaFt, P36.missed.to, P36.missed.altFt], [5.0, 2000, 305, 505, 'LABED', 3000]);
+  const av = A.createAvionics();
+  A.control(av, 'PROC_RNAV');
+  assert.equal(av.proc.name, 'RNAV (GPS) RWY 36'); assert.equal(av.cdi, 'GPS'); assert.equal(av.direct, 'LABRW');
+  const R = P.LAB_RWY, [pn, pe] = P.rwyToNE(R, -4000, 0);
+  const o = { altTrue: R.elevFt + (300 + 4000) * Math.tan(3 * Math.PI / 180) * 3.28084, gs: 70, trk: R.trueHdg, hdgTrue: R.trueHdg };
+  const n = A.navSolve(av, { n: pn, e: pe }, o, P.MAGVAR_W, R);
+  assert.equal(n.cdiScale, 0.3, 'the approach CDI scale');
+  assert.ok(n.gsDots != null && Math.abs(n.gsDots) < 0.1, 'the LPV vertical path, centred on the 3° path');
+  A.control(av, 'PROC_RNAV');
+  assert.equal(av.proc.missed, true); assert.equal(av.direct, 'LABED'); assert.ok(av.altSel >= 3000);
+  A.control(av, 'PROC_RNAV'); assert.equal(av.proc, null);
+});
+
 test('systems-model shapes: o.cyls bars render, the 0..1 fuel pressure reads as a ratio and only sagging raises the CAS', () => {
   const av = A.createAvionics(), s = P.newState();
   const texts = [];

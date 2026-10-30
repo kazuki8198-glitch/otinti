@@ -315,6 +315,7 @@ export const EN = {
   '合格です。航法ログを作って、ひとりで遠くまで飛ぶ準備ができました。': 'A pass. You\'re ready to make a nav log and fly far, alone.',
   '合格です。計器の審査に進めます。': 'A pass. You can go on to the instrument check.',
   '合格です。双発の審査に進めます。': 'A pass. You can go on to the multi-engine check.',
+  '合格です。複雑機の審査に進めます。': 'A pass. You can go on to the complex endorsement check.',
   '合格です。残るは、最終審査の Check Flight だけです。': 'A pass. All that\'s left is the final check flight.',
   '今日は単独の野外飛行です。その前に、ここで航法ログを作りましょう。地図に線を引いて、風の計算をして、時間と燃料。全部、自分の手で。': 'Today is your solo cross-country. Before that, let\'s make the nav log here. Draw the line on the chart, work out the wind, the time and the fuel. All by your own hand.',
   '途中で目的地が変わることもあります。そのときに慌てないように、最初の計算をきちんと。': 'The destination may change on the way. So you don\'t panic then, get the first calculation right.',
@@ -363,7 +364,7 @@ export const PATTERNS = [
 const titles = (s) => s.split('、').map(qt).join(', ');
 const EXAM_EN = { 'ソロ前の筆記試験': 'pre-solo written test', '航法の筆記試験': 'navigation written test', '計器飛行の筆記試験': 'instrument written test', '双発の筆記試験': 'multi-engine written test', '最終の筆記試験': 'final written test' };
 // the checks' names (career/career.js CHECKS, and the pre-solo check)
-export const CHECK_EN = { 'ソロ前の審査': 'pre-solo check', '単独の野外飛行': 'solo cross-country', '計器飛行の審査': 'instrument check', '双発の審査': 'multi-engine check', '最終審査（Check Flight）': 'final check (check flight)' };
+export const CHECK_EN = { 'ソロ前の審査': 'pre-solo check', '単独の野外飛行': 'solo cross-country', '計器飛行の審査': 'instrument check', '双発の審査': 'multi-engine check', '最終審査（Check Flight）': 'final check (check flight)', '複雑機エンドースメント審査': 'complex endorsement check' };
 const checkEn = (s) => CHECK_EN[s] || s;
 // the people's names as the crew say them in English
 // (said at the start of a sentence: "{checkWho} is waiting in the instructors' room")

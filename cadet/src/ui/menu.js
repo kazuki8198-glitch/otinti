@@ -59,7 +59,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
   let tab = 'main', open = false;
   const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ...(onFreeSetup ? [['free', '自由飛行']] : []), ['about', 'このゲームについて']];
   // the free-flight setup's working values (kept while the menu is open; the start hands them over whole)
-  const freeCfg = { start: 'ramp', aircraft: 'pa28', hour: 10, wind: 'light', windRel: 40, windKt: 12, loading: 'std', fail: 'none' };
+  const freeCfg = { start: 'ramp', aircraft: 'pa28', hour: 10, wind: 'light', windRel: 40, windKt: 12, loading: 'std', fail: 'none', failWhen: 'now', failMin: 10, failAlt: 2000 };
   let keyMsg = '', keyBad = false;
   let bindMsg = '';                       // the rebind row's note (a duplicate warning included)
   // capture one key for a rebind: the next keydown while the menu is open becomes the binding (Esc cancels —
@@ -221,9 +221,12 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sel('wind', '風', [['calm', '無風'], ['light', '軽い風（滑走路方向 5 kt）'], ['cross', '横風 10 kt'], ['strong', '強い風 16 kt・ガスト'], ['custom', 'カスタム']])
         + (freeCfg.wind === 'custom' ? `<label class="m-row"><span>カスタム風（滑走路から何度・何 kt）</span><span><input type="number" min="0" max="359" value="${freeCfg.windRel}" data-free-num="windRel" style="width:5em"> 度 <input type="number" min="0" max="40" value="${freeCfg.windKt}" data-free-num="windKt" style="width:4em"> kt</span></label>` : '')
         + sel('loading', '搭載（重量・重心）', [['std', '標準（前席 2 名）'], ['light', '軽い（前席 1 名）'], ['heavy', '重い（4 名＋荷物）']])
-        + sel('fail', '故障（練習）', [['none', 'なし'], ['mag', 'マグネトー不良（ランナップで分かる）'], ['carb', 'キャブレター着氷（湿度の高い日）'], ['elec', 'オルタネーター故障（電圧低下）'], ['engine', 'エンジン停止（飛行中）'], ['engL', '左エンジン停止（双発）'], ['engR', '右エンジン停止（双発）'], ['ahrs', 'AHRS 故障（姿勢表示）'], ['gps', 'GPS 故障']])
+        + sel('fail', '故障（練習）', [['none', 'ランダム（シード付き：約2割の飛行で1つ）'], ['mag', 'マグネトー不良（ランナップで分かる）'], ['carb', 'キャブレター着氷（湿度の高い日）'], ['elec', 'オルタネーター故障（電圧低下）'], ['pitot', 'ピトー閉塞（着氷の経路）'], ['static', '静圧閉塞（高度計の凍結）'], ['gear', '脚の故障（双発）'], ['pump', '燃料ポンプ故障'], ['engine', 'エンジン停止（飛行中）'], ['engL', '左エンジン停止（双発）'], ['engR', '右エンジン停止（双発）'], ['ahrs', 'AHRS 故障（姿勢表示）'], ['gps', 'GPS 故障'], ['ppanel', '部分パネル（AHRS＋GPS 故障）']])
+        + (freeCfg.fail !== 'none' ? sel('failWhen', '教官コンソール：故障の起き方', [['now', 'すぐ'], ['time', '指定した分が過ぎたら'], ['alt', '指定した高度以上で']]) : '')
+        + (freeCfg.fail !== 'none' && freeCfg.failWhen === 'time' ? `<label class="m-row"><span>何分後（飛行時間）</span><span><input type="number" min="0" max="180" value="${freeCfg.failMin}" data-free-num="failMin" style="width:5em"> 分</span></label>` : '')
+        + (freeCfg.fail !== 'none' && freeCfg.failWhen === 'alt' ? `<label class="m-row"><span>何 ft 以上で</span><span><input type="number" min="0" max="12000" step="100" value="${freeCfg.failAlt}" data-free-num="failAlt" style="width:6em"> ft</span></label>` : '')
         + `<div class="m-big"><button class="primary" data-act="free-start">この条件で飛ぶ</button></div>
-        <p class="m-note">訓練の日とは別の、自由な飛行です。記録（飛行日誌）には数えません。故障は選んだものが 1 つだけ起きます。エンジン停止は飛行中に起きるので、高度のある開始位置がおすすめです。</p>`;
+        <p class="m-note">訓練の日とは別の、自由な飛行です。記録（飛行日誌）には数えません。故障は選んだものが 1 つだけ起きます（「ランダム」はセッションのシードで決まり、飛行中に起きます）。エンジン停止は飛行中に起きるので、高度のある開始位置がおすすめです。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
@@ -267,7 +270,11 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       const LOADS = { std: { fuel: 'std', front: 2, rear: 0, bagKg: 0 }, light: { fuel: 'std', front: 1, rear: 0, bagKg: 0 }, heavy: { fuel: 'std', front: 2, rear: 2, bagKg: 25 } };
       const cfg = { start: freeCfg.start, aircraft: freeCfg.aircraft, hour: +freeCfg.hour,
         wind: freeCfg.wind === 'custom' ? { rel: +freeCfg.windRel || 0, kt: +freeCfg.windKt || 0, gust: 0.5 } : WINDS[freeCfg.wind] || WINDS.light,
-        loading: LOADS[freeCfg.loading] || LOADS.std, fail: freeCfg.fail === 'none' ? null : freeCfg.fail };
+        loading: LOADS[freeCfg.loading] || LOADS.std, fail: freeCfg.fail === 'none' ? null : freeCfg.fail,
+        // the instructor console's reservation (a time / an altitude), and the session's seed
+        // for the random roll when no failure was chosen (aircraft/failures.js)
+        failAt: freeCfg.failWhen === 'time' ? { atMin: Math.max(0, +freeCfg.failMin || 0) } : freeCfg.failWhen === 'alt' ? { atAltFt: Math.max(0, +freeCfg.failAlt || 0) } : {},
+        seed: Date.now() % 2147483647 };
       close(false); onFreeSetup(cfg); return;
     }
     if (b.dataset.act === 'keys-reset') { settings.set('keyBinds', null); settings.set('heldBinds', null); bindMsg = ''; render(); return; }

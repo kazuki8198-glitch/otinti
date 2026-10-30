@@ -17,6 +17,10 @@ import { cbFor } from './flight/cb.js';
 import { buildAirfield, airfieldColliders, STANDS } from './world/airfield.js';
 import { buildBuildings } from './world/buildings.js';
 import { buildAcademy, ACADEMY } from './world/academy.js';
+import { buildDorm, DORM } from './world/dorm.js';
+import { dormSpec } from './content/dorm-spec.js';
+import { buildTower } from './world/tower.js';
+import { towerSpec } from './content/tower-spec.js';
 import { createPropKit } from './world/props.js';
 import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
@@ -49,6 +53,7 @@ import { INTRO_CARDS } from './content/dialog/intro.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
+import { randomFailureFor, preflightJudgeBase } from './aircraft/failures.js';
 import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, CLASS_FTD, SOLO_TRUST, dateText, dateOf, dayOfYear, activeRunway, weatherAt, passedAt, groundPassed, noteGround, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk } from './career/career.js';
 import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
@@ -64,6 +69,7 @@ import { careerBoardDialogs } from './content/dialog/cockpit.js';
 import { classDialogs, ftdDialogs, examDialogs, drillDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, examScoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
 import { eventDialogs } from './content/dialog/ch1-events.js';
 import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard, prologueWord } from './content/day-flow.js';
+import { usableKind, COFFEE_TIRE, COFFEE_CARD, LOCKER_CARD, shelfSection, dailyNotices, TOWER_VISIT, TOWER_COMM_BASE } from './content/usable.js';
 import { chairScript } from './content/chair-flight.js';
 import { createChairFlight } from './dialog/chair-flight.js';
 import { drawChairScreen } from './ui/chair-screen.js';
@@ -159,9 +165,13 @@ async function boot() {
   const cbVis = createCb(scene);   // (B3.3) the day's cumulonimbus, when the day has one
   const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group); airfieldColliders(airfield, world);
   bootMsg('訓練所を作っています…', 0.45); await frame();
-  const buildings = buildBuildings(L, { world }); scene.add(buildings.group);
+  const buildings = buildBuildings(L, { world, kit: createPropKit() }); scene.add(buildings.group);
   const spec = academySpec(FL);
   const academy = buildAcademy({ L, FL, spec, kit: createPropKit(), world, audio }); scene.add(academy.group);
+  const dspec = dormSpec();
+  const dorm = buildDorm({ L, FL, spec: dspec, kit: createPropKit(), world, audio }); scene.add(dorm.group);
+  const tspec = towerSpec();
+  const tower = buildTower({ L, spec: tspec, kit: createPropKit(), world, audio }); scene.add(tower.group);
   bootMsg('木と景色を作っています…', 0.6); await frame();
   const veg = buildVegetation(L, FL, { quality: preset }); scene.add(veg.group);
   const landmarks = buildLandmarks(L, FL); scene.add(landmarks.group);
@@ -189,6 +199,8 @@ async function boot() {
     if (i === 19) { todayIds = ids; todayAc = ac; }
   }
   { const ac = parkedAircraft(FL, L, 'pa28', 563, 258, hdgOut, { prop: 1.1, reg: PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length], lod: 'auto' }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
+  // (Phase 4) the spare Archer in hangar 1, now that its doors stand open too
+  { const ac = parkedAircraft(FL, L, 'pa28', 495, 261.5, hdgOut, { prop: 0.6, reg: PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length], lod: 'auto' }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
   // (M6) the twin's days: the Seminole N452SY on stand 19 in the Archer's place (kept, hidden, until a day needs it)
   const todays = { pa28: { ac: todayAc, ids: todayIds } };
   {
@@ -218,18 +230,26 @@ async function boot() {
   // the light the lit rooms bounce around (ceilings, the sides of things facing away from the lamps); the indoor shading
   // applies it inside the buildings only
   const fill = new THREE.AmbientLight(0xfff1e0, 0); scene.add(fill);
-  academy.group.updateMatrixWorld(true);
+  academy.group.updateMatrixWorld(true); dorm.group.updateMatrixWorld(true); tower.group.updateMatrixWorld(true);
   // each room's ceiling fixtures as a few light clusters (a fixture hanging high in the lobby counts for more)
   const clusters = new Map();
   for (const r of academy.rooms) {
     const fx = academy.lights.filter(l => l.room === r.id).map(l => ({ a: -l.z, c: l.x, p: academy.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: l.y > 4 ? 3 : 1 }));
     clusters.set(r.id, roomClusters(fx, 5, G));
   }
+  for (const r of dorm.rooms) {
+    const fx = dorm.lights.filter(l => l.room === r.id).map(l => ({ a: -l.z, c: l.x, p: dorm.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: 1 }));
+    clusters.set(r.id, roomClusters(fx, 5, G));
+  }
+  for (const r of tower.rooms) {
+    const fx = tower.lights.filter(l => l.room === r.id).map(l => ({ a: -l.z, c: l.x, p: tower.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: 1 }));
+    if (fx.length) clusters.set(r.id, roomClusters(fx, 5, G + (r.floorY || 0)));
+  }
   let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
     const st = sky.setTime(hours, dayOfYear(career.day));   // (the sun for the career's own date: the days drift from April to the autumn)
     pipe.setHaze({ sunDir: st.dir, el: st.el });
-    buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
+    buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn); dorm.setNight(st.lightsOn);
     $('#time').value = String(hours);
     const hh = Math.floor(hours), mm = Math.round((hours - hh) * 60);
     $('#timeTxt').textContent = `${hh}:${String(mm).padStart(2, '0')}（現地時刻） 太陽高度 ${st.el.toFixed(0)}°`;
@@ -241,6 +261,8 @@ async function boot() {
   const surfaceAt = (x, z) => {
     const [fx, fz] = toFrame(x, z), a = -fz, c = fx;
     const f = academy.inside(a, c) && academy.floorAt(a, c); if (f) return f;
+    const df = dorm.inside(a, c) && dorm.floorAt(a, c); if (df) return df;
+    const tf = tower.inside(a, c) && tower.floorAt(a, c); if (tf) return tf;
     if (indoorAt(ACADEMY, a, c) > 0) return 'concrete';
     const k = L.cellAt(a, c)?.kind;
     return k === 'apron' || k === 'walk' ? 'concrete' : k ? 'asphalt' : 'grass';
@@ -259,7 +281,7 @@ async function boot() {
     // choices: [{ k, text }] (the walk-around's decisions, keys 1–4), or none
     card(title, text, choices = null) {
       const c = $('#card'); document.body.classList.toggle('card-open', !!title);
-      if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; return; }
+      if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; simOpen = false; towerOpen = false; return; }
       c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text;
       const ch = c.querySelector('.card-choices'); ch.textContent = '';
       for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
@@ -271,11 +293,33 @@ async function boot() {
   interactor = createInteractor({ walker, world, L, hud });
   // (the boards that tell the day — the dispatch's schedule and weather, the lobby's flights, briefing room 1's
   // whiteboard — say the career's own day: boardCard below)
-  for (const t of academy.targets) interactor.add({ ...t, use: () => { const c = boardCard(t) || t; interactor.showCard(c.title, c.text); audio.ui('examine'); return 'examined'; } });
+  for (const t of academy.targets) interactor.add({ ...t, use: () => usableUse(t) });
   for (const t of academy.doors.targets()) {
     interactor.add({
       ...t, use: () => {
         const r = academy.doors.toggle(t.door, walker.framePos);
+        if (r === 'locked') toast(`${t.door.label_ja || 'この扉'} — 鍵がかかっています`);
+        return r;
+      },
+    });
+  }
+  for (const t of dorm.targets) interactor.add({ ...t, use: () => dormTargetUse(t) });
+  for (const t of dorm.doors.targets()) {
+    interactor.add({
+      ...t, use: () => {
+        const r = dorm.doors.toggle(t.door, walker.framePos);
+        if (r === 'locked') toast(`${t.door.label_ja || 'この扉'} — 鍵がかかっています`);
+        return r;
+      },
+    });
+  }
+  // (Phase 4) the hangars' things to examine (from world/buildings.js) and the tower's
+  for (const t of buildings.targets) interactor.add({ ...t, use: () => usableUse(t) });
+  for (const t of tower.targets) interactor.add({ ...t, use: () => towerTargetUse(t) });
+  for (const t of tower.doors.targets()) {
+    interactor.add({
+      ...t, use: () => {
+        const r = tower.doors.toggle(t.door, walker.framePos);
         if (r === 'locked') toast(`${t.door.label_ja || 'この扉'} — 鍵がかかっています`);
         return r;
       },
@@ -299,19 +343,18 @@ async function boot() {
     dayItem = { day: career.day, it: flightItem() };
     setTodayType((planOf(flightItem()) || {}).aircraft || 'pa28');
     const w = career.weather(prog()), pm = career.slot === 'pm';
-    // (M7) now and then a later chapter's ordinary Archer day has a fault: the run-up finds a bad magneto (one hash
-    // in six), or — on a humid day, a different hash — carburettor ice waits in flight, announced only by the rpm
-    const it0 = flightItem(), h = (career.state.seed * 13 + career.day * 7) >>> 0;
-    const magDay = it0 && it0.kind === 'flight' && ['ch3', 'ch4'].includes(career.chapter) && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
-    const pitotDay = it0 && it0.kind === 'flight' && career.chapter === 'ch4' && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
-    const gearDay = it0 && it0.kind === 'flight' && ['ch5', 'ch6'].includes(career.chapter) && todayType === 'pa44' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
-    const fault = forceFault != null ? forceFault : magDay && h % 6 === 4 ? 'mag' : magDay && h % 6 === 2 && (w.tempC - w.dewC) <= 4 ? 'carb' : pitotDay && h % 6 === 0 ? 'pitot' : gearDay && h % 6 === 3 ? 'gear' : null;
-    // the alternator-failure day: from chapter 3 on, either type, never the chapter's first lesson and never
-    // together with the day's other faults (h2's day term is ×11: a ×7 term would vanish mod 7)
-    const h2 = (career.state.seed * 29 + career.day * 11) >>> 0;
-    const elecFault = forceFault === 'elec' ? true
-      : forceFault != null || fault ? false
-      : !!(it0 && it0.kind === 'flight' && ['ch3', 'ch4', 'ch5', 'ch6'].includes(career.chapter) && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0] && h2 % 7 === 3);
+    // (M7 → next-wave item 4) the day's random failure, seeded by the career's own seed and the
+    // day (aircraft/failures.js — a pure, testable roll): on a normal flight day only (never a
+    // test / checkride / XC / solo day, never a chapter's first lesson), with probability 0.20
+    // one of the day-fault kinds (mag / carb / pitot / static / elec / pump, and gear on the
+    // twin). A carb day still asks for a humid day, as the M7 hash did: without the moisture
+    // the roll's carb is no fault at all. forceFault (the tests' hook) overrides the roll.
+    const it0 = flightItem();
+    const firstLesson = !!(it0 && STAGE[career.chapter] && it0.id === (STAGE[career.chapter] || { lessons: [] }).lessons[0]);
+    const rf = forceFault != null ? null : randomFailureFor({ seed: career.state.seed, day: career.day, kind: ['ch3', 'ch4', 'ch5', 'ch6'].includes(career.chapter) && it0 ? it0.kind : '', aircraft: todayType, lessonId: it0 ? it0.id : '', firstLesson });
+    const rolled = rf && rf.kind === 'carb' && (w.tempC - w.dewC) > 4 ? null : rf;
+    const fault = forceFault != null ? (forceFault && forceFault !== 'elec' ? forceFault : null) : rolled && rolled.kind !== 'elec' ? rolled.kind : null;
+    const elecFault = forceFault != null ? forceFault === 'elec' : !!(rolled && rolled.kind === 'elec');
     today = createDay(FL, { fault, elecFault, seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
       weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud', runway: activeRunway(w), qnh: w.qnh } });
     // the other trainers in the pattern today (flight/traffic.js): seeded like the fault; the morning's TEM
@@ -356,6 +399,8 @@ async function boot() {
   const walkTargets = [];
   let walkOpen = null;                                       // the place whose card is open
   let homeOpen = false;                                      // the front door's card (home to sleep) is open
+  let simOpen = false;                                       // the training device's card (the chair-flight practice) is open
+  let towerOpen = false;                                     // the tower visit's card is open (Phase 4)
   function walkCard(id) {
     const c = today.walk.inspect(id); if (!c) return null;
     walkOpen = id;
@@ -1112,7 +1157,8 @@ async function boot() {
   }
   interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: () => startTalk('instructor') });
   // the academy's other people
-  const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', 'examiner', ...PEERS], onTalk: (id) => startTalk(id) });
+  const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', 'controller', 'examiner', ...PEERS], onTalk: (id) => startTalk(id),
+    nav: { specs: [spec, dspec, tspec], doorSystems: [academy.doors, dorm.doors, tower.doors] } });   // (Phase 2: they walk between rooms)
   // everyone standing drawn as one mesh (npc/crowd.js)
   const crowdAt = new THREE.Vector3();
   const crowd = createCrowd(scene, { outdoors: (root) => { root.getWorldPosition(crowdAt); const [fx, fz] = toFrame(crowdAt.x, crowdAt.z); return !academy.inside(-fz, fx); } });
@@ -1357,7 +1403,8 @@ async function boot() {
 
   let pendingNewDay = false;
   // ---------------------------------------------------------------- the career (M5): the day, the time, the work
-  // Each morning the cadet comes in through the academy's front door (the dorm is out of the grounds); the day's plan
+  // Each morning the cadet wakes in their own room at the dormitory east of the car park and walks (or takes the
+  // entrance hall's shortcut) to the academy; the day's plan
   // is the career's (career/career.js schedule()). Work done moves the time on (morning → 午前 → 午後 → 夜); in the
   // evening the front door takes them home to sleep, and the next morning begins with its card.
   const cards = createCards();
@@ -1395,7 +1442,7 @@ async function boot() {
     cbNow = w.kind === 'pmStorm' ? cbFor(career.state.seed, career.day) : null;
     { const [cn, ce] = FL.physics.rwyToNE(FL.physics.LAB_RWY, 600, 0); cbVis.show(ce, -cn, cbNow ? cbNow.dn : 0, cbNow ? cbNow.de : 0, !!cbNow); }
     haze0 = { sunDir: st.dir.clone ? st.dir.clone() : st.dir, el: st.el, fog, grey, kind: w.kind }; cloudK = fog;
-    buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
+    buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn); dorm.setNight(st.lightsOn);
     $('#time').value = String(hours);
     layoutPeople();
     if (!(fly && fly.active) && !talk) placeInstructor();
@@ -1532,6 +1579,11 @@ async function boot() {
   // when the cadet flew tired (the fatigue before this flight's own +15); a lesson's first-ever try is counted
   function applyFlightGrowth(sum) {
     if (!sum || !sum.lessons) return;
+    // (item 4) the walk-around's defects the cadet found are judged through the career's
+    // existing growth (career.grow's own formula and repeat factor — no new plumbing):
+    // preflightJudgeBase is only the base (0.5 a defect, at most 1.0 a day)
+    const pj = preflightJudgeBase(sum.walk ? sum.walk.found : 0);
+    if (pj > 0) career.grow('judge', pj, `preflight:${career.day}`);
     const tired = career.tired(), p = prog();
     for (const l of sum.lessons) {
       if (!l.done) continue;
@@ -1629,7 +1681,12 @@ async function boot() {
       syncFlags();
       applySlot();
       newDay(); buildInstructorTalk(); placeInstructor(); layoutPeople();
-      if (place) placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face);
+      if (place) {
+        // (the prologue's first morning begins at the academy's front door; every later morning in the cadet's own
+        // room at the dormitory, with the walk — or the entrance hall's shortcut — to the academy)
+        if (career.state.chapter === 'prologue') placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face);
+        else placeWalker(dspec.start.a, dspec.start.c, dspec.start.face);
+      }
     };
     if (!card) { setUp(); return Promise.resolve(); }
     return cards.show({ kicker: ch.title, title: dateText(st.day), sub: `${SLOT_NAMES[st.slot]}　${career.weather(prog()).ja}`, ms: 1700, onDark: setUp }).then(() => greet());
@@ -1649,7 +1706,7 @@ async function boot() {
     const ch1 = st.chapter === 'ch1' ? dayToast(st, sch, { missed: reviewFor(FL, st, CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed, short: shortWords() }) : null;
     if (st.chapter === 'prologue') toast(prologueWord('morning', { short: shortWords() }), 5200);
     else if (ch1) toast(ch1, 6400);
-    else if (sch.some(x => x.kind === 'off')) toast('今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります', 6000);
+    else if (sch.some(x => x.kind === 'off')) toast('今日は休日です。ラウンジで休むのも、自習するのもいい。寮の自室で寝れば、明日になります', 6000);
     else toast(`今日の予定：${sch.map(x => `${SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`, 6000);
   }
   // the front door: home to the dorm (the evening, or a day off) — early, or after some study (it tires)
@@ -1660,10 +1717,98 @@ async function boot() {
   }
   function goHome() {
     if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
+    toast('寮は、駐車場の先の道路の突き当たりです。自室のベッドで今日を終えます（急ぐ日は、寮の玄関の E で移動を省略）', 4600);
+    return 'examined';
+  }
+  // the bed in the cadet's own room: the dorm's card as it was at the front door (early / late — the study first,
+  // at the room's desk — / stay), over the same sleepNow
+  function openBedCard() {
+    if (!dayIsDone()) { interactor.showCard('自室のベッド', 'まだ今日の予定が残っています（Tab でタブレット）。\n予定が終わったら、ここで今日を終えます。'); audio.ui('examine'); return 'examined'; }
     homeOpen = true;
     const c = homeCard = dormCard(career.state, planToday(), { short: shortWords(), nextFtd: nextGround() });
     interactor.showCard(c.title, c.text, c.choices);
     return 'examined';
+  }
+  // the desk in the cadet's own room: the evening's study (three questions) starts here too, then straight to bed
+  function openDesk() {
+    const t = dspec.interactables.find(x => x.id === 'dorm-desk');
+    if (!dayIsDone() || !CLASSES.some((_, i) => career.state.done[`class:${i}`])) { interactor.showCard(t.title, t.text); audio.ui('examine'); return 'examined'; }
+    tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）');
+    return 'examined';
+  }
+  // ------------------------------------------------------------ usable things (Phase 3): the furniture that does
+  // something. Every effect rides an existing system: the coffee through career.tire (once a day, by the
+  // career's own done-mark), the shelf through the textbook, the training device through the same chair-flight
+  // practice the tablet starts, the desk PCs through the tablet's own weather and logbook numbers.
+  function usableUse(t) {
+    const id = t.id.replace(/^ex:/, ''), kind = usableKind(id);
+    if (kind === 'coffee') return coffeeUse();
+    if (kind === 'shelf') return shelfUse();
+    if (kind === 'sim') return simUse(t);
+    if (kind === 'pc') return pcUse(t);
+    if (kind === 'locker') { interactor.showCard(LOCKER_CARD.title, LOCKER_CARD.text); audio.ui('examine'); return 'examined'; }
+    const c = boardCard(t) || t; interactor.showCard(c.title, c.text); audio.ui('examine'); return 'examined';
+  }
+  function coffeeUse() {
+    if (!career.doneToday('coffee', 'brew')) { career.tire(COFFEE_TIRE); career.done('coffee', 'brew'); interactor.showCard(COFFEE_CARD.title, COFFEE_CARD.fresh); }
+    else interactor.showCard(COFFEE_CARD.title, COFFEE_CARD.again);
+    audio.ui('examine'); return 'examined';
+  }
+  function shelfUse() {
+    const ids = book.chapters.flatMap(c => c.sections.map(s => s.id));
+    const id = shelfSection(career.state.day, ids);
+    if (id) { openSection(id); audio.ui('examine'); return 'examined'; }
+    return 'examined';
+  }
+  function simUse(t) {
+    simOpen = true;
+    interactor.showCard('訓練装置（FTD 風の練習席）', '席に座って、交信の練習（チェアフライト）ができます。タブレットの練習と同じ記録で、課程の進行には影響しません。', [
+      { k: 1, text: '交信の練習：ステージ 1' }, { k: 2, text: '交信の練習：ステージ 2' },
+      { k: 3, text: '交信の練習：ステージ 3' }, { k: 4, text: 'やめる' },
+    ]);
+    audio.ui('examine'); return 'examined';
+  }
+  function simChoose(k) {
+    if (!simOpen) return false;
+    simOpen = false; interactor.closeCard();
+    if (k >= 0 && k <= 2) startChair(k + 1, { practice: true });
+    return true;
+  }
+  function pcUse(t) {
+    const st = career.state, w = career.weather(prog()), lt = logbook.totals();
+    interactor.showCard(t.title, `【今日の天気】${w.ja}\nMETAR ${w.metar.am}\n（飛行の可否は運行管理室と教官が決めます）\n\n【航空日誌】飛行 ${lt.days} 日・総時間 ${lt.total} 時間（同乗 ${lt.dual}／単独 ${lt.solo}）・着陸 ${lt.landings} 回\n詳しい日誌はタブレット（Tab）の「航空日誌」から。`);
+    audio.ui('examine'); return 'examined';
+  }
+  // (Phase 4) the tower's things to examine: the visit in the cab is the event — listen to the real exchanges
+  // (COMM grows a little, once a day, below the chair-flight practice's rate: content/usable.js TOWER_COMM_BASE)
+  function towerTargetUse(t) {
+    const id = t.id.replace(/^ex:/, '');
+    if (id !== 'tower-visit') { interactor.showCard(t.title, t.text); audio.ui('examine'); return 'examined'; }
+    towerOpen = true;
+    interactor.showCard(TOWER_VISIT.title, TOWER_VISIT.text, TOWER_VISIT.choices.map((text, i) => ({ k: i + 1, text })));
+    audio.ui('examine'); return 'examined';
+  }
+  function towerChoose(k) {
+    if (!towerOpen) return false;
+    towerOpen = false; interactor.closeCard();
+    if (k === 0) {
+      if (!career.doneToday('tower', 'visit')) { career.grow('comm', TOWER_COMM_BASE, `tower:${career.state.day}`); career.done('tower', 'visit'); interactor.showCard(TOWER_VISIT.title, TOWER_VISIT.listen); }
+      else interactor.showCard(TOWER_VISIT.title, TOWER_VISIT.listenAgain);
+    } else if (k === 1) interactor.showCard(TOWER_VISIT.title, TOWER_VISIT.about);
+    audio.ui('examine');
+    return true;
+  }
+  // the dormitory's things to examine: the bed and the desk do their work; the coffee machine, the shelf and the
+  // vending machine work (the same handlers as the academy's); the rest are read
+  function dormTargetUse(t) {
+    const id = t.id.replace(/^ex:/, '');
+    if (id === 'dorm-bed') return openBedCard();
+    if (id === 'dorm-desk') return openDesk();
+    const kind = usableKind(id);
+    if (kind === 'coffee') return coffeeUse();
+    if (kind === 'shelf') return shelfUse();
+    if (id === 'dorm-bulletin') { interactor.showCard('寮の掲示板', dailyNotices(career.state.day).join('\n') + '\n\n朝食：6:30–7:30（食堂）／ 消灯の目安：23:00\n洗濯機は回したら取りに来ること。名前のない洗濯物は談話室の箱へ'); audio.ui('examine'); return 'examined'; }
+    interactor.showCard(t.title, t.text); audio.ui('examine'); return 'examined';
   }
   // (the k-th of the dorm card's choices, by what it does: early, late — the study first, once a class is done — stay)
   let homeCard = null;
@@ -1698,26 +1843,27 @@ async function boot() {
   }
   // walking out of the front doors ends the day too (at the end of the day: no card, straight to sleep — the card with
   // the late study stays at the door, with E); before the end of the day, a word (once each time out)
-  let outsideSeen = false, leaving = false;
+  let outsideSeen = false;
   function frontDoorStep(pa, pc) {
-    const out = pc > 278.4 && pa > 640 && pa < 670;
+    const out = pc > 278.4 && pc < 300 && pa > 640 && pa < 670;      // just outside the front doors (not the dorm itself)
     if (!out) { outsideSeen = false; return; }
-    if (outsideSeen || leaving || talk || cards.showing) return;
+    if (outsideSeen || talk || cards.showing) return;
     outsideSeen = true;
     if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return; }
-    leaving = true; interactor.closeCard();
-    toast('寮へ帰ります', 1600);
-    Promise.resolve(sleepNow({ late: false })).finally(() => { leaving = false; });
+    toast('寮は駐車場の先、道路の突き当たりです。自室のベッドで今日を終えます', 3600);
   }
-  interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (dayIsDone() ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
-  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); });
+  interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (dayIsDone() ? '寮へ帰る（正面入口）' : '正面入口'), use: goHome });
+  interactor.add({ id: 'dorm:gate', frame: [dspec.hall.c, 1.3, -dspec.hall.a], radius: 0.9, prompt: () => 'アカデミーへ（移動を省略）', use: () => {
+    cards.show({ kicker: '', title: '移動', sub: 'アカデミー正面入口へ', ms: 200, fade: 300, onDark: () => placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face) });
+    return 'examined';
+  } });
+  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); else if (b && simOpen) simChoose(+b.dataset.k); else if (b && towerOpen) towerChoose(+b.dataset.k); });
 
   // the day's boards: what the career has today
   function boardCard(t) {
     const id = t.id.replace(/^ex:/, '');
-    // (the desks of the training device room: k4 is flown at one)
-    if (id === 'sim-station') return { title: '訓練装置（FTD 風の練習席）', text: 'G1000 型の画面と操縦輪・スロットルの練習席。\nk4「交信のチェアフライト」は、この席でヘッドセットをつけて行います（ミラー講師に話しかける）。\nタブレットの「練習」からも、交信の練習ができます。' };
-    if (!['schedule', 'metar', 'status-board', 'wb-brief-1'].includes(id)) return null;
+    // (sim-station is usable furniture now: usableUse starts the practice from the seat — see content/usable.js)
+    if (!['schedule', 'metar', 'status-board', 'wb-brief-1', 'notices'].includes(id)) return null;
     const st = career.state, p = prog(), w = career.weather(p), sch = planToday(), it = flightItem();
     const date = dateText(st.day), plan = it ? planOf(it) : null;
     const reg = todayType === 'pa44' ? 'N452SY  PA-44-180' : 'N738SY  PA-28-181';
@@ -1728,6 +1874,7 @@ async function boot() {
       const rows = [...flights, '10:00  N512SY  PA-28-181  訓練（同期）', '13:30  N806SY  PA-44-180  双発（上級）'];
       return { title: id === 'schedule' ? `本日の割り当て（運航管理・${date}）` : `本日のフライト（LAB 飛行場・${date}）`, text: (sch.some(x => x.kind === 'off') ? '本日は訓練休み\n' : '') + rows.join('\n') + (w.fly.am && w.fly.pm ? '' : `\n※ ${w.ja}：${w.why}`) };
     }
+    if (id === 'notices') return { title: '訓練生のお知らせ', text: dailyNotices(st.day).join('\n') + '\n\n（掲示は日替わり。今日の訓練の正はタブレットで）' };
     if (st.graduated) return { title: 'ホワイトボード', text: '修了おめでとう。\nここで覚えたことを、次の空へ。\n翔洋航空 フライトアカデミー' };
     if (!plan || !flyingChapter()) return { title: 'ホワイトボード', text: st.chapter === 'ch1' ? '座学の期間：午前はブリーフィング室 2 で授業、午後は訓練装置室。\nわからないことは、早瀬 教官に。' : STAGE[st.chapter] ? `${CHAPTERS[st.chapter].title}\n${CHAPTERS[st.chapter].sub}` : '入社おめでとう。\n翔洋航空 フライトアカデミー' };
     if (it && (it.kind === 'xc' || (it.kind === 'checkride' && CHECKS[it.id]))) {
@@ -1964,6 +2111,8 @@ async function boot() {
     // (G: the next step worked out now — the guide's line may be off in the menu, and then not kept up to date)
     if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { computeGuide(walker.framePos.a, walker.framePos.c); if (!jumpNext()) { const j = jumpPlan(true); toast(j && j.no ? j.no : 'G で行けるのは、一度歩いて入ったことのある部屋です', 2600); } return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
+    if (mode === 'walk' && simOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { simChoose(+e.code.slice(-1) - 1); return; }
+    if (mode === 'walk' && towerOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { towerChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
       e.preventDefault();
       if (tablet.isOpen) tablet.close();
@@ -2042,7 +2191,9 @@ async function boot() {
   // where the player is (the label top left, shown for a few seconds when it changes)
   const OUTSIDE = { apron: '駐機場（エプロン）', walk: 'アカデミー前の歩道', lot: '駐車場', twy: '誘導路 — 立ち入りには許可が要ります', rwy: '滑走路 — 立ち入り禁止' };
   function placeAt(a, c) {
-    if (academy.inside(a, c)) { const r = academy.roomOf(a, c); return { name: r ? r.name_ja : NAMES.academy.ja, sub: NAMES.academy.ja }; }
+    if (dorm.inside(a, c)) { const r = dorm.roomOf(a, c); return { name: r ? r.name_ja : '訓練生寮', sub: '翔洋航空 訓練生寮' }; }
+    if (tower.inside(a, c)) { const r = tower.roomOf(a, c, walker.state.y); return { name: r ? r.name_ja : '管制塔', sub: NAMES.field.ja }; }
+    if (academy.inside(a, c)) { const r = academy.roomOf(a, c, walker.state.y); return { name: r ? r.name_ja : NAMES.academy.ja, sub: NAMES.academy.ja }; }
     for (const h of HANGARS) if (a > h.a0 && a < h.a1 && c > h.c0 && c < h.c1) return { name: h.name, sub: NAMES.field.ja };
     const k = L.cellAt(a, c)?.kind;
     return { name: OUTSIDE[k] || '飛行場の草地', sub: NAMES.field.ja };
@@ -2210,6 +2361,8 @@ async function boot() {
     camera.getWorldPosition(camWorld);
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
+    dorm.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
+    tower.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
     if (mode === 'walk' && live && !talk && !chair) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); noteRoom(pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
@@ -2243,7 +2396,8 @@ async function boot() {
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
     const k = indoorAt(ACADEMY, pa, pc, camWorld.y - G);
     adapt += (Math.min(1, k / 0.85) - adapt) * (1 - Math.exp(-dt / 0.7));
-    const room = academy.inside(pa, pc) && camWorld.y - G < ACADEMY.slab ? academy.roomOf(pa, pc) : null;
+    const camH = camWorld.y - G;
+    const room = academy.inside(pa, pc) && camH < ACADEMY.H + 0.6 ? academy.roomOf(pa, pc, Math.max(0, camH - 1.6)) : dorm.inside(pa, pc) && camH < DORM.slab ? dorm.roomOf(pa, pc) : tower.inside(pa, pc) ? tower.roomOf(pa, pc, Math.max(0, camH - 1.6)) : null;
     litK += ((room ? 1 : 0) - litK) * (1 - Math.exp(-dt / 0.7));          // the lights' share of the eye's adaptation
     pipe.setIndoor(adapt, litK);
     fill.intensity = litK * (0.3 + 0.5 * (sky.state.lightsOn || 0));       // by day the windows already do much of it
@@ -2486,7 +2640,7 @@ async function boot() {
   let screenCopy = null;                                       // (the tests' screen(): a canvas to read the surfaces through)
   let screenRead = null;                                       // (…and screenCopy()'s, the small copy's)
   window.__cadet = {
-    ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker, followGuide, navPath,
+    ready: true, L, FL, VIEWS, spec, dspec, dorm, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker, followGuide, navPath,
     guide: () => (guideStep ? { ...guideStep, way: guideWay } : null),
     setPose: (p, look) => { outOfAircraft(); setMode('spectator'); spectator.setPose(new THREE.Vector3(...p), new THREE.Vector3(...look)); },
     setTime: (h) => { hours = h; applyTime(); }, stats: () => ({ fps: stats.fps, ...pipe.sceneInfo, all: renderer.info.render.calls, dpr: pipe.dpr, preset: preset.id, gpu, trees: veg.counts, colliders: world.count(), memory: { ...renderer.info.memory, programs: (renderer.info.programs || []).length } }),
@@ -2602,7 +2756,7 @@ async function boot() {
         for (let i = 0; i < d.length; i += 4 * 7) h = Math.imul(h ^ (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)), 16777619) >>> 0;
         return h;
       },
-      home: () => goHome(), homeChoose: (k) => homeChoose(k),
+      home: () => goHome(), homeChoose: (k) => homeChoose(k), bed: () => openBedCard(), desk: () => openDesk(),
       // the way skipped (G): whether it can be now, and the jump
       jump: () => jumpNext(), canJump: () => { computeGuide(walker.framePos.a, walker.framePos.c); return !!jumpPlan(); },
       // the room's screen's copy: shown, large, a hash of what it shows

@@ -5,6 +5,7 @@
 // (the Seminole's days), cross-country time (the solo cross-country), simulated instrument time (under the hood:
 // the lessons' share of the day) and multi-engine time; a check's line signed by the check pilot. Kept in the browser (localStorage 'cadet.logbook', versioned); a record of play, not a real
 // pilot's logbook (the page says so).
+import { cleanAnalysis } from '../flight/analysis.js';
 export const LOGBOOK_KEY = 'cadet.logbook';
 export const LOGBOOK_V = 1;
 export const INSTRUCTOR_SIG = { name: '早瀬 航', cert: 'CFI-0412（架空）' };
@@ -14,9 +15,9 @@ export const tenths = (sec) => Math.round(Math.max(0, sec) / 360) / 10;
 const defaultStore = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
 // an entry from the day's summary (career/day.js) and what the debrief said; date: the career's day (M5)
-const HOOD = new Set(['i1', 'i2', 'i3', 'i4', 'i5']);
+const HOOD = new Set(['i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7', 'i8']);
 export function entryFrom(sum, { date, remarks = '', dayN = 1, skippedSec = 0, xc = false, sig = null, endorsement = '' } = {}) {
-  const lessons = sum.lessons.filter(l => l.done).map(l => ({ id: l.id, title: l.title, grade: l.grade, passed: !!l.passed }));
+  const lessons = sum.lessons.filter(l => l.done).map(l => { const ana = l.ana ? cleanAnalysis(l.ana) : null; return { id: l.id, title: l.title, grade: l.grade, passed: !!l.passed, ...(ana ? { ana } : {}) }; });
   const block = sum.blockT + skippedSec, solo = !!sum.solo, h = tenths(block), twin = sum.plan && sum.plan.aircraft === 'pa44';
   const hood = lessons.filter(l => HOOD.has(l.id)).length;
   const landings = Number.isInteger(sum.landings) ? sum.landings : sum.lessons.some(l => l.id === 't3' && l.done && !l.crashed) ? 1 : 0;
@@ -52,7 +53,7 @@ export function cleanEntry(e) {
   if (!e || typeof e !== 'object' || !Number.isFinite(e.total)) return null;
   const out = { day: Number.isInteger(e.day) ? e.day : 0, date: str(e.date, 10), aircraft: str(e.aircraft, 16) || 'PA-28-181', reg: str(e.reg, 8) || 'N738SY', from: str(e.from, 4) || 'LAB', to: str(e.to, 4) || 'LAB',
     total: num(e.total), dual: num(e.dual), solo: num(e.solo), xc: num(e.xc), inst: num(e.inst), me: num(e.me), landings: Number.isInteger(e.landings) ? Math.max(0, Math.min(20, e.landings)) : 0,
-    lessons: Array.isArray(e.lessons) ? e.lessons.filter(l => l && /^[a-z0-9]{1,6}$/.test(l.id)).slice(0, 12).map(l => ({ id: l.id, title: str(l.title, 40), grade: str(l.grade, 2), passed: !!l.passed })) : [],
+    lessons: Array.isArray(e.lessons) ? e.lessons.filter(l => l && /^[a-z0-9]{1,6}$/.test(l.id)).slice(0, 12).map(l => { const ana = cleanAnalysis(l.ana); return { id: l.id, title: str(l.title, 40), grade: str(l.grade, 2), passed: !!l.passed, ...(ana ? { ana } : {}) }; }) : [],
     remarks: str(e.remarks, 200), skipped: Number.isInteger(e.skipped) ? e.skipped : 0, trust: Number.isFinite(e.trust) ? e.trust : 0,
     sig: { name: str(e.sig && e.sig.name, 20) || INSTRUCTOR_SIG.name, cert: str(e.sig && e.sig.cert, 30) || INSTRUCTOR_SIG.cert }, signed: e.signed !== false };
   if (e.endorsement) out.endorsement = str(e.endorsement, 120);

@@ -1,0 +1,8 @@
+{
+  "best": {
+    "file": "./physics-best-variant.js"
+  },
+  "base": {
+    "file": "../../src/physics.js"
+  }
+}

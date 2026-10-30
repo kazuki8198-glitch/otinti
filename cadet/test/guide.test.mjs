@@ -54,9 +54,11 @@ test('guide: the way through the academy\'s doors', () => {
   // out to the apron from the lobby: the airside doors; from outside into briefing room 1: in through the lobby
   assert.equal(R.next('lobby', 'outside').door, 'x-airside');
   assert.ok(['x-airside', 'x-main'].includes(R.next('outside', 'brief-1').door));
-  // in the room already: nothing; a locked or closed room: no way
+  // in the room already: nothing; a closed room: no way
   assert.equal(R.next('lobby', 'lobby'), null);
-  assert.equal(R.next('lobby', 'stairs'), null);
+  assert.equal(R.next('lobby', 'wc'), null);
+  // (Phase 3: the stairs are open now — the way up goes through their door)
+  assert.equal(R.next('lobby', 'stairs').door, 'd-stairs');
   // every door's middle is on the door's line
   const d = R.next('brief-1', 'lobby'); assert.ok(Math.abs(d.c - 261.0) < 1e-9 && d.a > 642.6 && d.a < 643.6);
   // rooms have centres

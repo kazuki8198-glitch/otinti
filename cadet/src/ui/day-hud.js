@@ -57,6 +57,7 @@ const CSS = `
 .dh-page tr.new td { background: rgba(255, 230, 150, .25); }
 .dh-page tfoot td { font-weight: 700; background: rgba(29, 59, 92, .05); }
 .dh-page .dh-end { margin-top: 4px; padding: 3px 6px; border-left: 3px solid #b8892a; font-size: 11.5px; color: #5b4a22; background: rgba(184, 137, 42, .08); }
+.dh-page .dh-ana { margin-top: 10px; padding: 8px 10px; border-top: 1px solid #c9d4e2; font-size: 12.5px; color: #243447; } .dh-page .dh-ana h3 { margin: 0 0 4px; font-size: 13.5px; } .dh-page .dh-ana p { margin: 2px 0; }
 .dh-page .g { display: inline-block; margin-right: 6px; white-space: nowrap; }
 .dh-page .g b { display: inline-block; min-width: 1.4em; text-align: center; margin-left: 2px; border-radius: 4px; color: #fff; background: #2f6f4f; }
 .dh-page .g b.c { background: #a0473d; }
@@ -75,6 +76,7 @@ const CSS = `
 #fhud .fh-ao button.script::after { content: '台本'; margin-left: auto; padding: 0 6px; border-radius: 4px; font-size: 11px; color: #1b1f22; background: #f2b632; }
 #fhud .dh-why { margin-top: 4px; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; color: #e8f0fa; background: rgba(95, 212, 255, .12); border-left: 3px solid #5fd4ff; }
 `;
+import { landingHistory, landingStats, sparkline } from '../flight/analysis.js';
 const WHO = { ATIS: 'ATIS', GND: 'GND', TWR: 'TWR', DEP: 'DEP', APP: 'APP', P: 'あなた' };
 const STATION = { ATIS: 'LAB ATIS', GND: 'LAB Ground', TWR: 'LAB Tower', DEP: 'LAB Departure', APP: 'LAB Approach', OPS: '操作（COM1・高度計・トランスポンダー）' };
 
@@ -216,6 +218,16 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     if (!entries.length) put(tb, put(make('tr'), Object.assign(make('td', '', 'まだ記入はありません。'), { colSpan: 14 })));
     const tf = put(make('tfoot'), put(make('tr'), Object.assign(make('td', '', `合計（${totals.days} 日）`), { colSpan: 4 }), make('td', 'n', fmtH(totals.total)), make('td', 'n', fmtH(totals.dual)), make('td', 'n', fmtH(totals.solo || 0)), make('td', 'n', fmtH(totals.xc || 0)), make('td', 'n', fmtH(totals.inst || 0)), make('td', 'n', fmtH(totals.me || 0)), make('td', 'n', String(totals.landings)), Object.assign(make('td'), { colSpan: 3 })));
     put(tbl, tb, tf);
+    // (next wave item 1) the landing analysis history under the book: every recorded touchdown's scatter,
+    // sink and centreline, with a one-line trend per measure (only when a landing has been analysed)
+    const hist = landingHistory(entries), hs = landingStats(hist);
+    let anaSec = null;
+    if (hs) {
+      anaSec = make('section', 'dh-ana');
+      put(anaSec, make('h3', '', '着陸分析の履歴（リプレイ記録から）'),
+        make('p', '', `着陸 ${hs.n} 回：接地位置 平均 ${hs.alongMean} m（目標点 300 m・ばらつき σ ${hs.alongSd} m・接地帯内 ${hs.inZonePct}%）／沈下 平均 ${hs.sinkMean} fpm（最大 ${hs.sinkMax}）／センターライン偏差 平均 ${hs.crossAbsMean} m／フロート 平均 ${hs.floatMean} m${hs.gateStablePct == null ? '' : `／500 ft ゲート STABLE ${hs.gateStablePct}%`}`),
+        make('p', '', `接地位置の推移 ${sparkline(hist.map(x => x.along))}　沈下の推移 ${sparkline(hist.map(x => x.sink), { invert: true })}　センターラインの推移 ${sparkline(hist.map(x => Math.abs(x.cross || 0)), { invert: true })}`));
+    }
     const btn = Object.assign(make('button', '', '閉じる'), { type: 'button' });
     btn.addEventListener('click', () => hideLogbook());
     const foot = put(make('footer'), make('span', '', '飛行時間は 1/10 時間（6 分）単位。訓練所の記録です。'));
@@ -225,7 +237,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
       put(foot, b);
     }
     put(foot, btn);
-    put(page, head, tbl, foot); put(book, page);
+    put(page, head, tbl); if (anaSec) put(page, anaSec); put(page, foot); put(book, page);
     book.hidden = false;
     setTimeout(() => btn.focus(), 0);
   }

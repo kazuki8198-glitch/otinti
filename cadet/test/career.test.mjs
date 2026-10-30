@@ -227,7 +227,7 @@ test('career M6: after the first solo, chapter 3 the next morning; each later ch
 });
 
 test('career M6: the checks and their aircraft, the weather of the later chapters', () => {
-  assert.deepEqual(Object.keys(CHECKS), ['xc', 'ir', 'me', 'final']);
+  assert.deepEqual(Object.keys(CHECKS), ['xc', 'ir', 'me', 'final', 'cx']);   // (next-wave item 6: the complex endorsement's check)
   assert.equal(CHECKS.final.who, 'examiner'); assert.equal(CHECKS.xc.who, null);
   assert.equal(STAGE.ch5.aircraft, 'pa44');
   // low cloud: no flying by sight; the instrument chapter flies in it (not alone)
@@ -558,4 +558,25 @@ test('career miss: the debrief\'s main missed item is kept overnight, asked abou
   assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'BAD KEY', label: 'x' } }).miss, null);
   assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'walk', label: 42 } }).miss, null);
   assert.equal(cleanCareer({ v: 1, seed: 1, day: 5 }).miss, null, 'a v1 save has none');
+});
+
+test('career (next-wave item 6): the complex endorsement — opened only after graduation, gates and schedules like a stage, in the Arrow', () => {
+  const C = createCareer(memStore());
+  // not before graduation
+  assert.equal(C.beginEndorsement(), false);
+  C.state.chapter = 'ch6'; C.state.graduated = { day: 40, rank: '優秀' };
+  assert.equal(C.beginEndorsement(), true);
+  assert.equal(C.state.chapter, 'ch7');
+  assert.equal(C.beginEndorsement(), false, 'and not twice');
+  // the gate reads the stage's lessons, its written test and its check
+  assert.deepEqual(gate(C.state, {}), STAGE.ch7.lessons.map(id => `課目 ${id}`).concat([EXAMS.complex.title, CHECKS.cx.title]));
+  const prog = progWith(STAGE.ch7.lessons);
+  C.state.exams.complex = { tries: 1, best: 90, pass: true };
+  C.state.checks.cx = { tries: 1, pass: true, day: 41 };
+  assert.deepEqual(gate(C.state, prog), []);
+  // a flyable day in the endorsement offers the next Arrow lesson (not the graduate's day off)
+  C.state.day = 42;
+  const items = schedule(C.state, {}, { weather: weatherFor(C.state.seed, 42, { force: 'good' }) });
+  assert.ok(items.some(x => x.kind === 'flight' && x.id === 'cx1'), JSON.stringify(items));
+  assert.equal(STAGE.ch7.aircraft, 'pa28r');
 });

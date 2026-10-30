@@ -21,7 +21,7 @@ export const SAMPLE_CTX = {
 };
 export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point', 'tem'];
 // ('done' also takes 'graduation': the ceremony's speech heard)
-export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed', 'prologue_short'];
+export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_controller', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed', 'prologue_short'];
 // the flags set here that the game reads (the tablet, the people met for the prologue's end, the check ride's brief)
 export const GAME_READS = ['met_chief', 'met_dispatcher', 'asahi_imsafe', 'has_tablet', 'c1_briefed'];
 
@@ -184,6 +184,24 @@ export function peopleDialogs() {
       'sem:1': say('左右のプロペラは、逆に回る。どっちのエンジンが止まっても、同じだけ曲がるようにな。……それでも、止まれば重い。', { if: { all: [{ ctx: 'today.type', is: 'Seminole' }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'sem:2', end: true }),
       'sem:2': say('静圧孔のテープ、洗機のあとに貼りっぱなしのことがある。あれで高度計が狂って、何人も青くなってる。', { if: { ctx: 'today.type', is: 'Seminole' }, else: 'grad', end: true }),
       grad: say('修了か。……おめでとう。最後まで、点検で手を抜かなかったな。それがいちばんだ。', { if: { ctx: 'career.graduated', is: true }, else: 'pre', hook: { name: 'nod' }, end: true }),
+    } };
+  }
+  // ---------------------------------------------------------------- 高嶺さん（管制官）
+  {
+    const say = (text, more = {}) => ({ speaker: 'controller', text, ...more });
+    D.controller = { start: 't1', nodes: {
+      t1: say('ようこそ、LAB タワーへ。管制の高嶺です。……見学？　どうぞ、私の後ろで。交信中は静かにね。', { if: flag('met_controller', false), else: 'tip:0', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_controller' }], next: 't2' }),
+      t2: say('ここからだと、場周の全部が見える。あんたたちが「ダウンウィンド」と言うとき、どのへんを飛んでいるかもね。', { hook: { name: 'nod' }, next: 't3' }),
+      t3: say('交信は、短く、はっきり。管制官がいちばん助かるのは、復唱が正確な機体。聞き返すのも、立派な交信だよ。', { end: true }),
+      ...byClass(say, 'pre', [
+        '訓練空域の天気が崩れるときは、ここから雲の足が速いのがよく見える。帰投の判断は早めにね。',
+        'タキシーウェイで迷う機体は、だいたい地図を見ていない。地上でも、飛行計画は頭の中に。',
+        '風が変わると、使う滑走路も変わる。ATIS は出発前に必ず新しい記号を取ること。',
+        '場周が混む日は、報告は短く。位置と高度と意図、それで十分伝わる。',
+      ]),
+      'tip:0': say('ソロの日の場周は、私たちも少し静かに見守っている。……内緒ね。', { if: { ctx: 'career.solo', is: true }, else: 'tip:1', end: true }),
+      'tip:1': say('見学は午前がおすすめ。訓練が一番多くて、交信も一番聞ける。', { if: { ctx: 'career.graduated', is: false }, else: 'grad', end: true }),
+      grad: say('修了おめでとう。次にこの周波数で会うときは、もう訓練生じゃないんだね。待っているよ。', { if: { ctx: 'career.graduated', is: true }, else: 'pre', hook: { name: 'nod' }, end: true }),
     } };
   }
   // ---------------------------------------------------------------- 同期：桐生

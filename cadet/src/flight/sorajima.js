@@ -136,6 +136,27 @@ export function installSorajima(FL) {
       v: { s0: 55, s1: 57, mc: 56, rotate: 75, x: 82, y: 88, xse: 88, sse: 82, yse: 88, glide: 88, appr: 88, apprFull: 80, ga: 88, va: 135, fe: 111, lo: 109, le: 140, no: 169, ne: 202, xwind: 17,
         apprFlaps: 2, apprThr: 0.3, cruise: 140, cruiseThr: 0.75, toFlaps: 0, climb: 105 },
     },
+    {
+      // (next-wave item 6) the complex trainer, mirrored from FLIGHT LAB's physics.js (the same aircraft data):
+      // retractable gear, an injected 200 hp engine, a propeller governed between propGov rpm by s.prop.
+      id: 'pa28r', name: 'Piper PA-28R-201 Arrow III（教材モデル）', short: 'Arrow', kind: '低翼の単発・引込脚・定速プロペラ（complex）', engines1: 1, cs: true, propCtrl: true, complex: true, propGov: [1900, 2700],
+      desc: 'Archer と同じ PA-28 系の単発機だが、200 馬力の燃料噴射エンジン、引き込み脚、定速プロペラを持つ「複雑機（complex）」。スロットルはマニホールド圧（MAN IN）、プロペラレバーはガバナーが保つ回転数を決める。',
+      fuse: [[-3.25, 0.30, 0.30, 0.02], [-3.05, 0.43, 0.42, 0.02], [-2.5, 0.55, 0.54, 0.04], [-1.5, 0.60, 0.62, 0.06], [-0.5, 0.60, 0.64, 0.08],
+        [0.6, 0.53, 0.57, 0.10], [1.7, 0.38, 0.44, 0.16], [2.8, 0.22, 0.30, 0.24], [3.75, 0.09, 0.17, 0.30], [4.0, 0.03, 0.07, 0.32]],
+      wing: { y: -0.45, dih: 7, rootX: 0.55, tipX: 5.4, rootLE: -1.0, rootC: 1.6, tipLE: -0.85, tipC: 1.2, t0: 0.15, t1: 0.12, hinge: 0.74, flap: [0.6, 2.6], ail: [2.8, 5.2] },
+      hstab: { y: 0.25, span: 2.0, rootLE: 3.05, tipLE: 3.05, te: 3.8, hinge: 3.05, t: 0.09 },
+      vstab: { y0: 0.25, y1: 1.5, rootLE: 2.35, topLE: 3.2, te: 3.95, hinge: 3.55, t: 0.1 },
+      engines: [{ type: 'nose', z: -3.34, y: 0.02, r: 0.99, blades: 3 }],
+      gear: { fixed: false, wheelR: 0.25, nose: [0, -1.15, -2.3], mains: [[1.6, -1.15, 0.25]] },
+      eye: [-0.3, 0.62, -0.4], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 36,
+      phys: {
+        mass: 1180, S: 15.8, b: 10.8, c: 1.6, L: 7.36, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.030, K: 0.05, CDgear: 0.020,
+        Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+        flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 149000, T0: 2800, eta: 0.85, etaK: 0.55 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
+      },
+      v: { s0: 53, s1: 58, rotate: 65, x: 78, y: 90, climb: 100, glide: 79, glideLand: 72, appr: 75, apprShort: 70, ga: 78, va: 125, fe: 103, lo: 107, le: 129, no: 146, ne: 183, xwind: 17,
+        apprFlaps: 3, apprThr: 0.3, cruise: 125, cruiseThr: 0.75, toFlaps: 0 },
+    },
   ];
 
   // ---------------------------------------------------------------- geometry helpers
@@ -330,8 +351,9 @@ export function installSorajima(FL) {
     return { T, p, rho, a: Math.sqrt(1.4 * 287.05 * T), sigma: rho / 1.225 };
   }
   // fixed-pitch propeller rpm (grows with power and airspeed); constant-speed: held near the governor's setting
-  function rpmFor(A, thr, u, pw = 1, dead = false) {
+  function rpmFor(A, thr, u, pw = 1, dead = false, propLev = null) {
     if (dead) return clamp(14 * u, 0, 1300);
+    if (A && A.propCtrl) { const gov = A.propGov[0] + (A.propGov[1] - A.propGov[0]) * clamp(propLev == null ? 1 : propLev, 0, 1); return gov * clamp(0.30 + 3.0 * Math.max(thr, 0), 0, 1); }
     if (A && A.cs) return 2250 + 450 * Math.sqrt(Math.max(thr, 0));
     return Math.min(650 + 1650 * Math.sqrt(Math.max(thr, 0)) * Math.pow(Math.max(pw, 0.1), 0.3) + 6 * Math.max(u, 0), 2850);
   }
@@ -526,6 +548,7 @@ export function installSorajima(FL) {
     // baggage / fuel; tabsGal: the fuel at the filler tabs, per tank (the Seminole's is a teaching value)
     pa28: { mtowLb: 2550, fwdIn: 82, aftIn: 93, emptyArm: 85.5, frontArm: 80.5, rearArm: 118.1, bagArm: 142.8, bagMaxKg: 90, fuelArm: 95, tabsGal: 17 },
     pa44: { mtowLb: 3800, fwdIn: 84, aftIn: 94, emptyArm: 89, frontArm: 84, rearArm: 118.9, bagArm: 142, bagMaxKg: 90, fuelArm: 95.7, tabsGal: 40 },
+    pa28r: { mtowLb: 2750, fwdIn: 84, aftIn: 93, emptyArm: 86, frontArm: 80.5, rearArm: 118.1, bagArm: 142.8, bagMaxKg: 90, fuelArm: 95, tabsGal: 25 },
   };
   // the standard training load (what every lesson has flown with until now)
   const stdLoading = () => ({ fuel: 'std', front: 2, rear: 0, bagKg: 0 });
@@ -578,7 +601,7 @@ export function installSorajima(FL) {
   function newState(o = {}) {
     const s = {
       t: 0, pos: [0, GROUND_M + 1.4, 0], vel: [0, 0, 0], q: [0, 0, 0, 1], w: [0, 0, 0],
-      thr: 0, elev: 0, ail: 0, rud: 0, trim: 0, trimTgt: null, brake: false, pIn: 0, rIn: 0, flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1,
+      thr: 0, prop: 1, elev: 0, ail: 0, rud: 0, trim: 0, trimTgt: null, brake: false, pIn: 0, rIn: 0, flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1,
       rpm: 0, propAng: 0, onGround: false, mainContact: false, airTime: 0, crashed: false, crashReason: '',
       alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, vs: 0, contacts: [],
       keyHold: true, pTgt: null, pRate: 0, dead: false,
@@ -713,6 +736,9 @@ export function installSorajima(FL) {
           if ((e.carbIce || 0) > 0.45) e.rough = Math.max(e.rough, 0.7);
         }
         e.powK = e.mixK * carbK;
+        // (next-wave item 6) the governed propeller (the Arrow), as in FLIGHT LAB's physics.js: power falls as
+        // the governed rpm is pulled back, (governed / max)^0.55. Only propCtrl aircraft take this branch.
+        if (A.propCtrl) { const gov = A.propGov[0] + (A.propGov[1] - A.propGov[0]) * clamp(s.prop == null ? 1 : s.prop, 0, 1); e.propK = Math.pow(gov / A.propGov[1], 0.55); e.powK *= e.propK; } else e.propK = 1;
         // one magneto (the key at L or R): a real engine is weaker on a single ignition source — about 3 % of
         // power gone, a slightly hotter exhaust, a rougher note; a bad magneto (e.magBad names its side, set by
         // the day's fault) roughens hard at run-up rpm and above whenever it is in circuit
@@ -736,6 +762,7 @@ export function installSorajima(FL) {
         // Manifold pressure (inHg): the ambient pressure less what the throttle plate holds back — nearly ambient at
         // full throttle, about 10 inHg at idle; it falls with altitude because the ambient does.
         e.manIn = Math.min(pAmbIn * (0.30 + 0.68 * th), pAmbIn - 0.3);
+        if (A.propCtrl && th > 0.05) e.manIn = Math.min(e.manIn + (1 - clamp(s.prop == null ? 1 : s.prop, 0, 1)) * 1.5, pAmbIn - 0.3);
         // The fuel flow the mixture meters: the lever's share of the rich flow (cut-off meters none)
         e.ffK = clamp(0.15 + 0.85 * Math.pow(e.lev, 1.2), 0, 1);
       }
@@ -883,7 +910,7 @@ export function installSorajima(FL) {
     s.agl = agl; s.vs = s.vel[1];
     // engine rpm, fuel
     let rpmSum = 0;
-    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw * (0.3 + 0.7 * (e.powK == null ? 1 : e.powK))) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });   // a fixed-pitch prop turns slower on a weak mixture or an iced carburettor (a governed one holds its rpm and shows it in the manifold pressure instead)
+    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw * (0.3 + 0.7 * (e.powK == null ? 1 : e.powK)), false, s.prop) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });   // a fixed-pitch prop turns slower on a weak mixture or an iced carburettor (a governed one holds its rpm and shows it in the manifold pressure instead)
     s.rpm = rpmSum / nE;
     s.propAng = (s.propAng + s.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
     // fuel: each running engine burns its own flow — its shaft power at BSFC, metered by its mixture — out of the
@@ -1006,6 +1033,8 @@ export function installSorajima(FL) {
     o.cyls = s.eng.map(e => (e.cyl || []).map(c => ({ egt: Math.round(c.egt), cht: Math.round(c.cht) })));
     o.cht = o.cyl.length ? Math.round(o.cyl.reduce((a, c) => a + c.cht, 0) / o.cyl.length) : 0; o.chts = o.cyls.map(cs => cs.length ? Math.round(cs.reduce((a, c) => a + c.cht, 0) / cs.length) : 0);
     o.gearFault = !!s.gearFault; o.gearEmerg = !!s.gearEmerg; o.xfeed = !!s.xfeed;
+    o.prop = s.prop == null ? 1 : s.prop; o.propK = s.eng[0] ? (s.eng[0].propK == null ? 1 : Math.round(s.eng[0].propK * 100) / 100) : 1;
+    o.govRpm = A.propCtrl ? Math.round(A.propGov[0] + (A.propGov[1] - A.propGov[0]) * clamp(o.prop, 0, 1)) : null;
     o.manIns = s.eng.map(e => Math.round((e.manIn || 0) * 10) / 10); o.manIn = o.manIns[0];
     o.rough = Math.max(0, ...s.eng.map(e => e.rough || 0));
     o.carbIce = Math.max(0, ...s.eng.map(e => e.carbIce || 0));
@@ -1025,7 +1054,7 @@ export function installSorajima(FL) {
   function resetState(s) {
     s.vel = [0, 0, 0]; s.w = [0, 0, 0]; s.onGround = false; s.mainContact = false; s.crashed = false; s.crashReason = '';
     s.events = []; s.td = null; s.tailTouch = false; s.firstWheel = -1; s.gLoad = 1; s.pTgt = null; s.pHI = 0; s.gI = 0; s.bI = 0;
-    s.trimHold = 0; s.trimTgt = null; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null; s._stH = null;
+    s.trimHold = 0; s.trimTgt = null; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null; s._stH = null; s.prop = 1;
     s.eng.forEach((e, i) => Object.assign(e, { failed: false, feather: false, cut: false, thr: null, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, carbIce: 0, iceNoted: false, magBad: null, pumpFail: false, pressT: 0 }));
     s.pitotIce = 0; s.staticBlocked = false; s._iasFrz = null; s._altFrz = null; s.gearFault = false; s.gearEmerg = false; s.gearEmergT = 0;
     s._mixCmd = s.mix; s._selCmd = s.fuelSel;   // the reset engines are in the running configuration above; the shared controls command them again when they next move

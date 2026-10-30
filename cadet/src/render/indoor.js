@@ -6,14 +6,14 @@
 // (the shadows decide). The ceiling lights near the player are a small pool of point lights; the eye adapts
 // (exposure) when walking in and out.
 import * as THREE from 'three';
-import { HANGARS } from '../world/layout.js';
+import { HANGARS, DORM, TOWER } from '../world/layout.js';
 
 let installed = false;
 // the open hangar is half-lit from its door; the shut one is dim
 const HANGAR_K = (h) => (h.open ? [0.45, 0.2] : [0.12, 0.12]);
 // a, c in the runway frame; the boxes are fixed at start-up (as constants in the shader: no new uniforms needed).
 // The test is the same on the GPU (cdIndoorK) and the CPU (indoorAt), boundaries included.
-export function installIndoorShading(L, A, hangars = HANGARS) {
+export function installIndoorShading(L, A, hangars = HANGARS, dorm = DORM, tower = TOWER) {
   if (installed) return; installed = true;
   const cy = Math.cos(L.frameYaw).toFixed(8), sy = Math.sin(L.frameYaw).toFixed(8), G = L.G.toFixed(4);
   const f = (v) => Number(v).toFixed(3);
@@ -34,10 +34,24 @@ export function installIndoorShading(L, A, hangars = HANGARS) {
       if (a > ${f(A.a0 + 0.38)} && a < ${f(A.a1 - 0.38)} && c > ${f(A.c0 + 0.38)} && c < ${f(A.c1 - 0.38)} && y < ${f(A.H - 0.25)}) {
         if (c < ${f(A.glassC + 0.01)} && a > ${f(A.lob0 - 0.01)} && a < ${f(A.lob1 + 0.01)}) return 1.0;
         if (a > ${f(A.lob0)} && a < ${f(A.lob1)}) return 0.55 - 0.25 * smoothstep(${f(A.glassC + 2)}, ${f(A.c1)}, c);
-        if (y > ${f(A.slab)}) return 0.05;
+        // (above the slab is the second floor (Phase 3): the same depth fall-off as the ground floor's rooms;
+        // before the floor was built, everything up there was kept nearly dark at 0.05)
         float dw = min(c - ${f(A.c0 + A.wall)}, ${f(A.c1 - A.wall)} - c);
         float de = min(a - ${f(A.a0 + A.wall)}, ${f(A.a1 - A.wall)} - a);
         return 0.17 + 0.38 * exp(-min(dw, de) / 2.2);
+      }
+      // the dormitory: the same fall-off with depth as the academy's rooms (its upper floor is closed: darker)
+      if (a > ${f(dorm.a0 + 0.38)} && a < ${f(dorm.a1 - 0.38)} && c > ${f(dorm.c0 + 0.38)} && c < ${f(dorm.c1 - 0.38)} && y < ${f(dorm.H - 0.25)}) {
+        if (y > ${f(dorm.slab)}) return 0.05;
+        float dw2 = min(c - ${f(dorm.c0 + dorm.wall)}, ${f(dorm.c1 - dorm.wall)} - c);
+        float de2 = min(a - ${f(dorm.a0 + dorm.wall)}, ${f(dorm.a1 - dorm.wall)} - a);
+        return 0.17 + 0.38 * exp(-min(dw2, de2) / 2.2);
+      }
+      // the control tower (Phase 4): the hall like a room, the shaft dim, the glass cab bright
+      if (a > ${f(tower.b0 + 0.38)} && a < ${f(tower.b1 - 0.38)} && c > ${f(tower.c0 + 0.38)} && c < ${f(tower.c1 - 0.38)} && y < ${f(tower.cabCeil)}) {
+        if (y > ${f(tower.cabFloor - 0.4)}) return 0.62;
+        if (y < ${f(tower.baseTop)}) { float dw3 = min(c - ${f(tower.c0 + 0.4)}, ${f(tower.c1 - 0.4)} - c); float de3 = min(a - ${f(tower.b0 + 0.4)}, ${f(tower.b1 - 0.4)} - a); return 0.17 + 0.38 * exp(-min(dw3, de3) / 2.2); }
+        return 0.12;
       }
       ${hangarGLSL}
       return 1.0;
@@ -63,11 +77,16 @@ export function installIndoorShading(L, A, hangars = HANGARS) {
 }
 
 // the same test on the CPU (for the player: the eye's adaptation, the ambience, the light pool), at eye height
-export function indoorAt(A, a, c, y = 1.6, hangars = HANGARS) {
+export function indoorAt(A, a, c, y = 1.6, hangars = HANGARS, dorm = DORM, tower = TOWER) {
   if (a > A.a0 + 0.38 && a < A.a1 - 0.38 && c > A.c0 + 0.38 && c < A.c1 - 0.38 && y < A.H - 0.25) {
     if (c < A.glassC + 0.01 && a > A.lob0 - 0.01 && a < A.lob1 + 0.01) return 0;
     return a > A.lob0 && a < A.lob1 ? 0.55 : 0.85;
   }
+  if (tower && a > tower.b0 + 0.38 && a < tower.b1 - 0.38 && c > tower.c0 + 0.38 && c < tower.c1 - 0.38 && y < tower.cabCeil) {
+    if (y > tower.cabFloor - 0.4) return 0.3;                       // the glass cab: nearly outdoors
+    return y < tower.baseTop ? 0.85 : 0.9;                          // the hall, then the shaft
+  }
+  if (dorm && a > dorm.a0 + 0.38 && a < dorm.a1 - 0.38 && c > dorm.c0 + 0.38 && c < dorm.c1 - 0.38 && y < dorm.H - 0.25) return 0.85;
   for (const h of hangars) {
     const half = (h.c1 - h.c0) / 2, cm = (h.c0 + h.c1) / 2;
     if (a > h.a0 + 0.2 && a < h.a1 - 0.2 && c > h.c0 + 0.2 && c < h.c1 - 0.2 && y < h.h + 0.12 + 0.14 * (half - Math.abs(c - cm))) return h.open ? 0.5 : 0.8;

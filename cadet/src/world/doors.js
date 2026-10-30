@@ -48,14 +48,15 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12, bodyRadi
   const aabb = (d, pts) => {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     for (const [lx, lz] of pts) { const [x, , z] = toFrame(d, lx, 0, lz); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-    return { x0, x1, y0: 0, y1: H, z0, z1, tag: 'door:' + d.id };
+    return { x0, x1, y0: d.y || 0, y1: (d.y || 0) + H, z0, z1, tag: 'door:' + d.id };
   };
 
   function add(spec, opts = {}) {
     // slideOffset: sliding leaves run on the inside face (in front of the fixed glass or wall beside the opening)
     const d = { ...spec, W: spec.to - spec.from, angle: 0, target: 0, open: 0, openTarget: 0, colliders: [], leaves: [], wallT: opts.wallT ?? wallT, slideOffset: opts.slideOffset ?? 0 };
     const g = new THREE.Group(); g.name = 'door-' + d.id;
-    if (d.wall === 'a') g.position.set(d.from, 0, -d.at); else { g.position.set(d.at, 0, -d.from); g.rotation.y = Math.PI / 2; }
+    // (spec.y: the floor the door stands on — an upper floor's doors; 0 for the ground floor, as before)
+    if (d.wall === 'a') g.position.set(d.from, d.y || 0, -d.at); else { g.position.set(d.at, d.y || 0, -d.from); g.rotation.y = Math.PI / 2; }
     group.add(g); d.group = g;
     const W = d.W, wt = d.wallT;
     // small parts are merged per material into one mesh per group (a door is a few draw calls, not a dozen)
@@ -145,13 +146,15 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12, bodyRadi
     const dx = p.x - (d.wall === 'a' ? d.from : d.at), dz = p.z - (d.wall === 'a' ? -d.at : -d.from);
     return d.wall === 'a' ? { lx: dx, lz: dz } : { lx: -dz, lz: dx };
   };
-  function toggle(d, player) {
-    if (d.kind === 'locked') { audio?.door('locked'); return 'locked'; }
+  // quiet: someone other than the player works the door (an NPC on their way through — npc/cast.js): the leaf
+  // swings away from *their* position the same way, but no sound is made for a door the player may be far from
+  function toggle(d, player, quiet = false) {
+    if (d.kind === 'locked') { if (!quiet) audio?.door('locked'); return 'locked'; }
     if (d.kind === 'sliding_auto') return 'auto';
-    if (Math.abs(d.target) > 0.01) { d.target = 0; audio?.door('swing_close'); return 'closed'; }
+    if (Math.abs(d.target) > 0.01) { d.target = 0; if (!quiet) audio?.door('swing_close'); return 'closed'; }
     const { lz } = player ? localOf(d, player) : { lz: 1 };
-    d.target = (lz >= 0 ? 1 : -1) * 1.6;              // about 92°, away from the player
-    audio?.door('swing_open');
+    d.target = (lz >= 0 ? 1 : -1) * 1.6;              // about 92°, away from whoever opens it
+    if (!quiet) audio?.door('swing_open');
     return 'opened';
   }
 
@@ -160,8 +163,9 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12, bodyRadi
       if (d.kind === 'sliding_auto') {
         const { lx, lz } = player ? localOf(d, player) : { lx: 1e9, lz: 1e9 };
         const near = Math.abs(lz) < 3.2 && lx > -1.6 && lx < d.W + 1.6;
-        const want = near || d.hold ? 1 : 0;
-        if (want !== d.openTarget) { d.openTarget = want; audio?.door(want ? 'slide_open' : 'slide_close'); }
+        const want = near || d.hold ? 1 : 0;         // (hold: set by npc/cast.js while one of the cast passes)
+        // a door an NPC holds open across the building makes no sound for a player who is nowhere near it
+        if (want !== d.openTarget) { d.openTarget = want; if (Math.abs(lz) < 9 && lx > -4 && lx < d.W + 4) audio?.door(want ? 'slide_open' : 'slide_close'); }
         const sp = dt / 0.9; d.open = d.open < d.openTarget ? Math.min(d.openTarget, d.open + sp) : Math.max(d.openTarget, d.open - sp);
         placeLeaves(d);
         continue;
@@ -181,7 +185,7 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12, bodyRadi
   // interaction targets: a sphere at each door's handle height, on its centre line
   function targets() {
     return doors.filter(d => d.kind !== 'sliding_auto').map(d => {
-      const [x, y, z] = toFrame(d, d.W / 2, 1.1, 0);
+      const [x, y, z] = toFrame(d, d.W / 2, (d.y || 0) + 1.1, 0);
       return {
         id: 'door:' + d.id, frame: [x, y, z], radius: Math.max(0.55, d.W / 2), door: d,
         prompt: () => (d.kind === 'locked' ? '扉を開ける' : Math.abs(d.target) > 0.01 ? '扉を閉める' : '扉を開ける'),

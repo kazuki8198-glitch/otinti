@@ -25,7 +25,7 @@
   const CS = 'Archer Seven Lima Alpha', CSS = 'Archer 7LA';
   // a pilot / ATC exchange as a small table: who, English, Japanese (and, under it, an optional note: why, and the source)
   const say = (rows) => `<table class="bk-t bk-radio"><tr><th>誰</th><th>英語（交信）</th><th>意味</th></tr>${rows.map(([w, en, jp, note]) => `<tr><td class="who ${w === 'P' ? 'p' : 'a'}">${w === 'P' ? 'あなた' : w}</td><td class="en">${en}</td><td>${[jp, note && `<span class="small mute">${note}</span>`].filter(Boolean).join('<br>')}</td></tr>`).join('')}</table>`;
-  const fic = '<p class="small mute">LAB 空港・周波数・コールサイン「Archer Seven Lima Alpha（Archer 7LA）」は架空の練習用です。実際の周波数で使わないでください。</p>';
+  const fic = '<p class="small mute">LAB 空港・周波数・無線呼出符号（call sign）「Archer Seven Lima Alpha（Archer 7LA）」は架空の練習用です。実際の周波数で使わないでください。</p>';
   // comm.icao's 日本 column: drawn from FL.jur (never written by hand: DESIGN 3.4), class jur-jp so that CADET leaves the
   // cell out (cadet/src/content/book.js JAPAN_SIDE) and the jurisdiction check reads it as the Japanese side. No data-jur
   // (the item's box is bk.jur: flight-lab/test/jur.test.mjs ①). Empty when FL.jur is not loaded.
@@ -54,7 +54,7 @@ ${bk.t(['ほかの相手', 'していること'], [['Clearance Delivery', '管�
 <p>表のトランスポンダーは、管制のレーダーの問い合わせに、管制官から言われた 4 けたのコードと高度で答える機械です。この章から何度も出てきます（${bk.see('comm.xpdr', 'トランスポンダーとコード')}）。</p>
 <p>相手は「<b>場所の名前＋局の種類</b>」で呼びます。たとえば Miami Ground、St. Louis Departure、Washington Center、Chicago Radio です（AIM 4-2-6）。言葉の意味は、FAA の Pilot/Controller Glossary（操縦士と管制官の用語集、PCG）で調べられます。</p>
 <h4>相手がしている業務を知る</h4>
-<p>無線の相手の仕事を、まとめて航空交通業務（air traffic service）と呼びます。PCG は、その中に飛行情報業務（flight information service）・警急業務・航空交通助言業務・航空交通管制業務を挙げています。このうち、この本で使う 3 つの働きを見ておきます。</p>
+<p>無線の相手の仕事を、まとめて航空交通業務（air traffic service）と呼びます。PCG は、その中に飛行情報業務（flight information service）と警急業務（alerting service）を挙げています。航空交通助言業務と航空交通管制業務（air traffic control service）も挙げています。このうち、この本で使う 3 つの働きを見ておきます。</p>
 ${bk.t(['業務', 'していること（PCG）', '例'], [
   ['航空交通管制業務（air traffic control service）', '航空交通を、安全に、順序よく、速やかに流す', 'Ground・Tower・Approach・Center の許可と指示'],
   ['飛行情報業務（flight information service）', '安全で効率のよい飛行に役立つ、助言と情報を伝える', '管制の指示ではない情報。ATIS の放送や、FSS（飛行サービス局、Flight Service Station）の気象情報など'],
@@ -70,7 +70,7 @@ ${FIG.radioAudioPanel()}
 <ol><li><b>予備に合わせる</b>：次に使う周波数を、予備の側に入れます。</li>
 <li><b>⇄ で入れ替える</b>：予備が使用中になります。前の周波数は予備に残るので、すぐ戻せます。</li>
 <li><b>MIC を選ぶ</b>：オーディオパネルで、どの無線機で話すか（COM1 MIC か COM2 MIC）を選びます。聞く無線機も選びます。</li>
-<li><b>聞いてから話す</b>：周波数を変えたら、少し聞いて、誰も話していないことを確かめます。送信ボタン（<b>PTT</b>：push-to-talk。操縦輪の親指のスイッチ）を押し、<b>一呼吸おいてから</b>話し始めます。最初の言葉が切れないためです。マイクは唇のすぐ近くで、<b>ふつうの会話の声</b>で話します（AIM 4-2-2）。</li>
+<li><b>聞いてから話す</b>：周波数を変えたら、少し聞いて、誰も話していないことを確かめます。送信ボタン（<b>PTT</b>：push-to-talk。操縦輪（ヨーク、control wheel）の親指のスイッチ）を押し、<b>一呼吸おいてから</b>話し始めます。最初の言葉が切れないためです。マイクは唇のすぐ近くで、<b>ふつうの会話の声</b>で話します（AIM 4-2-2）。</li>
 <li><b>離して待つ</b>：管制官は書き取ったり、別の周波数で話していたりします。数秒待ってから、もう一度呼びます。</li></ol>
 <p>PTT を押している間は、相手の声は聞こえません。2 機が同時に送信すると、聞く側には雑音か、強い方の声しか届きません。送った 2 機は、どちらもそれに気づけません。PTT が押しっぱなしになると（<b>スタックマイク</b>、stuck mike）、その周波数がずっと使えなくなります。</p>
 <p>受信の音量のほかに、<b>スケルチ</b>（squelch）という調節があります。弱い雑音を消すための調節で、上げすぎると、弱い声まで消えてしまいます。</p>
@@ -97,24 +97,24 @@ ${bk.aim('英語の交信は速く、雑音もあります。でも、言う内�
 ${FIG.radioCallAnatomy()}
 <p>この節は、教材としての学習のコツです。管制官の言い方は、FAA の管制官の方式基準 JO 7110.65 に決められています。表の（JO 7110.65 …）は、その中の場所です。</p>
 ${bk.t(['コツ', 'やり方'], [
-  ['① まず自分のコールサインを聞く', '管制官の指示は「あなたのコールサイン →（最初の交信では）局の名前 → 指示」の順です（JO 7110.65 2-4-8）。自分のコールサイン（Archer Seven Lima Alpha）が聞こえたら、そこから集中します。ほかの機への指示でも、同じ滑走路を使う機などは頭に入れておきます'],
+  ['① まず自分の無線呼出符号を聞く', '管制官の指示は「あなたの無線呼出符号 →（最初の交信では）局の名前 → 指示」の順です（JO 7110.65 2-4-8）。自分の無線呼出符号（Archer Seven Lima Alpha）が聞こえたら、そこから集中します。ほかの機への指示でも、同じ滑走路を使う機などは頭に入れておきます'],
   ['② 次に来る言葉を予想する', '地上滑走なら「滑走路・経路・hold short」、離陸なら「滑走路・風・cleared for takeoff」、帰りなら「入り方・報告する所・順番」。予想があると、聞きのがした所だけを「Say again」で聞き直せます'],
   ['③ 数字は書き取る', 'ひざ板（kneeboard）に、聞いた順に短い記号で書きます。周波数・コード・高度・針路（ヘディング、heading）は、覚えておこうとしません'],
   ['④ まぎらわしい言葉を知っておく', 'two（2）と to・too、four（4）と for、left と right、hold short（手前で止まる）と hold position（その場で止まる）。数字は 1 けたずつ言うことが多いですが、まとめて言う所もあります。自信がなければ聞き直します'],
   ['⑤ わからなければ聞き直す', '推測で動きません。「Say again」と言います。自分あての指示か不安なら「Verify clearance for Archer Seven Lima Alpha」（AIM 4-2-4）'],
   ['⑥ 声に出して練習する', '台本を見ながら、音声と同時に言います（パラレル・リーディング）。慣れたら台本を見ずに、少し遅れて追いかけて言います（シャドーイング）。1 回の飛行の交信を、最初から最後まで声に出してみます']])}
 <p>まわりの機への指示も聞いておくと、自分の番や、滑走路の様子が先にわかります。ただし、ほかの機への許可や指示に従って動いてはいけません（${bk.see('comm.clarify', 'わからないとき・従えないとき')}）。</p>
-${bk.key('自分のコールサインのあとに、指示が来る', '次の言葉を予想して聞く。数字は書く', 'わからなければ「Say again」。推測で動かない')}
+${bk.key('自分の無線呼出符号のあとに、指示が来る', '次の言葉を予想して聞く。数字は書く', 'わからなければ「Say again」。推測で動かない')}
 ${bk.q('地上管制の指示の後半、出発周波数が聞き取れなかった。どうする？', '推測で合わせません。聞き取れなかった所だけを聞き直します（例：「Say again departure frequency, Archer Seven Lima Alpha」）。わかった所まで復唱（readback）してもかまいません。')}
 ${bk.sim('場周経路の課目で、管制塔との交信を聞きながら飛びます。英語交信のページでは、1 回の飛行の交信を音声つきで最初から最後まで聞けます（メニュー → 英語交信）。', ['t2', '場周経路'])}` },
     ],
     terms: [['Radiotelephony', '無線電話（音声の交信）', ''], ['Air traffic control (ATC)', '航空交通管制', ''], ['ATIS', '飛行場情報放送', '飛行場情報の自動放送。AIM 4-1-13'], ['Clearance Delivery', '管制承認（クリアランス）の伝達（おもに IFR）', 'ある空港だけ'], ['Ground / Tower', '地上管制・飛行場管制', ''], ['Departure / Approach', '出発管制・進入管制', 'レーダー'], ['Center', '航空路管制', ''], ['Flight Service Station (FSS) / "Radio"', 'FSS（飛行サービス局）', '業務の名前は飛行情報業務'], ['CTAF (Common Traffic Advisory Frequency)', '共通交通情報周波数', '管制塔のない空港（または管制塔が閉まっている時間）の共通の周波数。AIM 4-1-9'], ['UNICOM', '政府のものではない空港の無線局', 'PCG'], ['Active / Standby frequency', '使用中・予備の周波数', ''], ['PTT (push-to-talk)', '送信ボタン', ''], ['Stuck mike', '押しっぱなしのマイク', ''], ['Audio panel', 'オーディオパネル', 'MIC と受信の選択'], ['Student pilot', '学生操縦士（最初の交信で名乗る）', 'AIM 4-2-4'], ['Say again', 'もう一度言ってください', ''], ['Stand by', '少し待って', ''], ['Air traffic service', '航空交通業務', '管制・飛行情報・警急などをまとめた言葉（PCG）'], ['Flight information service', '飛行情報業務', '飛行に役立つ助言と情報（PCG）'], ['Alerting service', '警急業務', '捜索救難の助けが要る機を知らせる（PCG）']],
     examples: ['離陸前、周波数を Tower に変えた → 先に数秒聞いて、誰も話していないこと・管制官の質問の途中でないことを確かめてから「LAB Tower, Archer Seven Lima Alpha, holding short runway three six, ready for departure」。', '返事がない → 音量・周波数・MIC の選択・スタックマイクを確かめる → もう一度、短く呼ぶ。', 'UNICOM が「風は 360° 8 kt、使っている滑走路は 36」と伝えた → 空港の情報で、管制の許可ではない。管制塔のない空港なら、自分で見て、CTAF で自己通報する。'],
-    cautions: ['この章の周波数・LAB 空港・コールサインは架空の練習用。実際の周波数は、最新のチャートと Chart Supplement で確かめる。', 'この教材は実際の管制にはつながらず、音声を送信しない。'],
+    cautions: ['この章の周波数・LAB 空港・無線呼出符号は架空の練習用。実際の周波数は、最新のチャートと Chart Supplement で確かめる。', 'この教材は実際の管制にはつながらず、音声を送信しない。'],
     quiz: [
       { q: '周波数を変えた直後に、まずすることは？（AIM 4-2-2）', choices: ['すぐに呼び出す', '少し聞いて、誰も話していないことを確かめる', '音量を下げる', 'トランスポンダーを 7600 にする'], answer: 1, why: 'Listen before you transmit（AIM 4-2-2）。変えた直後は、ほかの交信の途中かもしれない。割り込むと、相手の受信をふさぐ。' },
       { q: '着陸して滑走路を出たあと、地上を動く指示をもらう相手は？', choices: ['ATIS', 'Ground', 'Departure', 'Center'], answer: 1, why: '地上（誘導路）の移動は Ground。ただし、管制塔に「contact ground」と言われてから切り替える（AIM 4-3-14）。' },
-      { q: 'AIM が学生操縦士に勧めている名乗り方は？', choices: ['最初の交信で "student pilot" と言う', '交信の最後に "over" と言う', '名乗らない', 'コールサインを省く'], answer: 0, why: 'AIM 4-2-4：最初の呼び出しで student pilot と名乗ると、管制官が必要な手助けをしてくれる。' },
+      { q: 'AIM が学生操縦士に勧めている名乗り方は？', choices: ['最初の交信で "student pilot" と言う', '交信の最後に "over" と言う', '名乗らない', '無線呼出符号を省く'], answer: 0, why: 'AIM 4-2-4：最初の呼び出しで student pilot と名乗ると、管制官が必要な手助けをしてくれる。' },
       { q: 'COM2 に出発管制の周波数を合わせて呼んだのに、返事がない。オーディオパネルでまず確かめるのは？', choices: ['NAV1 の音量', 'MIC が COM2 になっているか', 'トランスポンダーのコード', '高度計の規正値'], answer: 1, why: '話す無線機は、オーディオパネルの MIC で選ぶ。COM2 に合わせても、MIC が COM1 のままなら相手に届かない（無線機・マイク・オーディオパネルの使い方の節）。' },
       { q: 'PTT を押して、すぐに話し始めると起きやすいことは？（AIM 4-2-2）', choices: ['声が大きくなりすぎる', '最初の言葉が切れて送られない', '周波数が変わる', 'ほかの機の声がよく聞こえる'], answer: 1, why: 'ボタンを押してから一呼吸おくと、最初の言葉まで送られる（AIM 4-2-2）。' },
       { q: '同じ周波数で聞こえた言葉のうち、許可ではなく「情報」なのは？', choices: ['cleared for takeoff', 'cross runway two seven', "traffic, two o'clock, four miles", 'cleared to land'], answer: 2, why: '交通情報は判断の材料で、動いてよいという許可ではない（PCG：Advisory。交信とは何か・誰と話すのかの節。時計の方位は、数字の言い方の節）。ほかの 3 つは、管制が動きを認める許可。' },
@@ -122,27 +122,27 @@ ${bk.sim('場周経路の課目で、管制塔との交信を聞きながら飛�
     written: [
       ['航空交通業務は「管制官が進路や離着陸の許可を出す仕事」だけだ、と説明されました。足りないところを、3 つの業務の働きで説明してください。', `それだけではありません。航空交通管制業務は、許可と指示で交通を安全に、順序よく流します。飛行情報業務は、天気や交通など、判断に役立つ情報を伝えます。警急業務は、捜索救難の助けが要る機を関係機関に知らせます。いま受けているのがどの業務かを知り、情報を許可と取り違えません。${bk.see('radio.why', '交信とは何か・誰と話すのか')}`, ['kiso09.q15']],
       ['周波数を変えて呼んだのに、返事がありません。何を、どの順で確かめますか。', `数秒待って、もう一度短く呼びます。それでも返事がなければ、音量、周波数が使用中の側にあるか、オーディオパネルの MIC の選択、ヘッドセット、スタックマイクを確かめます。もう一方の無線機も試します。${bk.see('radio.equip', '無線機・マイク・オーディオパネルの使い方')}`],
-      ['管制官の指示の一部が聞き取れませんでした。推測で動かずに、どう言いますか。自分あてかどうかわからないときは？', `聞き取れなかった所だけを “Say again” で聞き直します（例：“Say again departure frequency, Archer Seven Lima Alpha.”）。自分あてか不安なら、コールサインを省略せずに “Verify clearance for Archer Seven Lima Alpha” と言います。${bk.see('radio.listen', '日本語を話す人のための聞き取りのコツ')}`],
+      ['管制官の指示の一部が聞き取れませんでした。推測で動かずに、どう言いますか。自分あてかどうかわからないときは？', `聞き取れなかった所だけを “Say again” で聞き直します（例：“Say again departure frequency, Archer Seven Lima Alpha.”）。自分あてか不安なら、無線呼出符号を省略せずに “Verify clearance for Archer Seven Lima Alpha” と言います。${bk.see('radio.listen', '日本語を話す人のための聞き取りのコツ')}`],
     ],
     refs: [R.aim42, R.aim43, R.aim41, R.aim51, R.pcg, R.jo71], lessons: ['t1', 't2'] });
 
   // ======================================================================= radio 2（第 1 部 第 14 章）
   B.add({ id: 'radio2', before: 'hf', part: 'p1', t: '言葉の決まり：アルファベット・数字・標準用語', en: 'Standard words: the phonetic alphabet, numbers and phraseology',
-    summary: 'フォネティックアルファベットと数字の発音、数字の言い方（1 けたずつが基本、高度と雲の高さは特別）、コールサインの決まり、標準用語（Roger・Wilco・Say again など）の正しい意味。聞いた数字を正しく書き取り、標準用語で誤解なく答えられるようにします。',
+    summary: 'フォネティックアルファベットと数字の発音、数字の言い方（1 けたずつが基本、高度と雲の高さは特別）、無線呼出符号の決まり、標準用語（Roger・Wilco・Say again など）の正しい意味。聞いた数字を正しく書き取り、標準用語で誤解なく答えられるようにします。',
     secs: [
       { id: 'comm.basic', t: 'フォネティックアルファベットと数字の発音', scope: 'us', faa: ['PA.III.A.K2'], h: () => `
 ${bk.aim('雑音の中でも、文字や数字を 1 つずつ確実に伝えるための、決まった言い方を覚えます。')}
 ${FIG.phoneticBoard()}
 <p>文字は、ICAO（国際民間航空機関）の<b>フォネティックアルファベット</b>で言います。使うのは、最初の交信で自分の無線呼出符号（コールサイン、call sign）を名乗るときです。1 文字だけの言葉や、聞き取りにくい言葉のつづりにも使います（AIM 4-2-7）。</p>
-<p>数字も、雑音の中で区別しやすい読み方が決まっています。3 は <b>TREE</b>、5 は <b>FIFE</b>、9 は <b>NIN-ER（niner）</b>です（AIM の表）。つづりは、AIM の表では Alfa・Juliett・Xray です（X-ray と書く資料もあります）。AIM の例文には Alpha とつづるものもあり、この本のコールサインも Alpha と書きます。</p>
+<p>数字も、雑音の中で区別しやすい読み方が決まっています。3 は <b>TREE</b>、5 は <b>FIFE</b>、9 は <b>NIN-ER（niner）</b>です（AIM の表）。つづりは、AIM の表では Alfa・Juliett・Xray です（X-ray と書く資料もあります）。AIM の例文には Alpha とつづるものもあり、この本の無線呼出符号も Alpha と書きます。</p>
 <p>数字は、交信のあらゆる所に出てきます。種類ごとの言い方は、次の節で学びます。</p>
 <ul><li>高さ：高度計（気圧高度計、altimeter）が示す高度</li>
 <li>気圧：高度計に合わせる高度計規正値（アルティメターセッティング、altimeter setting）</li>
 <li>向き：針路（ヘディング、heading）は、ふつう磁方位（magnetic direction）で言います。真方位（true direction）のときは、そう付け加えます（AIM 4-2-10）。</li>
 <li>交通情報の時計の方位：12 時は、機首ではなく航跡（トラック、track）の向きです。横風（crosswind）の日の探し方は、${bk.see('comm.radar', '出発管制・レーダー：交通情報と、別れ方')} で学びます。</li>
 <li>そのほか：周波数・時刻・速度・トランスポンダー（transponder）のコード</li></ul>
-${bk.key('最初の交信では、コールサインをフォネティックで全部言う', '数字は 1 けたずつ。3 は tree、5 は fife、9 は niner', '発音は、カタカナでなく音声で確かめる')}
-${bk.q('登録記号 N12AB の飛行機。文字と数字を 1 つずつ言うと？', `<b>November One Two Alpha Bravo</b> です。機種名を付けて名乗るときの決まりは、${bk.see('comm.callsign', 'コールサインの決まり')} で学びます。`)}` },
+${bk.key('最初の交信では、無線呼出符号をフォネティックで全部言う', '数字は 1 けたずつ。3 は tree、5 は fife、9 は niner', '発音は、カタカナでなく音声で確かめる')}
+${bk.q('登録記号 N12AB の飛行機。文字と数字を 1 つずつ言うと？', `<b>November One Two Alpha Bravo</b> です。機種名を付けて名乗るときの決まりは、${bk.see('comm.callsign', '無線呼出符号の決まり')} で学びます。`)}` },
       { id: 'comm.numbers', t: '数字の言い方：高度・針路・速度・周波数・時刻・コード', scope: 'us', jcab: ['ppl.4.2.2.7', 'cpl.4.2.2.7'], faa: ['PA.III.A.K2'], h: () => `
 ${bk.aim('数字は 1 けたずつ言うのが基本です。高度と雲の高さは、特別な言い方をします。言い方の型を覚えて、聞きまちがいをなくします。')}
 <h4>① 1 けたずつ言うもの（基本）</h4>
@@ -167,16 +167,16 @@ ${bk.t(['高度', '言い方', '決まり'], [['500 ft', 'five hundred', '9,900 
 <li><b>交通情報の時計の方位</b>：「traffic, two o'clock, five miles」の時計の方位は、機首ではなく、<b>進んでいる方向（航跡）が 12 時</b>です。管制官のレーダーには航跡しか見えないからです。横風で機首をずらしているときは、言われた方位と、窓から見える方位がずれます（AIM 4-1-15）。</li></ul>
 ${bk.key('数字は 1 けたずつが基本。周波数の小数点は point', '高度と雲の高さは thousand・hundred。10,000 ft 以上は thousand の前を 1 けたずつ', '北は heading three six zero。時計の方位は航跡が 12 時')}
 ${bk.q('“Climb and maintain one zero thousand five hundred” は何 ft？ “heading three six zero” はどちら向き？', '<b>10,500 ft</b> と<b>北（360°）</b>です。10,000 ft 以上は thousand の前を 1 けたずつ言い、北は 360 と言います。')}` },
-      { id: 'comm.callsign', t: 'コールサインの決まり', scope: 'us', h: () => `
-${bk.aim('コールサインは「誰への交信か」を決める、いちばん大切な部分です。省略してよいときと、いけないときを覚えます。')}
+      { id: 'comm.callsign', t: '無線呼出符号の決まり', scope: 'us', h: () => `
+${bk.aim('無線呼出符号は「誰への交信か」を決める、いちばん大切な部分です。省略してよいときと、いけないときを覚えます。')}
 <ul><li><b>最初の交信では省略しない</b>：機種名・型式名かメーカー名のあとに、登録記号の数字と文字を言います。機種名を言うときは、<b>先頭の N を省きます</b>（例：Bonanza Six Five Five Golf）（AIM 4-2-4）。</li>
 <li><b>省略は管制官から</b>：交信が確立したあと、管制官が「機種名＋最後の 3 文字」に省略して呼んだら、操縦士もそれを使ってかまいません（AIM 4-2-4）。例：Cessna One Two Three Four Five → Cessna Three Four Five。</li>
-<li><b>似たコールサインがいるとき</b>は省略しません。自分への指示か疑わしいときは「<b>Verify clearance for</b>（完全なコールサイン）」と言います。似たコールサインの取りちがえは、ほかの機への許可を自分のものとして実行してしまう事故につながります（AIM 4-2-4）。</li>
+<li><b>似た無線呼出符号がいるとき</b>は省略しません。自分への指示か疑わしいときは「<b>Verify clearance for</b>（完全な無線呼出符号）」と言います。似た無線呼出符号の取りちがえは、ほかの機への許可を自分のものとして実行してしまう事故につながります（AIM 4-2-4）。</li>
 <li><b>エアライン</b>は、会社の呼び名と便名を、数字をまとめた形で言います（例：United Twenty-Five Heavy）（AIM 4-2-4）。日本の ANA の呼び名は “All Nippon” です。</li></ul>
-<p>この教材のコールサイン「<b>Archer Seven Lima Alpha</b>」は、練習用に決めた架空の機体（N7LA）のものです。同じ登録記号の実在の機とは関係ありません。登録記号の最後の 3 文字が 7LA なので、省略しても同じ言い方になります。本の中では「Archer 7LA」と短く書きますが、読み方は同じです。</p>
+<p>この教材の無線呼出符号「<b>Archer Seven Lima Alpha</b>」は、練習用に決めた架空の機体（N7LA）のものです。同じ登録記号の実在の機とは関係ありません。登録記号の最後の 3 文字が 7LA なので、省略しても同じ言い方になります。本の中では「Archer 7LA」と短く書きますが、読み方は同じです。</p>
 ${fic}
-${bk.key('最初の交信では、コールサインを省略しない', '省略してよいのは、管制官が先に省略してから', '自分あてか迷ったら「Verify clearance for（完全なコールサイン）」')}
-${bk.q('交信が確立したあと、管制官が「Cessna Three Four Five」と呼んできた。自分は Cessna N12345。次の交信で自分も省略してよい？', 'はい。管制官が先に省略したので、そのあとの交信では「Cessna Three Four Five」と言ってかまいません（AIM 4-2-4）。ただし、似たコールサインの機がいるときは省略しません。')}` },
+${bk.key('最初の交信では、無線呼出符号を省略しない', '省略してよいのは、管制官が先に省略してから', '自分あてか迷ったら「Verify clearance for（完全な無線呼出符号）」')}
+${bk.q('交信が確立したあと、管制官が「Cessna Three Four Five」と呼んできた。自分は Cessna N12345。次の交信で自分も省略してよい？', 'はい。管制官が先に省略したので、そのあとの交信では「Cessna Three Four Five」と言ってかまいません（AIM 4-2-4）。ただし、似た無線呼出符号の機がいるときは省略しません。')}` },
       { id: 'comm.words', t: '標準用語の正しい意味（Pilot/Controller Glossary）', scope: 'us', faa: ['PA.III.A.K2'], h: () => `
 ${bk.aim('Roger・Wilco・Affirmative などの標準用語（phraseology）は、意味をまちがえると事故になります。正しい意味と使い方を覚えます。')}
 <p>FAA の Pilot/Controller Glossary（PCG）は、操縦士と管制官のための用語集です。同じ言葉を、同じ意味で使うためのものです（PCG）。</p>
@@ -215,7 +215,7 @@ ${bk.warn('<b>よくある間違い：</b>はい・いいえで答える質問�
 ${bk.jur('words')}
 ${bk.q('管制官「Archer 7LA, say altitude.」。上昇中で、高度計は 3,480 ft。何と答える？', '「Archer 7LA, three thousand five hundred」のように、高度計の示す高度を 100 ft 単位に丸めて答えます（PCG：Say altitude）。Roger や Affirmative では答えになりません。')}` },
     ],
-    terms: [['Phonetic alphabet', 'フォネティックアルファベット', 'AIM 4-2-7'], ['Niner / Tree / Fife', '9 / 3 / 5 の発音', ''], ['Flight level', 'フライトレベル', '米国は 18,000 ft MSL から'], ['Altimeter setting', '高度計規正値', 'JO 7110.65 2-4-17'], ['Squawk', 'スコーク（トランスポンダーのコードを入れよ）', '4 けた'], ['Zulu (UTC)', '協定世界時', 'AIM 4-2-12'], ['Call sign', '無線呼出符号', 'コールサイン'], ['Abbreviated call sign', '省略したコールサイン', '管制官が先に省略してから'], ['Roger / Wilco', '受け取った / 理解して従う', ''], ['Affirmative / Negative', 'はい / いいえ', ''], ['Unable', '従えない', ''], ['Stand by', '少し待って', '許可でも不許可でもない'], ['Say again', 'もう一度言って', ''], ['Hold short of', '…の手前で止まれ', 'いつも復唱する'], ['Line up and wait', '滑走路に入って待て', '離陸の許可ではない'], ['Pilot/Controller Glossary', '操縦士と管制官の用語集', 'PCG'], ['Phraseology', '標準用語', '意味の決まった言葉']],
+    terms: [['Phonetic alphabet', 'フォネティックアルファベット', 'AIM 4-2-7'], ['Niner / Tree / Fife', '9 / 3 / 5 の発音', ''], ['Flight level', 'フライトレベル', '米国は 18,000 ft MSL から'], ['Altimeter setting', '高度計規正値', 'JO 7110.65 2-4-17'], ['Squawk', 'スコーク（トランスポンダーのコードを入れよ）', '4 けた'], ['Zulu (UTC)', '協定世界時', 'AIM 4-2-12'], ['Call sign', '無線呼出符号', 'コールサイン'], ['Abbreviated call sign', '省略した無線呼出符号', '管制官が先に省略してから'], ['Roger / Wilco', '受け取った / 理解して従う', ''], ['Affirmative / Negative', 'はい / いいえ', ''], ['Unable', '従えない', ''], ['Stand by', '少し待って', '許可でも不許可でもない'], ['Say again', 'もう一度言って', ''], ['Hold short of', '…の手前で止まれ', 'いつも復唱する'], ['Line up and wait', '滑走路に入って待て', '離陸の許可ではない'], ['Pilot/Controller Glossary', '操縦士と管制官の用語集', 'PCG'], ['Phraseology', '標準用語', '意味の決まった言葉']],
     examples: ['“Archer Seven Lima Alpha, fly heading one two zero, climb and maintain three thousand five hundred.” → 針路 120°・高度 3,500 ft。', '“Altimeter three zero zero one” → 30.01 inHg に合わせる。“Squawk zero four two five” → 0425。', '“Contact Ground point seven” → 121.7 MHz に変えて Ground を呼ぶ。'],
     cautions: ['発音のカタカナは目安にしかならない。実際の音は音声で確かめる。', '英国など ICAO の言い方とは、一部が違う（{ch:radio5}）。'],
     quiz: [
@@ -228,7 +228,7 @@ ${bk.q('管制官「Archer 7LA, say altitude.」。上昇中で、高度計は 3
     written: [
       ['Roger・Wilco・Affirmative の違いを説明してください。滑走路や高度の指示に、Wilco だけで答えてはいけないのはなぜですか。', `Roger は「最後の送信を全部受け取った」、Wilco は「受け取り、理解し、従う」、Affirmative は「はい」です。滑走路・高度・針路・hold short は、聞きまちがいがそのまま事故になるので、内容を復唱して、管制官に確かめてもらいます。${bk.see('comm.words', '標準用語の正しい意味（Pilot/Controller Glossary）')}`],
       ['13,500 ft、FL190、周波数 119.75、北向きの針路を、AIM の言い方で言ってください。', `one three thousand five hundred、flight level one niner zero、one one niner point seven five、heading three six zero です。10,000 ft 以上は thousand の前を 1 けたずつ、周波数の小数点は point、北は 360 と言います。${bk.see('comm.numbers', '数字の言い方')}`],
-      ['コールサインを省略してよいのは、どんなときですか。似たコールサインの機がいるときは、どうしますか。', `最初の交信では省略せず、管制官が先に省略してからだけ省略します。似たコールサインの機がいるときは省略しません。自分あてか疑わしければ “Verify clearance for（完全なコールサイン）” と確かめます。${bk.see('comm.callsign', 'コールサインの決まり')}`],
+      ['無線呼出符号を省略してよいのは、どんなときですか。似た無線呼出符号の機がいるときは、どうしますか。', `最初の交信では省略せず、管制官が先に省略してからだけ省略します。似た無線呼出符号の機がいるときは省略しません。自分あてか疑わしければ “Verify clearance for（完全な無線呼出符号）” と確かめます。${bk.see('comm.callsign', '無線呼出符号の決まり')}`],
     ],
     refs: [R.aim42, R.aim41, R.aim43, R.aim52, R.pcg, R.jo71], lessons: ['t1'] });
 
@@ -248,7 +248,7 @@ ${FIG.callupBlocks()}
 <p>覚え方は「<b>誰を呼ぶ → 自分は誰 → どこにいる → 何をしたい</b>」です。</p>
 ${say([['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area at three thousand five hundred, request taxi.`, 'LAB 地上管制へ。こちら Archer Seven Lima Alpha、学生操縦士。西の駐機場にいて、ATIS の B を聞きました。北東の訓練空域へ 3,500 ft で VFR。地上滑走（タキシー、taxi）を要求します。']])}
 ${fic}
-<p>この本では、コールサインを “Archer 7LA” と短く書くことがあります。声に出すときは、どちらも “Archer Seven Lima Alpha” と言います（${bk.see('comm.callsign', 'コールサインの決まり')}）。</p>
+<p>この本では、無線呼出符号を “Archer 7LA” と短く書くことがあります。声に出すときは、どちらも “Archer Seven Lima Alpha” と言います（${bk.see('comm.callsign', '無線呼出符号の決まり')}）。</p>
 <h3>1 回で言うか、短く呼ぶか</h3>
 <p>相手に<b>届くことがほぼ確かなら</b>、最初の呼び出しに要求・位置（空中なら高度）・ATIS の記号まで入れます。やり取りの回数が減り、周波数の混雑が減るからです。ただし、必要のないことまで言わないようにします（AIM 4-2-3）。</p>
 <p>返事がないときは、無線の設定を確かめてから、<b>次の呼び出しを短く</b>します（例：“LAB Approach, ${CS}.”）。相手が応えてから、要求を言います（AIM 4-2-3）。</p>
@@ -261,7 +261,7 @@ ${bk.key('最初の呼び出し：相手 → 自分（省略しない）→ 地�
 ${bk.q('出発管制を最初に呼ぶ。地上で言った “at the west ramp” の代わりに、何を入れる？', `いまの高度です。上昇中なら、目標の高度も言います。例：“LAB Departure, Archer Seven Lima Alpha, student pilot, one thousand two hundred, climbing to three thousand five hundred.”（AIM 4-1-20・${bk.see('comm.radar', '出発管制・レーダー：交通情報と、別れ方')}）`)}` },
       { id: 'comm.ack', t: '応答と周波数の変更', scope: 'us', h: () => `
 ${bk.aim('管制官からの呼び出しや指示への応え方、周波数の変え方、Class C 空域に入ってよい合図を覚えます。')}
-<p>管制官からの呼び出しや許可には、<b>必ず応答</b>します（管制官が「応答は要らない」と言ったときを除きます）。応答には、自分のコールサインを最初か最後に付けます。そして Wilco・Roger・Affirmative・Negative などの言葉か、内容を言います（AIM 4-2-3）。言葉の意味は ${bk.see('comm.words', 'Roger・Wilco などの意味')} で確かめてください。</p>
+<p>管制官からの呼び出しや許可には、<b>必ず応答</b>します（管制官が「応答は要らない」と言ったときを除きます）。応答には、自分の無線呼出符号を最初か最後に付けます。そして Wilco・Roger・Affirmative・Negative などの言葉か、内容を言います（AIM 4-2-3）。言葉の意味は ${bk.see('comm.words', 'Roger・Wilco などの意味')} で確かめてください。</p>
 ${say([
   ['Departure', `${CS}, LAB Departure, radar contact two miles north of LAB. Resume own navigation.`, 'レーダーで確認した（LAB の北 2 マイル）。自分で航法を続けよ（管制に言われた飛び方が終わり、自分で行き先へ向かう。PCG）。'],
   ['P', `Resume own navigation, ${CSS}.`, '自分で航法を続けます。'],
@@ -291,12 +291,12 @@ ${say([
 <p>Class C・D 空域に入る前の交信の確立の決まりは、${bk.see('law.airspace', '空域の種類と入る条件')} で学びました（下の「思い出そう」）。ここでは、その言い方を練習します。境界の外で、余裕をもって呼びます。下の 3 つは、管制官の答えの例です（AIM 3-2-4）。</p>
 ${say([
   ['P', `LAB Approach, ${CS}, student pilot, one five miles northeast, two thousand five hundred, squawking one two zero zero, with information Charlie, landing LAB.`, 'LAB 進入管制へ。学生操縦士。北東 15 マイル、2,500 ft、コード 1200、ATIS C を聞いた。LAB に着陸したい。', '位置・高度・コード・ATIS の記号・行き先を言う'],
-  ['Approach', `${CS}, stand by.`, '待て。', '<b>確立した</b>（コールサインを言った）。Class C に入ってよい'],
+  ['Approach', `${CS}, stand by.`, '待て。', '<b>確立した</b>（無線呼出符号を言った）。Class C に入ってよい'],
   ['Approach', `${CS}, remain outside the Class Charlie airspace and stand by.`, 'Class C の外で待て。', '確立した。ただし入るなという指示なので、外で待つ'],
-  ['Approach', 'Aircraft calling LAB Approach, stand by.', '呼んでいる機は待て。', '<b>確立していない</b>（コールサインがない）。入ってはいけない']])}
+  ['Approach', 'Aircraft calling LAB Approach, stand by.', '呼んでいる機は待て。', '<b>確立していない</b>（無線呼出符号がない）。入ってはいけない']])}
 ${fic}
-${bk.key('呼び出しと許可には必ず応答する。コールサインを付けて', '周波数は「応答してから」「できるだけ早く」変える', 'Contact は呼ぶ。Monitor は呼ばずに聞く', 'Class C：コールサイン付きの応答があれば、交信の確立')}
-${bk.recall('Class C・D 空域に入る前には、管制機関との双方向の交信（two-way radio communications）を確立します。管制官が自分のコールサインを言って答えたら、確立です（14 CFR 91.130・91.129・AIM 3-2-4）。', ['law.airspace', '空域の種類と入る条件'])}` },
+${bk.key('呼び出しと許可には必ず応答する。無線呼出符号を付けて', '周波数は「応答してから」「できるだけ早く」変える', 'Contact は呼ぶ。Monitor は呼ばずに聞く', 'Class C：無線呼出符号付きの応答があれば、交信の確立')}
+${bk.recall('Class C・D 空域に入る前には、管制機関との双方向の交信（two-way radio communications）を確立します。管制官が自分の無線呼出符号を言って答えたら、確立です（14 CFR 91.130・91.129・AIM 3-2-4）。', ['law.airspace', '空域の種類と入る条件'])}` },
       { id: 'comm.readback', t: '復唱（readback）：何を・どの順に', scope: 'us', from: ['kiso09.19'], h: () => `
 ${bk.aim('復唱（readback）で、何を・どの順に言うかを覚えます。復唱は、聞きまちがいをその場で見つけるための二重の確認です。')}
 ${FIG.readbackLoop()}
@@ -306,11 +306,11 @@ ${FIG.readbackLoop()}
 <ul><li><b>空中</b>：高度の指定・高度の制限（ある地点を決まった高度以上・以下で通れ、などの条件）・針路の指示（vector）・滑走路の指定を復唱します（AIM 4-4-7）。高度・高度の制限・針路は、<b>言われた順に</b>復唱します。</li>
 <li><b>地上</b>：滑走路の指定・滑走路に入る許可・<b>滑走路の手前で止まれ（hold short）</b>・<b>line up and wait</b> を復唱します（AIM 4-3-18）。管制官は hold short の復唱がないと、復唱を求めます（“read back hold instructions”。JO 7110.65 3-7-2）。</li>
 <li><b>最初の復唱</b>：地上滑走の指示と、離陸（takeoff）・着陸の許可を最初に復唱するときは、滑走路の番号を入れます。L・R・C があれば、それも言います（AIM 4-4-7）。</li>
-<li>すべての復唱と応答に、<b>自分のコールサイン</b>を付けます（AIM 4-4-7）。</li></ul>
+<li>すべての復唱と応答に、<b>自分の無線呼出符号</b>を付けます（AIM 4-4-7）。</li></ul>
 <p><b>line up and wait</b>（LUAW）は、離陸の許可ではありません（AIM 5-2-5）。言葉ごとにしてよいことは、${bk.see('comm.runway', '滑走路に入る許可と誤進入の防ぎ方')} にまとめます。</p>
 ${say([
   ['Ground', `${CS}, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.`, '滑走路 36 へ。誘導路 A を通り、誘導路 C の手前で止まれ。出発管制は 119.75、コードは 4271。'],
-  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '言われた順に復唱し、最後にコールサイン。'],
+  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '言われた順に復唱し、最後に無線呼出符号。'],
   ['Tower', `${CS}, LAB Tower, runway three six, line up and wait. Traffic, a Cessna on five mile final.`, '滑走路 36 に入って待て（離陸の許可ではない）。5 マイルのファイナルに Cessna。'],
   ['P', `Runway three six, line up and wait, ${CSS}.`, '滑走路の番号を入れる。'],
   ['Tower', `${CS}, runway three six, wind three four zero at eight, cleared for takeoff. Fly runway heading. Traffic, a Cessna on four mile final.`, '滑走路 36、風 340° 8 kt、離陸を許可。滑走路の方位を保って上昇せよ。4 マイルのファイナルに Cessna。'],
@@ -328,10 +328,10 @@ ${bk.t(['管制官が言うこと', 'あなたの応え方'], [
   [`交通情報 “${CSS}, traffic, one o'clock, four miles, westbound, a Cessna, two thousand five hundred.”`, `見えたら “Traffic in sight, ${CSS}.”。探しているなら “Looking, ${CSS}.”。見えないと伝えるなら “Negative contact, ${CSS}.”`],
   ['“Radar contact …”', `“${CSS}.” のように、受け取ったことを伝える`],
   ['風や規正値だけの知らせ', `“${CSS}.”。数字を復唱して確かめてもよい`]])}
-${bk.key('空中：高度・高度の制限・針路・滑走路の指定は、いつも復唱', '地上：滑走路の指定・入る許可・hold short・line up and wait は、いつも復唱', '言われた順に、コールサインを付けて。復唱のあとは返事を最後まで聞く')}
+${bk.key('空中：高度・高度の制限・針路・滑走路の指定は、いつも復唱', '地上：滑走路の指定・入る許可・hold short・line up and wait は、いつも復唱', '言われた順に、無線呼出符号を付けて。復唱のあとは返事を最後まで聞く')}
 ${bk.warn('<b>よくある間違い：</b>数字の入った指示に “Roger” だけで答えることです。管制官は、あなたが数字を正しく聞いたかを確かめられません。')}
 ${bk.jur('readback')}
-${bk.q('Ground「Archer 7LA, runway three six, taxi via Alpha, cross runway two seven.」。何を復唱する？', '滑走路の指定（runway three six）と、滑走路を横切る許可（cross runway two seven）です。言われた順に復唱し、コールサインを付けます：“Runway three six, taxi via Alpha, cross runway two seven, Archer 7LA.”（AIM 4-3-18）')}` },
+${bk.q('Ground「Archer 7LA, runway three six, taxi via Alpha, cross runway two seven.」。何を復唱する？', '滑走路の指定（runway three six）と、滑走路を横切る許可（cross runway two seven）です。言われた順に復唱し、無線呼出符号を付けます：“Runway three six, taxi via Alpha, cross runway two seven, Archer 7LA.”（AIM 4-3-18）')}` },
       { id: 'comm.clarify', t: 'わからないとき・従えないとき', scope: 'us', from: ['kiso09.20'], h: () => `
 ${bk.aim('聞き取れない・自分あてかわからない・従えない、というときの正しい言い方を覚えます。許可・指示・情報を聞き分け、推測で動かないことが、いちばん大切です。')}
 <p>米国の規則（14 CFR 91.123）は、機長（PIC：pilot in command）に、次のことを求めています。許可の内容がはっきりしないときは、<b>すぐに管制官に確かめる</b>ことです。AIM も、理解できない許可や指示は、理解できるまで確かめるよう勧めています（AIM 4-3-18）。機長は、自分の機の運航に最終的な責任を持つからです（14 CFR 91.3）。</p>
@@ -345,7 +345,7 @@ ${bk.t(['種類', '意味（PCG）', '例'], [
 <p>順番や見込みの言葉は、情報です。「number two」「まもなく離陸できる」と聞いても、滑走路に入る許可や離陸の許可にはなりません。“ready for departure” も、準備ができたという知らせで、許可ではありません（${bk.see('comm.runway', '滑走路に入る許可と誤進入の防ぎ方')}）。</p>
 ${bk.t(['場面', '言い方', 'ポイント'], [
   ['聞き取れなかった', `“Say again, ${CSS}.”<br>後半だけなら “Say again all after Charlie, ${CSS}.”`, '推測で復唱しない。推測で動かない。例の Charlie は、聞き取れた最後の言葉'],
-  ['自分あてかわからない（似たコールサインがいる）', `“Verify clearance for ${CS}.”`, 'コールサインは省略しない（AIM 4-2-4）'],
+  ['自分あてかわからない（似た無線呼出符号がいる）', `“Verify clearance for ${CS}.”`, '無線呼出符号は省略しない（AIM 4-2-4）'],
   ['地上で、経路がわからない', `“Request progressive taxi, ${CSS}.”`, '一区間ずつ案内してもらえる（AIM 4-3-18）'],
   ['指示に従えない', `“Unable, clouds ahead, ${CSS}.”`, '理由を添える。VFR で雲に入るような指示には従わない'],
   ['line up and wait のまま、長く待たされている', `“${CSS}, holding in position runway three six.”`, '離陸の許可が来なければ確かめる（AIM 5-2-5）'],
@@ -360,15 +360,15 @@ ${bk.photo('holdShort')}
 ${bk.t(['よくある間違い', '正しいやり方'], [
   ['hold short の指示に “Roger” だけで答える', `止まる所まで復唱する：“Hold short of runway three six, ${CSS}.”（AIM 4-3-18）`],
   ['line up and wait を離陸の許可と思う', '“cleared for takeoff” を待つ。LUAW を正しく復唱したのに、許可なしで離陸した例が多くあります（AIM 5-2-5）'],
-  ['ほかの機への指示を、自分への指示と思う', 'コールサインを最後まで聞く。疑わしければ Verify（AIM 4-2-4）'],
+  ['ほかの機への指示を、自分への指示と思う', '無線呼出符号を最後まで聞く。疑わしければ Verify（AIM 4-2-4）'],
   ['応答しないで周波数を変える', '応答してから変える（AIM 4-2-3）'],
   ['着陸のあと、言われる前に Ground に変える', '管制塔に “contact ground” と言われるまで変えない（AIM 4-3-14）'],
-  ['最初の交信で、コールサインを省略する', '最初は省略しない。省略は、管制官が先にしてから（AIM 4-2-4）'],
+  ['最初の交信で、無線呼出符号を省略する', '最初は省略しない。省略は、管制官が先にしてから（AIM 4-2-4）'],
   ['ほかの交信にかぶせて話す', '送信する前に聞く（AIM 4-2-2）'],
   ['長すぎる呼び出し', '型どおりに。必要のないことは言わない（AIM 4-2-3）'],
   ['はい・いいえの質問に “Roger” と答える', '“Affirmative” か “Negative”（PCG）']])}
 <p>写真の黄色い線が停止線です。hold short と言われたら、機体のどこも、この線を越えないように止まります（AIM 2-3-5）。線と標識の見方は、${bk.see('comm.runway', '滑走路に入る許可と誤進入の防ぎ方')} で学びます。</p>
-${bk.key('hold short と line up and wait は、いつも復唱する。Roger だけでは足りない', '自分のコールサインを最後まで聞く。迷ったら Verify', '周波数は応答してから変える。着陸のあとは、言われてから Ground へ')}` },
+${bk.key('hold short と line up and wait は、いつも復唱する。Roger だけでは足りない', '自分の無線呼出符号を最後まで聞く。迷ったら Verify', '周波数は応答してから変える。着陸のあとは、言われてから Ground へ')}` },
       { id: 'comm.runway', t: '滑走路に入る許可と誤進入の防ぎ方', scope: 'us', from: ['kiso09.20', 'kiso09.21', 'kiso09.22'], faa: ['PA.II.D.K2', 'PA.II.D.K3', 'PA.II.D.K5', 'PA.II.D.K6', 'PA.III.A.K9'], h: () => `
 ${bk.aim('滑走路は、許可のない機がいてはいけない場所です。地上滑走（タキシー、taxi）の指示と、滑走路に入る・横切る許可を聞き分けます。離陸（takeoff）と着陸の許可も区別して、滑走路誤進入（runway incursion）を防ぎます。')}
 ${FIG.runwayEntry()}
@@ -409,11 +409,11 @@ ${bk.recall('line up and wait と離陸の許可の聞き分けは、復唱の�
 ${bk.q('地上管制「Archer 7LA, runway three six, taxi via Alpha.」。誘導路 A の途中で、滑走路 27 を横切ります。そのまま横切ってよい？', 'いいえ。滑走路は 1 本ずつ、はっきりした横切る許可が要ります（AIM 4-3-18）。この指示には滑走路 27 を横切る許可がないので、滑走路 27 の停止線の手前で止まり、管制官に確かめます。')}` },
     ],
     terms: [['Initial contact (initial callup)', '最初の呼び出し', 'AIM 4-2-3'], ['Acknowledge', '応答する', 'AIM 4-2-3'], ['Readback', '復唱', 'AIM 4-4-7・4-3-18'], ['Contact / Monitor', '交信せよ（呼ぶ）/ 聞いて待て（呼ばない）', 'PCG'], ['Two-way radio communications', '双方向の交信', 'Class C・D に入る条件（AIM 3-2-4）'], ['Line up and wait (LUAW)', '滑走路に入って待て', '離陸の許可ではない（AIM 5-2-5）'], ['Progressive taxi', '一区間ずつの地上滑走の案内', 'AIM 4-3-18'], ['Holding in position', '滑走路の上で待っている', 'AIM 5-2-5'], ['Verify clearance for …', '…への許可か確かめてください', 'AIM 4-2-4'], ['Runway holding position marking', '停止線', '滑走路の手前の停止線。AIM 2-3-5'], ['Hearback', 'ヒアバック', '管制官が復唱を聞いて確かめること（JO 7110.65 2-4-3（確かめる義務）・NASA ASRS（語））'], ['ATC clearance', '管制承認', 'クリアランス。経路や空域に入る許可。滑走路の許可は離陸許可・着陸許可と呼び分ける（PCG）'], ['Takeoff clearance / Landing clearance', '離陸許可 / 着陸許可', '滑走路の許可（cleared for takeoff / cleared to land）'], ['ATC instructions', '管制の指示', '決まった動きを求める（PCG）'], ['Advisory', '助言・情報', '判断の材料で、許可ではない（PCG）'], ['Runway incursion', '滑走路誤進入', 'FAA Runway Safety'], ['Runway holding position sign', '滑走路の手前の標識', '赤地に白。AIM 2-3-8'], ['Hot spot', 'ホットスポット', '衝突や誤進入の危険があった記録がある場所（PCG）'], ['Runway entrance lights (REL)', '停止線の赤い灯', 'AIM 2-1-6'], ['Enhanced taxiway centerline', '強化された誘導路中心線', '停止線が近い合図（AIM 2-3-4）'], ['Taxi instructions', '地上滑走の指示', '滑走路に入る・横切る許可を含まない（AIM 4-3-18）']],
-    examples: ['“Archer 7LA, hold short of runway three six.” → “Hold short of runway three six, Archer 7LA.”（Roger だけでは足りない）', '“Aircraft calling LAB Approach, stand by.” → コールサインが言われていないので、Class C には入らない（AIM 3-2-4）。', '“Runway three six, taxi via Alpha.” で、途中に滑走路 27 がある → 滑走路 27 の停止線の手前で止まり、横切る許可を確かめる（AIM 4-3-18）。'],
+    examples: ['“Archer 7LA, hold short of runway three six.” → “Hold short of runway three six, Archer 7LA.”（Roger だけでは足りない）', '“Aircraft calling LAB Approach, stand by.” → 無線呼出符号が言われていないので、Class C には入らない（AIM 3-2-4）。', '“Runway three six, taxi via Alpha.” で、途中に滑走路 27 がある → 滑走路 27 の停止線の手前で止まり、横切る許可を確かめる（AIM 4-3-18）。'],
     cautions: ['交信の例は米国（FAA）の言い方です。英国など ICAO の言い方とは一部が違います（{ch:radio5}）。', '実際の交信では、その空港の手順と管制官の指示が優先です。'],
     quiz: [
-      { q: 'AIM 4-4-7 が、空中で復唱すべきとしているものは？', choices: ['交通情報', '高度・高度の制限・針路・滑走路の指定を含む指示', '風と気温', 'ATIS の内容'], answer: 1, why: 'AIM 4-4-7：高度・高度の制限・針路（vector）・滑走路の指定は、言われた順に、コールサインを付けて復唱する。' },
-      { q: '管制官が「Aircraft calling LAB Approach, stand by.」と応えた。Class C 空域に入ってよい？', choices: ['入ってよい', '入ってはいけない（コールサインがない）', '高度を下げれば入ってよい', 'トランスポンダーを 7700 にして入る'], answer: 1, why: 'AIM 3-2-4：コールサインを付けて応答されたときだけ、交信が確立する。コールサインのない応答では確立していない（空域の種類と入る条件の節）。' },
+      { q: 'AIM 4-4-7 が、空中で復唱すべきとしているものは？', choices: ['交通情報', '高度・高度の制限・針路・滑走路の指定を含む指示', '風と気温', 'ATIS の内容'], answer: 1, why: 'AIM 4-4-7：高度・高度の制限・針路（vector）・滑走路の指定は、言われた順に、無線呼出符号を付けて復唱する。' },
+      { q: '管制官が「Aircraft calling LAB Approach, stand by.」と応えた。Class C 空域に入ってよい？', choices: ['入ってよい', '入ってはいけない（無線呼出符号がない）', '高度を下げれば入ってよい', 'トランスポンダーを 7700 にして入る'], answer: 1, why: 'AIM 3-2-4：無線呼出符号を付けて応答されたときだけ、交信が確立する。無線呼出符号のない応答では確立していない（空域の種類と入る条件の節）。' },
       { q: '周波数を変えるよう指示された。正しいのは？', choices: ['黙ってすぐ変える', '応答してから、できるだけ早く変える', '変えずに待つ', '一度ほかの周波数を試す'], answer: 1, why: 'AIM 4-2-3：応答がないと、管制官は指示が届いたのか、無線が壊れたのかを区別できない。' },
       { q: 'Tower「Archer 7LA, runway three six, line up and wait.」の意味は？', choices: ['離陸してよい', '滑走路に入り、離陸の向きにそろえて待つ（離陸の許可ではない）', '滑走路の手前で待つ', '滑走路を横切ってよい'], answer: 1, why: 'AIM 5-2-5：LUAW は離陸の許可ではない。“cleared for takeoff” を聞いてから離陸する。' },
       { q: '管制官「Archer 7LA, monitor tower one one eight point three.」。正しいのは？', choices: ['118.3 に変えて、すぐ管制塔を呼ぶ', '応答してから 118.3 に変え、呼ばずに聞いて待つ', '今の周波数のまま待つ', '118.3 に変えて、ATIS の記号を言う'], answer: 1, why: 'Monitor は「その周波数を聞いて待て」で、自分からは呼ばない（PCG）。変える前に応答する（AIM 4-2-3）。' },
@@ -472,7 +472,7 @@ ${bk.aim('Ground に地上滑走を頼み、滑走路・経路・止まる所・
 ${say([
   ['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area at three thousand five hundred, request taxi.`, 'LAB 地上管制へ。こちら Archer Seven Lima Alpha、学生操縦士（student pilot）。西の駐機場にいて ATIS B を聞いた。北東の訓練空域へ 3,500 ft で VFR。地上滑走を要求。', '型：相手 → 自分（最初は省略しない）→ 位置 → ATIS → 行き先 → 要求（AIM 4-2-3・4-2-4）'],
   ['Ground', `${CS}, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.`, '滑走路 36 へ。誘導路 A 経由、誘導路 C の手前で止まれ。出発管制 119.75、コード 4271。', '「滑走路 36 へ」は、滑走路に入る・横切る許可ではない（AIM 4-3-18）'],
-  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '滑走路 36・A 経由・C の手前で停止・出発 119.75・コード 4271、Archer 7LA。', '滑走路の指定は、いつも復唱（AIM 4-3-18）。誘導路の hold short も、止まる所なので復唱する。コールサインを付ける（AIM 4-4-7）'],
+  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '滑走路 36・A 経由・C の手前で停止・出発 119.75・コード 4271、Archer 7LA。', '滑走路の指定は、いつも復唱（AIM 4-3-18）。誘導路の hold short も、止まる所なので復唱する。無線呼出符号を付ける（AIM 4-4-7）'],
   ['Ground', `${CSS}, continue via Alpha to runway three six.`, '誘導路 A をそのまま滑走路 36 へ。', ''],
   ['P', `Continue via Alpha to runway three six, ${CSS}.`, '誘導路 A で滑走路 36 へ、Archer 7LA。', '']])}
 <p>復唱したら、トランスポンダーに 4271、無線機の予備に 119.75 を入れておきます。誘導路 A を走り、C の手前で止まります。</p>
@@ -533,7 +533,7 @@ ${say([['ATIS', 'LAB information Charlie. One five five three Zulu. Wind three s
 <p>帰りは南西へ飛びます。地上 3,000 ft を超える高さで水平に飛ぶときは、高度が決まっています（14 CFR 91.159）。磁航路（magnetic course）が 180〜359° のとき（南西向きも入る）は、偶数千 ft＋500 ft（4,500 ft など）です。この例では、雲の下に十分に離れて、地上 3,000 ft より低い 2,500 ft で帰ります。</p>
 ${say([
   ['P', `LAB Approach, ${CS}, student pilot, one five miles northeast, two thousand five hundred, squawking one two zero zero, with information Charlie, landing LAB.`, 'LAB 進入管制へ。学生操縦士。北東 15 マイル、2,500 ft、コード 1200、ATIS C を聞いた、LAB に着陸したい。', '位置・高度・コード・行き先を言う（AIM 3-2-4 は、Class C の業務を頼むことも挙げている）。Class C の境界より十分手前で呼ぶ'],
-  ['Approach', `${CS}, LAB Approach, squawk zero four two five and ident.`, 'コード 0425 にして IDENT ボタンを押せ。', 'コールサインを付けて応えたので、交信が確立した（AIM 3-2-4）。Ident：トランスポンダーの識別の機能（PCG）'],
+  ['Approach', `${CS}, LAB Approach, squawk zero four two five and ident.`, 'コード 0425 にして IDENT ボタンを押せ。', '無線呼出符号を付けて応えたので、交信が確立した（AIM 3-2-4）。Ident：トランスポンダーの識別の機能（PCG）'],
   ['P', `Squawk zero four two five, ${CSS}.`, 'コード 0425、Archer 7LA。', 'コードを入れて IDENT を押す'],
   ['Approach', `${CSS}, radar contact one four miles northeast of LAB. Enter left downwind runway three six. Contact LAB Tower one one eight point three.`, 'レーダーで確認（LAB の北東 14 マイル）。滑走路 36 の左ダウンウインドに入れ。LAB 管制塔 118.3 と交信せよ。', ''],
   ['P', `Left downwind runway three six, Tower one one eight point three, ${CSS}.`, '滑走路 36 の左ダウンウインド、管制塔 118.3、Archer 7LA。', '左右と滑走路の番号を必ず入れる']])}
@@ -566,7 +566,7 @@ ${say([
   ['P', `Runway three six, cleared for the option, ${CSS}.`, '', ''],
   ['Tower', `${CSS}, go around.`, '着陸復行せよ。', ''],
   ['P', `Going around, ${CSS}.`, '着陸復行する、Archer 7LA。', 'まず操縦（出力・姿勢・形態）。そのあとで応答']])}
-<ul><li><b>cleared for the option</b> は、ふつう訓練で使う許可で、教官が学生の判断を見るのに役立ちます（AIM 4-3-23・PCG）。滑走路で止まる・遅れるときは、すぐに伝えます。</li>
+<ul><li><b>cleared for the option</b> は、ふつう訓練で使う許可です。操縦教員（教官、flight instructor）が学生の判断を見るのに役立ちます（AIM 4-3-23・PCG）。滑走路で止まる・遅れるときは、すぐに伝えます。</li>
 <li><b>go around</b> と言われたら、すぐに着陸復行を始めます。VFR の機は、ほかに指示がなければ、滑走路の上を上昇しながら場周高度まで上がります。そして、クロスウインド（crosswind leg）から場周に入ります（PCG）。操作は第 2 部で学びます（${ahead('ops.goaround', 'ゴーアラウンド')}）。</li></ul>
 ${bk.t(['オプションで選べること', '中身'], [
   ['タッチアンドゴー（touch-and-go）', '接地して、止まらず、滑走路を出ずに、そのまま離陸する（PCG）'],
@@ -618,7 +618,7 @@ ${bk.t(['いつ（AIM 4-1-9）', '例（架空の Lakeside 空港・滑走路 18
 <li>到着の機は 10 マイル手前から、出発の機はエンジンをかけてから 10 マイル離れるまで、CTAF を聞いて必要なことを言います（AIM 4-1-9）。</li>
 <li>VFR の直進着陸（straight-in）は、空中衝突の危険が増えるので FAA は勧めていません。直進で入る機に優先はありません（AIM 4-1-9・14 CFR 91.113）。</li>
 <li>管制塔のない空港の手順は、双方向の無線を求めていません。だから、無線を積んでいない機もいます。場周では、ほかの機を特によく探します（AC 90-66C 9.12.2）。</li></ul>
-<p class="small mute">Lakeside 空港とコールサイン「Archer Seven Lima Alpha（Archer 7LA）」は架空の練習用です。実際の周波数で使わないでください。</p>
+<p class="small mute">Lakeside 空港と無線呼出符号（call sign）「Archer Seven Lima Alpha（Archer 7LA）」は架空の練習用です。実際の周波数で使わないでください。</p>
 ${bk.key('管制塔がない＝自分で言う。空港名を最初と最後に', '言う所：地上滑走の前・滑走路に入る前・10 マイル手前・ダウンウインド・ベース・ファイナル・滑走路を出たとき', '“active runway” でなく番号。“Traffic in the area, please advise” は使わない')}
 ${bk.q('Lakeside 空港へ向かう途中、CTAF で「Lakeside traffic, Cessna … left base runway one eight」と聞こえた。何がわかる？', '別の機が、滑走路 18 の左場周のベース（ファイナルの手前）にいることです。自分が場周に入るときは、その機の後ろに付けるよう、位置と順番を考えて見張り（see and avoid）を続けます。')}` },
       { id: 'comm.xpdr', t: 'トランスポンダーとコード', scope: 'us', jcab: ['ppl.1.2.5.6', 'cpl.1.6.5.3', 'ir.2.5.2'], faa: ['PA.III.A.K4', 'PA.VI.B.K4'], h: () => `
@@ -630,7 +630,7 @@ ${FIG.xpdrCodes()}
 ${bk.t(['コード', '意味', '出典'], [['1200', 'VFR（管制から指定がないとき）', 'AIM 4-1-20'], ['7500', '不法な干渉（ハイジャック）', 'AIM 6-3-4'], ['7600', '無線の故障', 'AIM 6-4-2'], ['7700', '緊急（遭難・緊急のとき）', 'AIM 6-2-2']])}
 <p>コードを変えるときは、途中で 7500・7600・7700 を通らないようにします。たとえば 2700 から 7200 に変えるときは、2700 → 2200 → 7200 の順にします（7700 を通らない。AIM 4-1-20）。地上の設備で警報が出てしまうからです。</p>
 <h4>動かし方</h4>
-<ul><li>管制空域では、トランスポンダーを高度を送る位置にして、言われたコードで動かします（14 CFR 91.215(c)・AIM 4-1-20）。どの位置か（ALT など）は、機体の手引書で確かめます。</li>
+<ul><li>管制空域（controlled airspace）では、トランスポンダーを高度を送る位置にします。コードは、言われたものにします（14 CFR 91.215(c)・AIM 4-1-20）。どの位置か（ALT など）は、機体の手引書で確かめます。</li>
 <li>ADS-B Out を積んでいる機は、いつも送信にしておきます（14 CFR 91.225(f)）。</li>
 <li>地上でも、誘導路と滑走路の上では、高度を送る位置と ADS-B Out を入れます。駐機場に着いたら、STBY か OFF にします（AIM 4-1-20）。</li>
 <li>滑走路状態表示灯（RWSL）の REL・THL は、地上の監視から情報を受けて動きます。その監視は、トランスポンダーと ADS-B Out の信号を使います。RWSL のある空港では、駐機場を出てから戻るまで入れておきます（AIM 2-1-6）。</li>
@@ -652,7 +652,7 @@ ${bk.t(['', '遭難（distress）', '緊急（urgency）'], [
   ['言葉', '<b>MAYDAY</b> を 3 回', '<b>PAN-PAN</b> を 3 回（英国のつづりは PAN PAN）'],
   ['優先', 'すべての交信より優先。その周波数のほかの局は、送信をやめる', '遭難の交信のほかは、すべてより優先']])}
 <p><b>伝える順番</b>（AIM 6-3-2。必要なものを、できればこの順に）：</p>
-<ol><li>MAYDAY ×3 か PAN-PAN ×3</li><li>呼ぶ相手の局</li><li>コールサインと機種</li><li>何が起きたか</li><li>天気</li><li>意図と要求</li><li>いまの位置と針路（ヘディング、heading）：迷ったら、最後にわかっていた位置・時刻と、そこからの針路</li><li>高度</li><li><b>残りの燃料（分で言う）</b></li><li>乗っている人数</li><li>そのほか役に立つこと</li></ol>
+<ol><li>MAYDAY ×3 か PAN-PAN ×3</li><li>呼ぶ相手の局</li><li>無線呼出符号と機種</li><li>何が起きたか</li><li>天気</li><li>意図と要求</li><li>いまの位置と針路（ヘディング、heading）：迷ったら、最後にわかっていた位置・時刻と、そこからの針路</li><li>高度</li><li><b>残りの燃料（分で言う）</b></li><li>乗っている人数</li><li>そのほか役に立つこと</li></ol>
 ${say([
   ['P', `Mayday, Mayday, Mayday, LAB Approach, ${CS}, engine failure, forced landing in a field, one zero miles northeast of LAB, two thousand five hundred, two people on board.`, '遭難。LAB 進入管制へ。Archer 7LA。エンジン故障。畑に不時着（forced landing）する。LAB の北東 10 マイル。2,500 ft。搭乗 2 名。', 'まず操縦：最良滑空速度（最良滑空、best glide speed）と着陸する場所。それから通報'],
   ['P', `Pan-pan, Pan-pan, Pan-pan, LAB Approach, ${CS}, uncertain of position, request vectors to LAB, last known position one five miles northeast of LAB at one six two zero Zulu, heading two two zero, two thousand five hundred, six zero minutes of fuel remaining, two people on board.`, '緊急。位置が不確か。LAB へ向かう針路の案内（vector）を求める。最後にわかった位置は 16:20 UTC に LAB の北東 15 マイル、そこから針路 220、2,500 ft、燃料は残り 60 分、搭乗 2 名。', '燃料は分で（AIM 6-3-2・PCG：Fuel remaining）']])}
@@ -666,9 +666,9 @@ ${say([
 <h4>管制がしてくれること</h4>
 <p>呼ばれた局は、すぐに応え、助け、ほかの機関を動かします。必要なら、捜索救難の機関に知らせます（AIM 6-3-1）。</p>
 <p>レーダーの管制官は、交信できてレーダーの範囲にいる VFR の機に、針路の案内（vector）をくれます。案内は助言で、安全に飛ぶ責任は操縦士に残ります（AIM 6-2-1）。</p>
-<p>交信を確立したら、指示に従います。わからないことや従えないことは、聞き返します。どうしても必要でなければ、周波数を変えません（AIM 6-3-2）。不時着が迫ったら、時間があれば ELT（航空機用救命無線機）の状態・目に見える目印・機体の色も伝えます（AIM 6-3-2）。</p>
+<p>交信を確立したら、指示に従います。わからないことや従えないことは、聞き返します。どうしても必要でなければ、周波数を変えません（AIM 6-3-2）。不時着が迫ったら、時間があれば、目に見える目印と機体の色も伝えます。航空機用救命無線機（ELT：emergency locator transmitter）の状態も伝えます（AIM 6-3-2）。</p>
 <h4>燃料が少ないとき：minimum fuel</h4>
-<p>燃料が減って、着いても遅れをほとんど受け入れられないときは、最初の交信でコールサインのあとに “minimum fuel” と言います（AIM 5-5-15）。これは緊急ではなく、遅れると緊急になるかもしれない、という知らせです。優先の扱いも意味しません（AIM 5-5-15・PCG）。安全に降りるのに優先が要りそうなら、燃料の不足で緊急を宣言し、残りの燃料を分で言います（AIM 5-5-15）。</p>
+<p>燃料が減って、着いても遅れをほとんど受け入れられないときは、最初の交信で無線呼出符号のあとに “minimum fuel” と言います（AIM 5-5-15）。これは緊急ではなく、遅れると緊急になるかもしれない、という知らせです。優先の扱いも意味しません（AIM 5-5-15・PCG）。安全に降りるのに優先が要りそうなら、燃料の不足で緊急を宣言し、残りの燃料を分で言います（AIM 5-5-15）。</p>
 ${bk.key('不安を感じたら、その時点で助けを求める（AIM 6-1-2）', '差し迫った危険は MAYDAY、安全に関わる状態は PAN-PAN。どちらも 3 回', '燃料は分で言う。すぐに交信できなければ 7700 にして呼ぶ', '計器飛行証明がなければ、雲に入るような上昇はしない')}
 ${bk.sim('エンジン故障の課目で、正しい遭難通報を選びます。', ['e3', '上空でのエンジン故障'])}` },
       { id: 'comm.nordo', t: '無線が使えないとき・灯火信号', scope: 'us', jcab: ['ppl.4.1.2.4', 'cpl.4.1.2.4'], faa: ['PA.III.A.K3', 'PA.III.A.K5', 'PA.III.A.K6'], h: () => `
@@ -683,7 +683,7 @@ ${bk.t(['状況', 'すること（AIM 4-2-13）'], [
   ['送信も受信も故障', '外か上で流れを見きわめてから場周に入り、管制塔を見続けて灯火信号を受ける'],
   ['出発の前に故障', '直す。直せなければ管制塔に電話して、無線なしで出発してよいか許可をもらう']])}
 <p><b>応え方</b>：飛行中は、昼は<b>翼を振り</b>、夜は<b>着陸灯か航空灯を点滅</b>させます（AIM 4-2-13）。地上では、昼は補助翼（エルロン、aileron）か方向舵（ラダー、rudder）を動かします。夜は着陸灯か航空灯を点滅させます（AIM 4-3-13）。灯火信号の意味は、米国の規則（14 CFR 91.125）に決められています。</p>
-${bk.key('故障を疑ったら：操作を確かめる → 7600 → VFR を保ち、適した空港に早めに着陸', '管制塔のある空港へは、外か上で流れを見てから場周に入り、灯火信号を見る', '緑の点滅は、空中では「戻れ」、地上では「タキシーしてよい」')}
+${bk.key('故障を疑ったら：操作を確かめる → 7600 → VFR を保ち、適した空港に早めに着陸', '管制塔のある空港へは、外か上で流れを見てから場周に入り、灯火信号を見る', '緑の点滅は、空中では「戻れ」、地上では「地上滑走してよい」')}
 ${bk.jur('nordo.vfr', 'light')}` },
       { id: 'comm.sfb', t: 'Sanford（KSFB）で気をつけること', scope: 'us', h: () => `
 ${bk.aim('平行な滑走路が 3 本ある Sanford（KSFB）で、取り違えやすい所と、管制塔が求めていることを知ります。')}
@@ -694,10 +694,10 @@ ${FIG.sfbLayout()}
 <li><b>Hot Spot HS1</b>：誘導路 C と滑走路 27C の標示が取り違えられやすい場所です。滑走路 18 に着陸した機が、誘導路 C へ右に曲がるはずが、滑走路 27C へ右に曲がってしまう誤進入が起きています。9L/27R に着陸して、滑走路 18 へ出てから誘導路 C へ右に曲がるよう言われた機も、同じ取り違えをしています。迷ったら、止まるか進むかを管制官に確かめます。</li>
 <li>滑走路の標示は白、離着陸に使わない所（誘導路の標示など）は黄色です。</li>
 <li>9L/27R はおもな運用の滑走路、9R/27L はおもな飛行訓練の滑走路です。</li>
-<li><b>滑走路の指定・誘導路・hold short の指示は、コールサインを付けて、同じ送信の中で復唱（readback）</b>します。足りなければ、周波数にほかの機がいなくても言い直しを求められます。</li>
+<li><b>滑走路の指定・誘導路・hold short の指示は、無線呼出符号を付けて、同じ送信の中で復唱（readback）</b>します。足りなければ、周波数にほかの機がいなくても言い直しを求められます。</li>
 <li>Line Up and Wait を使います。離陸の許可ではありません（${bk.see('comm.runway', '滑走路に入る許可と誤進入の防ぎ方')}）。</li>
 <li>訓練の場周では、upwind・crosswind・base をそれぞれ約 1 マイルで飛びます。</li>
-<li>ソロのときは、最初の交信で SOLO と伝えます。LAHSO（Land and Hold Short Operations：着陸して、交差する滑走路などの手前で止まる許可）が出ることがあります。学生操縦士（student pilot）は LAHSO を受けないことになっているので、“unable” と伝えます（AIM 4-3-11）。</li>
+<li>単独飛行（ソロ、solo flight）のときは、最初の交信で SOLO と伝えます。LAHSO（Land and Hold Short Operations）が出ることがあります。着陸して、交差する滑走路などの手前で止まる許可です。学生操縦士（student pilot）は LAHSO を受けないことになっているので、“unable” と伝えます（AIM 4-3-11）。</li>
 <li>管制塔の運用は 6:30〜23:00（現地時間）です。空域は Class C で、その上に Orlando の Class B があります（${bk.see('law.airspace', '空域の種類と入る条件')}）。</li></ul>
 <p>管制塔が閉まっている時間は、CTAF で自己通報します（周波数は Chart Supplement で確かめる）。図の配置は FAA の空港データ（2026 年 10 月）によるものです。同じデータの、滑走路の長さと場周の向きです。</p>
 ${bk.t(['滑走路', '長さ', '場周の側と向き'], [
@@ -739,13 +739,13 @@ ${bk.key('型を覚え、声に出し、数字を書く', '本物の交信を、
 ${bk.sim('課目「英語交信②」で 1 回の飛行の交信を通して聞き、「英語交信④」で音声の聞き取りを練習できます。チェアフライングと、この教材を使った練習の組み立ては {ch:sim} にあります。', ['k4', '英語交信②：1 回の飛行'], ['k6', '英語交信④：聞き取り'])}` },
     ],
     terms: [['CTAF (Common Traffic Advisory Frequency)', '共通交通情報周波数', 'AIM 4-1-9'], ['UNICOM', '政府のものではない空港の無線局', 'PCG'], ['MULTICOM 122.9', '地上局のない空港の自己通報の周波数', 'AIM 4-1-9'], ['Self-announce', '自己通報（返事を期待しない通報）', 'AIM 4-1-9'], ['Traffic pattern altitude', '場周高度（プロペラ機は地上 1,000 ft）', 'AIM 4-3-3'], ['Straight-in', '直進着陸', 'AIM 4-1-9'], ['Squawk / Ident', 'コードを入れよ / IDENT を押せ', 'AIM 4-1-20'], ['ADS-B Out', '位置を自分から送る装置', '14 CFR 91.225'], ['Mayday / Pan-pan', '遭難通信 / 緊急通信', 'AIM 6-3-1。英国のつづりは PAN PAN'], ['Fuel remaining', '残りの燃料（分で言う）', 'AIM 6-3-2'], ['121.5 MHz', '緊急の周波数', ''], ['Any station', '聞いているどの局でも', 'AIM 6-3-1'], ['Light gun signals', '灯火信号', '14 CFR 91.125'], ['Hot spot', '衝突や滑走路への誤進入の危険が起きてきた、特に注意する場所', 'PCG'], ['LAHSO', '着陸して、交差する滑走路・誘導路などの手前で止まる許可（学生は受けない）', 'AIM 4-3-11'], ['QNH / Affirm / Pass your message', 'ICAO・英国の言い方', 'CAP 413'], ['CAP 413', '英国の無線電話の手引き', 'UK CAA'], ['Conspicuity code', '英国の目立たせるためのコード（7000・2000）', 'CAP 413'], ['Primary / secondary radar', '一次レーダー / 二次レーダー', '反射で見る / トランスポンダーが答える（AIM 4-5-1・4-5-2）'], ['Mode A / Mode C', 'コードで答える / 高度で答える', 'PCG：Mode'], ['Minimum fuel', '燃料が少ないことの知らせ', '緊急ではない（AIM 5-5-15）'], ['Traffic circuit', '場周経路（英国の言い方）', 'CAP 413'], ['Radio check / Readability', '無線の確かめ / 聞こえ方の段階（1〜5）', 'CAP 413']],
-    examples: ['管制塔のない空港へ 10 マイル：“Lakeside traffic, Archer Seven Lima Alpha, one zero miles northeast, two thousand five hundred, descending, Lakeside.”（AIM 4-1-9 の型。空港名とコールサインは架空）', '無線が聞こえない → 操作を確かめる → 7600 → 空港の外側で使っている滑走路を見きわめ、管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信 → 3〜5 マイルで位置を送信して場周に入り、管制塔の緑の連続光で着陸。昼は翼を振って応える。', 'コードを 2700 から 7200 に変える → 2700 → 2200 → 7200（7700 を通らない。AIM 4-1-20）。'],
+    examples: ['管制塔のない空港へ 10 マイル：“Lakeside traffic, Archer Seven Lima Alpha, one zero miles northeast, two thousand five hundred, descending, Lakeside.”（AIM 4-1-9 の型。空港名と無線呼出符号は架空）', '無線が聞こえない → 操作を確かめる → 7600 → 空港の外側で使っている滑走路を見きわめ、管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信 → 3〜5 マイルで位置を送信して場周に入り、管制塔の緑の連続光で着陸。昼は翼を振って応える。', 'コードを 2700 から 7200 に変える → 2700 → 2200 → 7200（7700 を通らない。AIM 4-1-20）。'],
     cautions: ['Lakeside 空港は架空です。実際の空港の周波数と手順は、Chart Supplement で確かめてください。', 'Sanford の情報は 2026 年の FAA の資料によります。変わることがあるので、飛ぶ前に最新の資料・NOTAM・管制官の指示で確かめてください。', '英国・ICAO の言い方は代表的な例だけです。詳しくは CAP 413 など、その国の公式の資料で確かめてください。'],
     quiz: [
       { q: '管制塔のない空港での自己通報で、AIM が勧めていないものは？', choices: ['空港の名前を最初と最後に言う', '滑走路の番号を言う', '“Traffic in the area, please advise” と言う', '10 マイル手前で位置を知らせる'], answer: 2, why: 'AIM 4-1-9：“Traffic in the area, please advise” は決まった言い方ではなく、使わない。' },
       { q: 'AIM 6-1-2 が「少なくとも緊急の状態」とする時点は？', choices: ['エンジンが止まったとき', '位置・燃料・天気などに不安を感じた時点', '着陸できないとき', '管制に言われたとき'], answer: 1, why: '不安を感じた時点で助けを求める。危険になってからでは遅い（AIM 6-1-2）。' },
       { q: 'VFR の天気で、無線がまったく使えなくなった。正しい対応は？', choices: ['7700 にして雲の中を急ぐ', '7600 にし、VFR のまま飛んで、適した空港に早めに着陸する', 'そのまま予定どおり 2 時間飛ぶ', 'トランスポンダーを切る'], answer: 1, why: 'AIM 6-4-2：無線の故障は 7600。VFR の天気なら VFR を続けて、無理のない範囲で早めに（as soon as practicable）着陸する（IFR の規則 14 CFR 91.185(b) と同じ考え方。AIM 6-4-1）。' },
-      { q: '飛行中、管制塔から緑の点滅の灯火信号。意味は？', choices: ['着陸してよい', '着陸のために戻れ（あとで緑の連続）', '空港は危険', '旋回を続けよ'], answer: 1, why: '14 CFR 91.125・AIM 4-3-13：飛行中の緑の点滅は「戻れ」。着陸の許可は緑の連続。地上の緑の点滅は「タキシーしてよい」。' },
+      { q: '飛行中、管制塔から緑の点滅の灯火信号。意味は？', choices: ['着陸してよい', '着陸のために戻れ（あとで緑の連続）', '空港は危険', '旋回を続けよ'], answer: 1, why: '14 CFR 91.125・AIM 4-3-13：飛行中の緑の点滅は「戻れ」。着陸の許可は緑の連続。地上の緑の点滅は「地上滑走してよい」。' },
       { q: 'PAN-PAN の通報で、残りの燃料はどう言う？', choices: ['時間で（one hour）', '分で（six zero minutes）', 'ガロンで', 'ポンドで'], answer: 1, why: 'AIM 6-3-2 と PCG（Fuel remaining）：残りの燃料は、分で言う。' },
       { q: 'コードを 2700 から 7200 に変える。AIM が勧める順は？', choices: ['2700 → 7700 → 7200', '2700 → 7500 → 7200', '2700 → 2200 → 7200', '2700 → 7600 → 7200'], answer: 2, why: 'AIM 4-1-20：7500・7600・7700 を途中で通ると、地上の設備で警報が出てしまう（トランスポンダーとコード）。' },
     ],

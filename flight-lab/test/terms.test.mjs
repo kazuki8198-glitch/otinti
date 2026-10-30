@@ -37,10 +37,10 @@ const EGOV = { kokuho: 'textbook/rewrite/sources/egov/articles/kokuho', kisoku: 
 const plain = s => String(s || '').replace(/<[^>]+>/g, '');
 const squeeze = s => String(s).replace(/\s+/g, '');
 
-test('terms: the file attaches FL.terms only, 150 to 320 rows (DESIGN 3.5 planned about 150; W04 made 297) of the right shape', () => {
+test('terms: the file attaches FL.terms only, 150 to 460 rows (DESIGN 3.5 planned about 150; W04 made 297, W24 added 134 checked against JCAB\'s papers) of the right shape', () => {
   assert.deepEqual(Object.keys(ctx), ['FL']);
   assert.deepEqual(Object.keys(FL), ['terms']);
-  assert.ok(LIST.length >= 150 && LIST.length <= 320, `${LIST.length} terms`);
+  assert.ok(LIST.length >= 150 && LIST.length <= 460, `${LIST.length} terms`);
   assert.ok(Object.isFrozen(T) && Object.isFrozen(LIST) && LIST.every(Object.isFrozen), 'frozen: the products read it, nobody writes it');
   const ids = new Set();
   for (const e of LIST) {

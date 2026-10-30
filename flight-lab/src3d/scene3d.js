@@ -45,14 +45,17 @@ const VISOR = new THREE.Color(0.018, 0.019, 0.021);       // the hood's visor: w
 // What the cockpit hides from the pilot's eye, for the landmarks' labels (they are drawn over the canvas, and one placed
 // under the glareshield would sit on the 3D G1000 or the cowling). Per azimuth in the aircraft's own frame (from 120°
 // left to 120° right, 5° apart), the elevation of the cockpit's lower edge seen from the eye: the sill of the pilot's
-// own window, the panel and its glareshield, the Archer's cowling over it (the Seminole has none ahead), the right
-// door's sill. Measured from CADET's cockpit with rays from the eye (the glass not counted, the window posts left out:
-// a label is wider than a post); the left side re-measured with the walls made in Blender (the window's raised surround,
-// the storm window's hinge strip at −50…−30°; its wire bail, thin, left out like a post).
+// own window, the panel and its glareshield, the Archer's cowling over it (the Seminole's nose instead), the right
+// door's sill. Measured from CADET's cockpit with rays from the eye (the glass not counted; the edge is where the
+// blockage becomes continuous looking down, so a window post's band on its own does not set it: a label is wider than
+// a post), the deepest over rays a few degrees either side of each azimuth. Re-measured 2026-10-30 with the
+// glareshield bowed like the real one's (its ends, and the panel's top edge under them, fall away; a cheek fills each
+// A-pillar's foot): ahead the crest and the cowling are as they were, the corners sit a little lower, and at the rear
+// right the instructor seat's back — not the window — is what the left seat's eye meets.
 const EDGE = {
   az0: -120, step: 5,
-  pa28: [-27.5, -33.5, -36, -37, -37.5, -37.5, -38, -37.5, -37.5, -37, -36, -35, -34, -32.5, -26.5, -24.5, -22.5, -20.5, -21, -18, -15.5, -11.5, -11, -7.5, -5.5, -5, -5, -5.5, -6.5, -7.5, -8, -9, -9, -8.5, -6, -10.5, -11.5, -12, -12.5, -12.5, -13, -13, -13, -13, -13, -12.5, -12.5, -12, -11.5],
-  pa44: [-27.5, -33.5, -36, -37, -37.5, -37.5, -38, -37.5, -37.5, -37, -36, -35, -34, -32.5, -26.5, -24.5, -22.5, -20.5, -21, -18, -15.5, -11.5, -11.5, -10, -12, -11.5, -11.5, -11.5, -11, -10.5, -10, -9.5, -9, -8.5, -6, -10.5, -11.5, -12, -12.5, -12.5, -13, -13, -13, -13, -13, -12.5, -12.5, -12, -11.5],
+  pa28: [-30.5, -35.5, -37, -37.5, -38, -38.5, -38.5, -38.5, -38, -37.5, -37, -36, -35, -33.5, -32, -26, -24, -22, -21.5, -20, -17, -13, -12.5, -9.5, -7, -6, -6, -6.5, -7.5, -8, -9, -10, -10, -9.5, -11, -12, -12.5, -13, -13.5, -13.5, -14, -14, -14, -14, -13.5, 0, -6, 0, 0],
+  pa44: [-30.5, -35.5, -37, -37.5, -38, -38.5, -38.5, -38.5, -38, -37.5, -37, -36, -35, -33.5, -32, -26, -24, -22, -21.5, -20, -17, -13, -12.5, -11.5, -10, -12.5, -12.5, -8.5, -8.5, -9, -9, -9.5, -9.5, -9.5, -11, -12, -12.5, -13, -13.5, -13.5, -14, -14, -14, -14, -13.5, 0, -6, 0, 0],
 };
 // FLIGHT LAB's own notes on the 3D G1000. CADET's screens (g1000.js createGlass) pass every fillText through panelText,
 // which takes FLIGHT LAB's teaching notes out (in CADET the screens are the aircraft's), by assigning a wrapper to each

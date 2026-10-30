@@ -108,7 +108,7 @@ test('cockpit: builds within budget', () => {
   assert.deepEqual(cp.fromCode, []);
   assert.deepEqual([...cp.band].sort(), [
     'bench.belt.pa28', 'bench.black.pa28', 'bench.chrome.pa28', 'bench.red.pa28', 'bench.seat.pa28', 'bench.seatSide.pa28',
-    'glareshield.glare', 'glareshield.glareLip', 'glareshield.rubber', 'header.wall', 'headliner.roof', 'pillars.wall',
+    'glareshield.glare', 'glareshield.glareLip', 'glareshield.lens', 'glareshield.rubber', 'glareshield.slot', 'header.wall', 'headliner.roof', 'pillars.wall',
     'roofTrims.trim', 'seals.rubber', 'seats.alu', 'seats.belt', 'seats.black', 'seats.chrome', 'seats.red', 'seats.seat', 'seats.seatSide',
     'visorHw.steel', 'visors.wall',
     'walls.black', 'walls.chrome', 'walls.postAlu', 'walls.rubber', 'walls.wall', 'walls.wallDark', 'walls.wallLow', 'walls.white',

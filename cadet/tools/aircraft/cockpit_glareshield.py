@@ -11,6 +11,13 @@
 #   forward round a vertical axis (a tight quarter turn, its section a little lower towards the wall) and stops just
 #   inside the side wall, buried in the foot of the A-pillar trim that comes down to it. A closed solid (its edges, tucked
 #   into the hood, joined inside it; capped).
+#   The whole glareshield bows like the real one (Piper's Archer TX panel photo; POH VB-2749 Fig 7-9): flat across the
+#   middle, its ends dropping towards the A-pillars — the spec's glare.bow (flat to |x| 0.25, then a quartic fall to
+#   28 mm at |x| 0.545, the roll's end). How far the ends may drop is set by what must stay seen under them (check():
+#   the screens and the aims, as before, and the panel's top print — the speeds over the G5 (the Seminole's five lines
+#   bind: 12 mm of room at the ray's crossing), the ELEV TRIM label, the Seminole's oil-cooler placard, the ELT and the
+#   hour meters); the panel's top edge in cockpit.js falls by the same bow, and a code-made cheek fills the A-pillar's
+#   foot where the dropped end leaves the windshield's base. The crest straight ahead is unchanged (12.25°).
 # - the hood (glareshield.glare): a closed solid under the roll: its top a shelf just under the roll's crest, falling
 #   straight to the windshield's base (meeting the glass at ws.y0 − 0.0045, its front face upright from there, 1.5 mm off
 #   the glass at its top), its underside from there back to the panel's face and on, level, to under the roll; its back
@@ -18,6 +25,10 @@
 #   the eye (its top lies under the line of sight over the crest): it is there for the shadows and to close the shape.
 # - the rubber joint (glareshield.rubber): a small bead along the hood's front, from its top 3 mm up the glass (no higher:
 #   at x = 0, where the hood is longest, the line of sight over the crest meets the glass at y 0.4249).
+# - the panel light (glareshield.lens): the LED strip under the roll that lights the panel — a thin lens band along the
+#   roll's underside, following the bow and the turns, 0.6 mm proud of the underside's surface.
+# - the defroster outlets (glareshield.slot): nine dark slots in a row on the hood's top at the windshield's base,
+#   laid on the top's slope (which falls with the bow at the ends).
 # Made to the spec (cockpit-spec.mjs: the eye, the panel's face pz and top ptop, the windshield ws, the window band, and
 # the old procedural lip's profile glare.lip and half-width glare.x that it replaces; every height and depth below is
 # taken from these, see layout()): the hood's underside at the old lip's (glare.lip[0]), the roll's 2 mm under it;
@@ -28,8 +39,9 @@
 # controls under it. Detail where it is seen: the roll's section (15 points, the seam), the hood's coarse. check() asserts
 # these (and that neither solid has a face turned inwards) on the triangulated objects.
 # It needs, with the glb that has it: in cockpit.js, the panel frame's top 8 mm lower (else its flat top shows as a grey
-# line between the cowling and the crest), the firewall's top lower (else its carpet shows over the crest at 10–12° left)
-# and the glareshield's box in AO_OCC reaching aft over the roll (z1 −1.02); in test/cockpit.test.mjs, its three nodes in
+# line between the cowling and the crest) and falling with the bow (the panel's top edge, the hood's underside and the
+# AO_OCC boxes stepped to it), the firewall's top lower (else its carpet shows over the crest at 10–12° left)
+# and the glareshield's box in AO_OCC reaching aft over the roll (z1 −1.02); in test/cockpit.test.mjs, its five nodes in
 # the list of the model's parts.
 # Coordinates and nodes: build_cockpit.py's (the cabin's frame, metres, x right, y up, z aft). Surfaces (cockpit.js's
 # table S): glareLip (grained vinyl), glare (textured paint), rubber. COLOR_0: rgb = the table's colour, the seam groove
@@ -37,7 +49,8 @@
 import math
 
 GROUPS = ('glareshield',)
-MAX_TRIS = 1000                       # (it replaces the 768 triangles of cockpit.js's procedural hood and lip)
+MAX_TRIS = 1250                       # (it replaces the 768 triangles of cockpit.js's procedural hood and lip; the bow's
+                                      # finer columns, the LED strip and the defroster slots take it from 870 to ~1,150)
 DEG = math.pi / 180
 
 # the views of the preview: yaw, pitch [, eye] (build_cockpit.py: yaw 0 looks forward, + to the left)
@@ -76,7 +89,8 @@ RC = 0.025                            # the radius of the ends' turn (to the cor
                                       # panel (a wider turn left a light wedge of it in view under the roll's end)
 TAPER = 0.15                          # how much lower the roll's section is (above its underside) at the end of its turn
 CREST_DEG = 12.25                     # the crest's depression from the eye straight ahead (see the header)
-N_STRAIGHT, N_TURN = 10, 4            # the roll's columns: across between the turns, in each turn
+N_STRAIGHT, N_TURN = 14, 4            # the roll's columns: across between the turns, in each turn (14 across: the bow's
+                                      # curve wants the finer spacing; the hood's columns are taken from these)
 
 # what must stay seen under the roll from the eye (cockpit.test.mjs 'the view from the left seat': the PFD's and MFD's
 # image corners and top middle, 1 mm in, and the ends of the softkey strip; the screens are placed by cockpit.js's PFD,
@@ -87,6 +101,11 @@ SEEN = [(-0.404, 0.42975, -1.0825), (-0.300, 0.42975, -1.0825), (-0.196, 0.42975
         (-0.053, 0.42975, -1.0825), (0.051, 0.42975, -1.0825), (0.155, 0.42975, -1.0825), (-0.053, 0.27981, -1.0825), (0.155, 0.27981, -1.0825)]
 AIMS = {'pfd.navVol': (-0.420, 0.426, -1.073), 'pfd.comVol': (-0.180, 0.426, -1.073), 'mfd.navVol': (-0.069, 0.426, -1.073),
         'mfd.comVol': (0.171, 0.426, -1.073), 'audio.COM1MIC': (-0.139, 0.428, -1.078), 'audio.COM1': (-0.110, 0.428, -1.078)}
+# the panel's top print and fittings, whose tops must stay seen under the bowed ends (cockpit.js: the speeds over the G5
+# — the Archer's three lines to y 0.4107, the Seminole's five to 0.4146 —, the Seminole's ELEV TRIM label (0.4084) and
+# oil-cooler placard (0.4073), the ELT's plate top, the BILLING meter's top, the G5 bezel's top corners)
+PRINT = [(-0.49, 0.4107, -1.0998), (-0.49, 0.4146, -1.0998), (-0.4475, 0.4084, -1.0998), (0.293, 0.4073, -1.0998),
+         (0.345, 0.393, -1.097), (0.42, 0.3835, -1.098), (-0.533, 0.373, -1.084), (-0.447, 0.373, -1.084)]
 # the panel round it, for the occlusion (the spec's panel: cockpit.js's PFD, MFD, AUD, G5 and g1000.js's BEZEL; the audio
 # panel's size as cockpit.js makes it): in layout()
 AUD_SIZE = (0.062, 0.018)
@@ -100,6 +119,12 @@ def layout(ctx):
     if getattr(ctx, '_glare', None): return ctx._glare
     S, EYE, bandX, WS = ctx.S, ctx.EYE, ctx.bandX, ctx.WS
     L = _L(); G = S['glare']; lip = G['lip']
+    L.BOW = G['bow']                                      # the bow: [flat to |x|, full drop at |x|, depth, power]
+    def drop(x):
+        ax = abs(x); b = L.BOW
+        if ax <= b[0]: return 0.0
+        u = min(1.0, (ax - b[0]) / (b[1] - b[0])); return b[2] * u ** b[3]
+    L.drop = drop
     L.PZ, L.PTOP, L.PBOT = S['pz'], S['ptop'], S['pbot']
     L.YU = lip[0][1]                                      # the hood's underside: the old lip's (0.451)
     L.YB = L.YU - 0.002                                   # the roll's underside, 2 mm under the hood's
@@ -151,19 +176,20 @@ def roll_columns(L):
 
 def roll_point(L, ctx, col, d, h):
     side, a = col
-    if side == 0: return ctx.Vector((a, section_y(L, h, 0.0), L.ZK + d))
+    if side == 0: return ctx.Vector((a, section_y(L, h, 0.0) - L.drop(a), L.ZK + d))
     r = RC + d
-    return ctx.Vector((side * (L.XA + r * math.sin(a)), section_y(L, h, a), L.ZC + r * math.cos(a)))
+    x = side * (L.XA + r * math.sin(a))
+    return ctx.Vector((x, section_y(L, h, a) - L.drop(x), L.ZC + r * math.cos(a)))
 
 
 def roll_local(L, co):
-    # (d, h, alpha) of a point on the roll: h its height in the section before scaling and tapering
+    # (d, h, alpha) of a point on the roll: h its height in the section before scaling, tapering and the bow's drop
     ax = abs(co.x)
     if ax <= L.XA: d, a = co.z - L.ZK, 0.0
     else:
         dx, dz = ax - L.XA, co.z - L.ZC; d, a = math.hypot(dx, dz) - RC, math.atan2(dx, dz)
     k = L.S * (1 - TAPER * taper(a))
-    return d, (co.y - L.YB) / k, a
+    return d, (co.y + L.drop(ax) - L.YB) / k, a
 
 
 def roll(ctx):
@@ -202,11 +228,12 @@ def hood_section(L, ctx, x, end=False):
     at = (lambda y: sd * (ctx.bandX(y) - 0.002)) if end else (lambda y: x)
     ax = abs(at(L.YB + HOOD_H * L.S)); zk = hood_core_z(L, ax)
     a = math.asin(ctx.clamp((ax - L.XA) / RC, 0, 1))
-    yh = section_y(L, HOOD_H, a)
+    yh = section_y(L, HOOD_H, a) - L.drop(ax)              # (the shelf under the roll, falling with the bow)
+    yu = L.YU - L.drop(ax)                                # (the underside's back, on the panel's bowed top edge)
     zb = zk - 0.006
     zf = ctx.wsZ(at(L.YF), L.YF) + 0.0015                  # (the front face upright, 1.5 mm off the glass at its top)
     zs = max(zk - 0.030, ctx.wsZ(at(yh), yh) + 0.0025)    # (near the walls the glass sweeps back over the shelf)
-    pts = [(zb, yh), (zs, yh), (zf, L.YF), (zf, L.YFB), (L.PZ, L.YU), (zb, L.YU)]
+    pts = [(zb, yh), (zs, yh), (zf, L.YF), (zf, L.YFB), (L.PZ, yu), (zb, yu)]
     return [ctx.Vector((at(y), y, z)) for z, y in pts]
 
 
@@ -237,7 +264,7 @@ def rubber(ctx):
         x = -L.BX + 2 * L.BX * i / 12
         zg = lambda y: ctx.wsZ(x, y)
         a = math.asin(ctx.clamp((abs(x) - L.XA) / RC, 0, 1))
-        yh = section_y(L, HOOD_H, a); zk = hood_core_z(L, abs(x))
+        yh = section_y(L, HOOD_H, a) - L.drop(x); zk = hood_core_z(L, abs(x))
         zs = max(zk - 0.030, zg(yh) + 0.0025)
         top = lambda z: L.YF + (yh - L.YF) * (z - (zg(L.YF) + 0.0015)) / (zs - (zg(L.YF) + 0.0015))   # the hood's top at z
         z0 = zg(L.YF) + 0.009; z1 = zg(L.YF) + 0.004
@@ -247,11 +274,49 @@ def rubber(ctx):
     return p
 
 
+def _under(d):
+    # a point of the roll's underside at depth d (between BOL 1 and 3), its section height interpolated
+    for (d0, h0), (d1, h1) in zip(BOL[1:], BOL[2:]):
+        if d <= d1: return d, h0 + (h1 - h0) * (d - d0) / (d1 - d0)
+    return BOL[-1]
+
+
+def lens(ctx):
+    # the LED strip under the roll: a thin band on its underside (d 0.004…0.014 of the section), 0.6 mm proud of it,
+    # along every column of the roll (the straights and the turns, falling with the bow)
+    L = layout(ctx); p = ctx.Piece(); rows = []
+    for c in roll_columns(L):
+        row = []
+        for d in (0.004, 0.014):
+            dd, hh = _under(d); pt = roll_point(L, ctx, c, dd, hh)
+            row.append(ctx.Vector((pt.x, pt.y - 0.0006, pt.z)))
+        rows.append(row)
+    p.grid(rows, ctx.C['lens'], flip=True)
+    return p
+
+
+def defrost(ctx):
+    # the defroster outlets: nine slots on the hood's top at the windshield's base, each laid on the top's slope
+    # (the segment from the shelf (zs, yh) to the glass (zf, YF), taken at its 0.45…0.75), 0.7 mm off it
+    L = layout(ctx); p = ctx.Piece()
+    for i in range(9):
+        xc = -0.42 + 0.105 * i
+        a = math.asin(ctx.clamp((abs(xc) - L.XA) / RC, 0, 1))
+        yh = section_y(L, HOOD_H, a) - L.drop(xc); zk = hood_core_z(L, abs(xc))
+        zs = max(zk - 0.030, ctx.wsZ(xc, yh) + 0.0025); zf = ctx.wsZ(xc, L.YF) + 0.0015
+        dz, dy = zf - zs, L.YF - yh; ln = math.hypot(dz, dy); nz, ny = dy / ln, -dz / ln   # the slope's normal, up
+        def pt(x, f): return ctx.Vector((x, yh + dy * f + ny * 0.0007, zs + dz * f + nz * 0.0007))
+        p.grid([[pt(xc - 0.031, 0.45), pt(xc + 0.031, 0.45)], [pt(xc - 0.031, 0.75), pt(xc + 0.031, 0.75)]], ctx.C['slot'], flip=True)
+    return p
+
+
 def parts(ctx):
     return {
         'glareshield.glareLip': (roll(ctx), roll_col(ctx)),
         'glareshield.glare': (hood(ctx), None),
         'glareshield.rubber': (rubber(ctx), None),
+        'glareshield.lens': (lens(ctx), None),
+        'glareshield.slot': (defrost(ctx), None),
     }
 
 
@@ -318,15 +383,19 @@ def check(ctx, objs):
             h = first(EYE, ahead(dn, az)); dn += 0.02
         assert h and h[0] == 'glareshield.glareLip', ('the edge at', az, h)
         edges[az] = round(dn - 0.02, 2)
-    # under it: the screens' image and the controls' aim points seen from the eye (with 2 mm to spare)
-    for name, p in [('screen', q) for q in SEEN] + list(AIMS.items()):
+    # under it: the screens' image, the controls' aim points and the panel's top print seen from the eye (2 mm to spare)
+    for name, p in [('screen', q) for q in SEEN] + list(AIMS.items()) + [('print', q) for q in PRINT]:
         for up in (0.0, 0.002):
             t = V(p) + V((0, up, 0)); d = t - EYE; h = first(EYE, d, d.length)
             assert h is None, ('hidden under the glareshield', name, p, up, h)
     # the roll's underside over the panel's bezels (their tops at y 0.447) and inside the side walls (the side glass ~16 mm
     # beyond); the hood against the walls
     vs = [v.co for v in lip.data.vertices]
-    assert min(v.y for v in vs if v.z > L.ZK - 0.004) > L.YB - 0.0005, ('the roll comes down onto the panel', min(v.y for v in vs))
+    assert min(v.y for v in vs if v.z > L.ZK - 0.004 and abs(v.x) <= 0.25) > L.YB - 0.0005, ('the roll comes down onto the panel', min(v.y for v in vs))
+    # the bow: the crest at the turns' ends (their top point at |x| ≈ 0.52, the section tapered there) is well below
+    # the crest at the middle — by the drop there less the taper's share
+    crest = lambda x0, x1: max(v.y for v in vs if x0 <= abs(v.x) <= x1)
+    assert crest(0.0, 0.02) - crest(0.515, 0.525) > L.BOW[2] * 0.6, ('the bow at the ends', crest(0.0, 0.02), crest(0.515, 0.525))
     for ob, slack in ((lip, -0.0015), (hd, 0.0005), (rb, 0.0)):
         for v in ob.data.vertices:
             assert abs(v.co.x) <= ctx.bandX(v.co.y) + slack, (ob.name, 'through the side wall', tuple(v.co))
@@ -348,7 +417,7 @@ def check(ctx, objs):
     y_top = 0.6 - first(V((0, 0.6, zt)), V((0, -1, 0)))[1]
     # the margins (for the report): the roll's underside over the lines of sight to the screens' top, in the section
     def line_y(p, z): return EYE.y + (p[1] - EYE.y) * (EYE.z - z) / (EYE.z - p[2])
-    under = min(v.y - line_y(SEEN[1], v.z) for v in vs if v.z > L.ZK - 0.004)
+    under = min(v.y - line_y(SEEN[1], v.z) for v in vs if v.z > L.ZK - 0.004 and -0.45 < v.x < 0.2)   # (the span the screens' sight lines cross; the bowed ends sit lower, off those lines)
     bb0 = V((min(v.x for v in vs), min(v.y for v in vs), min(v.z for v in vs))); bb1 = V((max(v.x for v in vs), max(v.y for v in vs), max(v.z for v in vs)))
     print('glareshield: crest scale %.4f, edge straight ahead %.2f°, edges by azimuth %s; the roll\'s underside %.1f mm over the sight '
           'line to the screens\' top; the roll from %s to %s; the hood under the centre strip at y %.4f'

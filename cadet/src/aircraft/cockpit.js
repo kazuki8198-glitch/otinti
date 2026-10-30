@@ -118,8 +118,19 @@ CON44.flap.aim = flapAt((CON44.flap.grip[0] + CON44.flap.len) / 2, 0.014, 0.006,
 const SEAT = { z: -0.58, w: 0.44 };               // the front seats (at ±SEAT_X): their cushions' centre z and width
 const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };    // where the right seat holds the instructor (see instructorSeat): his knees
 // clear of the right yoke's horns as it rolls; the seats made in Blender are shaped round him there (cockpit_seats.py BACK_AFT)
-// the glareshield's lip in profile ([z, y], from under it to the top of its roll; then the hood falls to the windshield)
-const GLARE = { x: 0.553, lip: [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795]] };
+// the glareshield's lip in profile ([z, y], from under it to the top of its roll; then the hood falls to the windshield);
+// bow: the glareshield's bow like the real one's (Piper's Archer TX panel photo; POH VB-2749 Fig 7-9) — flat to |x|,
+// then a quartic fall of depth to the roll's end at |x| (the spec carries it to tools/aircraft/cockpit_glareshield.py,
+// whose check() holds it to what must stay seen under the ends: the panel's top print binds, the Seminole's speeds
+// placard tightest). The panel's top edge below falls by the same bow (panelTopY), and a cheek at each A-pillar's foot
+// (below) fills where the dropped end leaves the windshield's base (WS.y0 stays straight: the exterior and FLIGHT LAB
+// share it)
+const GLARE = { x: 0.553, lip: [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795]], bow: [0.25, 0.545, 0.028, 4] };
+const glareDrop = x => { const [x0, x1, d, p] = GLARE.bow, ax = Math.abs(x); return ax <= x0 ? 0 : d * Math.min(1, (ax - x0) / (x1 - x0)) ** p; };
+const panelTopY = x => PTOP - 0.008 - glareDrop(x);       // the panel frame's and face's top edge, following the bow
+// the panel's top corners turn a little towards the side walls (Fig 7-9's outline): past |x| 0.535 the face and the
+// frame sweep aft, 12 mm at the corner (the G5, at the left end, sits on the flat part, as its placard does)
+const panelWrapZ = x => { const ax = Math.abs(x); return ax <= 0.535 ? 0 : 0.012 * ((ax - 0.535) / 0.018) ** 2; };
 // the yokes' hit boxes ([w, h, d] and an offset from the yoke's pivot; the horns' at ±x; top: the tall hub's narrower upper
 // part, over the hub's box — one box as wide as the hub's foot would take the clicks on the dimmers —, up to the cap of
 // the 0.134 m hub made in Blender (round R3, tools/aircraft/cockpit_yokes.py: ~72 % of the grips' height, as in Piper's
@@ -400,11 +411,15 @@ const WALLS = {
 // the bench's cushion and back; the console between the front seats (its full height to where its face slopes down —
 // FCON.zt —, then the face's lower half); the baggage floor
 const AO_OCC = [
-  [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.56, 0.56, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
+  [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.25, 0.25, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
   [-0.51, -0.07, FLOOR, -0.095, -0.94, -0.245], [-0.51, -0.07, -0.15, 0.56, -0.30, -0.02], [-0.48, -0.10, 0.49, 0.69, -0.13, 0.01],
   [0.07, 0.51, FLOOR, -0.095, -0.94, -0.245], [0.07, 0.51, -0.15, 0.56, -0.30, -0.02], [0.10, 0.48, 0.49, 0.69, -0.13, 0.01],
   [-0.52, 0.52, FLOOR, -0.085, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.54, 0.74, 0.95], [-0.07, 0.07, FLOOR, FCON.y1 - 0.01, FCON.zt - 0.02, FCON.z1],
   [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT], [-0.065, 0.065, FLOOR, (FLOOR + FCON.y1) / 2, FCON.z0 + 0.03, FCON.zt - 0.02],
+  // the glareshield's bowed ends, either side of its middle box (the second box above): stepped down with the bow —
+  // appended, not inserted: tools/aircraft/cockpit_seats.py reads the seats' boxes by their places in this list
+  [-0.42, -0.25, 0.44, 0.49, -1.31, -1.02], [0.25, 0.42, 0.44, 0.49, -1.31, -1.02],
+  [-0.56, -0.42, 0.415, 0.48, -1.22, -1.02], [0.42, 0.56, 0.415, 0.48, -1.22, -1.02],
 ];
 // the overhead air duct's fairing along the roof's centreline aft of the overhead switch panel (POH VB-2266 7.23: the
 // outlets overhead at each seat, the duct fed by the blower; the brochure photo through the door: a raised centre
@@ -959,20 +974,51 @@ export function buildCockpit(FL, A, opts = {}) {
   add(at(rbox(1.04, 0.18, AFT - 0.95, 0.02), [0, FLOOR + 0.09, (AFT + 0.95) / 2]), S.carpet);
 
   // ============================================================ the panel, the glareshield
-  add(at(rbox(1.106, PTOP - PBOT - 0.008, 0.035, 0.008, 2), [0, (PTOP + PBOT - 0.008) / 2, PZ - 0.018]), S.panel);   // (its top under the sight line over the glareshield's crest)
-  add(sheet((u, v, o) => o.set(-0.545 + 1.09 * u, PBOT + 0.008 + (PTOP - PBOT - 0.016) * v, PZ + 0.0002), 22, 9), S.panel);
+  // the panel's frame: a box whose top edge falls with the glareshield's bow (panelTopY); its top under the sight
+  // line over the glareshield's crest. The outline is drawn 1.5 mm inside, the bevel bringing it back to size
+  { const sh = new THREE.Shape(), x0 = -0.5515, x1 = 0.5515, yb = PBOT - 0.0025;
+    sh.moveTo(x0, yb);
+    for (let i = 0; i <= 28; i++) { const x = x0 + (x1 - x0) * i / 28; sh.lineTo(x, panelTopY(x) - 0.0015); }
+    sh.lineTo(x1, yb); sh.closePath();
+    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.032, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1 });
+    g.translate(0, 0, PZ - 0.034);                       // (its faces where the old box's were: front PZ − 0.0005, back PZ − 0.0355)
+    // (the frame is NOT swept aft at its corners as the face is: its cap is triangulated with long diagonals, so
+    // shifting only the corner vertices would tent the whole front across the panel and bury the switches under
+    // it. Its front stays 0.7 mm behind the face everywhere — the face carries the sweep, and the cheeks above
+    // fill the corners where the two part)
+    add(smooth(g), S.panel);
+  }
+  add(sheet((u, v, o) => { const x = -0.545 + 1.09 * u; o.set(x, PBOT + 0.008 + (panelTopY(x) - PBOT - 0.008) * v, PZ + 0.0002 + panelWrapZ(x)); }, 36, 9), S.panel);
   // its screw heads (dark steel, round its edges; the sub-panels' and plates' with them)
   const screw = (x, y, z = PZ + 0.0004) => add(at(new THREE.CircleGeometry(0.0021, 6), [x, y, z]), S.screw);
-  for (const sx of [-1, 1]) for (const y of [0.115, 0.205, 0.415]) screw(sx * 0.541, y);
+  for (const sx of [-1, 1]) for (const y of [0.115, 0.205, 0.415]) screw(sx * 0.541, y, PZ + 0.0004 + panelWrapZ(0.541));
   for (const x of [-0.49, -0.33, -0.19, 0.11, 0.30, 0.49]) screw(x, PBOT + 0.007);
-  // (without the model) the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's base
+  // (without the model) the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's
+  // base; the lip falls with the bow, as the model's does
   if (!fromModel('glareshield')) add(sheet((u, v, o) => {
     const x = -GLARE.x + 2 * GLARE.x * u, zb = wsZ(x, WS.y0);
     const z1 = zb - 0.002, y1 = WS.y0 - 0.002, slope = (f) => [-1.05 + (z1 + 1.05) * f, 0.4795 + (y1 - 0.4795) * f];   // the hood falls straight to the windshield
-    const prof = [...GLARE.lip, slope(0.33), slope(0.67), [z1, y1]];
+    const prof = [...GLARE.lip.map(([z, y]) => [z, y - glareDrop(x)]), slope(0.33), slope(0.67), [z1, y1]];
     const f = v * (prof.length - 1), i = Math.min(prof.length - 2, Math.floor(f)), t = f - i;
     o.set(x, prof[i][1] + (prof[i + 1][1] - prof[i][1]) * t, prof[i][0] + (prof[i + 1][0] - prof[i][0]) * t);
-  }, 24, 16, false), S.glare);
+  }, 36, 16, false), S.glare);
+  // the A-pillars' feet: a cheek in the wall's colour at each end, filling the corner the bowed glareshield end leaves
+  // against the windshield's base — from the glass (its front edge 2–4 mm off it), over the panel's bowed top corner,
+  // back under the roll's dropped end (its top tucked into the hood and the roll); its underside follows the panel's
+  // top edge. In code, with or without the model (it is an interior piece; WS itself stays straight)
+  for (const sd of [-1, 1]) {
+    const sh = new THREE.Shape(), prof = [[-1.183, 0.400], [-1.148, 0.4245], [-1.085, 0.4495], [-1.030, 0.4435], [-1.030, 0.400]];
+    sh.moveTo(prof[0][0], prof[0][1]); for (const q of prof.slice(1)) sh.lineTo(q[0], q[1]); sh.closePath();
+    const g = new THREE.ExtrudeGeometry(sh, { depth: 0.056, bevelEnabled: false });
+    g.applyMatrix4(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0), new THREE.Vector3(sd, 0, 0)).setPosition(sd * 0.500, 0, 0));
+    const p = g.attributes.position;
+    if (sd > 0) for (let i = 0; i < p.count; i += 3) {   // (the basis swaps the axes (a reflection): turn its faces back outwards)
+      const ax = p.getX(i + 1), ay = p.getY(i + 1), az = p.getZ(i + 1);
+      p.setXYZ(i + 1, p.getX(i + 2), p.getY(i + 2), p.getZ(i + 2)); p.setXYZ(i + 2, ax, ay, az);
+    }
+    for (let i = 0; i < p.count; i++) if (Math.abs(p.getY(i) - 0.400) < 1e-6) p.setY(i, panelTopY(p.getX(i)) - 0.004);
+    add(smooth(g), S.wall);
+  }
 
   // ============================================================ the displays (G1000 type)
   const BZ = PZ + BEZEL.depth;                                       // the bezels' front face

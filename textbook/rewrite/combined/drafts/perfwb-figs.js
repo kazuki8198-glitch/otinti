@@ -43,6 +43,24 @@
 //        category's conditions shown as a note. ARCHER_WB keeps its rows and functions (example(), fwd()) and gains
 //        the POH's numbers it uses (ramp, taxi, bagMax, fuelMaxGal, utility).
 // Every number drawn here is one the text gives with its source (perfwb.claims.json); text ≥ 12 (≥ 10 px at 390 px).
+//
+// revise-perfwb (2026-10-30; reports/revise-perfwb.md):
+//   redrawn fuelPlan       perf.fuel — the climb from POH Fig. 5-17 (2 gal, 12 NM, start/taxi/takeoff fuel included) and
+//                          the cruise over the remaining 108 NM (the text's new example); replaces book-figs.js's fuelPlan.
+//   redrawn wbEnvelope     perf.wbex — ③ is the landing (② − 8 lb start/taxi fuel − 20 gal = 2,302 lb, 90.9 in), as the
+//                          text and the written answers say; replaces book-figs.js's wbEnvelope. ARCHER_WB.example() is
+//                          not changed (its ③ is ramp − 20 gal; nothing reads it now but the old perf.wbex).
+//   perfChartRead          the reference lines drawn thick and labelled, a legend for them and the guide lines;
+//   takeoffDistance        the midpoint labelled with its distance, the caption says AIM 7-6-8 is for unimproved airports;
+//   perfPlanChain          ≒ 2,479 ft; ⑤ carburetor heat OFF (AFH ch. 9);
+//   wbLimits               the caption says the example airplane cannot carry four 170 lb people and full fuel (POH 6.1
+//                          adds maximum baggage); 地上で使う燃料 in place of 地上走行;
+//   wbLoadingGraph         the fuel line's label moved off the dashed 340 lb reading line;
+//   rangeWind              the caption opens ISA −15 ℃ (−8 ℃ at 4,000 ft) and says wheel pants;
+//   densityAltitude        the 15 ℃ row rounds to 10 ft (約 70 ft, not 約 100 ft);
+//   CALC.da                hPa to 0.1 (1013.2 for 29.92, not 1013);
+//   CALC.wb                no CG range above 2,550 lb (the row shows —, not a forward limit extended past the POH's
+//                          line); 地上滑走 (FL.terms) for taxi.
 (function (FL) {
   'use strict';
   FL.bookFigs = FL.bookFigs || {};
@@ -99,7 +117,7 @@
       rows.forEach((r, i) => {
         const y = 62 + i * 44, w = Math.max(X(r.da) - X(0), 3), hot = r.t >= 33;
         s0 += T(12, y + 21, `気温 ${r.t}℃`, { c: hot ? C.rd : C.ink, b: 1, a: 'start', fs: 12 }) + `<rect x="${X(0)}" y="${y + 6}" width="${w.toFixed(1)}" height="22" rx="4" fill="${C.am}" fill-opacity="${0.25 + i * 0.18}"/>`;
-        s0 += T(X(0) + w + 6, y + 22, `約 ${r100(r.da)} ft`, { c: C.ink, a: 'start', fs: 12 }) + T(392, y + 22, `約 ${r10(r.fpm)}`, { c: C.cy, a: 'end', fs: 12 });
+        s0 += T(X(0) + w + 6, y + 22, `約 ${r.da < 500 ? r10(r.da).toLocaleString() : r100(r.da)} ft`, { c: C.ink, a: 'start', fs: 12 }) + T(392, y + 22, `約 ${r10(r.fpm)}`, { c: C.cy, a: 'end', fs: 12 });
       });
       s0 += T(196, 272, '密度高度（ft）＝空気の濃さが同じになる標準大気の高さ', { c: C.mut, fs: 12 });
       return svg(400, 284, s0, `図：暑い日ほど空気が薄く、密度高度が高くなり、上昇率が下がります。密度高度は本書の概算式、上昇率は教材モデル（${Math.round(s.AC.mass * 2.20462).toLocaleString()} lb・全開・Vy ${vy} KIAS）の計算値です`);
@@ -116,9 +134,9 @@
       s += L(X(0), 66, X(0), yG, C.mut, 1, '3 3') + L(xo, 66, xo, yG - 50, C.mut, 1, '3 3') + A(X(0) + 2, 72, xo - 2, 72, C.cy, 2) + A(xo - 2, 72, X(0) + 2, 72, C.cy, 2);
       s += T((X(0) + xo) / 2, 64, `50 ft を越えるまで ${over50.toLocaleString()} ft`, { c: C.cy, b: 1, fs: 12 });
       const xm = X(len / 2);
-      s += L(xm, 82, xm, yG + 12, C.vi, 2, '6 4') + L(xm, 86, xm + 32, 86, C.vi, 1.5) + TL(xm + 36, 90, ['中間点：浮揚速度の', '70% に届かなければ', '中止（浮くまでの目安）'], { c: C.vi, a: 'start', fs: 12 });
+      s += L(xm, 82, xm, yG + 12, C.vi, 2, '6 4') + L(xm, 86, xm + 32, 86, C.vi, 1.5) + TL(xm + 36, 90, [`中間点（約 ${(Math.round(len / 20) * 10).toLocaleString()} ft）：`, '浮揚速度の 70% に', '届かなければ中止'], { c: C.vi, a: 'start', fs: 12 });
       s = T(12, 22, '50 ft を越える距離は、滑走の分を含む', { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, 40, `2 つの数字は足さない（${roll.toLocaleString()} ＋ ${over50.toLocaleString()} ではない）`, { c: C.am, a: 'start', fs: 12 }) + T(12, 58, '（高さは強調して描いています）', { c: C.mut, a: 'start', fs: 12 }) + `<g transform="translate(0 24)">${s}</g>`;
-      return svg(400, 242, s, `図：POH の図の例（気圧高度 2,000 ft・23℃・2,400 lb・向かい風 8 kt）の 2 つの距離を、LAB の滑走路に重ねたもの。滑走は ${roll.toLocaleString()} ft、50 ft を越えるまでは ${over50.toLocaleString()} ft です。中間点の確かめは米国の AIM 7-6-8 の目安で、浮くまでの距離だけを見ます`);
+      return svg(400, 242, s, `図：POH の図の例（気圧高度 2,000 ft・23℃・2,400 lb・向かい風 8 kt）の 2 つの距離を、LAB の滑走路に重ねたもの。滑走は ${roll.toLocaleString()} ft、50 ft を越えるまでは ${over50.toLocaleString()} ft です。紫の線は滑走路の中間点で、米国の AIM 7-6-8 が舗装していない空港のために示す目安（浮くまでの距離だけを見る）を、説明のために重ねたものです`);
     },
     // perf.chart — reading a combined graph: OAT → pressure altitude → reference line → weight → reference line → wind → distance
     perfChartRead() {
@@ -140,8 +158,12 @@
       s += TL(394, yk - 26, ['距離', '1,290 ft'], { c: C.gr, b: 1, a: 'end', fs: 12, lh: 15, halo: 1 });
       s += T((p1[0] + p1[1]) / 2, yB + 18, '① 外気温 21℃', { c: C.ink, fs: 12 }) + T((p2[0] + p2[1]) / 2, yB + 18, '② 2,240 lb', { c: C.ink, fs: 12 }) + T((p3[0] + p3[1]) / 2, yB + 18, '③ 5 kt', { c: C.ink, fs: 12 });
       s += T((p1[0] + p1[1]) / 2, yB + 36, '外気温（℃）', { c: C.mut, fs: 12 }) + T((p2[0] + p2[1]) / 2, yB + 36, '重量（lb）', { c: C.mut, fs: 12 }) + T((p3[0] + p3[1]) / 2, yB + 36, '向かい風（kt）', { c: C.mut, fs: 12 });
-      s += T(p2[0] + 4, yT + 14, '基準の線', { c: C.mut, a: 'start', fs: 12 }) + T(p3[0] + 4, yT + 14, '基準の線', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, 284, s, '図：POH の組み合わせの図の読み方（模式図）。外気温 21℃ から上へ、気圧高度 2,500 ft の線で右へ、基準の線から案内線に沿って重量 2,240 lb まで、また右へ、向かい風 5 kt まで沿って進むと、50 ft の高さから止まるまで 1,290 ft です（Archer III の POH の図 5-35 の例）');
+      // the reference lines (the left edges of panels 2 and 3) drawn thick and labelled; a legend for them and the guide lines
+      s += L(p2[0], yT, p2[0], yB, C.vi, 3) + L(p3[0], yT, p3[0], yB, C.vi, 3);
+      s += T(p2[0] + 5, yT + 14, '基準の線', { c: C.vi, b: 1, a: 'start', fs: 12, halo: 1 }) + T(p3[0] + 5, yT + 14, '基準の線', { c: C.vi, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += L(18, 286, 18, 302, C.vi, 3) + T(28, 299, '基準の線：区画の左の縁の縦の線', { c: C.vi, a: 'start', fs: 12 });
+      s += L(12, 324, 28, 312, C.mut, 1.5, '4 3') + T(36, 323, '案内線：斜めの点線。あいだは近い線と平行に進む', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 334, s, '図：POH の組み合わせの図の読み方（模式図）。外気温 21℃ から上へ、気圧高度 2,500 ft の線で右へ、基準の線（縦の線）から案内線（斜めの点線）と平行に重量 2,240 lb まで、また右へ、向かい風 5 kt まで平行に進むと、50 ft の高さから止まるまで 1,290 ft です（Archer III の POH の図 5-35 の例）');
     },
     // perf.climb — the same rate of climb, two groundspeeds: the gradient over the ground (ft per NM)
     climbGradient() {
@@ -167,16 +189,16 @@
         s += T(X(0) + 6, y + 15, mix, { c: C.bg, a: 'start', fs: 12 });
       });
       s += `<rect x="96" y="266" width="12" height="12" fill="${C.cy}" fill-opacity="0.55"/>` + T(112, 276, '無風', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="170" y="266" width="12" height="12" fill="${C.am}" fill-opacity="0.55"/>` + T(186, 276, `向かい風 ${wind} kt`, { c: C.ink, a: 'start', fs: 12 });
-      return svg(400, 288, s, `図：Archer III の POH の巡航の表（気圧高度 4,000 ft・ISA −15℃・2,550 lb）の 3 つの出力で、燃料 1 US gal あたりに進める距離。速い出力ほど 1 gal で進める距離は短く、向かい風 ${wind} kt ではどれも短くなります（真対気速度 − 風 ＝ 対地速度で計算）`);
+      return svg(400, 288, s, `図：Archer III の POH の巡航の表（気圧高度 4,000 ft・標準より 15℃ 低い日（約 −8℃）・2,550 lb・ホイールパンツ付き）の 3 つの出力で、燃料 1 US gal あたりに進める距離。速い出力ほど 1 gal で進める距離は短く、向かい風 ${wind} kt ではどれも短くなります（真対気速度 − 風 ＝ 対地速度で計算）`);
     },
     // perf.plan — the checks of one flight, in the order they are flown, with the section's worked example
     perfPlanChain() {
       const items = [
-        ['① 離陸', ['1,907 × 1.3', '＝ 2,479 ft'], '3,900 ft'],
+        ['① 離陸', ['1,907 × 1.3', '≒ 2,479 ft'], '3,900 ft'],
         ['② 上昇の勾配', ['487 × 60 ÷ 70', '≒ 417 ft/NM'], '300 ft/NM'],
         ['③ 巡航と燃料', ['時間 × 燃料流量', '＋予備'], '使える 48 gal'],
         ['④ 着陸', ['1,290 × 1.3', '＝ 1,677 ft'], '2,600 ft'],
-        ['⑤ 着陸復行', ['全開・フラップ 25°', '64 KIAS'], '上昇できるか'],
+        ['⑤ 着陸復行', ['全開・ヒーター OFF', 'フラップ 25°・64 KIAS'], '上昇できるか'],
       ];
       let s = T(12, 20, '1 つの数字で終わらず、飛ぶ順に全部確かめる', { c: C.ink, b: 1, a: 'start', fs: 13 });
       items.forEach(([t, lines, cmp], i) => {
@@ -208,15 +230,15 @@
       s += `<rect x="${X(0)}" y="72" width="${(X(bew) - X(0)).toFixed(1)}" height="36" fill="${C.mut}" fill-opacity="0.45"/>` + T((X(0) + X(bew)) / 2, 95, `空虚重量（例）${bew.toLocaleString()}`, { c: C.ink, b: 1, fs: 12 });
       s += `<rect x="${X(bew).toFixed(1)}" y="72" width="${(X(ramp) - X(bew)).toFixed(1)}" height="36" fill="${C.cy}" fill-opacity="0.35"/>` + T((X(bew) + X(ramp)) / 2, 95, `有効搭載量 ${(ramp - bew).toLocaleString()}`, { c: C.ink, b: 1, fs: 12 });
       s += L(X(ramp), 50, X(ramp), 112, C.rd, 2) + T(X(ramp) - 3, 46, `ランプ ${ramp.toLocaleString()}・離陸 ${tow.toLocaleString()}`, { c: C.rd, b: 1, a: 'end', fs: 12 });
-      s += TL(20, 176, ['ランプ重量 − 8 lb（始動・地上走行の燃料）＝ 離陸の重さ', '手荷物は 200 lb まで（実用類では 0 lb・後席も不可）', `満タン 288 lb ＋ 170 lb × 4 人 ＝ 968 lb ＞ ${(ramp - bew).toLocaleString()} lb`], { c: C.ink, a: 'start', fs: 12, lh: 20 });
-      return svg(400, 244, s, `図：Archer III の重さ（POH の値）。空虚重量（この本の例 ${bew.toLocaleString()} lb）から最大ランプ重量 ${ramp.toLocaleString()} lb までが、人・荷物・燃料に使える重さです。満タンで 4 人は乗れません`);
+      s += TL(20, 176, ['ランプの重さ − 8 lb（地上で使う燃料）＝ 離陸の重さ', '手荷物は 200 lb まで（実用類では 0 lb・後席も不可）', `満タン 288 lb ＋ 170 lb × 4 人 ＝ 968 lb ＞ ${(ramp - bew).toLocaleString()} lb`], { c: C.ink, a: 'start', fs: 12, lh: 20 });
+      return svg(400, 244, s, `図：Archer III の重さ（POH の値）。空虚重量（この本の例 ${bew.toLocaleString()} lb）から最大ランプ重量 ${ramp.toLocaleString()} lb までが、人・荷物・燃料に使える重さです。この例の機体では、170 lb の 4 人と満タンは同時に積めません`);
     },
     // wb.graph — the POH's Loading Graph: load weight against moment ÷ 1,000 for each place (lines from the POH arms)
     wbLoadingGraph() {
       const arms = W ? { front: W.rows[1][2], rear: W.rows[2][2], fuel: W.rows[3][2], bag: W.rows[4][2] } : { front: 80.5, rear: 118.1, fuel: 95.0, bag: 142.8 };
       const f = frame(400, 300, 0, 50, 0, 450, [0, 10, 20, 30, 40, 50], [0, 100, 200, 300, 400], 'モーメント ÷ 1,000（lb-in）', '積む重さ（lb）', { l: 56, r: 14, t: 40, b: 40 });
       const line = (arm, max, c, lab, dx, dy) => P([[f.X(0), f.Y(0)], [f.X(arm * max / 1000), f.Y(max)]], c, 2.5) + T(f.X(arm * max / 1000) + dx, f.Y(max) + dy, lab, { c, b: 1, a: 'start', fs: 12, halo: 1 });
-      let s = f.s + line(arms.front, 450, C.gr, `前席 ${arms.front}`, -40, -8) + line(arms.fuel, 288, C.am, `燃料 ${arms.fuel.toFixed(1)}`, 10, 6) + line(arms.rear, 380, C.cy, `後席 ${arms.rear}`, -50, -8) + line(arms.bag, 200, C.vi, `手荷物 ${arms.bag}`, 4, 4);
+      let s = f.s + line(arms.front, 450, C.gr, `前席 ${arms.front}`, -40, -8) + line(arms.fuel, 288, C.am, `燃料 ${arms.fuel.toFixed(1)}`, 10, 20) + line(arms.rear, 380, C.cy, `後席 ${arms.rear}`, -50, -8) + line(arms.bag, 200, C.vi, `手荷物 ${arms.bag}`, 4, 4);
       const m = arms.front * 340 / 1000;
       s += L(f.X(0), f.Y(340), f.X(m), f.Y(340), C.ink, 1.5, '5 4') + L(f.X(m), f.Y(340), f.X(m), f.Y(0), C.ink, 1.5, '5 4') + `<circle cx="${f.X(m).toFixed(1)}" cy="${f.Y(340).toFixed(1)}" r="4" fill="${C.ink}"/>`;
       s += T(f.X(m) + 6, f.Y(30), `例：前席 340 lb → 約 ${m.toFixed(1)}`, { c: C.ink, a: 'start', fs: 12, halo: 1 });
@@ -237,6 +259,38 @@
       s += `<path d="M${X(cg2).toFixed(1)} ${yR - 10} l-7 -14 h14 Z" fill="${C.gr}"/>` + T(X(cg2) - 10, yR - 28, `② ${cg2.toFixed(1)} in`, { c: C.gr, b: 1, a: 'end', fs: 12, halo: 1 });
       s += TL(12, 214, [`重心の動き ＝ 移す重さ × 移す距離 ÷ 合計の重さ`, `＝ ${move} ×（${a2} − ${a1}）÷ ${w0.toLocaleString()} ≒ −${Math.abs(dcg).toFixed(1)} in`], { c: C.ink, a: 'start', fs: 12, lh: 18 });
       return svg(400, 252, s, `図：計算例 ① の積み方（${w0.toLocaleString()} lb・重心 ${cg1} in）で、後席の 1 人を前席へ移すと、合計の重さは同じまま、重心は約 ${Math.abs(dcg).toFixed(1)} in 前へ動いて ${cg2.toFixed(1)} in になります（アームは POH の値）`);
+    },
+    // perf.fuel — redrawn (revise-perfwb): the climb fuel from POH Fig. 5-17 (2 gal and 12 NM, start/taxi/takeoff included) and
+    // the cruise over the remaining 108 NM at 105 kt and 9.5 gal/h (the POH's 65 % power), with the day / night reserve of the US
+    // 14 CFR 91.151, against 48 gal usable — the same numbers as the text's example
+    fuelPlan() {
+      const gph = 9.5, climb = 2, cruise = (120 - 12) / 105 * gph, day = 0.5 * gph, night = 0.75 * gph, X = g => 70 + g / 50 * 316, usable = 48;
+      const bar = (y, lab, res, resLab) => {
+        let s = T(64, y + 19, lab, { c: C.ink, b: 1, a: 'end', fs: 12 }), x0 = X(0);
+        for (const [g, c] of [[climb, C.mut], [cruise, C.cy], [res, C.am]]) { s += `<rect x="${x0.toFixed(1)}" y="${y}" width="${(X(g) - X(0)).toFixed(1)}" height="28" fill="${c}" fill-opacity="0.55" stroke="${C.bg}"/>`; x0 += X(g) - X(0); }
+        return s + T(x0 + 6, y + 19, `計 約 ${(climb + cruise + res).toFixed(1)} gal`, { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(X(climb + cruise + res / 2), y + 44, resLab, { c: C.am, fs: 12 });
+      };
+      let s = T(12, 20, '燃料は「上昇＋巡航＋予備」を積む', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      for (const v of [0, 10, 20, 30, 40, 50]) s += L(X(v), 40, X(v), 196, C.grid, 1) + T(X(v), 212, v, { c: C.mut, fs: 12 });
+      s += bar(56, '昼', day, '予備 30 分') + bar(122, '夜', night, '予備 45 分');
+      s += L(X(usable), 36, X(usable), 196, C.gr, 2.5) + T(X(usable) - 4, 34, `使える燃料 ${usable} gal`, { c: C.gr, b: 1, a: 'end', fs: 12 });
+      s += T(228, 230, '燃料（US gal）', { c: C.mut, fs: 12 });
+      s += `<rect x="70" y="244" width="12" height="12" fill="${C.mut}" fill-opacity="0.55"/>` + T(86, 254, '上昇（始動・地上滑走・離陸を含む）', { c: C.ink, a: 'start', fs: 12 });
+      s += `<rect x="70" y="264" width="12" height="12" fill="${C.cy}" fill-opacity="0.55"/>` + T(86, 274, '巡航', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="132" y="264" width="12" height="12" fill="${C.am}" fill-opacity="0.55"/>` + T(148, 274, '予備（米国の 91.151）', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 286, s, `図：燃料計画の例。POH 図 5-17 の例の上昇（9 分・${climb} gal・12 NM。始動・地上滑走・離陸の燃料を含む）のあと、残りの 108 NM を対地速度 105 kt で巡航すると約 1 時間 2 分、9.5 gal/h（POH の 65% 出力の値）で約 ${cruise.toFixed(1)} gal です。予備は米国の 14 CFR 91.151 の昼 30 分・夜 45 分です`);
+    },
+    // perf.wbex — redrawn (revise-perfwb): the same envelope and points ① ② as book-figs.js; ③ is now the landing — ② less the
+    // 8 lb of start/taxi fuel and 20 gal (both at the fuel arm 95.0 in: POH Fig. 6-9), 2,302 lb and 90.9 in, the text's number
+    wbEnvelope() {
+      const env = W.env, f = frame(400, 280, 80, 95, 1600, 2600, [80, 83, 86, 89, 92, 95], [1600, 1800, 2000, 2200, 2400, 2600], '重心位置（基準線から in）', '重量（lb）', { l: 56, r: 14, t: 16, b: 40 });
+      const [a, b] = W.example(), fa = W.rows[3][2], lw = b.w - W.taxiFuel - 120, c = { w: lw, cg: (b.m - (W.taxiFuel + 120) * fa) / lw };
+      const pt = (p, col) => `<circle cx="${f.X(p.cg).toFixed(1)}" cy="${f.Y(p.w).toFixed(1)}" r="6" fill="${col}" stroke="${C.bg}" stroke-width="1.5"/>`;
+      let s = f.s + `<path d="${env.map((p, i) => (i ? 'L' : 'M') + f.X(p[0]).toFixed(1) + ' ' + f.Y(p[1]).toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.12)" stroke="${C.cy}" stroke-width="2"/>`;
+      s += L(f.X(80), f.Y(W.max), f.X(95), f.Y(W.max), C.rd, 1.5, '6 4') + T(f.X(80) + 4, f.Y(W.max) - 6, `最大離陸重量 ${W.max.toLocaleString()} lb`, { c: C.rd, a: 'start', fs: 12 });
+      s += T(f.X(88), f.Y(1800), '許容範囲', { c: C.cy, b: 1, fs: 13 }) + T(f.X(94.1), f.Y(1900), '後ろすぎ', { c: C.rd, fs: 12, rot: -90 }) + T(f.X(81.6), f.Y(2350), '前すぎ', { c: C.rd, fs: 12 });
+      s += A(f.X(a.cg) - 6, f.Y(a.w), f.X(b.cg) + 8, f.Y(b.w), C.gr, 2) + A(f.X(b.cg), f.Y(b.w) + 7, f.X(c.cg) + 1, f.Y(c.w) - 9, C.gr, 2);
+      s += pt(a, C.rd) + pt(b, C.gr) + pt(c, C.gr) + T(f.X(a.cg) - 2, f.Y(a.w) - 12, '①', { c: C.rd, b: 1, fs: 13, halo: 1 }) + T(f.X(b.cg) - 12, f.Y(b.w) - 8, '②', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(f.X(c.cg) - 14, f.Y(c.w) + 16, '③', { c: C.gr, b: 1, fs: 13, halo: 1 });
+      return svg(400, 280, s, `図：Archer III の重量と重心の許容範囲（POH の値）と、計算例の 3 つの点。①後ろすぎ（${a.cg.toFixed(1)} in）→ ②後席の 1 人を前席へ（${b.cg.toFixed(1)} in）→ ③始動・地上滑走の 8 lb と燃料 20 gal を使った着陸（${c.w.toLocaleString()} lb・${c.cg.toFixed(1)} in）。① と ② はランプの重さです`);
     },
     // perf.wb — the Archer from the side over a ruler of stations: the same drawing as book-figs.js, only the heading's words
     wbStations() {
@@ -271,7 +325,7 @@
     };
     u.addEventListener('change', () => {
       const Q = num(q.value);
-      if (u.value === 'hPa') { q.step = '1'; if (Q !== null && Q < 40) q.value = String(Math.round(Q * 33.8639)); }
+      if (u.value === 'hPa') { q.step = '0.1'; if (Q !== null && Q < 40) q.value = (Q * 33.8639).toFixed(1); }
       else { q.step = '0.01'; if (Q !== null && Q > 40) q.value = (Q / 33.8639).toFixed(2); }
       f();
     });
@@ -289,7 +343,7 @@
       + `<tr><td>燃料（1 US gal ＝ ${W.lbPerGal} lb）</td><td><input type="number" value="${galDefault}" min="0"> gal</td><td>${R[3][2].toFixed(1)}</td><td class="m"></td></tr>`
       + `<tr><td>${R[4][0]}</td><td><input type="number" value="${R[4][1]}" min="0"> lb</td><td>${R[4][2]}</td><td class="m"></td></tr>`
       + '<tr><th>ランプ</th><th class="rw"></th><th class="rc"></th><th class="rm"></th></tr>'
-      + `<tr><td>始動・地上走行の燃料</td><td>−${W.taxiFuel} lb</td><td>${R[3][2].toFixed(1)}</td><td>−${Math.round(W.taxiFuel * R[3][2]).toLocaleString()}</td></tr>`
+      + `<tr><td>始動・地上滑走の燃料</td><td>−${W.taxiFuel} lb</td><td>${R[3][2].toFixed(1)}</td><td>−${Math.round(W.taxiFuel * R[3][2]).toLocaleString()}</td></tr>`
       + '<tr><th>離陸</th><th class="tw"></th><th class="tc"></th><th class="tm"></th></tr></table><output></output>';
     const ins = el.querySelectorAll('input'), out = el.querySelector('output'), ms = el.querySelectorAll('.m'), $ = c => el.querySelector(c);
     const f = () => {
@@ -304,7 +358,9 @@
       const checks = [
         [rw <= W.ramp, `ランプ重量 ${Math.round(rw).toLocaleString()} lb（最大 ${W.ramp.toLocaleString()}）`],
         [tw <= W.max, `離陸重量 ${Math.round(tw).toLocaleString()} lb（最大 ${W.max.toLocaleString()}）`],
-        [tcg >= fwdAt(tw) - 1e-9 && tcg <= 93.0 + 1e-9, `離陸の重心 ${tcg.toFixed(1)} in（この重さの範囲 ${fwdAt(tw).toFixed(1)}〜93.0）`],
+        // above the maximum takeoff weight the POH gives no CG range (POH 2.13 stops at 2,550 lb; 5.3: no extrapolation)
+        tw <= W.max ? [tcg >= fwdAt(tw) - 1e-9 && tcg <= 93.0 + 1e-9, `離陸の重心 ${tcg.toFixed(1)} in（この重さの範囲 ${fwdAt(tw).toFixed(1)}〜93.0）`]
+          : [false, `離陸の重心 ${tcg.toFixed(1)} in（—：重さが ${W.max.toLocaleString()} lb を超えるので、重心の範囲がない）`],
         [bag <= W.bagMax, `手荷物 ${Math.round(bag)} lb（最大 ${W.bagMax}）`],
         [gal <= W.fuelMaxGal, `燃料 ${gal} gal（使える燃料は ${W.fuelMaxGal} gal まで）`],
       ];

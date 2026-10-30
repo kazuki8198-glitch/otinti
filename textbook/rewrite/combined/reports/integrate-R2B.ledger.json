@@ -2694,6 +2694,1616 @@
    "id": "inst.ap#82e8fece",
    "by": "W15",
    "note": "integrate-R2B：本にない文（章を drafts/inst.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#e357185e",
+   "sec": "perf.da",
+   "text": "たとえば標高 55 ft の LAB でも、規正値 29.92 inHg・気温 33℃ の日の空気は、標準大気の約 2,200 ft と同じくらい薄くなります。",
+   "tag": "参考値",
+   "source": "教材の架空の LAB 空港（FL.physics：標高 55 ft）と本書の概算式（PHAK 第 4 章の ISA、FAA-P-8740-2 の考え方）で計算した値（55 ＋ 120 ×（33 − 14.89）≒ 2,228）。規正値 29.92 inHg の条件を書いた",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.da#76d23c75。規正値の条件を足した（reader-perfwb DA1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#d86f0be3",
+   "sec": "perf.da",
+   "text": "標準大気では、海面の近くで 1 hPa の差が約 27 ft の高さにあたります。",
+   "tag": "参考値",
+   "source": "標準大気の海面での dh/dp ＝ RT/(gp)（R＝287.05 J/(kg·K)・T＝288.15 K・g＝9.80665 m/s²・p＝1013.25 hPa）から計算した 8.32 m/hPa ≒ 27.3 ft/hPa（RULINGS R.pa-coefficient の値と同じ。factcheck-perfwb が 27.31 で照合）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.da#cda8c2fc（reader-perfwb C3・expert-perfwb E-S15：数を 1 つに） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#81015c1c",
+   "sec": "perf.da",
+   "text": "この本の hPa の式では、この 27 ft を使います。",
+   "tag": "参考値",
+   "source": "この本の決め（hPa の式の係数を 27 ft にする。RULINGS R.pa-coefficient）",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#711ec580",
+   "sec": "perf.da",
+   "text": "inHg の目安の「1 inHg で 1,000 ft」は丸めた数です。",
+   "tag": "参考値",
+   "source": "PHAK 第 4 章（NEW_R.phak4：about 1 inHg per 1,000 ft の目安）。丸めた目安であることの説明",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#666f9c78",
+   "sec": "perf.da",
+   "text": "1 inHg は約 33.9 hPa なので、1 hPa あたりに直すと約 30 ft で、少し大きめです。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（R.nist811：1 inHg＝3,386.389 Pa ＝ 33.86 hPa）。1,000 ÷ 33.86 ≒ 29.5 ft/hPa（約 30 ft）。27.3 ft より大きい",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.da#0a2fa083（reader-perfwb C3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#d3ffdc5c",
+   "sec": "perf.da",
+   "text": "例：LAB の 30.01 inHg は約 1016.3 hPa です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：30.01 × 33.8639 ≒ 1016.3 hPa",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.da#e11ab009。1016 → 1016.3（reader-perfwb DA7） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#49e9c34d",
+   "sec": "perf.da",
+   "text": "「120 ft ×」の式は広く使われる概算です。",
+   "tag": "参考値",
+   "source": "FAA-P-8740-2 Density Altitude（R.dalt）の早見表と比べた概算式（教科書の既存の式。factcheck-perfwb が早見表より 1〜17% 大きいことを照合）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.da#ee0daf99 を 2 文に分けた前半 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#11bfb238",
+   "sec": "perf.tol",
+   "text": "紫の線は滑走路の中間点で、米国の AIM 7-6-8 が舗装していない空港のために示す目安（浮くまでの距離だけを見る）を、説明のために重ねたものです",
+   "tag": "参考値",
+   "source": "FAA AIM 7-6-8 Use of Runway Half-way Signs at Unimproved Airports（R.aim76。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：reach 70 percent of lift-off airspeed by the midpoint；applies only to runway required for actual liftoff",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#c11ec4fc。舗装していない空港の目安を説明のために重ねたと書いた（reader-perfwb T3・T4・expert-perfwb E-N3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#93e70283",
+   "sec": "perf.tol",
+   "text": "50 ft の速度：50 ft の高さを越えるときの速度です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7 の表の見出し「50FT」（50 ft の高さでの速度）",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#fc8e9c9b",
+   "sec": "perf.tol",
+   "text": "Archer III の POH では、ふつうの離陸のローテーション速度は 60 KIAS、短距離離陸では 55 KIAS です（POH 4.5i）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：4.5i Takeoff Checklist（NORMAL TECHNIQUE：Rotation Airspeed 60 KIAS、SHORT FIELD, OBSTACLE CLEARANCE：Rotation Airspeed 55 KIAS）。Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Normal Rotation 60 KIAS・SHORT FIELD TAKEOFF Rotate 55 KIAS",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S3・reader-perfwb C1：ローテーション速度と浮揚速度を書き分けた） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#3215ba1f",
+   "sec": "perf.tol",
+   "text": "離陸の図の表では、2,550 lb で浮揚速度 60 KIAS・50 ft で 65 KIAS です（POH 図 5-7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7 Flaps Up Takeoff Performance の表（WT 2550 lb：LIFTOFF 60・50FT 65 KIAS）",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#c9177cda",
+   "sec": "perf.tol",
+   "text": "Archer の公開チェックリストでは 17 kt です。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：MAX DEMONSTRATED CROSSWIND Takeoff or Landing 17 KTS。FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：The maximum demonstrated crosswind component is published in the AFM/POH",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S9） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#5c055835",
+   "sec": "perf.tol",
+   "text": "Archer の公開チェックリストでは、最終進入で 70 KIAS、短距離と不整地の着陸で 65 KIAS です。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：LANDING Airspeed 70 KIAS ON FINAL (65 for Short/Soft Field)",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#5b3c03d8",
+   "sec": "perf.tol",
+   "text": "メーカーの値がないときは、着陸の形（フラップを下げた形）の失速速度（stall speed）、VS0 の 1.3 倍を使います（AFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 9 章（NEW_R.afh9）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Normal Approach（The pilot should use the manufacturer's recommended airspeed or 1.3 VSO if there is no manufacturer's recommendation）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#00ba98b6",
+   "sec": "perf.tol",
+   "text": "米国の AIM 7-6-8 は、舗装していない空港（unimproved airports）のための目安を示しています。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-6-8 Use of Runway Half-way Signs at Unimproved Airports（R.aim76。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#8f4f05fa（reader-perfwb T3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#9889d25c",
+   "sec": "perf.tol",
+   "text": "Archer の浮揚速度を POH の表の 60 KIAS とすると、70% は約 42 KIAS です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7 の表（2,550 lb の LIFTOFF 60 KIAS）。70% は計算（60 × 0.7 ＝ 42）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#61e1e290。浮揚速度の出典をチェックリストの Vr から POH の表の LIFTOFF に直した（expert-perfwb E-S3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#28e067cc",
+   "sec": "perf.tol",
+   "text": "路面が一様でないときも、この目安は当てはまりません（米国の AIM 7-6-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-6-8（R.aim76。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：This “rule of thumb” is based on a uniform surface condition",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#76ffff5f を 2 文に分けた後半（reader-perfwb T3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#c282ee09",
+   "sec": "perf.tol",
+   "text": "米国では、残りの長さを 1,000 ft 単位で示す残り距離標識（runway distance remaining sign）がある空港もあります（AIM 2-3-13）。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-13 Runway Distance Remaining Signs（R.aim23。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：black background with a white numeral inscription and may be installed … distance (in thousands of feet) of landing runway remaining",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#b014dbb1。「ある空港もあります」に（expert-perfwb E-N1：may be installed） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#8acb8441",
+   "sec": "perf.tol",
+   "text": "Archer の浮揚速度が約 60 KIAS なら、5 kt は約 8% です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：5 ÷ 60 ≒ 8%（浮揚速度 60 KIAS は POH 図 5-7 の表）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#5160e267。kt → KIAS（reader-perfwb C5） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#5d09c025",
+   "sec": "perf.tol",
+   "text": "上の図の曲線で −8% を読むと、離陸距離は約 17% 延びます。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：(1 ＋ 5/60)² − 1 ≒ 17%（PHAK の近似 (1 ± w)²。図 windEffect の曲線）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#24193f47。図の曲線で読むと書いた（reader-perfwb T2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#2fba04b4",
+   "sec": "perf.tol",
+   "text": "考えてみよう：Archer（浮揚速度 約 60 KIAS）で、6 kt の向かい風を受けて離陸する。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7 の表（LIFTOFF 60 KIAS）。6 kt は 10%（計算）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#bafad851 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#e978b44c",
+   "sec": "perf.tol",
+   "text": "この課目は簡略化して、フラップ 0・ローテーション 60 kt で離陸します。",
+   "tag": "教材値",
+   "source": "FL.physics・syllabus.js の課目 x3（フラップ 0・Vr 60：教材の簡略化。DESIGN 10.5）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#50ae209a。浮揚 → ローテーション（expert-perfwb E-S3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#5a6f4278",
+   "sec": "perf.tol",
+   "text": "公開されているチェックリスト（checklist）の短距離離陸は、フラップ 25°・ローテーション 55 KIAS です。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：SHORT FIELD TAKEOFF 25° FLAPS・Rotate 55 KIAS",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.tol#08583091。浮揚 → ローテーション（expert-perfwb E-S3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#63121184",
+   "sec": "perf.chart",
+   "text": "外気温 21℃ から上へ、気圧高度 2,500 ft の線で右へ、基準の線（縦の線）から案内線（斜めの点線）と平行に重量 2,240 lb まで、また右へ、向かい風 5 kt まで平行に進むと、50 ft の高さから止まるまで 1,290 ft です（Archer III の POH の図 5-35 の例）",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-35 Landing Performance の例（2,500 ft・21℃・2,240 lb・向かい風 5 kt → 1,290 ft）。読み方は FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 11-23 の例（draw a line straight across to the first dark reference line … in a diagonal direction following the surrounding lines）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.chart#9297736e（reader-perfwb CH1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#7f105e70",
+   "sec": "perf.chart",
+   "text": "2,300 ft・20℃ なら、2,000 ft から 3,000 ft までの 3 割の所なので、1,115 ＋（1,230 − 1,115）× 0.3 ≒ 1,150 ft です。",
+   "tag": "参考値",
+   "source": "PHAK 25C 図 11-21 の表（2,000 ft・20℃ 1,115 ft、3,000 ft・20℃ 1,230 ft）と、この本の仮定の値の計算（revise-perfwb が検算した）：1,115 ＋ 115 × 0.3 ＝ 1,149.5 ≒ 1,150",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#ea64cddd",
+   "sec": "perf.chart",
+   "text": "米国の 14 CFR Part 139 の認可を受けた空港は、旅客を運ぶ航空会社の便が使う空港です。",
+   "tag": "条文",
+   "source": "14 CFR 139.1 Applicability（eCFR 2026-10-28 の版。revise-perfwb が取得：scheduled passenger-carrying operations of an air carrier operating aircraft configured for more than 9 passenger seats；unscheduled … at least 31 passenger seats）",
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#d9d5e2b0",
+   "sec": "perf.chart",
+   "text": "米国の AIM 4-3-6 によると、この空港は、滑走路の端ごとに公示距離（declared distances）を出します。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-6 Use of Runways/Declared Distances（R.aim43。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：All 14 CFR part 139 airports report declared distances for each runway",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.chart#10ee643b を 2 文に分けた後半 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#3ed2069b",
+   "sec": "perf.chart",
+   "text": "この 1.3 は、進入速度の「VS0 の 1.3 倍」とは関係のない数です。",
+   "tag": "参考値",
+   "source": "この本の説明（計画の余裕の 1.3 は練習の例：RULINGS R.planning-margin。進入速度の 1.3 VSO は AFH 第 9 章）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.climb#c3111057",
+   "sec": "perf.climb",
+   "text": "①500 ÷ 6,076 ≒ 0.082 なので約 8.2%です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：1 NM ＝ 6,076.1 ft（NIST SP 811 B.9）、500 ÷ 6,076 ≒ 0.0823",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.climb#de3fdd2e を 2 文に分けた前半 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.climb#db58e66a",
+   "sec": "perf.climb",
+   "text": "角度は、電卓で tan⁻¹ 0.082 を求めて約 4.7°です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：atan 0.0823 ≒ 4.70°",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.climb#de3fdd2e の後半。tan⁻¹ を書いた（reader-perfwb CL1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.climb#87d3063a",
+   "sec": "perf.climb",
+   "text": "上の表は、教材モデル（この教材のシミュレータの機体。重さ 2,315 lb・標準大気）の値です。",
+   "tag": "教材値",
+   "source": "FL.physics（教材モデルの Archer pa28：mass 1,050 kg ≒ 2,315 lb）から本文に差し込む値",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.climb#819dada9（reader-perfwb C11） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#30a62c24",
+   "sec": "perf.range",
+   "text": "図：Archer III の POH の巡航の表（気圧高度 4,000 ft・標準より 15℃ 低い日（約 −8℃）・2,550 lb・ホイールパンツ付き）の 3 つの出力で、燃料 1 US gal あたりに進める距離。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-20・5-20a・5-20b の 4,000 ft・ISA −15（−8℃）の行（2,550 lb・Wheel pants and strut fairings installed）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#43d2a015（factcheck-perfwb N7・reader-perfwb R1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#27a20598",
+   "sec": "perf.range",
+   "text": "燃料消費率（燃料流量、fuel consumption rate）は、1 時間に使う燃料の量です。",
+   "tag": "参考値",
+   "source": "用語の定義（FL.terms fuel-consumption：燃料消費率＝fuel consumption rate）。数値の主張なし",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#2574d1d7。太字の定義にした（expert-perfwb E-S16：住所の案） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#556836ce",
+   "sec": "perf.range",
+   "text": "数字は、POH の巡航の表の、気圧高度 4,000 ft・2,550 lb・ホイールパンツ付きの値です（POH 図 5-20・5-20a・5-20b）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-20（55%：Best Economy 8.2 GPH）・5-20a（65%：9.5 GPH）・5-20b（75%：Best Power 11.0 GPH）の 4,000 ft の KTAS（106・115・123、2,550 lb・Wheel pants）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#6454ce90 を 2 文に分けた前半 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#e365f8ef",
+   "sec": "perf.range",
+   "text": "気温は、標準より 15℃ 低い日（ISA −15℃：この高さで約 −8℃）の行です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-20 の 4,000 ft・ISA -15 の行（−8℃）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#6454ce90 の後半（reader-perfwb R1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#fc3e234b",
+   "sec": "perf.range",
+   "text": "同じ出力の割合でも、高い所を飛ぶほど真対気速度は少し速くなります（55% で、海面 105 kt・10,000 ft 107 kt：POH 図 5-20）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-20（55%：Sea Level ISA-15 105 KTAS、10000 ft ISA-15 107 KTAS）。FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：A flight conducted at high altitude has a greater true airspeed",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N7） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#9303444a",
+   "sec": "perf.range",
+   "text": "65% なら 24 ÷ 9.5 ≒ 2.53 時間（約 2.5 時間）で、無風なら 115 × 2.53 ≒ 291 NM です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：24 ÷ 9.5 ≒ 2.53 h、115 × 2.53 ≒ 291",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#c6b4c312（reader-perfwb R3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#59333efe",
+   "sec": "perf.range",
+   "text": "55% なら 24 ÷ 8.2 ≒ 2.93 時間（約 2.9 時間）で、106 × 2.93 ≒ 310 NM です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：24 ÷ 8.2 ≒ 2.93 h、106 × 2.93 ≒ 310",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.range#dcbe3f6b（reader-perfwb R3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#f366aa93",
+   "sec": "perf.fuel",
+   "text": "POH 図 5-17 の例の上昇（9 分・2 gal・12 NM。始動・地上滑走・離陸の燃料を含む）のあと、残りの 108 NM を対地速度 105 kt で巡航すると約 1 時間 2 分、9.5 gal/h（POH の 65% 出力の値）で約 9.8 gal です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の例（9 min・2 gal・12 n.m.、NOTE: This chart includes fuel allowance for start, taxi, & takeoff）・図 5-20a（65% 9.5 GPH）。この本の仮定の値の計算（revise-perfwb が検算した）：108 ÷ 105 × 9.5 ≒ 9.77",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#e8b4e84a（図 fuelPlan のキャプション。expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#1ac30185",
+   "sec": "perf.fuel",
+   "text": "予備は米国の 14 CFR 91.151 の昼 30 分・夜 45 分です",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)（eCFR、R.cfr91）。FL.jur fuel.vfr の米国の欄と同じ",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#f0f745b8",
+   "sec": "perf.fuel",
+   "text": "予備を足す（米国の 14 CFR 91.151 では、昼 30 分・夜 45 分の分）",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)（eCFR、R.cfr91）。FL.jur fuel.vfr の米国の欄と同じ",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#7cbc656f。国と条文を書いた（factcheck-perfwb S6〔安全〕K4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#df916e1d",
+   "sec": "perf.fuel",
+   "text": "Archer III の POH の上昇の図（2,550 lb・全開・78 KIAS：POH 図 5-17）には、例があります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 Time, Fuel, Distance to Climb の ASSOCIATED CONDITIONS（Gross Weight 2550 LB・Power FULL THROTTLE・Airspeed 78 KIAS・Flaps UP）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#f520df15",
+   "sec": "perf.fuel",
+   "text": "気圧高度 2,000 ft・23℃ の空港から、6,000 ft・15℃ まで上がる例です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の例（Depart Airport Press Alt. 2000 FT・Temperature 23°C・Cruise Press Alt. 6000 FT・Cruise OAT 15°C）。5.5(c) にも同じ例",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#f5269fcb",
+   "sec": "perf.fuel",
+   "text": "上昇には 9 分・2 gal・12 NM かかります。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の例（12 min minus 3 min ＝ 9 min、4 gal minus 2 gal ＝ 2 gal、17 n.m. minus 5 n.m. ＝ 12 n.m.）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#15d35c49",
+   "sec": "perf.fuel",
+   "text": "この 2 gal には、始動・地上滑走・離陸の燃料も入っています（図の注）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の NOTE（This chart includes fuel allowance for start, taxi, & takeoff）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#08bef38e",
+   "sec": "perf.fuel",
+   "text": "例（上の図）：120 NM 先の空港へ飛びます。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）（教科書の既存の例の 120 NM）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#8a92930a ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#877ed17a",
+   "sec": "perf.fuel",
+   "text": "上昇は POH の図の例の 2 gal・12 NM とします。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の例（2 gal・12 n.m.）を例に使う",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#bcde045e",
+   "sec": "perf.fuel",
+   "text": "残りの 108 NM を対地速度 105 kt で巡航すると、約 1 時間 2 分です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：(120 − 12) ÷ 105 ≒ 1.03 h ≒ 1 時間 2 分",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#8a92930a（上昇の距離を引いた：expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#e623e721",
+   "sec": "perf.fuel",
+   "text": "9.5 gal/h なら巡航に約 9.8 gal、昼の予備 30 分に約 4.8 gal で、合わせて 2 ＋ 9.8 ＋ 4.8 ≒ 約 16.5 gal です（降下は巡航に含めて考えました）。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：1.0286 × 9.5 ≒ 9.77、0.5 × 9.5 ＝ 4.75、2 ＋ 9.77 ＋ 4.75 ≒ 16.5（燃料流量 9.5 gal/h は POH 図 5-20a）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#b3e08402（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#ae7f62a2",
+   "sec": "perf.fuel",
+   "text": "上の計算機に距離 108 NM を入れると、巡航と予備の約 14.5 gal が出ます。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：(108 ÷ 105 ＋ 0.5) × 9.5 ≒ 14.5（book-figs.js の計算機 fuel の式）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#11b3d37f",
+   "sec": "perf.fuel",
+   "text": "これに上昇の 2 gal を足します。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 の例（2 gal）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "新 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#4c5c01b0",
+   "sec": "perf.fuel",
+   "text": "米国の 91.151 の最低限の燃料（地上滑走・上昇の分を除く）は？",
+   "tag": "条文",
+   "source": "14 CFR 91.151（eCFR、R.cfr91）。FL.jur fuel.vfr の米国の欄と同じ",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.fuel#b2d08f28。タキシー → 地上滑走（FL.terms：reader-perfwb C2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#354666e4",
+   "sec": "perf.plan",
+   "text": "ヒーターを入れたままの全開は、デトネーション（detonation：シリンダーの中の異常な燃焼）の原因にもなります（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：4.5m（Full throttle operation with carburetor heat on can cause detonation）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S1 と同じ段落） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#a8daa2be",
+   "sec": "perf.plan",
+   "text": "だから POH は、気化器着氷（キャブレターアイス、carburetor icing）の兆しがない限り、進入ではヒーターを使わないとしています（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：4.5m（Carburetor heat should not be applied unless there is an indication of carburetor icing, since the use of carburetor heat causes a reduction in power which may be critical in case of a go-around）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.plan#52a5623a。着氷（icing）→ 気化器着氷（carburetor icing）（factcheck-perfwb S5・reader-perfwb P1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#01fc4d29",
+   "sec": "perf.plan",
+   "text": "POH の 3 つの図（離陸・上昇・着陸）の例の条件をつないで、1 回の飛行を確かめる練習をします。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7・5-15・5-35 のそれぞれの例（3 つの別の条件）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.plan#8bcc9b6b（expert-perfwb E-N11・reader-perfwb P2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#bfd7b8a0",
+   "sec": "perf.plan",
+   "text": "上昇率の 487 fpm は、図の例の 2,550 lb・76 KIAS（Vy）の値です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-15 Climb Performance（2,550 lb・76 KIAS・例 4,000 ft・19℃ → 487 fpm）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.plan#f0d9586b。76 KIAS（Vy）を書いた（expert-perfwb E-N11） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#51b5def7",
+   "sec": "perf.wb",
+   "text": "重量：Archer III の POH（操縦士用の機体の手引書、pilot's operating handbook）によると、最大離陸重量（maximum takeoff weight）は普通類（normal category）で 2,550 lb です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：1.11・2.11（Maximum Takeoff Weight 2,550 lb、Normal）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wb#55765a73。最大重量 → 最大離陸重量（reader-perfwb C6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#3dba6414",
+   "sec": "perf.wb",
+   "text": "基準線はステーション 0 で、ステーション 80.5 にある物のアームは 80.5 in です（FAA の重量重心のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：用語集 Structural station（The datum is, therefore, identified as station zero. The stations and arms are identical. An item located at station +50 would have an arm of 50 inches）。80.5 in は POH 図 6-9 の前席のアーム",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S7） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#2338c43c",
+   "sec": "perf.wb",
+   "text": "設計では、1 回転のスピンから普通に回復できることも考えます（PHAK 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（NEW_R.phak5）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Effect of Load Distribution（It is common practice for aircraft designers to establish an aft CG limit that is within one inch of the maximum, which allows normal recovery from a one-turn spin）",
+   "by": "revise-perfwb",
+   "note": "新（factcheck-perfwb S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#4399e5ac",
+   "sec": "perf.wb",
+   "text": "2,400 lb での範囲は約 86.6〜93.0 in なので、入っています（前の限界の求め方は ）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：2.13（2,050 lb 以下 82.0 in・2,550 lb 88.6 in の直線、後ろの限界 93.0 in）。82.0 ＋ 350 ÷ 500 × 6.6 ≒ 86.6",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wb#ed300af6（リンクを足した：reader-perfwb W5） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#8bd8deb9",
+   "sec": "wb.limits",
+   "text": "この例の機体では、170 lb の 4 人と満タンは同時に積めません",
+   "tag": "参考値",
+   "source": "この本の計算（170 lb × 4 ＋ 48 gal × 6 lb ＝ 968 lb ＞ 有効搭載量 918 lb ＝ 2,558 − 1,640）。POH 6.1 は「大人の最大の人数・満タン・最大の手荷物を同時には積めない」と書く（Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ））",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.limits#025b3c75。「満タンで 4 人は乗れません」を例の機体に限った（factcheck-perfwb S2・reader-perfwb L3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#a68917c6",
+   "sec": "wb.limits",
+   "text": "Archer の POH では、基準線から前輪まで A ＝ 31.0 in、主輪まで B ＝ 109.7 in です（POH 6.3・図 6-3）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：6.3(d) 図 6-3 Leveling Diagram（A ＝ 31.0、B ＝ 109.7）と (d)(2) の式（C.G. Arm ＝ N (A) ＋ (R ＋ L) (B) ÷ T、T ＝ N ＋ R ＋ L）。ページの画像で読んだ",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#5cdf072d",
+   "sec": "wb.limits",
+   "text": "台はかりの読みが、前輪 478 lb・右の主輪 589 lb・左の主輪 588 lb でした。",
+   "tag": "参考値",
+   "source": "この本の仮定の値（はかりの読み。この本の例の機体 1,640 lb・87.0 in になるように選んだ）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#bee4e915",
+   "sec": "wb.limits",
+   "text": "風袋はどれも 5 lb です（仮の値）。",
+   "tag": "参考値",
+   "source": "この本の仮定の値（風袋）。風袋を引くことは POH 6.3(c)（Deduct the tare, if any, from each reading）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#3cc8b131",
+   "sec": "wb.limits",
+   "text": "風袋を引くと、N ＝ 473 lb、R ＝ 584 lb、L ＝ 583 lb で、T ＝ 1,640 lb です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：478 − 5 ＝ 473、589 − 5 ＝ 584、588 − 5 ＝ 583、473 ＋ 584 ＋ 583 ＝ 1,640",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#e20e4e93",
+   "sec": "wb.limits",
+   "text": "重心 ＝（473 × 31.0 ＋ 1,167 × 109.7）÷ 1,640 ＝（14,663 ＋ 128,020）÷ 1,640 ≒ 87.0 in です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：473 × 31.0 ＝ 14,663、1,167 × 109.7 ＝ 128,019.9、142,682.9 ÷ 1,640 ≒ 87.00（A・B と式は POH 6.3(d)）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#81dec1ba",
+   "sec": "wb.limits",
+   "text": "この本の例の機体（1,640 lb・87.0 in）と同じになる値を選びました。",
+   "tag": "参考値",
+   "source": "この本の説明（book-figs.js の ARCHER_WB の空虚重量 1,640 lb・87.0 in）",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#605f411d",
+   "sec": "wb.limits",
+   "text": "そのときは 2,130 lb 以下で、後席に人を乗せず、手荷物も積みません（POH 2.11・2.25・図 6-9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：2.11（Utility：Maximum Takeoff 2,130 lb、Baggage 0 lb）・2.25 の札（UTILITY CATEGORY OPERATION - NO BAGGAGE OR AFT PASSENGERS ALLOWED）・図 6-9（Utility Category Operation - No baggage or rear passengers allowed）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.limits#6db4570e。出典 2.15 → 2.25（factcheck-perfwb N1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#5ec0a166",
+   "sec": "wb.limits",
+   "text": "実用類の前の限界は、2,130 lb で 83.0 in です（POH 2.13）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：2.13（Utility Category：2,130 lb で 83.0 in）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.limits#935d9f14（reader-perfwb L2：「も」を外した） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#071b2458",
+   "sec": "wb.limits",
+   "text": "実地試験の急旋回（米国の自家用で約 45°・事業用で約 50°：ACS）は、バンク 60° を超えない運動です。",
+   "tag": "参考値",
+   "source": "FAA-S-ACS-6C（R.acsP）PA.V.A.S3「approximately a 45° bank」・FAA-S-ACS-7B（R.acsC）CA.V.A.S3「approximately a 50° bank」（このセッションの ACS の写しを revise-perfwb が 2026-10-30 に読んだ）。POH 2.15 の実用類はバンク 60° を超える運動（steep turns・lazy eights・chandelles）",
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N5） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#e741952b",
+   "sec": "perf.wbex",
+   "text": "①後ろすぎ（93.8 in）→ ②後席の 1 人を前席へ（91.2 in）→ ③始動・地上滑走の 8 lb と燃料 20 gal を使った着陸（2,302 lb・90.9 in）。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：③ ＝ ② − 8 lb − 120 lb ＝ 2,302 lb、(221,507 − 760 − 11,400) ÷ 2,302 ≒ 90.94（perfwb-figs.js の wbEnvelope）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#0b9cba5d（図 wbEnvelope のキャプション）。③ を 8 lb も引いた着陸に（factcheck-perfwb S1・reader-perfwb X2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#55b3861e",
+   "sec": "perf.wbex",
+   "text": "始動・地上滑走の燃料（8 lb・95.0 in）を引いて、離陸の重さにする",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 6-9（Fuel Allowance For Engine Start, Taxi and Run Up −8 lb at 95.0 in）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#adf8b85b。地上走行 → 地上滑走（FL.terms：reader-perfwb C2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#42f401ea",
+   "sec": "perf.wbex",
+   "text": "重量は最大ランプ重量より軽いのに、重心が後ろの限界 93.0 in を超えています（図の ①）。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#1a6478e1。最大重量 → 最大ランプ重量（reader-perfwb C6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#21d13a4c",
+   "sec": "perf.wbex",
+   "text": "② 後席の 1 人（170 lb）を前席へ移す：重量は同じ 2,430 lb、重心は 91.2 in になり、範囲に入ります（図の ②）。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#f00137c9（「図の ②」を足した） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#486cacc0",
+   "sec": "perf.wbex",
+   "text": "たとえば 170 lb の 4 人と満タン（48 gal・288 lb）では、ランプの重さは 2,608 lb です。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：1,640 ＋ 340 ＋ 340 ＋ 288 ＝ 2,608",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#85faf97f を 2 文に分けた前半（factcheck-perfwb M1・reader-perfwb X1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#d5198988",
+   "sec": "perf.wbex",
+   "text": "最大ランプ重量 2,558 lb を 50 lb 超えます（離陸の 2,600 lb も、最大離陸重量 2,550 lb を 50 lb 超えます）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：1.11・2.11（Maximum Ramp 2,558・Takeoff 2,550 lb）・図 6-9（−8 lb）。この本の仮定の値の計算（revise-perfwb が検算した）：2,608 − 2,558 ＝ 50、2,600 − 2,550 ＝ 50",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#85faf97f の後半。58 lb → 50 lb（ランプはランプ、離陸は離陸と比べる：factcheck-perfwb M1・reader-perfwb X1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#eb43fadd",
+   "sec": "perf.wbex",
+   "text": "燃料を 10 gal（60 lb）減らすと、ランプ 2,548 lb・離陸 2,540 lb です。",
+   "tag": "参考値",
+   "source": "この本の仮定の値の計算（revise-perfwb が検算した）：2,608 − 60 ＝ 2,548、− 8 ＝ 2,540",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#af3fe664。ランプと離陸の 2 つに（factcheck-perfwb M1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#2a012c4c",
+   "sec": "perf.wbex",
+   "text": "始動・地上滑走の 8 lb を引くと、離陸は 2,422 lb・91.1 in です。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：2,430 − 8 ＝ 2,422、221,507 − 760 ＝ 220,747、÷ 2,422 ≒ 91.14",
+   "kind": "例題",
+   "by": "revise-perfwb",
+   "note": "新（例 ③ の前の離陸：factcheck-perfwb S1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#31f0731e",
+   "sec": "perf.wbex",
+   "text": "燃料を 20 gal（120 lb）使って着陸すると、③ 2,302 lb・90.9 in です（図の ③）。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：2,422 − 120 ＝ 2,302、220,747 − 11,400 ＝ 209,347、÷ 2,302 ≒ 90.94（説明してみよう 25 と同じ）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#c5ed80df。2,310 lb・91.0 in → 2,302 lb・90.9 in。「直し方」の外に出した（factcheck-perfwb S1・reader-perfwb X2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wbex#d5c7c761",
+   "sec": "perf.wbex",
+   "text": "上の計算機は、ランプと離陸の重さと重心、手荷物の 200 lb、燃料の 48 gal を、1 つずつ確かめます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：2.11（Baggage 200 lb）・2.21（Usable 48 gal）。計算機の判定（perfwb-figs.js CALC.wb）",
+   "by": "W16・revise-perfwb",
+   "note": "旧 perf.wbex#a11a17af（「上の計算機」：reader-perfwb C10） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#7d6918f4",
+   "sec": "wb.shift",
+   "text": "例：例 ② のモーメントは、例 ① の 227,899 lb-in から、後席から前席へ移した分 170 × 37.6 ＝ 6,392 を引いた 221,507 lb-in です。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：170 × (118.1 − 80.5) ＝ 6,392、227,899 − 6,392 ＝ 221,507",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.shift#90346c08 を 2 文に分けた前半（reader-perfwb S1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#a05815bf",
+   "sec": "wb.shift",
+   "text": "この例 ②（2,430 lb）に、手荷物を 20 lb 足します。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.shift#90346c08 の後半 ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#d3a5cd0f",
+   "sec": "wb.shift",
+   "text": "例 ② の離陸（8 lb を引いた 2,422 lb・220,747 lb-in）から 20 gal（120 lb）使うと、2,302 lb・209,347 lb-in で 90.9 in です（例 ③：着陸）。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：2,422 − 120 ＝ 2,302、220,747 − 11,400 ＝ 209,347、÷ 2,302 ≒ 90.94",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.shift#9eff55af。例 ③ を 8 lb も引いた着陸に（factcheck-perfwb S1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#5c33a8a8",
+   "sec": "wb.shift",
+   "text": "重心を 93.79 − 93.0 ≒ 0.79 in 前へ動かします。",
+   "tag": "参考値",
+   "source": "book-figs.js の ARCHER_WB（空虚重量 1,640 lb・87.0 in は例、アームと範囲は POH 2.13・図 6-9、始動・地上滑走の燃料 −8 lb at 95.0 in は POH 図 6-9）。この本の仮定の値の計算（revise-perfwb が検算した）：227,899 ÷ 2,430 ≒ 93.79、93.79 − 93.0 ≒ 0.79",
+   "kind": "例題",
+   "by": "W16・revise-perfwb",
+   "note": "旧 wb.shift#c0fc7942（reader-perfwb S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#3d227a95",
+   "sec": "perf.da",
+   "text": "空気が薄いと、燃料に対して空気が足りず、混合気が濃くなりすぎます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（NEW_R.phak7）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Mixture Control（as altitude increases, the density of air entering the carburetor decreases, while the density of the fuel remains the same. This creates a progressively richer mixture）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#638b15cf",
+   "sec": "perf.da",
+   "text": "気化器（キャブレター、carburetor）の混合比（ミクスチャー、mixture）を濃いままにすると、出力がさらに落ちます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（NEW_R.phak7）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Mixture Control（… can result in engine roughness and an appreciable loss of power … may occur during the runup prior to takeoff at high-elevation airports）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#5735376e",
+   "sec": "perf.da",
+   "text": "Archer の公開チェックリスト（checklist）には、密度高度が高い日の離陸前の手順があります。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：HIGH DENSITY ALTITUDE ENGINE LEANING FOR TAKEOFF",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#ef76b98f",
+   "sec": "perf.da",
+   "text": "ブレーキを踏んだまま全開にし、混合比を最良出力（best power）に合わせて、そのまま離陸します。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：HIGH DENSITY ALTITUDE ENGINE LEANING FOR TAKEOFF（Brakes APPLY & HOLD・Throttle FULL POWER・Mixture LEAN FOR BEST POWER、Leave the mixture in this position for takeoff）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.da#b421eaec",
+   "sec": "perf.da",
+   "text": "エンジンが熱くなりすぎたら、温度が戻るまで混合比を濃くします。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（Middle Georgia State University、2025、R.archerCk）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：同じ手順の注（Do not overheat the engine when operating with mixture leaned. If overheating occurs, enrich the mixture enough that temperature returns to normal）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#85a0dbe1",
+   "sec": "perf.tol",
+   "text": "ローテーション速度（Vr、rotation speed）：操縦輪を引いて、機首を上げ始める速度です。",
+   "tag": "参考値",
+   "source": "用語の定義（FL.terms vr：ローテーション速度＝rotation speed）。POH 4.5i（Rotation Airspeed … ROTATE TO CLIMB ATTITUDE）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#460bbf7b",
+   "sec": "perf.tol",
+   "text": "浮揚速度（lift-off speed）：車輪が地面を離れるときの速度です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-7 の表の見出し LIFTOFF。FAA AIM 7-6-8（R.aim76。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：lift-off airspeed（語は FL.terms にない：W04 に依頼）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb C1・expert-perfwb E-S3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#c66da350",
+   "sec": "perf.tol",
+   "text": "重いと、浮くのに要る速度が上がり、加速させる重さが増え、地面の摩擦と抗力（drag）も増えます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Increased gross weight can be considered to produce a threefold effect（Higher lift-off speed・Greater mass to accelerate・Increased retarding force (drag and ground friction)）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb T1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#39d8b2ef",
+   "sec": "perf.tol",
+   "text": "図の風の区画に入れるのは、滑走路に沿った向かい風成分（追い風なら追い風成分）です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Crosswind and Headwind Component Chart（the headwind and crosswind component for any given wind direction and velocity）・図 11-23 の例は headwind の値で読む",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S9） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#16c3a09c",
+   "sec": "perf.tol",
+   "text": "横風（crosswind）のときは、滑走路に直角な横風成分（crosswind component）を、POH の最大実証横風成分と比べます（PHAK 第 11 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：The maximum demonstrated crosswind component is published in the AFM/POH",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S9） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#499b1247",
+   "sec": "perf.tol",
+   "text": "進入速度（approach speed）は、POH とチェックリストの値を使います。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 9 章（NEW_R.afh9）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：the airspeed and the flap setting should conform to airplane manufacturer's recommendations in the AFM/POH",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#beeda9f7",
+   "sec": "perf.tol",
+   "text": "突風のときに足すのは、突風の分（平均の風速との差）の半分までです（AFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 9 章（NEW_R.afh9）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：In gusty air, no more than one-half the gust factor is added（normal approach speed plus one-half of the wind gust factors）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#26c1d44d",
+   "sec": "perf.tol",
+   "text": "どの滑走路でも、離陸の前に「ここまでに浮いていなければやめる」点を決めておきます（AFH 第 6 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 6 章（NEW_R.afh6）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Rejected Takeoff/Engine Failure（Prior to takeoff, the pilot should identify a point along the runway at which the airplane should be airborne. If that point is reached and the airplane is not airborne, immediate action should be taken to discontinue the takeoff）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb T3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.tol#433eab4c",
+   "sec": "perf.tol",
+   "text": "小型機の速度計は、低い速度では正確ではありません。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-6-8（R.aim76。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：Airspeed indicators in small airplanes are not required to be evaluated at speeds below stalling, and may not be usable at 70 percent of liftoff airspeed",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧 perf.tol#76ffff5f を 2 文に分けた前半（reader-perfwb T3） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#e781e8e3",
+   "sec": "perf.chart",
+   "text": "2 つめと 3 つめの区画の左の縁の縦の線を基準の線（reference line）、区画の中の斜めの線を案内線（guide line）とよびます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 11-23 の読み方（the first dark reference line … following the surrounding lines）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#8331cf98",
+   "sec": "perf.chart",
+   "text": "点が案内線と案内線のあいだにあるときは、まわりの線と平行に進みます（PHAK 第 11 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：draw the line from the reference point in a diagonal direction following the surrounding lines",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#eedaf4e6",
+   "sec": "perf.chart",
+   "text": "米国では、空港の情報をまとめた FAA の冊子 Chart Supplement に載ります。",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary（R.pcg。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：CHART SUPPLEMENT（A series of civil/military flight information publications issued by FAA every 56 days）。FAA AIM 4-3-6（R.aim43。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：declared distances … are published in the Chart Supplement",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#8e054a06",
+   "sec": "perf.chart",
+   "text": "クリアウェイ（clearway）は、滑走路の先の、障害物の高さを制限した区域です",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary（R.pcg。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：CLEARWAY（An area beyond the takeoff runway under the control of airport authorities within which terrain or fixed obstacles may not extend above specified limits）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb CH2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.chart#713e64ea",
+   "sec": "perf.chart",
+   "text": "ただし、進入端が滑走路の奥へずらしてある（displaced threshold）ときは、着陸に使える長さがその分だけ短くなります。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-6（R.aim43。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：unless there is a displaced landing threshold, in which case the LDA is shortened by the amount of the threshold displacement。FAA Pilot/Controller Glossary（R.pcg。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：DISPLACED THRESHOLD",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧の文に語を足した（reader-perfwb CH2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#fa0f0dc0",
+   "sec": "perf.range",
+   "text": "2 つは同じ速さではなく、遠くへ行ける速さのほうが速くなります（PHAK 第 11 章の図）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 11-11 Airspeed for maximum endurance（Maximum endurance at minimum power required が左、Maximum range at L/DMAX が右）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb R4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.range#a96c8f43",
+   "sec": "perf.range",
+   "text": "燃料を使って重さが減ると、いちばんよい速度と出力が下がることがあります（PHAK 第 11 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章（NEW_R.phak11）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：As fuel is consumed and the aircraft's gross weight decreases, the optimum airspeed and power setting may decrease",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N7） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#f39de57a",
+   "sec": "perf.fuel",
+   "text": "上昇の時間・燃料・距離を、POH の上昇の図で読む（Archer III は図 5-17。始動・地上滑走・離陸の燃料も含む）",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：図 5-17 と NOTE・5.5(c)",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.fuel#e6b07746",
+   "sec": "perf.fuel",
+   "text": "巡航の距離 ＝ 全体の距離 − 上昇の距離（POH には降下の図もある：図 5-31）",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：5.5(d)・(e)（subtract the previously calculated distance to climb and distance to descend）・目次の図 5-31 Time, Distance and Fuel to Descend",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S8） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#c8fb36f7",
+   "sec": "perf.plan",
+   "text": "キャブレターヒーター（キャブレターヒート、carburetor heat）を入れていたら、全開にするときに OFF にして、最大の出力を出します（AFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH FAA-H-8083-3C 第 9 章（NEW_R.afh9）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Go-Arounds, Power（Carburetor heat is turned off to obtain maximum power, as applicable）。チェックリストの BEFORE LANDING は Carburetor Heat AS REQUIRED",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新〔安全〕（expert-perfwb E-S1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.plan#3c072030",
+   "sec": "perf.plan",
+   "text": "Archer III の POH の上昇の図は、この Vy の 1 枚だけです（POH 図 5-15）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：第 5 章の図の目次（上昇は 5-15 Climb Performance と 5-17 Time, Distance and Fuel to Climb だけ。5-15 は 76 KIAS）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N11） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#8f36e6df",
+   "sec": "perf.wb",
+   "text": "重すぎると、失速（stall）する速さである失速速度（stall speed）が上がります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 10 章（NEW_R.phak10）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Effects of Weight（Higher stalling speed）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧の文を直した（expert-perfwb E-S12） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#9995422a",
+   "sec": "perf.wb",
+   "text": "同じ速度でも、大きな迎え角（迎角、angle of attack）が要るからです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（NEW_R.phak5）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：The aircraft stalls at a higher speed … because the stalling AOA is reached at a higher speed due to increased wing loading（重さでも同じ考え）。aero.stall の「臨界迎え角は変わらない」と合わせた",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S12） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#cdb16d74",
+   "sec": "perf.wb",
+   "text": "ステーション（station）：機体の中の位置を、基準線からの距離で表した番号です。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：用語集 Station（A location along the airplane fuselage usually given in terms of distance from the reference datum）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S7） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#75f1730a",
+   "sec": "perf.wb",
+   "text": "モーメント（moment）：物を回そうとする働きで、重量 × アームで表します（lb-in）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：用語集 Moment（A force that causes or tends to cause an object to rotate. It is indicated by the product of the weight of an item multiplied by its arm）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧の文に定義を足した（reader-perfwb WE1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#0d65ac95",
+   "sec": "perf.wb",
+   "text": "重力の分は分子と分母で消えるので、lb-in でも kg·m でも、同じ位置が出ます。",
+   "tag": "参考値",
+   "source": "計算（重心 ＝ Σ(m g x) ÷ Σ(m g) ＝ Σ(m x) ÷ Σm）。モーメント ＝ 重量 × アーム は FAA-H-8083-1B",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb WE1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#eff55f75",
+   "sec": "perf.wb",
+   "text": "機首の上げ下げに要る操縦輪の力も、重心が前ほど重く、後ろほど軽くなります（PHAK 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（NEW_R.phak5）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：Higher elevator control forces normally exist with a forward CG location",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb W2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#bbe9d88a",
+   "sec": "perf.wb",
+   "text": "後ろの限界は、主に安定を考えて決められています。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（NEW_R.phak5）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：The rearward CG limit of an aircraft is determined largely by considerations of stability",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧の文を直した（factcheck-perfwb S4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#f61d368e",
+   "sec": "wb.limits",
+   "text": "空虚重量は、人・荷物・使える燃料を載せていない機体の重さです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：1.19（Standard Empty Weight：standard airplane including unusable fuel, full operating fluids and full oil）・FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：Empty weight",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb L1） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#c0671284",
+   "sec": "wb.limits",
+   "text": "POH の言葉では、標準空虚重量（standard empty weight）は、使えない燃料・運用に要る液体（作動油など）・満タンのオイルを含んだ重さです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：1.19（unusable fuel, full operating fluids and full oil）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧の文。作動油 → 運用に要る液体（作動油など）（factcheck-perfwb N6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#169f5467",
+   "sec": "wb.limits",
+   "text": "量るときは、使えない燃料とオイルを入れ、追加の装備も付けておくので、量った重さが基本空虚重量になります（POH 6.3）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：6.3(a)(3)(4)（add the unusable fuel・Fill with oil to full capacity）・(d)(2)（basic empty weight … as weighed including optional equipment, full oil and unusable fuel）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#59319b71",
+   "sec": "wb.limits",
+   "text": "重心は、3 つの車輪の重さと、基準線から車輪までの距離で求めます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：6.3(d)",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-S6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#21aae621",
+   "sec": "wb.limits",
+   "text": "ランプ（ramp）は、駐機場（エプロン、apron）のことです（P/CG）。",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary（R.pcg。revise-perfwb が 2026-10-30 に faa.gov の HTML を取り直して読んだ）：RAMP（See APRON）・APRON（A defined area on an airport … intended to accommodate aircraft for purposes of loading or unloading passengers or cargo, refueling, parking, or maintenance）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb C4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#27bf8631",
+   "sec": "wb.limits",
+   "text": "ランプの重さは、駐機場で人・荷物・燃料を全部積んだ、エンジンをかける前の重さです。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：用語集 Ramp weight（The zero fuel weight plus all of the usable fuel on board）・Takeoff weight（the ramp weight minus the weight of the fuel burned during start and taxi）。POH 図 6-9（Total Loaded Airplane → Fuel Allowance for Engine Start, Taxi and Run Up）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb C4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#b6e89f94",
+   "sec": "wb.limits",
+   "text": "スピンは、普通類でも実用類でも禁止です（POH 2.15・2.25 の札）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：2.15（Normal Category - All acrobatic maneuvers including spins prohibited）・2.25（SPINS ARE PROHIBITED FOR NORMAL AND UTILITY CATEGORY）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N5） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#d43ac377",
+   "sec": "wb.limits",
+   "text": "燃料を除いた重さは零燃料重量（zero fuel weight）といい、その最大を決めている機体もあります（FAA の重量重心のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：用語集 Zero fuel weight（The weight of an aircraft without fuel）・Maximum zero fuel weight",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#0afaab1a",
+   "sec": "wb.limits",
+   "text": "Archer III の POH の重さの限界には、ありません。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：1.11・2.11（Ramp・Takeoff・Landing・Baggage だけ）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N6） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#2b9d0d7f",
+   "sec": "wb.limits",
+   "text": "燃料の量が L で示されたときは、US gal に直してから lb にします。",
+   "tag": "参考値",
+   "source": "この本の手順（換算は NIST SP 811 B.9：1 US gal ＝ 3.785 L）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "旧「日本で給油すると、量は L で記録されます」を国を書かない手順の文に（factcheck-perfwb S3：出典のない日本の事実を外した） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#86efd150",
+   "sec": "wb.shift",
+   "text": "Archer のトリム（trim）は、スタビレーター（stabilator）と方向舵（ラダー、rudder）の 2 つだけです（POH 4.5h）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）（revise-perfwb が 2026-10-30 に取り直して読んだ。factcheck-perfwb の写しと sha256 が同じ）：4.5a（Stabilator and Rudder Trim … NEUTRAL）・4.5h（Stabilator and Rudder Trims … SET）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（expert-perfwb E-N4） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "wb.shift#cdb7c072",
+   "sec": "wb.shift",
+   "text": "左右の偏りも、中心線からの距離（右を＋、左を−）× 重さで考えます（FAA の重量重心のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（2016、R.wb。revise-perfwb が 2026-10-30 に faa.gov の PDF を取り直して読んだ）：第 8 章 lateral CG（the distances between the scales and butt line zero (BL 0) are used as the arms. Arms to the right of BL 0 are positive and those to the left are negative）",
+   "extracted": false,
+   "by": "revise-perfwb",
+   "note": "新（reader-perfwb WE2） ／ integrate-R2B：章を登録したコミットで drafts/perfwb.claims.json から入れた"
+  },
+  {
+   "id": "perf.da#76d23c75",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.da#cda8c2fc",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.da#0a2fa083",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.da#e11ab009",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.da#ee0daf99",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#c11ec4fc",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#8f4f05fa",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#61e1e290",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#76ffff5f",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#b014dbb1",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#5160e267",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#24193f47",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#bafad851",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#50ae209a",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.tol#08583091",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.chart#9297736e",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.chart#10ee643b",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.climb#de3fdd2e",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.climb#819dada9",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.range#43d2a015",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.range#2574d1d7",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.range#6454ce90",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.range#c6b4c312",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.range#dcbe3f6b",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#e8b4e84a",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#d993b711",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#fbc9dc08",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#7cbc656f",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#8a92930a",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#b3e08402",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.fuel#b2d08f28",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.plan#52a5623a",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.plan#8bcc9b6b",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.plan#f0d9586b",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wb#55765a73",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wb#ed300af6",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#025b3c75",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#6db4570e",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#935d9f14",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#0b9cba5d",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#adf8b85b",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#1a6478e1",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#f00137c9",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#c5ed80df",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#85faf97f",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#af3fe664",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "perf.wbex#a11a17af",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.shift#90346c08",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.shift#9eff55af",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.shift#c0fc7942",
+   "by": "W16",
+   "note": "integrate-R2B：本にない文（章を drafts/perfwb.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
   }
  ]
 }

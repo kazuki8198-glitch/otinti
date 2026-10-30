@@ -172,6 +172,8 @@
     g1000pg: { label: "Garmin G1000 Pilot's Guide for Cessna Nav III（190-00498-07 Rev. A）— 第 1 章（AHRS の整列）・第 2 章 Flight Instruments・第 7 章 AFCS（GFC 700 型：トレンドの線・モードの表示の帯の色・自動操縦が外れたときの表示。Archer の手引きではない例）", url: 'https://static.garmin.com/pumac/190-00498-07_0A_Web.pdf' },
     aah4: { label: 'FAA Advanced Avionics Handbook（FAA-H-8083-6。2009 年版・2013 年の改訂。FAA Safety Team（faasafety.gov）の写し）第 4 章 Automated Flight Control（自動操縦を使う手順・モードの確かめ・昇降率と高度保持のモードと失速・切るスイッチ）', url: 'https://www.faasafety.gov/files/events/EA/EA03/2019/EA0392003/aah_ch04.pdf' },
     nzCompass: { label: 'Civil Aviation Authority of New Zealand, Flight Instructor Guide — Compass use（南半球の磁気コンパスの誤差の覚え方 ONUS・SAND）', url: 'https://www.aviation.govt.nz/licensing-and-certification/pilots/flight-training/flight-instructor-guide/compass-use' },
+    // Part 1 rewritten (R2): the sources the chapter perf, wb added (drafts/perfwb.js's NEW_R; one entry for a URL two drafts cite)
+    afh6: { label: 'FAA Airplane Flying Handbook（FAA-H-8083-3C）第 6 章 Takeoffs and Departure Climbs（離陸をやめる点を先に決める）', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

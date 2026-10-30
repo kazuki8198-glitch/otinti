@@ -376,10 +376,10 @@ test('physics: the fuel selector — OFF stops the engine only after the fuel in
 test('syllabus: the lessons follow the published course order, each says what, why, how (keys) and the standard', () => {
   const L = flightLessons();
   assert.ok(L.length >= 30, `${L.length} flight lessons`);
-  assert.deepEqual(SY.STAGES.map(s => s.phase), ['p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
+  assert.deepEqual(SY.STAGES.map(s => s.phase).slice(0, 6), ['p1', 'p2', 'p3', 'p4', 'p5', 'p6']);   // (next-wave item 6: a seventh stage, the complex/CFI endorsement, rides on the p6 phase)
   for (const l of L) {
     assert.ok(l.title && l.goal && l.why && l.std && Array.isArray(l.brief) && l.brief.length >= 1, `${l.id} brief`);
-    assert.ok(['pa28', 'pa44'].includes(l.aircraft), `${l.id} aircraft`);
+    assert.ok(['pa28', 'pa44', 'pa28r'].includes(l.aircraft), `${l.id} aircraft`);
     assert.ok(l.steps.length >= 1 && l.steps.every(S => S.say || S.checklist || S.atc || S.name), `${l.id} steps`);
     assert.ok(l.steps.some(S => S.keys), `${l.id}: at least one step says which keys to use`);
     for (const b of l.book || []) assert.ok(BK.findSection(b), `${l.id} book ${b}`);
@@ -428,7 +428,7 @@ test('grading: ≥ 85 % of the time inside and the largest deviation within 1.6 
 
 test('the scripted pilot flies and passes the lessons a script can fly (Archer, Seminole, instruments, navigation)', () => {
   const fails = [];
-  for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'e3', 'c1', 'x3', 'n1', 'n2', 'n3', 'i3', 'i4', 'i5', 'm1', 'm2', 'm3', 'm4']) {
+  for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'e3', 'c1', 'x3', 'n1', 'n2', 'n3', 'i3', 'i4', 'i5', 'i6', 'i7', 'm1', 'm2', 'm3', 'm4']) {
     const L = runLesson(FL, id, 'basic', 1200);
     if (!(L.done && L.passed)) fails.push(`${id}: ${L.grade} ${L.reason} ${L.results.flatMap(r => r.rows).filter(r => !r.pass).map(r => r.name + ' ' + r.val).join(' / ')}`);
   }
@@ -885,4 +885,57 @@ test('wb: the before-takeoff checklist refuses an out-of-envelope load, and pass
   assert.ok(!SC.checklistNext(L).ok, 'and it keeps refusing until the load is fixed');
   const M = SC.startLesson('m1', 'intro', { loading: { fuel: 'full', rear: 2, bagKg: 30 } });
   assert.ok(M.s.wb && !M.s.wb.ok, 'the twin lesson carries the load too');
+});
+
+// ------------------------------------------------------------------ (next-wave item 6) the complex aircraft
+test('complex: the Arrow is a retractable, governed-propeller single; the standard load is in its envelope', () => {
+  const AW = P.AIRCRAFT.find(a => a.id === 'pa28r');
+  assert.ok(AW && AW.complex && AW.propCtrl && AW.cs && !AW.gear.fixed && !AW.carb, 'the complex flags');
+  const wb = P.computeWB(AW, P.stdLoading());
+  assert.ok(wb && wb.ok && Math.abs(wb.kg - AW.phys.mass) < 1e-9, `the standard load is the reference mass (${wb && wb.kg})`);
+  const s = P.newState({ aircraft: 'pa28r' });
+  assert.equal(s.A.id, 'pa28r'); assert.equal(s.prop, 1, 'the prop lever starts full forward');
+});
+
+test('complex: the prop lever governs the rpm, the manifold pressure creeps up, the power falls (measured)', () => {
+  const meas = (prop, thr) => {
+    const s = P.newState({ aircraft: 'pa28r' }); P.placeInAir(s, 7000, -37500, 3000, 90, 110, 0, 0, thr);
+    s.prop = prop; s.thr = thr; run(s, 6);
+    return { rpm: s.out.rpm, manIn: s.out.manIn, propK: s.out.propK, gov: s.out.govRpm };
+  };
+  const fwd = meas(1, 0.75), cruise = meas(0.625, 0.75), low = meas(0, 0.75), full = meas(1, 1), lowFull = meas(0, 1);
+  assert.ok(Math.abs(fwd.rpm - 2700) < 60 && Math.abs(cruise.rpm - 2400) < 60 && Math.abs(low.rpm - 1900) < 60, `the governor holds the set rpm at cruise power (${fwd.rpm} / ${cruise.rpm} / ${low.rpm})`);
+  assert.equal(cruise.gov, 2400, 'the governed setting the instruments quote');
+  assert.ok(cruise.manIn > fwd.manIn + 0.3 && low.manIn > cruise.manIn + 0.3, `MAN IN creeps up as the rpm comes back (${fwd.manIn} → ${cruise.manIn} → ${low.manIn} inHg)`);
+  assert.ok(Math.abs(cruise.propK - 0.94) < 0.02 && Math.abs(low.propK - 0.82) < 0.02, `the power factor at 2,400 / 1,900 rpm (${cruise.propK} / ${low.propK})`);
+  assert.ok(Math.abs(full.rpm - 2700) < 30 && Math.abs(lowFull.rpm - 1900) < 30, 'and at full power');
+  // the existing types never take the prop branch: the Seminole's rpm formula and the Archer's are untouched
+  const SM = P.AIRCRAFT.find(a => a.id === 'pa44');
+  assert.equal(P.rpmFor(SM, 0.75, 50), 2250 + 450 * Math.sqrt(0.75), 'the Seminole rpm is the old formula');
+  const s2 = P.newState({ aircraft: 'pa44' }); s2.prop = 0; P.placeInAir(s2, 7000, -37500, 3000, 90, 110, 0, 0, 0.75); run(s2, 3);
+  assert.ok(Math.abs(s2.out.rpm - (2250 + 450 * Math.sqrt(0.75))) < 80, 'moving s.prop does nothing on the twin');
+});
+
+test('complex: gear up climbs much better than gear down (measured at Vy, full power)', () => {
+  const climb = gear => {
+    const s = P.newState({ aircraft: 'pa28r' }); P.placeInAir(s, 7000, -37500, 1200, 90, 90, 0, 0, 1);
+    s.gearDown = gear; s.gearPos = gear ? 1 : 0; s.thr = 1;
+    let vs = 0, n = 0;
+    run(s, 20, () => { hands(s, 90); if (s.t > 12) { vs += s.out.vsi; n++; } });
+    return vs / Math.max(1, n);
+  };
+  const down = climb(true), up = climb(false);
+  assert.ok(up > down + 200, `gear up ${Math.round(up)} fpm vs gear down ${Math.round(down)} fpm`);
+  assert.ok(down > 150, `gear down still climbs (${Math.round(down)} fpm)`);
+});
+
+test('complex + CFI: the endorsement lessons and the CFI prototype pass with the scripted pilot', () => {
+  for (const id of ['cx1', 'cx2', 'cx3', 'cf1']) {
+    const L = runLesson(FL, id, 'intro', 900);
+    assert.ok(L.done, `${id} finishes`);
+    assert.ok(L.passed, `${id} passes (grade ${L.grade}): ${L.results.flatMap(r => r.rows.filter(x => !x.pass).map(x => `${r.step}/${x.name}=${x.val}`)).join('; ')}`);
+  }
+  // the CFI trainee really made its seeded mistake (the deviation was recorded, not scripted into the grade)
+  const L = runLesson(FL, 'cf1', 'intro', 900);
+  assert.ok(L.cfiDev >= 40, `the trainee's deviation was measured (${L.cfiDev} ft)`);
 });

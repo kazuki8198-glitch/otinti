@@ -18,12 +18,15 @@ export function snapshot(s, t) {
   const q = q4(s && s.q);
   return {
     t: +t || 0,
-    n: s ? +s.n || 0 : 0, e: s ? +s.e || 0 : 0, h: s && s.pos ? +s.pos.y || 0 : 0,
+    // (the position: the bridge state carries pos [east, up, south] — n/e are derived from it when the
+    // state does not carry them itself; alt/vs likewise fall back to the model's altTrue/vsi, which are
+    // the fields derive() actually writes. Without these the recording had no horizontal position at all)
+    n: s ? (s.n != null ? +s.n || 0 : s.pos ? -s.pos[2] || 0 : 0) : 0, e: s ? (s.e != null ? +s.e || 0 : s.pos ? +s.pos[0] || 0 : 0) : 0, h: s && s.pos ? +s.pos.y || 0 : 0,
     q: [+q[0], +q[1], +q[2], +q[3]],
-    ias: o.ias || 0, gs: o.gs || 0, vs: o.vs || 0, alt: o.alt || 0,
+    ias: o.ias || 0, gs: o.gs || 0, vs: o.vsi != null ? o.vsi : o.vs || 0, alt: o.alt != null ? o.alt : o.altTrue || 0,
     pIn: s ? s.pIn || 0 : 0, rIn: s ? s.rIn || 0 : 0, rud: s ? s.rud || 0 : 0,
     thr: s ? (e0.thr != null ? e0.thr : s.thr || 0) : 0,
-    gear: s ? (s.gearPos == null ? 1 : s.gearPos) : 1, flap: s && s.flaps ? s.flaps.deg || 0 : 0,
+    gear: s ? (s.gearPos == null ? 1 : s.gearPos) : 1, flap: s ? (s.flaps ? s.flaps.deg || 0 : s.flapDeg || 0) : 0,
     onGround: !!(s && s.onGround),
     rpm: e0.rpm || 0, failed: !!(e0.failed),
   };

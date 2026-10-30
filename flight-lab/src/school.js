@@ -129,6 +129,19 @@
     ms_before_landing: { title: '着陸前点検・双発（GUMPS）', items: [
       ['G：Gas（燃料）', '両方 ON', s => s.eng.every(e => selNow(s, e) !== 'OFF')], ['U：Undercarriage（脚）', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98], ['M：Mixture', 'RICH', s => s.eng.every(e => mixNow(s, e) >= 0.95)],
       ['P：Props', '前（教材では自動）'], ['S：Switches / Seatbelts', '着陸灯 ON・ベルト着用'] ] },
+    // (next-wave item 6) the complex single (the Arrow): the extra items are the gear and the propeller lever —
+    // power is set by TWO levers (the throttle for the manifold pressure, the prop lever for the governed rpm)
+    cx_before_takeoff: { title: '離陸前点検・複雑機（BEFORE TAKEOFF・教材の簡略版）', items: [
+      ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く（W / S / A / D / Q / E で確認）'], ['計器（G1000 型）', 'PFD・MFD 異常なし、高度計規正（BARO）'],
+      ['重量と重心', wbText, wbOk],
+      ['燃料セレクター', '燃料の多い側', s => fullerSide(s)], ['ミクスチャー', 'RICH', s => s.eng.every(e => mixNow(s, e) >= 0.95)],
+      ['プロペラ', 'FULL FORWARD（一番前：離陸は最大回転で）', s => (s.prop == null ? 1 : s.prop) >= 0.98], ['フラップ', 'UP（通常離陸）', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T でリセット）', s => Math.abs(s.trim) < 0.05],
+      ['脚', 'DOWN・緑 3 つ', s => s.gearDown && s.gearPos > 0.98], ['スロットル', 'アイドル', s => s.thr < 0.1],
+      ['離陸の計画', s => `Vr ${s.A.v.rotate}・Vy ${s.A.v.y}・脚上げは正の上昇を確認してから。浮揚前の異常は止まる、浮揚後のエンジン故障は正面へ`] ] },
+    cx_before_landing: { title: '着陸前点検・複雑機（GUMPS＋プロペラ）', items: [
+      ['G：Gas（燃料）', '燃料の多い側', s => fullerSide(s)], ['U：Undercarriage（脚）', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98], ['M：Mixture', 'RICH（降下前に戻す）', s => s.eng.every(e => mixNow(s, e) >= 0.95)],
+      ['P：Propeller', 'FULL FORWARD（, / . キー：一番前。ゴーアラウンドに備える）', s => (s.prop == null ? 1 : s.prop) >= 0.98],
+      ['S：Switches / Seatbelts', '着陸灯 ON・ベルト着用'], ['進入速度', s => `${s.A.v.appr} kt`] ] },
     ms_engine_failure: { title: '片発停止の記憶操作（教材の簡略版・機体の POH が優先）', items: [
       ['ピッチ', s => `機首を下げて Vyse ${s.A.v.yse} kt（青線）を保つ`], ['出力', 'ミクスチャー・プロペラ・スロットル 前（全開）'], ['外形', 'フラップ UP・脚 UP（G）', s => s.flapIdx === 0 && !s.gearDown],
       ['Identify（特定）', '踏んでいない足の側＝止まったエンジン（Dead foot, dead engine）'], ['Verify（確認）', '止まったと思う側のスロットルを絞っても何も変わらないこと'],
@@ -152,6 +165,9 @@
     ils: L => ({ msg: `LAB Approach: "${L.call}, turn left heading 330, maintain 2,000 until established on the localizer, cleared ILS runway 36 approach."`,
       opts: [`Left 330, maintain 2,000 until established, cleared ILS runway 36, ${L.callShort}.`, `Cleared ILS, ${L.callShort}.`, `Right 330, cleared ILS runway 36, ${L.callShort}.`], ok: 0,
       why: '進入許可は「針路・ローカライザーに乗るまでの高度・進入の種類と滑走路」をすべて復唱します。旋回方向（left / right）も大切です。' }),
+    rnav: L => ({ msg: `LAB Approach: "${L.call}, turn left heading 330, maintain 2,000 until established on the final approach course, cleared RNAV runway 36 approach."`,
+      opts: [`Left 330, maintain 2,000 until established, cleared RNAV runway 36, ${L.callShort}.`, `Cleared RNAV, ${L.callShort}.`, `Right 330, cleared ILS runway 36, ${L.callShort}.`], ok: 0,
+      why: '進入許可は「針路・ファイナルコースに乗るまでの高度・進入の種類（RNAV）と滑走路」をすべて復唱します。ILS との取り違え、旋回方向の取り違えは重大です。' }),
     divert: L => ({ msg: `LAB Approach: "${L.call}, roger, proceed direct LAB-F, maintain ${L.alt0.toLocaleString('en-US')}."`,
       opts: [`Direct LAB-F, maintain ${L.alt0.toLocaleString('en-US')}, ${L.callShort}.`, `Roger, ${L.callShort}.`, `Direct LAB-A, ${L.callShort}.`], ok: 0,
       why: '目的地変更の指示は「どこへ（直行先）・高度」を復唱します。' }),
@@ -181,7 +197,7 @@
     return {
       dt, t: L.t, alt: A.indicatedAlt(o.altTrue, s.qnh, av.baro), altTrue: o.altTrue, agl: o.agl, aglR, kias: o.ias, tas: o.tas, gsK: o.gs,
       hdg, trk: A.trueToMag(o.trk, varW), pitch: o.pitch, bank: o.bank, vs: o.vsi, rate: L.rateF, along: rc.along, cross: rc.cross, rwyHdg: 360,
-      thr: s.thr, flaps: s.flapIdx, gearDown: s.gearDown, gearPos: s.gearPos, onGround: s.onGround, paved: o.onRunway, stall: o.stallWarn, g: o.g, beta: o.beta,
+      thr: s.thr, prop: s.prop == null ? 1 : s.prop, rpm: o.rpm || 0, manIn: o.manIn || 0, propK: o.propK == null ? 1 : o.propK, flaps: s.flapIdx, gearDown: s.gearDown, gearPos: s.gearPos, onGround: s.onGround, paved: o.onRunway, stall: o.stallWarn, g: o.g, beta: o.beta,
       latV, gp, cl: rc.cross, cdi: nav.flag ? 2.5 : nav.dots, loc: nav.flag ? 2.5 : nav.dots, gsd: nav.flag || nav.gsDots == null ? 2.5 : nav.gsDots, navFlag: nav.flag, dmeV, brgV, dis: nav.dis, xtk: nav.xtk,
       engRun: s.eng.filter(e => e.run).length, crashed: s.crashed, td: s.td,
     };
@@ -260,6 +276,7 @@
     L.av.baro = s.qnh; L.av.hdgBug = L.hdg0 || 360; L.av.altSel = Math.round(L.alt0 / 100) * 100;
     if (su.nav === 'VOR') { L.av.cdi = 'NAV1'; L.av.nav1.act = 113500; L.av.crs = w360((su.obs != null ? su.obs : Math.round(A.trueToMag(A.neBearing(ph.ne(s), A.NAVAIDS[0]), varW) / 5) * 5) + (su.obsOff || 0)) || 360; }
     else if (su.nav === 'ILS') { L.av.cdi = 'NAV1'; L.av.nav1.act = 109900; L.av.crs = 360; }
+    else if (su.nav === 'RNAV') { A.control(L.av, 'PROC_RNAV'); }
     if (su.fpl) { L.av.fpl = { wps: su.fpl.slice(), active: 1 }; L.av.cdi = 'GPS'; }
     P().derive(s);
   }
@@ -546,7 +563,7 @@
     const steps = Array.isArray(r.steps) ? r.steps.slice(0, 40).map(S => (S && typeof S === 'object' ? { step: txt(S.step, 80), pass: !!S.pass, rows: Array.isArray(S.rows) ? S.rows.slice(0, 8).map(x => ({ name: txt(x && x.name, 60), val: txt(x && x.val, 120), std: txt(x && x.std, 60), pass: !!(x && x.pass) })) : [] } : null)).filter(Boolean) : [];
     return {
       v: 2, id: txt(r.id, 40).replace(/[^A-Za-z0-9_\-]/g, '') || 'r' + Math.random().toString(36).slice(2),
-      lessonId: lid, lessonTitle: lessonTitle(lid), level: level(r.level).id, levelName: level(r.level).name, aircraft: ['pa28', 'pa44'].includes(r.aircraft) ? r.aircraft : 'pa28',
+      lessonId: lid, lessonTitle: lessonTitle(lid), level: level(r.level).id, levelName: level(r.level).name, aircraft: ['pa28', 'pa44', 'pa28r'].includes(r.aircraft) ? r.aircraft : 'pa28',
       datetime: isNaN(Date.parse(r.datetime)) ? new Date(0).toISOString() : new Date(Date.parse(r.datetime)).toISOString(),
       result: ['pass', 'fail', 'abort', 'free'].includes(r.result) ? r.result : 'abort', grade: ['S', 'A', 'B', 'C', '―', ''].includes(r.grade) ? r.grade : '', reason: txt(r.reason, 300),
       passPct: isNum(r.passPct) ? clamp(Math.round(r.passPct), 0, 100) : 0, practiceSec: isNum(r.practiceSec) ? Math.max(0, Math.round(r.practiceSec)) : 0,

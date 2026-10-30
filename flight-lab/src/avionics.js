@@ -96,6 +96,17 @@
   function cdiLoc(angleOffDeg) { return clamp(-angleOffDeg / 1.25, -2.5, 2.5); }
   const gsDots = (aboveDeg) => clamp(-aboveDeg / 0.35, -2.5, 2.5);
 
+  // ---------------------------------------------------------------- procedures (架空の進入方式)
+  // The two approaches LAB has, as data: the ILS (LOC + glide slope, DA) and the RNAV (GPS) RWY 36
+  // (LNAV / LPV minima, a 3° path to the same threshold). FAF 5.0 NM from the threshold on the final
+  // course (354° true / 360° magnetic), crossing the FAF at 2,000 ft MSL; the missed approach climbs
+  // to 3,000 ft direct LAB-D and holds. NOT real procedures, NOT for navigation.
+  const PROCEDURES = [
+    { id: 'ILS36', name: 'ILS 36', type: 'ILS', runway: '36', finalCourse: 360, fafDistNm: 5.0, fafAltFt: 2000, daFt: 255, mdaFt: null, visSm: 0.5, missed: { to: 'LABED', altFt: 3000, text: '直行 LAB-D・3,000 ft へ上昇して待機' } },
+    { id: 'RNAV36', name: 'RNAV (GPS) RWY 36', type: 'RNAV', runway: '36', finalCourse: 360, fafDistNm: 5.0, fafAltFt: 2000, daFt: 305, mdaFt: 505, visSm: 0.5, missed: { to: 'LABED', altFt: 3000, text: '直行 LAB-D・3,000 ft へ上昇して待機' } },
+  ];
+  const procedureById = id => PROCEDURES.find(p => p.id === id) || null;
+
   // ---------------------------------------------------------------- fictional training points (架空訓練点)
   // Positions on the local plane (metres from the display origin). NOT real fixes, NOT for navigation.
   const WAYPOINTS = [
@@ -188,7 +199,14 @@
       // PROC again in the approach sequences the missed approach (direct to the hold point, 3,000 ft), a
       // third press unloads it. There is no procedure database behind this — it is the one approach LAB has.
       case 'PROC': {
-        if (!av.proc) { av.proc = { name: 'ILS 36', missed: false }; av.nav1.act = 109900; av.cdi = 'NAV1'; return 'PROC：ILS 36 をロード（LOC 109.90）'; }
+        if (!av.proc) { av.proc = { name: 'ILS 36', type: 'ILS', missed: false }; av.nav1.act = 109900; av.cdi = 'NAV1'; return 'PROC：ILS 36 をロード（LOC 109.90）'; }
+        if (!av.proc.missed) { av.proc.missed = true; av.direct = 'LABED'; av.directFrom = null; av.crs = 360; if (av.altSel < 3000) av.altSel = 3000; return 'ミストアプローチ：LAB-D へ直行・3,000 ft へ上昇'; }
+        av.proc = null; return 'PROC 解除'; }
+      // the RNAV (GPS) RWY 36, the same shape as PROC: load → sequence the missed approach → unload.
+      // Loading it puts the CDI on GPS, directs to the runway and selects the LPV decision altitude
+      // (DA 305 ft MSL; the LNAV MDA is 505 ft MSL — see PROCEDURES).
+      case 'PROC_RNAV': {
+        if (!av.proc || av.proc.type !== 'RNAV') { const P36 = procedureById('RNAV36'); av.proc = { name: P36.name, type: 'RNAV', missed: false, daFt: P36.daFt, mdaFt: P36.mdaFt }; av.cdi = 'GPS'; av.direct = 'LABRW'; av.directFrom = null; av.crs = 360; if (av.altSel < P36.fafAltFt) av.altSel = P36.fafAltFt; return `PROC：${P36.name} をロード（LPV DA ${P36.daFt} ft / LNAV MDA ${P36.mdaFt} ft）`; }
         if (!av.proc.missed) { av.proc.missed = true; av.direct = 'LABED'; av.directFrom = null; av.crs = 360; if (av.altSel < 3000) av.altSel = 3000; return 'ミストアプローチ：LAB-D へ直行・3,000 ft へ上昇'; }
         av.proc = null; return 'PROC 解除'; }
       case 'RANGE': av.mfdRangeIdx = clamp(av.mfdRangeIdx + dir, 0, RANGES.length - 1); return `RANGE ${RANGES[av.mfdRangeIdx]} NM`;
@@ -288,6 +306,12 @@
       if (av.obs && B && !gpsFail) {
         const radial = trueToMag(neBearing(B, pos), varW), v = cdiVor(radial, av.crs);
         out.dots = v.dots; out.toFrom = v.toFrom; out.crs = av.crs; out.obs = true;
+      }
+      // (the RNAV's LPV vertical guidance: the same 3° path to the threshold the ILS flies, drawn as
+      // glide-slope dots while the RNAV procedure is loaded and the aircraft is on the final segment)
+      if (av.proc && av.proc.type === 'RNAV' && !av.proc.missed && rwy && !gpsFail) {
+        const c = FL.physics.rwyCoords(rwy, pos.n, pos.e), h = (o.altTrue - rwy.elevFt) / 3.28084, dGp = 300 - c.along;
+        if (dGp > 200 && dGp < 35000 && Math.abs(c.cross) < 3000) out.gsDots = gsDots(Math.atan2(h, dGp) / DEG - 3);
       }
     } else {
       const r = av[av.cdi.toLowerCase()], aid = NAVAIDS.find(x => x.freq === r.act);
@@ -591,7 +615,7 @@
     const rows = [
       ['出力 PWR', run ? `${fin(o.powerPct)} %` : '0 %', run ? fin(o.powerPct) / 100 : 0, '教材モデルの出力'],
       ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / (twin ? 24 : 12), ''],
-      ...(twin ? [['MAN IN', pair(manIns, v => fin(v).toFixed(1)), Math.max(fin(manIns[0]), fin(manIns[1] || 0)) / 30, '']] : []),
+      ...((twin || o.govRpm != null) ? [['MAN IN', pair(manIns, v => fin(v).toFixed(1)), Math.max(fin(manIns[0]), fin(manIns[1] || 0)) / 30, '']] : []),
       ['OIL PSI', pair(oilP, v => `${Math.round(fin(v))}`), twin || !oilP.length ? null : fin(oilP[0]) / 85, oilP.length ? '' : '未実装'],
       ['OIL °F', pair(oilT, v => `${Math.round(fin(v))}`), null, oilT.length ? '' : '未実装'],
       ['EGT °F', pair(egts, v => `${Math.round(fin(v))}`), Math.max(fin(egts[0]), fin(egts[1] || 0)) / 1700, ''],
@@ -766,7 +790,7 @@
       const rows = [
         ['RPM', engs.map(e => `${Math.round(fin(e.rpm))}`).join(' / ')],
         ['EGT °F', egts.map(v => `${Math.round(fin(v))}`).join(' / ')],
-        ...(engs.length > 1 ? [['MAN IN', manIns.map(v => fin(v).toFixed(1)).join(' / ')]] : []),
+        ...((engs.length > 1 || o.govRpm != null) ? [['MAN IN', manIns.map(v => fin(v).toFixed(1)).join(' / ')]] : []),
         ['OIL PSI', (o.oilP || []).length ? (o.oilP || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
         ['OIL °F', (o.oilT || []).length ? (o.oilT || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
         ['FFLOW GPH', fin(o.fuelFlow).toFixed(1)],
@@ -823,6 +847,6 @@
 
   FL.avionics = { trueToMag, magToTrue, hdgDiff, hdgFmt, wrap360, wrap180, indicatedAlt, inhgToHpa, hpaToInhg, FT_PER_INHG, tune, fmtCom, fmtNav, validCom,
     COM_MIN, COM_MAX, COM_STEP, ORIGIN, neToLatLon, latLonToNe, gcDistNm, gcBearing, neDistNm, neBearing, xtkNm, atkToGoNm, eteSec, eteFmt,
-    cdiGps, cdiVor, cdiLoc, gsDots, WAYPOINTS, wpt, NAVAIDS, createAvionics, control, cdiName, navSolve, RANGES, drawPFD, drawMFD, COLORS: C,
+    cdiGps, cdiVor, cdiLoc, gsDots, WAYPOINTS, wpt, NAVAIDS, PROCEDURES, procedureById, createAvionics, control, cdiName, navSolve, RANGES, drawPFD, drawMFD, COLORS: C,
     collectAlerts, xpdrEffMode, nrstList, fplCatalog };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

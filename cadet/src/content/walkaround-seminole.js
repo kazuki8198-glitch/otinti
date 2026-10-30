@@ -1,4 +1,4 @@
-// CADET — content/walkaround-seminole.js : the walk-around of the twin, the Seminole N452SY (M6), 17 places in the
+// CADET — content/walkaround-seminole.js : the walk-around of the twin, the Seminole N452SY (M6), 19 places in the
 // order of a published PA-44 training checklist's walk-around: the cabin (from the door), the right wing and its
 // engine, the nose, the left wing and its engine, the tail. Written for the game from the published checklists' items
 // (what to look at, and why); the aircraft's own POH and the school's checklist govern.
@@ -67,6 +67,14 @@ export const POINTS = [
     ok: '燃料は満タンに近く、ふたも閉まっています。ピトー管には赤い「REMOVE BEFORE FLIGHT」のカバーが付いています。',
     task: { id: 'pitot', verb: 'ピトー管のカバーを外す', done: 'カバーを外しました。穴はきれいです。カバーは機内にしまいます。' },
     bad: { id: 'vane', see: '失速警報のベーンを指で上げても、引っかかって戻ってきません。', fix: 'mx', mx: '整備士がベーンの引っかかりを直し、上げると警報が鳴ることを確かめました。' } },
+  { id: 'l_cap', group: 'left wing', at: [-3.5, -0.1, -0.55], name: '左翼：燃料キャップ',
+    check: '左タンクの給油口のふたがしっかり閉まっていること（ふたが開くと飛行中に燃料が吸い出される）。',
+    ok: 'ふたはしっかり閉まっています。',
+    bad: { id: 'cap', see: '給油口のふたのレバーが起きたままで、ふたが浮いています。給油のあと閉め忘れたようです。', fix: 'self', verb: 'ふたを閉めて、レバーを倒す', done: 'ふたを押し込んで、レバーを倒しました。しっかり閉まっています。' } },
+  { id: 'pitot_block', group: 'left wing', at: [-3.5, -0.15, -0.6], name: '左翼：ピトー管の穴（詰まり）',
+    check: 'カバーを外したピトー管の穴をのぞき、虫や泥の詰まりがないこと（詰まると速度計が正しく動かない）。',
+    ok: '穴はきれいに開いています。',
+    bad: { id: 'pitotBlock', see: 'ピトー管の穴の奥に、虫と泥が詰まっています。これでは速度が正しく出ません。', fix: 'mx', mx: '整備士がピトー管の中を清掃し、穴が通っていることを確かめました。' } },
   { id: 'l_tip', group: 'left wing', at: [-5.75, -0.05, -0.2], name: '左翼：翼端・エルロン・フラップ・係留ロープ',
     check: '翼端と赤い航法灯のレンズ、エルロンとフラップのヒンジ。係留のロープを外す。',
     ok: '翼端・レンズ・ヒンジとも問題ありません。係留のロープが付いています。',
@@ -89,4 +97,4 @@ export const TASK_MISSED = {
   tieT: '尾部の係留ロープが付いたままでした。ほどいてきました。', chocks: '前輪の輪止めが置いたままでした。外してきました。',
 };
 // (the lens, the brake, the nose strut, the stabilator's tab, the papers: as the Archer's)
-export const ANOMALIES = ['pin', 'cap', 'water', 'tire', 'oil', 'nick', 'vane', 'static', 'lens', 'brake', 'strut', 'tab', 'docs'];
+export const ANOMALIES = ['pin', 'cap', 'water', 'tire', 'oil', 'nick', 'vane', 'static', 'lens', 'brake', 'strut', 'tab', 'docs', 'pitotBlock'];

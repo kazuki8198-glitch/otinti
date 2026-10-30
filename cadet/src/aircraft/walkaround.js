@@ -12,6 +12,7 @@
 // Pure logic: no three.js, no DOM.
 import * as ARCHER from '../content/walkaround-archer.js';
 import * as SEMINOLE from '../content/walkaround-seminole.js';
+import { preflightHookFor } from './failures.js';
 // (M6) each aircraft its own places: the Archer's, the Seminole's
 export const KITS = { pa28: ARCHER, pa44: SEMINOLE };
 
@@ -107,6 +108,19 @@ export function createWalkaround({ seed = 1, anomalies, aircraft = 'pa28' } = {}
       falseReports: rows.filter(r => r.falseReport).length, tasksLeft: POINTS.filter(p => p.task && st.get(p.id).taskByIns).map(p => p.task.id), rows,
     };
   }
+  // what being left behind connects to in flight (aircraft/failures.js PREFLIGHT_HOOKS — the existing
+  // hooks only): a task not done, or an anomaly still open (never found, or reported but not yet put
+  // right), as it stands NOW. career/day.js captures this at boarded(), before settle() puts the
+  // ground items right for the debrief's record; fly-mode seeds the flight hooks from the capture.
+  function consequences() {
+    const out = [];
+    for (const p of POINTS) {
+      const s = st.get(p.id);
+      if (p.task && !s.task) out.push({ source: 'task', point: p.id, item: p.task.id, ...preflightHookFor('task', p.task.id) });
+      if (p.bad && (s.bad === 'open' || s.bad === 'found')) out.push({ source: 'defect', point: p.id, item: p.bad.id, ...preflightHookFor('defect', p.bad.id) });
+    }
+    return out;
+  }
   // what the 3D props show (the tasks' things, the anomalies one can see)
   function props() {
     // (by the task's id: each aircraft has its places where it has them)
@@ -115,5 +129,5 @@ export function createWalkaround({ seed = 1, anomalies, aircraft = 'pa28' } = {}
     return { lock: task('lock'), tieR: task('tieR'), tieL: task('tieL'), tieT: task('tieT'), chocks: task('chocks'), pitot: task('pitot'),
       capOpen: open('r_cap'), tireLow: open('r_main'), brakeLeak: open('l_main') };
   }
-  return { points: POINTS, inspect, act, pending, settle, summary, props, isDone, planted: [...bad], get log() { return log.slice(); } };
+  return { points: POINTS, inspect, act, pending, settle, summary, props, isDone, consequences, planted: [...bad], get log() { return log.slice(); } };
 }

@@ -1,4 +1,4 @@
-// CADET — content/walkaround-archer.js : the walk-around (preflight inspection) of today's Archer, 15 places in the
+// CADET — content/walkaround-archer.js : the walk-around (preflight inspection) of today's Archer, 18 places in the
 // published order of the PA-28 checklists' walk-around: the cabin (from the door), the right wing, the nose, the left
 // wing, the tail. Written for the game from the published checklists' items (what to look at, and why); the
 // aircraft's own POH and the school's checklist govern.
@@ -65,10 +65,22 @@ export const POINTS = [
     ok: 'ピトー管には赤い「REMOVE BEFORE FLIGHT」のカバーが付いています。失速警報のベーンは軽く上下に動きます。',
     task: { id: 'pitot', verb: 'ピトー管のカバーを外す', done: 'カバーを外しました。穴はきれいです。カバーは機内にしまいます。' },
     bad: { id: 'vane', see: '失速警報のベーンを指で上げても、引っかかって戻ってきません。', fix: 'mx', mx: '整備士がベーンの引っかかりを直し、上げると警報が鳴ることを確かめました。' } },
+  { id: 'l_cap', group: 'left wing', at: [-2.8, -0.15, -0.45], name: '左翼：燃料キャップ',
+    check: '左タンクの給油口のふたがしっかり閉まっていること（ふたが開くと飛行中に燃料が吸い出される）。',
+    ok: 'ふたはしっかり閉まっています。レバーも倒れています。',
+    bad: { id: 'cap', see: '給油口のふたのレバーが起きたままで、ふたが浮いています。給油のあと閉め忘れたようです。', fix: 'self', verb: 'ふたを閉めて、レバーを倒す', done: 'ふたを押し込んで、レバーを倒しました。しっかり閉まっています。' } },
+  { id: 'pitot_block', group: 'left wing', at: [-3.6, -0.35, -0.9], name: '左翼：ピトー管の穴（詰まり）',
+    check: 'カバーを外したピトー管の穴をのぞき、虫や泥の詰まりがないこと（詰まると速度計が正しく動かない）。',
+    ok: '穴はきれいに開いています。光が通ります。',
+    bad: { id: 'pitotBlock', see: 'ピトー管の穴の奥に、虫と泥が詰まっています。これでは速度が正しく出ません。', fix: 'mx', mx: '整備士がピトー管の中を清掃し、穴が通っていることを確かめました。' } },
   { id: 'l_tip', group: 'left wing', at: [-5.25, 0.2, -0.35], name: '左翼：翼端・エルロン・フラップ・係留ロープ',
     check: '翼端と赤い航法灯のレンズ、エルロンとフラップのヒンジ。係留のロープを外す。',
     ok: '翼端・レンズ・ヒンジとも問題ありません。係留のロープが付いています。',
     task: { id: 'tieL', verb: '左翼の係留ロープを外す', done: 'ロープをほどいて、地面のリングに掛けておきました。' } },
+  { id: 'static', group: 'tail', at: [-0.32, 0.05, 2.4], name: '胴体：静圧孔',
+    check: '胴体の横の静圧孔がふさがっていないこと（ふさがると高度計・昇降計・速度計が狂う）。',
+    ok: '静圧孔はきれいに開いています。',
+    bad: { id: 'static', see: '静圧孔の上に、洗機のときのテープが貼ったままです。', fix: 'self', verb: 'テープをはがして、穴を確かめる', done: 'テープをはがしました。穴はきれいに開いています。' } },
   { id: 'tail', group: 'tail', at: [0.0, 0.35, 3.65], name: '尾部：スタビレーター・ラダー・アンテナ・係留ロープ',
     check: 'スタビレーターとトリム タブ、ラダーのヒンジ、アンテナ、尾部の灯火。尾部の係留ロープを外す。',
     ok: 'スタビレーターもラダーも自由に動き、ヒンジもしっかりしています。尾部の下に係留のロープが付いています。',
@@ -85,4 +97,4 @@ export const TASK_MISSED = {
 };
 // the anomalies that can be planted (by their id): which places they can be at
 // (M6: the lens, the brake, the nose strut, the trim tab, the papers)
-export const ANOMALIES = ['pin', 'cap', 'water', 'tire', 'oil', 'nick', 'vane', 'lens', 'brake', 'strut', 'tab', 'docs'];
+export const ANOMALIES = ['pin', 'cap', 'water', 'tire', 'oil', 'nick', 'vane', 'lens', 'brake', 'strut', 'tab', 'docs', 'pitotBlock', 'static'];

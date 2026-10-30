@@ -109,7 +109,7 @@
     if (S.paused || S.L.done) return;
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && S.L.check) { e.preventDefault(); checklistNext(); return; }
     if (/^(Digit|Numpad)[123]$/.test(e.code) && S.L.atc) { e.preventDefault(); answerAtc(+e.code.slice(-1) - 1); return; }
-    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyR: e.shiftKey ? 'thrFull' : null, KeyF: e.shiftKey ? 'thrIdle' : null, KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR' }[e.code];
+    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyR: e.shiftKey ? 'thrFull' : null, KeyF: e.shiftKey ? 'thrIdle' : null, KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR', Comma: 'propDown', Period: 'propUp' }[e.code];
     if (act) { e.preventDefault(); doAction(act); }
   });
   window.addEventListener('keyup', e => { S.keys.delete(e.code); });
@@ -154,6 +154,11 @@
     } else if (a === 'restart0' || a === 'restart1') {
       if (!A.twin) return; if (!L.free) { toast('訓練中はエンジンの再始動はできません', 1600); return; }
       const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false, on: true }); toast('エンジンを再始動（自由飛行の補助）', 1400);
+    } else if (a === 'propUp' || a === 'propDown') {
+      if (!A.propCtrl) { toast('プロペラレバーは定速プロペラの複雑機（Arrow）の操作です。Archer は固定ピッチ、Seminole は教材では自動です', 2200); return; }
+      s.prop = clamp((s.prop == null ? 1 : s.prop) + (a === 'propUp' ? 0.05 : -0.05), 0, 1);
+      const gov = Math.round(A.propGov[0] + (A.propGov[1] - A.propGov[0]) * s.prop);
+      toast(`プロペラ ${s.prop >= 0.98 ? 'FULL FORWARD' : `設定 ${gov} rpm`}：ガバナーが保つ回転数。スロットル（MAN IN）と別に管理する`, 1800);
     } else if (a === 'rtrimL' || a === 'rtrimR') {
       S.rTrim = clamp(S.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       toast(`ラダートリム ${S.rTrim === 0 ? '中立' : `${S.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(S.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`, 1400);
@@ -466,6 +471,7 @@
       ['V', 'フラップ', `${A.flapLabels[s.flapIdx]}${flapMoving ? '（作動中）' : ''}`, '', s.flapIdx > 0 && o.ias > V.fe ? 'bad' : ''],
     ];
     if (!A.gear.fixed) rows.push(['G', '脚', s.gearPos > 0.98 ? 'DOWN ●●●' : s.gearPos < 0.02 ? 'UP' : '作動中', '', !s.gearDown && o.agl < 400 && s.thr < 0.3 && !s.onGround ? 'bad' : '']);
+    if (A.propCtrl) rows.push([', / .', 'プロペラ', `設定 ${o.govRpm || ''} rpm（いま ${Math.round(o.rpm || 0)} rpm・MAN IN ${o.manIn ? o.manIn.toFixed(1) : '—'}）`, meter(s.prop == null ? 1 : s.prop), '']);
     rows.push(['B', 'ブレーキ', s.brake ? 'ON' : '—', '', s.brake ? 'warn' : '']);
     const mini = S.prefs.strip === 'mini';
     const keep = mini ? ['スロットル', 'フラップ', '脚', 'トリム'] : null;

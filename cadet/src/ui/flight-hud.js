@@ -14,6 +14,7 @@
 // the cockpit. update() is cheap: it writes only the nodes whose text, class or size changed. The CSS is injected once
 // and scoped under #fhud (but for two rules: the fold button is not shown while the game has captured the mouse, and
 // the game's toast moves up above the big G1000 while it is shown).
+import { analysisRows } from '../flight/analysis.js';
 const CSS = `
 #fhud { --fh-w: min(380px, 31vw); --fh-rw: min(380px, 30vw); --fh-sub-h: 0px; --p2d-h: min(44vh, calc((100vw - 240px) / 3.2));
   --fh-bg: rgba(10, 18, 28, 0.8); --fh-ok: #6fe3a0; --fh-warn: var(--warn, #ffcf5c); --fh-ng: #ff7a6b; --fh-amber: #ffb547;
@@ -373,6 +374,9 @@ export const advice = bad => adviceTips(bad).join('。') || ADVICE_NONE;
 // and for how long it flew.
 export function debriefOf(sum) {
   const rows = [], bad = [];
+  // (next wave item 1) the standards analysis (flight/analysis.js) rides along as extra detail groups:
+  // shown and counted on the card, but it never feeds the grade, the pass or the advice above it
+  const anaGroups = sum.analysis ? analysisRows(sum.analysis) : [];
   for (const r of sum.results || []) for (const row of r.rows) {
     rows.push(row);
     if (!row.pass && !(sum.reason && row.name === '結果')) bad.push([r.step, row]);
@@ -399,7 +403,7 @@ export function debriefOf(sum) {
     time,
     tips: bad.length ? adviceTips(bad) : [], tipNone: bad.length && !adviceTips(bad).length ? ADVICE_NONE : '',
     bad: bad.slice(0, 4).map(b => b[1].name).join('・'),
-    results: sum.results || [],
+    results: [...(sum.results || []), ...anaGroups],
   };
 }
 

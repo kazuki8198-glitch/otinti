@@ -95,15 +95,18 @@ export const CHAPTERS = {
   ch4: { n: 4, title: '第 4 章　計器', short: '第 4 章', sub: 'フードをかぶって、計器だけで飛ぶ。最後は雲の中の ILS 進入' },
   ch5: { n: 5, title: '第 5 章　双発', short: '第 5 章', sub: 'Piper Seminole。エンジンが 2 つ、止まるのも片方' },
   ch6: { n: 6, title: '第 6 章　最終審査', short: '第 6 章', sub: 'TEM、そして審査官の同乗する Check Flight' },
+  // (next-wave item 6) not a curriculum chapter: a post-graduation endorsement, opened by beginEndorsement()
+  ch7: { n: 7, title: '第 7 章　複雑機エンドースメント（卒業後）', short: '複雑機', sub: '引込脚と定速プロペラの Arrow、そして教える側の試作' },
 };
 // the chapters after the first solo (M6): their lessons in the order they are flown, the written test, the check
 // that closes them (flown with the chief instructor, the examiner, or alone), the aircraft
 export const LATER = ['ch3', 'ch4', 'ch5', 'ch6'];
 export const STAGE = {
   ch3: { lessons: ['x3', 'x1', 'x2', 'n1', 'n2', 'n3'], exam: 'nav', check: 'xc', aircraft: 'pa28' },
-  ch4: { lessons: ['i1', 'i2', 'i3', 'i4', 'i5'], exam: 'instr', check: 'ir', aircraft: 'pa28' },
-  ch5: { lessons: ['m1', 'm2', 'm3', 'm4', 'm5'], exam: 'multi', check: 'me', aircraft: 'pa44' },
+  ch4: { lessons: ['i1', 'i2', 'i3', 'i8', 'i4', 'i5', 'i6', 'i7'], exam: 'instr', check: 'ir', aircraft: 'pa28' },
+  ch5: { lessons: ['m1', 'm2', 'm3', 'm4', 'e6', 'm5'], exam: 'multi', check: 'me', aircraft: 'pa44' },
   ch6: { lessons: ['r1'], exam: 'final', check: 'final', aircraft: 'pa28' },          // (r1 in the Archer; the final check in the Seminole)
+  ch7: { lessons: ['cx1', 'cx2', 'cx3', 'cf1'], exam: 'complex', check: 'cx', aircraft: 'pa28r' },
 };
 // the checks: kind 'xc' (the solo cross-country: the navigation log in the morning, then FLIGHT LAB's n2 flown alone —
 // its diversion is the chapter's turn of events) or 'checkride' (the lessons flown one after the other with the check
@@ -113,12 +116,13 @@ export const CHECKS = {
   ir: { kind: 'checkride', title: '計器飛行の審査', short: '計器の審査', lessons: ['t1', 'i3', 'i5', 't3'], who: 'chief', ch: 'ch4' },
   me: { kind: 'checkride', title: '双発の審査', short: '双発の審査', lessons: ['m4', 'm2', 'm5'], who: 'chief', ch: 'ch5' },
   final: { kind: 'checkride', title: '最終審査（Check Flight）', short: '最終審査', lessons: ['m1', 'm2', 'm5'], who: 'examiner', ch: 'ch6' },
+  cx: { kind: 'checkride', title: '複雑機エンドースメント審査', short: '複雑機の審査', lessons: ['cx1', 'cx3', 'cx2'], who: 'chief', ch: 'ch7' },
 };
 // the training device's lessons (FLIGHT LAB's stage 0), in order
 export const GROUND = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // chapter 2's lessons in the order they are flown (t1 and t3 are flown every day round the others: they are passed
 // along the way; the instructor schedules them on their own only if they are not)
-export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 't1', 't3'];
+export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 'e4', 't1', 't3'];
 export const ALL_CH2 = [...CH2, 'c1'];
 // the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js).
 // In this order each afternoon's training device lesson comes after the class that teaches it: the numbers and the
@@ -156,6 +160,7 @@ export const EXAMS = {
   instr: { title: '計器飛行の筆記試験', banks: ['q_ifr', 'q_hf'], n: 30, pass: 80, room: 'planning', ok: '合格です。計器の審査に進めます。' },
   multi: { title: '双発の筆記試験', banks: ['q_me', 'q_emg'], n: 30, pass: 80, room: 'planning', ok: '合格です。双発の審査に進めます。' },
   final: { title: '最終の筆記試験', banks: ['q_crm', 'q_law', 'q_ops', 'q_radio'], n: 30, pass: 80, room: 'planning', ok: '合格です。残るは、最終審査の Check Flight だけです。' },
+  complex: { title: '複雑機エンドースメントの筆記試験', banks: ['q_ops', 'q_me', 'q_sys'], n: 30, pass: 80, room: 'planning', ok: '合格です。複雑機の審査に進めます。' },
 };
 // the trust the first solo needs (the cadet's instructor's)
 export const SOLO_TRUST = 60;
@@ -500,7 +505,7 @@ export const nextIn = (prog, list) => list.find(id => !passedAt(prog, id)) || nu
 function laterSchedule(state, prog, W, out) {
   const day = state.day, S = STAGE[state.chapter], C = CHECKS[S.check], ex = state.exams[S.exam];
   const today = (key) => state.done[key] === day;
-  if (state.graduated) return [{ slot: 'am', kind: 'off', id: 'grad', title: '修了（訓練はすべて終わりました）', where: null, who: null }];
+  if (state.graduated && state.chapter !== 'ch7') return [{ slot: 'am', kind: 'off', id: 'grad', title: '修了（訓練はすべて終わりました）', where: null, who: null }];   // (ch7: the endorsement trains after graduation)
   const checkPassed = !!(state.checks[S.check] && state.checks[S.check].pass);
   if (state.chapter === 'ch6' && checkPassed) return [{ slot: 'morning', kind: 'graduation', id: 'grad', title: '修了式（ロビー）', where: 'lobby', who: 'chief' }];
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|xc):/.test(k));
@@ -515,7 +520,11 @@ function laterSchedule(state, prog, W, out) {
     if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && (!id || S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2))) out.push({ slot: 'pm', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
     return out;
   }
-  if (id) { out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' }); written(flySlot === 'am' ? 'pm' : 'am'); return out; }
+  // (next-wave item 3) a forecast-bust day in the late chapters: the flight itself carries the
+  // diversion — if the front arrives while airborne, the cadet diverts to LABEF (the grass strip,
+  // CTAF 122.9, RWY 09; flight/divert.js's flow, the CTAF set in content/dialog/atc.js). The day's
+  // own decision stays 'early' (fly in the morning); the divert is the in-flight judgement on top.
+  if (id) { out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor', ...(W.kind === 'forecastBust' ? { divert: { to: 'LABEF', rwy: '09', freq: '122.9', ctaf: true } } : {}) }); written(flySlot === 'am' ? 'pm' : 'am'); return out; }
   // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
   // failed, nothing more is due today and the test comes back tomorrow)
   if ((!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day) || (ex && ex.pass && today(`exam:${S.exam}`))) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
@@ -665,6 +674,8 @@ export function createCareer({ store = null, seed } = {}) {
     check(id, pass) { const r = st.checks[id] || { tries: 0, pass: false, day: 0 }; r.tries++; if (pass) { r.pass = true; r.day = st.day; } st.checks[id] = r; st.done[`${CHECKS[id].kind}:${id}`] = st.day; save(); return r; },
     // (the graduation: its day, and its rank with the record it was judged by — §4.6)
     graduate(prog) { st.graduated = { day: st.day, ...graduationRank(st, prog) }; st.done['graduation:grad'] = st.day; save(); },
+    // (next-wave item 6) open the post-graduation complex endorsement: only from a graduated record, and only once
+    beginEndorsement() { if (!st.graduated || st.chapter !== 'ch6') return false; st.chapter = 'ch7'; save(); return true; },
     // today's weather as it counts for today's flying (the instrument chapter flies in low cloud)
     flyingWeather: (prog, kind = 'flight') => weatherFor2(weatherFor(st.seed, st.day, forcedWeather(st, prog)), st.chapter, kind),
     // the day's wind field (surface + the winds aloft at the nav altitude), kept with the day it belongs to:

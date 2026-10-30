@@ -43,6 +43,8 @@ import { createTraffic } from './traffic.js';
 import { cbEffect } from './cb.js';
 import { iceStep, iceApply } from './ice.js';
 import { createRecorder, sampleAt as recSampleAt, duration as recDuration } from './recorder.js';
+import { analyzeRecording } from './analysis.js';
+import { randomFailureFor, makeSchedule, scheduleOf, dueSchedule } from '../aircraft/failures.js';
 import { createTrafficView } from './traffic-view.js';
 import { createAutopilot, drawApStrip } from './autopilot.js';
 import { createRouteLine } from '../world/route-line.js';
@@ -156,7 +158,13 @@ export function createFlyMode(ctx) {
   // ---- state
   let active = false, phase = 'off';          // 'board' (talking in the seat) | 'ground' | 'lesson' | 'debrief' | 'leaving'
   let carbDay = 0;                            // a humid day's carburettor-ice risk (set by beginDay; 0 = it cannot form)
-  let faultKind = null;                       // the day's fault kind (mag / carb / pitot / gear / pump), applied to the physics each frame
+  let faultKind = null;                       // the day's fault kind (mag / carb / pitot / gear / pump / static), applied to the physics each frame
+  // (next-wave item 4) the preflight effects the day captured at boarded() (aircraft/failures.js:
+  // pitotRisk / staticBlocked / oilQ — seeded into the flight each frame, like the day fault), and
+  // the free flight's instructor console: failures reserved for a time / an altitude, plus a
+  // seeded random roll when the setup left the failure on "none" (failElapsed: minutes aloft)
+  let preflightFx = [];
+  let failSched = [], failElapsed = 0;
   let view = 'cockpit', yaw = 0, pitch = 0, chaseYaw = 0, chasePitch = 0.08, psiS = null, fov = null;
   // the flight recorder (recorder.js): every flight is kept at 10 Hz for the debrief's replay and the
   // logbook's export. The fixed viewpoint cameras (the spectator's presets, in the runway frame): usable
@@ -460,8 +468,20 @@ export function createFlyMode(ctx) {
   }
   // a key that is his today (the throttle, the flaps, the trim, the rudder, the brakes): a word, not too often
   function refuse() { if (performance.now() - refusedAt > 4000) { refusedAt = performance.now(); say(INTRO_AIR.R_keys, 4200); } }
+  // (item 4) one failure, applied through the routes that already exist: the systems' own
+  // faults (mag / elec), the day's carburettor humidity (carb), and FLIGHT LAB's failNow for
+  // the rest (pitot / static / gear / pump / engine / engL / engR / ahrs / gps)
+  function applyFail(kind) {
+    if (!kind) return;
+    if (kind === 'mag') systems.setFault({ dropL: 200 });
+    else if (kind === 'elec') systems.setElecFault(true);
+    else if (kind === 'carb') carbDay = 1;
+    else if (kind === 'ppanel' && FL.school && FL.school.failNow && flight.L) { FL.school.failNow(flight.L, 'ahrs'); FL.school.failNow(flight.L, 'gps'); }
+    else if (FL.school && FL.school.failNow && flight.L) FL.school.failNow(flight.L, kind);
+    toast('故障が発生しました', 2600);
+  }
   function beginFree() {
-    phase = 'ground'; carbDay = 0; faultKind = null;
+    phase = 'ground'; carbDay = 0; faultKind = null; preflightFx = []; failSched = []; failElapsed = 0;
     if (fh) fh.setMode('free');
     recorder.start({ title: '自由飛行', aircraft: todayType(), startISO: new Date().toISOString() });
     startEngine();
@@ -488,10 +508,21 @@ export function createFlyMode(ctx) {
       parked().visible = false; ctx.todayColliders(false);
       live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
       seatCrew(null);
-      carbDay = cfg.fail === 'carb' ? 1 : 0;
-      systems.setFault(cfg.fail === 'mag' ? { dropL: 200 } : null);
-      systems.setElecFault(cfg.fail === 'elec');
-      if (['engine', 'engL', 'engR', 'ahrs', 'gps'].includes(cfg.fail) && FL.school && FL.school.failNow) FL.school.failNow(flight.L, cfg.fail);
+      // the failure: at once as before when no reservation is made; with one (the instructor
+      // console: cfg.failAt { atMin } / { atAltFt }) it is scheduled and applyFail fires it when
+      // due (update()). With no failure chosen, a seeded roll (cfg.seed, the session's) may
+      // schedule one in flight instead — never at the ramp.
+      preflightFx = []; failElapsed = 0; failSched = [];
+      carbDay = 0; systems.setFault(null); systems.setElecFault(false);
+      if (cfg.fail) {
+        const entry = makeSchedule(cfg.fail, cfg.failAt || {});
+        if (entry && (entry.atMin != null || entry.atAltFt != null) && !(entry.atMin === 0 && entry.atAltFt == null)) failSched = [entry];
+        else applyFail(cfg.fail);
+      } else if (cfg.seed != null) {
+        const rf = randomFailureFor({ seed: cfg.seed, day: 1, kind: 'free', mode: 'free', aircraft: cfg.aircraft === 'pa44' ? 'pa44' : 'pa28' });
+        const entry = scheduleOf(rf);
+        if (entry) failSched = [entry];
+      }
       yaw = 0; pitch = HOME_PITCH; setFocus(null, true); zoomFov = null;
       ctx.onEnter();
       placeNow();
@@ -553,7 +584,11 @@ export function createFlyMode(ctx) {
     elecWarned = false; elecLowSeen = false;
     carbDay = d.st.fault && d.st.fault.kind === 'carb' ? 1 : 0;                            // a humid day: carburettor ice can build in flight (the physics reads it each frame)
     faultKind = d.st.fault ? d.st.fault.kind : null;
+    failSched = []; failElapsed = 0;
     dayMode.begin(d, level);
+    // the walk-around's left-behind defects, captured when the cadet boarded (before the
+    // instructor's look-round): their flight hooks are seeded each frame below
+    preflightFx = (d.st.preflightEffects || []).filter(e => e && (e.hook === 'pitotRisk' || e.hook === 'staticBlocked' || e.hook === 'oilQ'));
   }
   // a lesson of the day: from where the cadet is (handoff: FLIGHT LAB's own start, the picture blending the last
   // metres) or after a fade (the transit skipped, or flown and arrived)
@@ -626,7 +661,7 @@ export function createFlyMode(ctx) {
     const was = replay.wasDebrief; replay = null;
     if (view === 'fixed') setView('cockpit');
     placeNow();
-    if (was && fh && debCbs) { fh.showDebrief(flight.status(), debCbs); debriefShown = true; }
+    if (was && fh && debCbs) { fh.showDebrief(attachAnalysis(flight.status()), debCbs); debriefShown = true; }
   }
   // the sun's shadow box: small and sharp round the cockpit in the air; on the ground wide enough for the hangars, the
   // parked aircraft and the whole wing (the chase view keeps the preset's box)
@@ -813,6 +848,16 @@ export function createFlyMode(ctx) {
       else if (faultKind === 'mag') for (const e of flight.s.eng) e.magBad = 'L';
       else if (faultKind === 'gear') flight.s.gearFault = true;
       else if (faultKind === 'pump') flight.s.eng[0].pumpFail = true;
+      else if (faultKind === 'static') flight.s.staticBlocked = true;
+      // (item 4) the preflight defects left behind, through the same states: the pitot cover /
+      // a blocked tube to the PS1 pitot path, the taped static port to the static block, the
+      // low oil the cadet did not find to the EN4 quantity (it only ever lowers it to the
+      // defect's 4 qt — the engine's own burn below that is untouched)
+      for (const fx of preflightFx) {
+        if (fx.hook === 'pitotRisk') flight.s.pitotRisk = Math.max(flight.s.pitotRisk || 0, 3);
+        else if (fx.hook === 'staticBlocked') flight.s.staticBlocked = true;
+        else if (fx.hook === 'oilQ') for (const e of flight.s.eng) if (e.oilQ == null || e.oilQ > fx.oilQ) e.oilQ = fx.oilQ;
+      }
       // the day's rain on the surface: at storm strength the runway is wet (the physics reads the flag for its
       // friction; the world branch only sets it, from the day's precipitation)
       flight.s.surfaceWet = (ctx.precip ? ctx.precip() : 0) >= 0.3;
@@ -853,6 +898,14 @@ export function createFlyMode(ctx) {
     }
     // the engine and the electrics (on the flight's clock: the sim rate takes them with it)
     for (const ev of systems.update(frameOpt.paused ? 0 : dt * rateNow, flight.s)) onSystems(ev);
+    // (item 4) the instructor console's reservations (and a free flight's seeded roll): the
+    // clock runs only while the flight does; a reservation fires once, when its time or its
+    // altitude is reached
+    if (failSched.length && !frameOpt.paused && flight.s) {
+      failElapsed += dt * rateNow / 60;
+      const due = dueSchedule(failSched, { elapsedMin: failElapsed, altFt: flight.s.out ? flight.s.out.altTrue : 0 });
+      if (due.length) { failSched = failSched.filter(e => !due.includes(e)); for (const e of due) applyFail(e.kind); }
+    }
     for (const ev of res.events) onEvent(ev);
     if (res.ended) onEnded();
     for (const r of res.pad || []) {
@@ -1130,11 +1183,23 @@ export function createFlyMode(ctx) {
     }
     else if (ev.type === 'crash') { if (flight.free) { showCrashPanel(ev.why); const L0 = flight.L; setTimeout(() => { hideCrashPanel(); if (flight.L === L0) showFreeEnd(); }, 1500); } else toast(`機体損傷：${ev.why}`, 5000); }
   }
+  // (next wave item 1) the standards analysis of the flight just ended, from its recording: attached to
+  // the status the debrief and the day read — display and logbook data only; the grade, the pass and the
+  // growth never look at it
+  let analysisCache = null;   // { rec, a } — the replay hands the debrief back with a fresh status()
+  function attachAnalysis(st) {
+    try {
+      const rec = recorder.last(), L = flight.L;
+      if (rec && L && (!analysisCache || analysisCache.rec !== rec)) analysisCache = { rec, a: analyzeRecording(rec, { vref: (L.V && L.V.appr) || 70, gearRequired: !!(L.A && L.A.gear && L.A.gear.fixed === false), flapMinDeg: 25 }) };
+      st.analysis = rec && analysisCache && analysisCache.rec === rec ? analysisCache.a : null;
+    } catch (e) { st.analysis = null; }
+    return st;
+  }
   function onEnded() {
     flight.finish();
     hideCrashPanel();
     recorder.done();
-    const st = flight.status(), L0 = flight.L;
+    const st = attachAnalysis(flight.status()), L0 = flight.L;
     if (dayMode.active) {
       // the day goes on: a word from the instructor, the grade on the screen, the flight carries on as CADET's own
       say(debriefLine(st), 5200);
@@ -1153,7 +1218,7 @@ export function createFlyMode(ctx) {
     if (!active || !fh || debriefShown || phase === 'leaving' || intro) return;
     recorder.done();
     debCbs = { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave(), onReplay: recorder.last() ? () => startReplay(true) : null };
-    fh.showDebrief(flight.status(), debCbs);
+    fh.showDebrief(attachAnalysis(flight.status()), debCbs);
     debriefShown = true; input.exitLock();
   }
   // taxiing into a hangar, a building or another aircraft: the colliders the walker uses (the aircraft's nose, wing

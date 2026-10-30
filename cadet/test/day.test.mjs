@@ -179,3 +179,12 @@ test('day: the level the day is flown at is the level its summary reports — th
   day.setLevel('intro');
   assert.ok(Math.abs(hand(day.summary().level) - hand('basic') * 0.5) < 1e-9, 'an intro A at half');
 });
+
+test('day (next-wave item 6): the endorsement days are planned in the Arrow, up with cx1 and down with cx2', () => {
+  assert.deepEqual(planFor(FL, 'cx1'), { main: 'cx1', solo: false, lessons: ['cx1', 'cx2'], aircraft: 'pa28r' });
+  assert.deepEqual(planFor(FL, 'cx3').lessons, ['cx1', 'cx3', 'cx2']);
+  assert.deepEqual(planFor(FL, 'cf1').lessons, ['t1', 'cf1', 't3']);   // (the CFI ride is in the Archer — the trainee's own trainer — so its day is an Archer day)
+  const steps = stepsFor(FL, ['cx1', 'cx3', 'cx2']);
+  assert.ok(steps.includes('cx1') && steps.includes('cx3') && steps.includes('cx2'), steps.join(' '));
+  assert.ok(!steps.includes('takeoff'), 'cx1 carries its own clearance readback: no extra tower step');
+});

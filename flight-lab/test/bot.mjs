@@ -7,7 +7,7 @@ export function makeBot(FL) {
   const P = FL.physics, SC = FL.school, DEG = Math.PI / 180, clamp = P.clamp;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const st = { pBase: null, iThr: 0, lastIas: null, lastStep: -1, flare: false };
-  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; }
+  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; st.flareF = false; st.sp = false; st.spDone = false; st.spTurn = 0; st.spPrev = null; }
   // the hands: a pitch target (the hold), a bank target (the stick), the rudder
   function pitchTo(s, deg) { s.keyHold = true; s.pTgt = clamp(deg, -20, 22); s.pRate = 0; }
   function bankTo(s, bankT) { const o = s.out, p = -s.w[2] / DEG; s.rIn = clamp(0.045 * (bankT - o.bank) - 0.012 * p, -1, 1); }
@@ -46,6 +46,7 @@ export function makeBot(FL) {
       SC.checklistNext(L); return;
     }
     if (S.atc && L.atc) { SC.answerAtc(L, L.atc.ok); return; }
+    if (S.propTo != null) { const cur = s.prop == null ? 1 : s.prop; s.prop = clamp(cur + clamp(S.propTo - cur, -dt * 0.8, dt * 0.8), 0, 1); }   // (the complex lessons: the prop lever, moved at a hand's pace)
     if (S.estimate && !L.estimate) { const t = FL.syllabus.estimateTruth(L, S.estimate); FL.syllabus.submitEstimate(L, { hdg: t.brg, dist: t.dist, eteMin: t.eteMin }); return; }
     rudder(s, c);
     const g = S.g && typeof S.g === 'object' ? S.g : {}, name = S.name || '';
@@ -87,9 +88,39 @@ export function makeBot(FL) {
         bankTo(s, 3 * live + clamp(w180((tv('hdg') != null ? hdg : c.rwyHdg && /上昇/.test(name) ? 360 : hdg) - c.hdg) * 0.5, -5, 5));
         return;
       }
-      s.thr = 0; speedPitch(s, c, g.kt || L.V.glide, dt);
+      s.thr = 0; speedPitch(s, c, S.field && c.aglR < 300 ? (L.V.glideLand || 66) : (g.kt || L.V.glide), dt);
+      const pos = P.ne(s), R = P.LAB_RWY;
+      // (a step may name an off-field site (S.field — e4's meadow): glide to it, not the runway. A straight
+      // best-glide arrives high, so the height is S-turned away first, as the lesson teaches)
+      if (S.field) {
+        const F = S.field, dF = Math.hypot(pos.n - F.n, pos.e - F.e);
+        // the aim: a gate 900 m short of the field while high (the PFL's low key), the field itself below 500 ft
+        const uh = P.LAB_RWY.trueHdg * DEG, gate = { n: F.n - 900 * Math.cos(uh), e: F.e - 900 * Math.sin(uh) };
+        const aimF = c.aglR > 500 ? gate : F;
+        const brgF = FL.avionics.trueToMag(FL.avionics.neBearing(pos, aimF), P.MAGVAR_W);
+        const brgToF = FL.avionics.trueToMag(FL.avionics.neBearing(pos, F), P.MAGVAR_W);
+        const needFt = dF * 3.28084 / 7.2;
+        let hT = brgF;
+        // a big excess is spiralled away over the approach (one descending 360: ≈800 ft at this speed and bank)
+        if (!st.spDone && c.aglR - needFt > 800 && dF > 3000 && c.aglR > 900) st.sp = true;
+        if (st.sp) {
+          hT = c.hdg + 100;
+          st.spTurn = (st.spTurn || 0) + Math.abs(w180(c.hdg - (st.spPrev == null ? c.hdg : st.spPrev))); st.spPrev = c.hdg;
+          if (c.aglR - needFt <= 150 || st.spTurn > 340) { st.sp = false; st.spDone = true; }
+        }
+        else if (c.aglR > needFt + 250 && dF > 900 && c.aglR > 400) hT = brgF + (Math.floor(L.t / 7) % 2 ? 55 : -55);
+        else if (dF < 1600) { const h = F.hdg * DEG, dn = pos.n - F.n, de = pos.e - F.e, crossF = -dn * Math.sin(h) + de * Math.cos(h); hT = Math.abs(crossF) > 150 ? brgToF : F.hdg - clamp(crossF * 0.3, -20, 20); }
+        headTo(s, c, hT, 30);
+        if (c.aglR < 40 || st.flareF) {
+          // the flare, as in the landing branch: idle, the nose up as the ground comes, more if the sink is fast
+          if (!st.flareF) { st.flareF = true; st.p0F = c.pitch; }
+          s.thr = 0; pitchTo(s, clamp(st.p0F + (40 - c.aglR) / 40 * 9 + clamp((-c.vs - 150) * 0.012, 0, 4), -2, 10));
+        }
+        else if (c.aglR < 300 && dF < 1600) s.flapIdx = 3;
+        return;
+      }
       // toward the runway threshold area (the 'final' point 2 km out), then line up
-      const pos = P.ne(s), R = P.LAB_RWY, aim = P.rwyToNE(R, c.aglR > 600 ? -1500 : 200, 0);
+      const aim = P.rwyToNE(R, c.aglR > 600 ? -1500 : 200, 0);
       const brg = FL.avionics.trueToMag(FL.avionics.neBearing(pos, { n: aim[0], e: aim[1] }), P.MAGVAR_W);
       headTo(s, c, c.along > -1700 && c.aglR < 700 && Math.abs(c.cross) < 600 ? 360 - clamp(c.cross * 0.3, -20, 20) : brg, 30);
       if (c.aglR < 350 && c.along > -1500) s.flapIdx = 2;
@@ -99,7 +130,7 @@ export function makeBot(FL) {
     // flight by the guide
     const how = g.how || 'level';
     if (g.flaps != null && s.flapIdx !== g.flaps && !/接地/.test(name)) s.flapIdx = g.flaps;
-    if (s.A.twin && !c.onGround && c.aglR > 150 && c.vs > 100 && s.gearDown && how === 'climbFull') s.gearDown = false;
+    if (!s.A.gear.fixed && !c.onGround && c.aglR > 150 && c.vs > 100 && s.gearDown && how === 'climbFull') s.gearDown = false;
     if (how === 'climbFull') { s.thr = 1; speedPitch(s, c, g.kt, dt); headTo(s, c, S.tgt && S.tgt.rhdg ? 360 : hdg); }
     else if (/減速と外形変更/.test(name)) { s.thr = c.kias > 66 ? 0.25 : 0.5; vsPitch(s, c, altVs(c, alt), dt); headTo(s, c, hdg, 10); if (c.kias < L.V.fe - 4 && s.flapIdx < 2) s.flapIdx++; }
     else if (/アウトバウンド 1 分/.test(name)) { speedThr(s, c, g.kt || 100, dt); vsPitch(s, c, altVs(c, alt), dt); if (L.st.t < 60) headTo(s, c, w180(L.hdg0 + 180) + 360); else bankTo(s, 17); }
@@ -125,7 +156,7 @@ export function makeBot(FL) {
       vsPitch(s, c, altVs(c, alt), dt);
       let h = hdg;
       if (S.tgt && (S.tgt.cdi || S.tgt.loc)) h = (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30);
-      if (/ローカライザー/.test(name)) h = c.navFlag || Math.abs(c.loc) > 0.64 ? L.intHdg || 330 : 360 + clamp(c.loc * 30, -30, 30);
+      if (/ローカライザー|ファイナルコース会合/.test(name)) h = c.navFlag || Math.abs(c.loc) > 0.64 ? L.intHdg || 330 : 360 + clamp(c.loc * 30, -30, 30);
       if (/VOR 局へ/.test(name) && Number.isFinite(c.brgV)) h = c.brgV;
       if (/コースの設定と会合/.test(name) && Number.isFinite(c.brgV)) { L.av.cdi = 'NAV1'; if (L.st.t < 1) L.av.crs = Math.round(c.brgV) || 360; h = (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30); }
       if (/LAB RWY へ/.test(name)) { const R = P.LAB_RWY, p = P.ne(L.s); h = FL.avionics.trueToMag(Math.atan2(R.e - p.e, R.n + 600 - p.n) / DEG, P.MAGVAR_W); }

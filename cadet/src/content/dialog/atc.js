@@ -210,41 +210,43 @@ export function dayRadio(weather) {
   return { exchanges: X, sequences, weather: W, atisText: ATIS, call: CALL, freq: FREQ };
 }
 
-// ---------------------------------------------------------------- uncontrolled ops (gap audit v2, B4.3)
-// READY TO WIRE: there is no second field in the world yet, so nothing in the day flow runs these. They
-// are a complete CTAF self-announce set in the same exchange shape as dayRadio (createAtc can run them
-// unchanged: sequences.ctaf), keyed to the area flag CTAF_AREA — when an uncontrolled field exists (the
-// world branch's second field), a day step with radio 'ctaf' in that area plays them. The field is a
-// fictional uncontrolled strip at the practice area's edge: Minami Field, runway 27, CTAF 122.9 (the
-// textbook's comm chapter teaches this same flow: announce early, announce often, nobody answers).
-export const CTAF_AREA = 'ctaf';
-export const CTAF = { freq: '122.9', field: 'Minami', rwy: '27' };
+// ---------------------------------------------------------------- uncontrolled ops (gap audit v2, B4.3 →
+// next-wave item 3: WIRED). The CTAF self-announce set, in the same exchange shape as dayRadio
+// (createAtc runs it unchanged: sequences.ctaf). The field is the world's real second airfield:
+// LABEF, the uncontrolled grass strip (flight/airfields.js STRIP_LABEF: heading 090°, so runway 09,
+// left traffic), CTAF 122.9. (The set used to be written for a fictional "Minami Field, runway 27"
+// that never existed in the world; the words now name the strip that is actually there.) A day step
+// with radio 'ctaf' plays it: career/day.js's stepsFor inserts that step for the LABEF cross-country
+// variant (planFor(..., { xcVariant: 'labef' })), and flight/divert.js's divert flow runs the same
+// sequence before its LABEF landing. Nobody answers — that is the point of a CTAF.
+export const CTAF_AREA = 'LABEF';
+export const CTAF = { freq: '122.9', field: 'LABEF', rwy: '09' };
 export function ctafRadio() {
   const F = CALL.full, S = CALL.short, T = `${CTAF.field} traffic`;
   const mk = (q, ok, wrongs, note) => ({ station: 'CTAF', freq: CTAF.freq, kind: 'call', q,
     choices: [{ en: ok, ok: true }, ...wrongs], note, time: 30 });
   const X = {};
-  X.ctaf_10 = mk('無管制の飛行場へ 10 マイル。最初の自家通報は？',
-    `${T}, ${F}, one zero miles south of ${CTAF.field}, two thousand five hundred, inbound for landing runway two seven, ${CTAF.field}.`,
-    [{ en: `${T}, ${S}, landing runway two seven.`, why: '最初の通報はコールサインを省略せず、位置・高度・意図・滑走路を全部言います（AIM 4-1-9）。誰も答えはしません。' },
+  X.ctaf_10 = mk('無管制の飛行場（LABEF）へ 10 マイル。最初の自家通報は？',
+    `${T}, ${F}, one zero miles west of ${CTAF.field}, two thousand five hundred, inbound for landing runway zero niner, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, landing runway zero niner.`, why: '最初の通報はコールサインを省略せず、位置・高度・意図・滑走路を全部言います（AIM 4-1-9）。誰も答えはしません。' },
      { en: `${CTAF.field} Tower, ${F}, inbound for landing.`, why: '無管制の飛行場に管制塔はありません。相手は「その空域の交通（traffic）」です。' }],
-    '答える者はいません。聞いている他機のために言うのです。');
+    '答える者はいません。聞いている他機のために言うのです。LABEF は LAB の東にある草地、滑走路は 09（方位 090°）です。');
   X.ctaf_dw = mk('ダウンウインドに入ります。自家通報は？',
-    `${T}, ${S}, entering left downwind runway two seven, ${CTAF.field}.`,
+    `${T}, ${S}, entering left downwind runway zero niner, ${CTAF.field}.`,
     [{ en: `${T}, ${S}, downwind.`, why: '入るレグと滑走路番号を言います。' },
      { en: `LAB Tower, ${S}, entering downwind.`, why: 'ここは無管制です。LAB の管制塔ではなく、その場の交通へ。' }],
-    '場周の他機は、この通報であなたの位置を知ります。');
+    '場周の他機は、この通報であなたの位置を知ります。09 の左場周は、滑走路の南側を西向きに飛びます。');
   X.ctaf_base = mk('ベースへ曲がります。',
-    `${T}, ${S}, turning left base runway two seven, ${CTAF.field}.`,
+    `${T}, ${S}, turning left base runway zero niner, ${CTAF.field}.`,
     [{ en: `${T}, ${S}, base.`, why: '曲がるレグと滑走路を言います。' }],
     '');
   X.ctaf_fin = mk('ファイナルに入ります。',
-    `${T}, ${S}, final runway two seven, full stop, ${CTAF.field}.`,
-    [{ en: `${T}, ${S}, cleared to land runway two seven.`, why: '無管制では「許可」は存在しません。自分の位置と意図（full stop）を言います。' },
+    `${T}, ${S}, final runway zero niner, full stop, ${CTAF.field}.`,
+    [{ en: `${T}, ${S}, cleared to land runway zero niner.`, why: '無管制では「許可」は存在しません。自分の位置と意図（full stop）を言います。' },
      { en: `${T}, ${S}, final.`, why: '滑走路番号と着陸の意図（full stop か touch and go か）を付けます。' }],
-    '先行機がいれば、その後ろに着く間隔も自分で取ります。');
+    '先行機がいれば、その後ろに着く間隔も自分で取ります。草地は 900 m。接地は早めに、確実に。');
   X.ctaf_clear = mk('滑走路を出ました。最後の通報は？',
-    `${T}, ${S}, clear of runway two seven, ${CTAF.field}.`,
+    `${T}, ${S}, clear of runway zero niner, ${CTAF.field}.`,
     [{ en: `${T}, ${S}, clear.`, why: '出た滑走路の番号を言います。' }],
     'これで場周の他機は、滑走路が空いたことを知ります。');
   return { exchanges: X, sequences: { ctaf: ['ctaf_10', 'ctaf_dw', 'ctaf_base', 'ctaf_fin', 'ctaf_clear'] }, call: CALL, freq: { ctaf: CTAF.freq }, area: CTAF_AREA };

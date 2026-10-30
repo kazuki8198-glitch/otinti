@@ -32,6 +32,7 @@ export const MODULES = Object.freeze([
   'book-3.js',
   'book-4.js',
   'book-5.js',
+  'book-gates.js',       // the parts' summary chapters g1〜g7 (each before the next part's first chapter) and the page「JCAB 学科の道」 (FL.book.jcabRoadHtml): after the parts' chapters (book-7.js when it comes: DESIGN 3.1)
   'kiso/kiso-data.js',   // the basic course (パイロット基礎教材 第 3 版, the original: never edited here)
   'kiso-errata.js',      // what the basic course's page shows over the original: the corrections and the written questions rebuilt (FLIGHT LAB only). Data only
   'quiz.js',             // the ground-school test banks

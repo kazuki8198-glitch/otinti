@@ -32,7 +32,8 @@ test('render.js: every section\'s title with FL.book.secMarks beside it — the 
   const all = R.allHtml();
   assert.equal((all.match(/<div class="bk-head"><h3 class="bk-title">/g) || []).length, SECS.length);
   assert.equal((all.match(/data-scope="/g) || []).length, SECS.filter(s => s.scope !== undefined).length);
-  assert.equal((all.match(/class="bk-from"/g) || []).length, SECS.filter(s => s.from !== undefined).length);
+  // the sections' provenance lines, and the door of each part with one (the door of Part 1: kiso01.x1・kiso02.x1, R2)
+  assert.equal((all.match(/class="bk-from"/g) || []).length, SECS.filter(s => s.from !== undefined).length + BK.PARTS.filter(p => p.door && p.door.from).length);
 });
 
 test('render.js: 説明してみよう on each chapter\'s last section — after the check questions, before the 日米の違い and the lessons; searchable; the contents mark 発展', () => {

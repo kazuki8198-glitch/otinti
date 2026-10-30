@@ -1,0 +1,251 @@
+{
+ "unitName": "integrate-R2C",
+ "about": "統合 R2C（W23・W24・W25・W26・W07d2 を本に入れた、2026-10-30）：W24 が用語をそろえて文の id が変わった CLAIMS の前の行 47 に「本にない文」の note、COUNTS の用語の表の数と部のまとめの登録の note。報告は reports/integrate-R2C.md",
+ "patches": [
+  {
+   "id": "intro.course#f24eab79",
+   "by": "revise-intro",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は intro.course#ffedae7d）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "intro.course#727d6b8f",
+   "by": "revise-intro",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は intro.course#ecfd92b7）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "intro.cert#5caa3c62",
+   "by": "revise-intro",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は intro.cert#28719f3c）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "intro.cert#5a5a711b",
+   "by": "revise-intro",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は intro.cert#a6e4f1b2）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "intro.exams#05116d52",
+   "by": "R1V",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は intro.exams#a43dea31）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "basics.units#0d26757d",
+   "by": "revise-basics",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は basics.units#1b2cea4a）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "basics.units#ede20799",
+   "by": "revise-basics",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は basics.units#a2ea222f）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "basics.time#a1934005",
+   "by": "revise-basics",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は basics.time#badd8255）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "en.class#2cdf3c9d",
+   "by": "revise-english",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は en.class#917257cb）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "en.class#c2fe31a9",
+   "by": "W10",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は en.class#a599574a）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.forces#7e52c640",
+   "by": "revise-aero",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.forces#8c030ff7）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.forces#b6d7ce8c",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.forces#985969b9）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.power#b48a9b79",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.power#ad8826f8）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.power#2f11ba86",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.power#64ac9f4c）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.flaps#cd3e0d59",
+   "by": "W13・revise-aero",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.flaps#52f031b8）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.flaps#2d80e19c",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.flaps#827772cc）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.flaps#ffd1bcb5",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.flaps#01c831ae）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "aero.vn#d1efdcc9",
+   "by": "W13",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は aero.vn#930edd47）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#cee3db98",
+   "by": "W16",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wb.limits#393c1f7e）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#24434c73",
+   "by": "W16",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wb.limits#cbbd084d）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wb.limits#071b2458",
+   "by": "revise-perfwb",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wb.limits#964633ec）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wx.wind#3fc9f779",
+   "by": "W17",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wx.wind#872c380b）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wx.brief#4cae0b0e",
+   "by": "W17",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wx.brief#6601babe）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "wx.brief#03dd621c",
+   "by": "revise-wx",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は wx.brief#55d01eda）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "navb.earth#74395b08",
+   "by": "revise-navb",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は navb.earth#cddf8120）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "navb.calc#c22a1672",
+   "by": "revise-navb",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は navb.calc#3994798d）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.basis#103d9483",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.basis#08163fd4）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.basis#fc700671",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.basis#bbad726e）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.pilot#069f385e",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.pilot#9f754b27）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.pilot#0c5d0d4b",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.pilot#dbe60a88）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.aircraft#d53b34ce",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.aircraft#688f6562）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.airspace#796f3f31",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.airspace#968d97e0）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.vfr#d8e62a89",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.vfr#48287213）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.special#efe08c7a",
+   "by": "revise-law",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.special#a25f75c1）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "law.special#c0954498",
+   "by": "revise-law",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は law.special#e0b56fba）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.basic#7539a6a2",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.basic#985a9bb3）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.callsign#e66c8c40",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.callsign#1c1cb704）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.ack#f93e3528",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.ack#84f21a0e）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.readback#1e6ecd86",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.readback#100f824e）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.readback#c44f7ba0",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.readback#4c2d7f3f）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.clarify#eeceea8b",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.clarify#e01f381b）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.dep#08e98859",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.dep#129d7928）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.arrive#6ce5ea66",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.arrive#56971fde）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.option#1d51ebe5",
+   "by": "W19",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.option#3cc6b050）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.xpdr#ad0cacd2",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.xpdr#ceb97bdb）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.mayday#52455fa4",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.mayday#8dbf4180）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "comm.mayday#2a7aa87b",
+   "by": "revise-radio",
+   "note": "integrate-R2C：本にない文（W24 が用語をそろえて文が変わった。同じ主張の新しい行は comm.mayday#bee5ef67）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "book.terms",
+   "by": "W24",
+   "note": "integrate-R2C（2026-10-30）：W24 が R1・R2 の書き手と読み手が挙げた語を JCAB の資料で確かめて 134 語足した（302 → 436 語。official 98・official-def 1・book 35）。flight-lab/test/terms.test.mjs の上限を 320 → 460 に（TEST-CONSTANTS.md）。built は W27 が数える"
+  },
+  {
+   "id": "origin.written.gates",
+   "by": "W25",
+   "note": "integrate-R2C（2026-10-30）：g1（2 節：g1.review・g1.japan）を book-gates.js で本に登録した（第 1 部 第 20 章、ground の前）。g2〜g7 は W35・W42"
+  }
+ ]
+}

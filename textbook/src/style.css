@@ -79,6 +79,10 @@ code { font-family: var(--mono); font-size: .92em; }
 .bk-item:hover { background: var(--hover); } .bk-item.sel { background: var(--sel); font-weight: 700; }
 .bk-item .bk-num { color: var(--muted); min-width: 3.4em; flex: none; }
 .bk-item.done .bk-num::after { content: " ✓"; color: var(--green); }
+/* a page that is not a section (a part's door, the appendix 「JCAB 学科の道」): under the part's title, not numbered */
+.tb-page { display: block; width: 100%; text-align: left; padding: 4px 8px; border: 0; border-radius: 5px; background: transparent; color: var(--part); font: 600 .8rem/1.45 var(--jp); cursor: pointer; }
+.tb-page:hover { background: var(--hover); } .tb-page.sel { background: var(--sel); font-weight: 700; }
+.tb-appx { margin: 14px 4px 4px; font: 700 .78rem/1.4 var(--jp); color: var(--part); }
 .tb-hit { margin-bottom: 4px; }
 .tb-main { min-width: 0; padding: 16px 30px 60px; outline: none; }
 .tb-main > * { max-width: 880px; }
@@ -222,6 +226,11 @@ table.terms th { color: var(--muted); font-weight: 600; }
 .tb-chapter-title { font: 700 1.5rem/1.4 var(--jp); margin: 8px 0 14px; }
 .tb-chapter .tb-sec { margin-bottom: 28px; }
 .tb-chapter .bk-title { font-size: 1.2rem; }
+.tb-door, .tb-appendix { border-top: 3px solid var(--line); margin-top: 40px; padding-top: 10px; }
+.bk-door h3, .bk-road h3 { font: 700 1.4rem/1.4 var(--jp); color: var(--part); margin: 8px 0 10px; }
+.bk-door h5, .bk-road h5 { font: 700 .95rem/1.5 var(--jp); margin: 12px 0 4px; color: var(--part); }
+.bk-door button[data-sec], .bk-road button[data-sec], .g1-where button[data-sec] { margin: 2px 4px 2px 0; }
+.g1-where { font-size: .9rem; color: var(--muted); }
 
 /* ------------------------------------------------------------------ phones: the contents above the text */
 @media (max-width: 900px) {
@@ -251,7 +260,7 @@ table.terms th { color: var(--muted); font-weight: 600; }
   .tb-wrap { display: block; }
   .tb-main { padding: 0; } .tb-main > * { max-width: none; }
   body { background: #fff; }
-  .tb-chapter { break-before: page; border-top: 0; margin-top: 0; }
+  .tb-chapter, .tb-door, .tb-appendix { break-before: page; border-top: 0; margin-top: 0; }
   .tb-all-toc { break-after: page; }
   .bk-fig, .bk-photo, .bk-calc, .quiz, .bk-key, .bk-warn, tr { break-inside: avoid; }
   /* 説明してみよう: the answers printed open, without their buttons (the folds are opened by page.js on beforeprint) */

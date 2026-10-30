@@ -31,11 +31,11 @@ test('build: one file, nothing from outside', () => {
   assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/i);
 });
 
-test('build: every script parses; the 18 FLIGHT LAB modules in order, then the page', () => {
+test('build: every script parses; the 19 FLIGHT LAB modules in order, then the page', () => {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert.equal(scripts.length, FL_MODULES.length + 2);
   for (const s of scripts) assert.doesNotThrow(() => new vm.Script(s), s.slice(0, 60));
-  assert.equal(FL_MODULES.length, 18);
+  assert.equal(FL_MODULES.length, 19);
   const at = FL_MODULES.map(m => html.indexOf(`/* ---- FLIGHT LAB: ${m} ---- */`));
   for (const [i, m] of FL_MODULES.entries()) assert.ok(at[i] > 0, m);
   for (let i = 1; i < at.length; i++) assert.ok(at[i] > at[i - 1], `${FL_MODULES[i]} after ${FL_MODULES[i - 1]}`);

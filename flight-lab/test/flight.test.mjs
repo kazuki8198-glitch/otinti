@@ -671,6 +671,51 @@ test('textbook: every cross-link resolves (sections, lessons, calculators) and t
   for (const w of ['Vmc', 'METAR', '91.155', 'ゴーアラウンド', 'ILS', 'TEM', 'IMSAFE', '偏流修正']) assert.ok(all.includes(w), w);
 });
 
+// DESIGN 3.1, 3.2「部のまとめの章 gN」「部の扉」, 3.3 付録, 5 criterion 23 (R2: W25, registered in R2C): book-gates.js puts the
+// summary chapter g1 at the end of Part 1 (before Part 2's first chapter) — g1.review and g1.japan, ≥ 30 % of its questions
+// on the earlier part, the part's FL.jur items in g1.japan and no chapter-end 日米 table —; book-core.js's PARTS gives Part 1
+// its door (FL.book.doorHtml: the groups' chapters in the book's order, the lessons with their sections and test banks, the
+// sections to recall from 序部); FL.book.jcabRoadHtml is the page 「JCAB 学科の道」 (the sections whose data jcab names each
+// subject's headings, in reading order). Every link has its section, and no （別の章）.
+test('textbook: the summary chapter g1, the door of Part 1 and 「JCAB 学科の道」 (book-gates.js) — links resolve, the earlier part\'s share, from the data', () => {
+  const g1 = BK.CHAPTERS.find(c => c.id === 'g1');
+  assert.ok(g1, 'g1 is in the book');
+  assert.equal(g1.part, 'p1');
+  assert.equal(BK.CHAPTERS[g1.n].id, 'ground', 'g1 stands in front of Part 2\'s first chapter');
+  assert.deepEqual(g1.secs.map(s => [s.id, s.scope]), [['g1.review', 'common'], ['g1.japan', 'mixed']]);
+  assert.deepEqual(g1.lessons, []);
+  // the chapter-end questions: each names the section its reason cites; ≥ 30 % on the earlier part (序部)
+  assert.ok(g1.quiz.length >= 8 && g1.quiz.every(q => BK.findSection(q.sec)), 'each question with its section');
+  const earlier = g1.quiz.filter(q => BK.findSection(q.sec).ch.part === 'p0').length;
+  assert.ok(earlier / g1.quiz.length >= 0.3, `${earlier}/${g1.quiz.length} on 序部`);
+  const review = BK.html(BK.findSection('g1.review').sec);
+  const qs = review.match(/考えてみよう：問 \d+/g) || [], oral = review.match(/考えてみよう：口述の練習 \d+/g) || [];
+  assert.ok(qs.length >= 12 && qs.length <= 16 && oral.length >= 3 && oral.length <= 5, `${qs.length} questions, ${oral.length} oral`);
+  // g1.japan: the gate's items, drawn from FL.jur (DESIGN 3.4 ②), and no chapter-end table
+  const japan = BK.html(BK.findSection('g1.japan').sec);
+  for (const it of FL.jur.ofGate('g1')) assert.ok(japan.includes(`data-jur="${it.id}"`), `g1.japan: ${it.id}`);
+  assert.equal(BK.jurTable('g1'), '');
+  // the door of Part 1 and the road
+  const door = BK.doorHtml('p1'), road = BK.jcabRoadHtml();
+  assert.equal(BK.doorHtml('p2'), '', 'no door for Part 2 yet (W35)');
+  for (const g of BK.PARTS.find(p => p.id === 'p1').door.groups) for (const c of g.chapters) assert.ok(door.includes(`第 ${BK.CHAPTERS.find(x => x.id === c).n} 章　`), `the door: ${c}`);
+  const stage = SY.STAGES.find(st => st.phase === 'p1');
+  for (const l of stage.lessons) assert.ok(door.includes(`${l.id}　`), `the door: lesson ${l.id}`);
+  assert.equal((door.match(/学科テスト：/g) || []).length, stage.lessons.length, 'each lesson with its test bank (FLIGHT LAB has quiz.js)');
+  const recall = BK.PARTS.find(p => p.id === 'p1').door.recall;
+  assert.ok(recall.length >= 6 && recall.length <= 10 && recall.every(id => BK.findSection(id).ch.part === 'p0'), 'the sections to recall: 6–10, from 序部');
+  for (const r of BK.jcabRoad()) {
+    for (const x of [...r.first, ...r.deep]) assert.ok(BK.findSection(x.id).sec.jcab.some(h => r.subject.heads.some(k => h === k || h.startsWith(`${k}.`))), `${r.subject.t}: ${x.id}`);
+    assert.ok(r.first.every(x => !BK.findSection(x.id).sec.deep) && r.deep.every(x => BK.findSection(x.id).sec.deep), `${r.subject.t}: first and deep`);
+  }
+  assert.ok(BK.jcabRoad().find(r => r.subject.id === 'eng').first.length > 0, 'Part 1 has the engineering subject\'s sections');
+  for (const [name, h] of [['g1.review', review], ['g1.japan', japan], ['door', door], ['road', road]]) {
+    assert.doesNotMatch(h, /（別の章）|\{ch:/, name);
+    for (const m of h.matchAll(/data-sec="([^"]+)"/g)) assert.ok(BK.findSection(m[1]), `${name} → ${m[1]}`);
+    assert.ok((h.match(/data-sec="/g) || []).length > 20, `${name}: links`);
+  }
+});
+
 // DESIGN 3.1 and 6.2 rules 2–3 (W09): a part is added by the file of its chapters (FL.book.addPart); the front part 序部
 // (p0, book-0.js) holds the two chapters that were finished before it ('intro' first, 'sim' last), and the stage titles
 // follow the part numbers (decision 8: 第 1 段階 goes with 第 1 部; ids and phases unchanged)

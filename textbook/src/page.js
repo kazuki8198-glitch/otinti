@@ -1,5 +1,6 @@
 // TEXTBOOK — page.js
-// The DOM: the table of contents, one section at a time (#節ID) or the whole book (#all), the search (marks on the
+// The DOM: the table of contents, one section at a time (#節ID), a page that is not a section (#door:p1 a part's door,
+// #jcab the appendix 「JCAB 学科の道」) or the whole book (#all), the search (marks on the
 // shown text nodes only), FLIGHT LAB's lesson buttons turned into tags, the calculators (FL.book.wire), the check
 // questions, the answers of 説明してみよう (shown and hidden here; not recorded: FLIGHT LAB keeps that record), the read
 // marks and the settings (this browser's localStorage only, keys "textbook.*"), the print.
@@ -19,7 +20,7 @@
     quiz: (o => o && typeof o === 'object' ? o : {})(load(KEY.quiz, {})),
     prefs: Object.assign({ theme: 'auto', size: 16 }, load(KEY.prefs, {})),
     last: load(KEY.last, null),
-    mode: 'sec', cur: null, idx: null,
+    mode: 'sec', cur: null, page: null, idx: null,
   };
 
   // ------------------------------------------------------------ the look: light / dark, the text size
@@ -117,7 +118,7 @@
       if (!S.idx) S.idx = R.index();
       toc.innerHTML = R.resultsHtml(q, R.search(q, S.idx));
     } else {
-      toc.innerHTML = R.tocHtml(S.read, S.mode === 'sec' ? S.cur : null);
+      toc.innerHTML = R.tocHtml(S.read, S.mode === 'sec' ? S.cur : S.mode === 'page' ? S.page : null);
       const sel = toc.querySelector('.bk-item.sel'), side = $('tbNav');
       if (sel && side.scrollHeight > side.clientHeight) {
         const top = sel.offsetTop - side.offsetTop;
@@ -151,6 +152,18 @@
     if (q && mark(view, q)) showMarks(view);
     else if (scroll) $(id).scrollIntoView({ block: 'start' });
   }
+  // a page that is not a section (a part's door, the appendix): not marked read, not the last section read
+  function showPage(key) {
+    const html = R.pageHtml(key); if (!html) return showSection(S.cur || S.last || FIRST);
+    S.mode = 'page'; S.page = key;
+    document.body.classList.remove('tb-mode-all');
+    $('tbAll').setAttribute('aria-pressed', 'false'); $('tbAll').textContent = '全文';
+    view.innerHTML = html;
+    enhance(view);
+    setHash(key);
+    drawToc();
+    window.scrollTo(0, 0);
+  }
   function showAll() {
     S.mode = 'all';
     document.body.classList.add('tb-mode-all');
@@ -169,6 +182,7 @@
     let h = ''; try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = ''; }
     if (h === 'all') return showAll();
     if (BK.findSection(h)) return showSection(h, { scroll: !first });
+    if (R.pageHtml(h)) return showPage(h);
     showSection(BK.findSection(S.last) ? S.last : FIRST, { scroll: false });
   }
   window.addEventListener('hashchange', () => route(false));
@@ -182,7 +196,8 @@
 
   // ------------------------------------------------------------ the clicks (one listener: the views are redrawn)
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check, button.bk-lesson, button.bk-w-btn'); if (!t) return;
+    const t = e.target.closest('[data-go], button[data-sec], button[data-page], a[data-jump], .tb-check, button.bk-lesson, button.bk-w-btn'); if (!t) return;
+    if (t.matches('button[data-page]')) { showPage(t.dataset.page); return; }
     if (t.matches('button.bk-lesson')) { toggleLesson(t); return; }
     if (t.matches('button.bk-w-btn')) { const box = t.closest('.bk-w'); showAnswer(box, box.querySelector('.bk-w-a').hidden); return; }
     if (t.matches('a[data-jump]')) { e.preventDefault(); go(t.dataset.jump); return; }

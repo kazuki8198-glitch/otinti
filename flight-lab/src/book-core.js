@@ -235,11 +235,54 @@
     mlitHf: { label: '国土交通省「自家用操縦士等ヒューマンファクターズ訓練検討会 最終とりまとめ」（令和 8 年 2 月 24 日。技能発揮訓練の間隔 2 年・最低 3 時間・義務の適用は令和 10 年 6 月頃の見込み）', url: 'https://www.mlit.go.jp/koku/content/001994979.pdf' },
     voices: { label: '航空安全情報自発報告制度（VOICES）「VOICES について」（公益財団法人 航空輸送技術研究センター。平成 26 年 7 月 10 日開始・義務報告の代わりにならない）', url: 'https://jihatsu.jp/about/' },
   };
+  // the door of Part 1 (DESIGN 3.2「部の扉」, 6.1: PARTS gets the item door; R2: drafts/g1.js by W25, registered in R2C): the
+  // part's goals / the lessons table (lesson → the sections to read first → the ground-school test) / 6–10 sections to
+  // recall (Part 1: from 序部) / the order of「まず読む節」, the chapters in four groups. The goals and the reading method are
+  // rewritten from the basic course's chapter doors and its opening sections kiso01.x1・kiso02.x1. Plain data: doorHtml
+  // below computes the reading order from the book and the lessons from FL.syllabus (no hand-written list to go stale).
+  // The summary chapter (summary: 'g1') and its links are drawn only when the book has it (CADET does not: DESIGN 6.3)
+  const DOOR_P1 = Object.freeze({
+    lead: Object.freeze([
+      '第 1 部は、英語の座学で学ぶ地上学科です。飛行機が飛ぶ原理、機体と計器、性能と重量、気象と航法の基礎、規則と交信、人間の能力を学びます。',
+      '原理は、国を問わず共通です。規則と交信の章は、Sanford で飛ぶための米国の決まりです。「ロンドンの座学で米国の規則を学ぶ」という意味ではありません。座学の中身と、英国の試験を受けるかは、公表されていません。',
+      '日本の数字は、その場で日米の対照の囲みに並べてあります。日本の決まりの本文は第 7 部、日米の違いのまとめは第 1 部の最後の章です。',
+    ]),
+    goals: Object.freeze([
+      '翼のまわりの空気の流れと 4 つの力で、揚力・抗力・失速・旋回を説明し、単位をそろえて計算できます。',
+      '機体・エンジン・燃料・電気の正常な流れをたどり、ある故障がどの働きと表示に響くかを、根拠をつけて言えます。',
+      '計器の表示を情報源までたどり、同じ情報源の表示どうしでは確かめ合いにならないことを説明できます。',
+      'POH の図表で性能と重量・重心を求め、表の前提・補正・余裕を分けて確かめられます。',
+      '天気のしくみを説明し、METAR と TAF を、飛ぶ場所と時刻に結び付けて読めます。',
+      '位置と方位の基準をそろえ、風を考えて針路・対地速度・時間・燃料を求められます。',
+      '米国の規則を予定する飛行に当てはめ、許可・指示・情報を聞き分けて、英語で交信できます。',
+      '自分の体と注意の限界を知り、確かめ方と情報の伝え方を選び、行くかやめるかを決められます。',
+    ]),
+    groups: Object.freeze([
+      Object.freeze({ t: '原理と機体', chapters: Object.freeze(['aero', 'sys']) }),
+      Object.freeze({ t: '計器・性能・重量', chapters: Object.freeze(['inst', 'perf', 'wb']) }),
+      Object.freeze({ t: '気象と航法の基礎', chapters: Object.freeze(['wx', 'navb']) }),
+      Object.freeze({ t: '規則・交信・人間', chapters: Object.freeze(['law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'adm']) }),
+    ]),
+    summary: 'g1',
+    // the lessons of the part (FL.syllabus: the stage whose phase is p1) → the ground-school test bank to take after
+    quizOf: Object.freeze({ k1: 'q_sys', k2: 'q_sys', k3: 'q_comm', k4: 'q_radio', k5: 'q_comm', k6: 'q_radio' }),
+    // 思い出す節 (DESIGN 3.2: 6–10; Part 1 recalls 序部). Only basics (CADET has it: no link to a chapter CADET drops)
+    recall: Object.freeze(['basics.flight', 'basics.crew', 'basics.units', 'basics.time', 'basics.speed', 'basics.alt', 'basics.rules', 'basics.docs']),
+    howTo: Object.freeze([
+      '1 回に 30〜45 分ずつ、章の順に読みます。次へ進む前に、節の最初の図を見ないで描き直せるかを確かめます。',
+      '序部で学んだ 3 つの区別を使います。空気に対する速さと地面に対する速さ、機体の姿勢と迎え角、重さ（力）と質量です。',
+      '計算は、使った式・単位・仮定を書き残します。度とラジアンを混ぜず、途中で丸めすぎません。',
+      '系統（エンジン・燃料・電気・計器）は、目的、供給源から使う所までの線、弁・スイッチ・保護装置・計器が測る場所、いつもの供給源を失ったときの代わり、の順にたどります。',
+      '数字は 3 種類を区別します。原理の式の値、この本の例の値（教材値と例題の値）、実機の限界の値です。実機の限界は、その機体の承認された資料（POH）で確かめます。',
+      'FAA の資料は、原理と米国の決まりの出典です。日本の資格と決まりの要件に読み替えません。',
+    ]),
+    from: Object.freeze(['kiso01.x1', 'kiso02.x1']),
+  });
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that
   // does not read that file has no such part (textbook/rewrite/combined/DESIGN.md 3.1)
   const PARTS = [
-    { id: 'p1', title: '第 1 部　地上学科（英語の座学）', phase: 'p1' },
+    { id: 'p1', title: '第 1 部　地上学科（英語の座学）', phase: 'p1', door: DOOR_P1 },
     { id: 'p2', title: '第 2 部　Sanford・Piper Archer の基礎操縦', phase: 'p2' },
     { id: 'p3', title: '第 3 部　航法・目的地変更', phase: 'p3' },
     { id: 'p4', title: '第 4 部　計器飛行', phase: 'p4' },
@@ -309,9 +352,10 @@
   }
   const jurJpSide = it => jurJp(it) + jurFoot([it], 'jur-foot');
   // the chapter-end table: the items whose boxes the chapter shows, in reading order (DESIGN 3.2「章末」)
+  // A summary chapter (g1〜g7) has none: its section gN.japan draws the part's items as its own tables (DESIGN 3.2, 3.4)
   function jurTable(chId) {
     const ch = CHAPTERS.find(c => c.id === chId), J = jurData();
-    if (!ch || !J) return '';
+    if (!ch || !J || /^g\d+$/.test(ch.id)) return '';
     const ids = [];
     for (const sec of ch.secs) for (const m of html(sec).matchAll(/data-jur="([^"]+)"/g)) if (!ids.includes(m[1])) ids.push(m[1]);
     return jurBox(ids.map(id => J.byId(id)).filter(Boolean), 'この章の日米の違い', 'bk-jur bk-jur-end');
@@ -480,5 +524,44 @@
           + `<div class="bk-w-a" id="${id}" hidden><b>答えの例</b>${w.a}</div></div>`;
       }).join('') + '</div>';
   }
-  FL.book = { R, PARTS, CHAPTERS, bk, add, addPart, findSection, fix, html, text, wire, jurTable, jurAppendix, secMarks, writtenItems, writtenHtml, SCOPE, get FIG() { return FL.bookFigs; } };
+  // the door of a part (PARTS[].door; DESIGN 3.2「部の扉」, 5 criterion 24): FLIGHT LAB's pages.js and TEXTBOOK's render.js
+  // draw it at the head of the part; CADET does not. It reads only the book's data, FL.syllabus and FL.quiz: the chapters
+  // of each group with their「まず読む節」 (deep ones counted as 発展) in the book's order, the summary chapter when the book
+  // has it, the lessons of the stage whose phase is the part's with the sections they name first and the test bank to take,
+  // the sections to recall, the reading method and the provenance line (secMarks). A link is drawn only to a section that
+  // is in the book (DESIGN 6.2 rules 6 and 13). '' for a part without a door
+  function doorHtml(partId) {
+    const p = PARTS.find(x => x.id === partId), d = p && p.door; if (!d) return '';
+    const ch = id => CHAPTERS.find(c => c.id === id);
+    const secBtns = ids => ids.map(id => { const f = findSection(id); return f ? bk.see(id, attr(f.sec.t)) : ''; }).join('');
+    let s = `<div class="bk-door" data-part="${attr(p.id)}"><h3>${attr(p.title)}</h3>${(d.lead || []).map(t => `<p>${t}</p>`).join('')}`;
+    if (d.goals) s += `<h4>この部の目標</h4><ul>${d.goals.map(t => `<li>${t}</li>`).join('')}</ul>`;
+    if (d.groups) {
+      s += '<h4>章のまとまりと、まず読む節の順</h4>';
+      for (const g of d.groups) {
+        const items = g.chapters.map(ch).filter(Boolean).map(c => {
+          const first = c.secs.filter(x => !x.deep), deep = c.secs.length - first.length;
+          return `<li><b>第 ${c.n} 章　${attr(c.t)}</b>：${first.map(x => bk.see(x.id, attr(x.t))).join('')}${deep ? `（発展 ${deep} 節）` : ''}</li>`;
+        });
+        if (items.length) s += `<h5>${attr(g.t)}</h5><ol>${items.join('')}</ol>`;
+      }
+      const g = d.summary && ch(d.summary);
+      if (g && g.secs.length) s += `<p>最後に：${bk.see(g.secs[0].id, `第 ${g.n} 章　${attr(g.t)}`)}</p>`;
+    }
+    const stage = FL.syllabus && FL.syllabus.STAGES.find(st => st.phase === p.phase);
+    if (stage && stage.lessons.length) {
+      // the test bank column only where the tests are (FLIGHT LAB: quiz.js; TEXTBOOK does not load it)
+      const banks = FL.quiz && Array.isArray(FL.quiz.BANKS) ? FL.quiz.BANKS : null;
+      const bank = id => { const b = banks.find(x => x.id === id); return b ? `学科テスト：${attr(b.title)}` : '—'; };
+      const row = l => [`${attr(l.id)}　${attr(l.title || l.t || '')}`, secBtns(l.book || [])];
+      s += banks
+        ? '<h4>課目と、先に読む節・学科テスト</h4>' + bk.t(['課目', '先に読む節', '学科テスト'], stage.lessons.map(l => [...row(l), d.quizOf && d.quizOf[l.id] ? bank(d.quizOf[l.id]) : '—']))
+        : '<h4>課目と、先に読む節</h4>' + bk.t(['課目', '先に読む節'], stage.lessons.map(row));
+    }
+    if (d.recall) s += `<h4>思い出す節（${partId === 'p1' ? '序部' : '前の部'}）</h4><p>${secBtns(d.recall)}</p>`;
+    if (d.howTo) s += `<h4>読み方</h4><ul>${d.howTo.map(t => `<li>${t}</li>`).join('')}</ul>`;
+    if (d.from) s += secMarks({ id: `door.${partId}`, from: d.from });
+    return `${s}</div>`;
+  }
+  FL.book = { R, PARTS, CHAPTERS, bk, add, addPart, findSection, fix, html, text, wire, jurTable, jurAppendix, secMarks, writtenItems, writtenHtml, doorHtml, SCOPE, get FIG() { return FL.bookFigs; } };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

@@ -390,7 +390,7 @@ test('browser: 基礎教材 — every chapter and section by 次の節, 161 figu
 // section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line) and the chapter-end
 // 説明してみよう (FL.book.writtenHtml): an answer opens with its button, is kept in the progress (bookWritten), printed open;
 // a question rewritten from the basic course says so when its original was opened there (kisoQa, never read as ours).
-test('browser: 教科書 — the scope badge and the provenance line beside the title, 発展 in the contents, 説明してみよう with its answers and its record', { skip: !chromium && 'Playwright not found' }, async () => {
+test('browser: 教科書 — the scope badge and the provenance line beside the title, 発展 in the contents, 説明してみよう with its answers and its record, the door of Part 1 and 「JCAB 学科の道」', { skip: !chromium && 'Playwright not found' }, async () => {
   const { out } = build({ quiet: true });
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   try {
@@ -471,6 +471,23 @@ test('browser: 教科書 — the scope badge and the provenance line beside the 
     assert.equal(await page.locator('#bkArt .bk-w-kiso').count(), 1);
     assert.deepEqual((await page.evaluate(() => __lab.progress())).bookWritten, ['basics.w0']);
     await page.evaluate(() => { __lab.progress().kisoQa.pop(); });
+    // R2 (W25, DESIGN 3.2「部の扉」, 3.3 付録): the door of Part 1 under its title in the contents and 「JCAB 学科の道」 at the
+    // end: not sections (no number, not marked read); the door has the lessons with their test banks; a link opens its section
+    const read0 = (await page.evaluate(() => __lab.progress())).read.length;
+    await page.locator('#bkNav .bk-page[data-page="door:p1"]').click();
+    const d = await page.evaluate(() => ({ chap: document.querySelector('#bkArt .bk-chap').textContent, h: document.querySelector('#bkArt .bk-door h3').textContent,
+      links: document.querySelectorAll('#bkArt .bk-door button[data-sec]').length, banks: (document.querySelector('#bkArt .bk-door').textContent.match(/学科テスト：/g) || []).length,
+      sel: [...document.querySelectorAll('#bkNav .sel')].map(b => b.dataset.page || 'item') }));
+    assert.deepEqual([d.chap, d.h, d.sel], ['部の扉', '第 1 部　地上学科（英語の座学）', ['door:p1']]);
+    assert.ok(d.links >= 100 && d.banks === 6, JSON.stringify(d));
+    await page.locator('#bkArt .bk-door button[data-sec="g1.review"]').click();
+    assert.equal(await page.textContent('#bkArt .bk-title'), '第 1 部の振り返り：問いと口述の練習');
+    await page.locator('#bkNav .bk-page[data-page="jcab"]').click();
+    assert.equal(await page.textContent('#bkArt .bk-road h3'), 'JCAB 学科の道');
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#bkArt .bk-road h4')].map(e => e.textContent)), ['航空工学', '航空気象', '空中航法', '航空通信', '航空法規', '計器飛行一般']);
+    const read1 = (await page.evaluate(() => __lab.progress())).read;
+    assert.equal(read1.length, read0 + (read1.includes('g1.review') && !read1.slice(0, read0).includes('g1.review') ? 1 : 0), 'only the section opened is marked read');
+    assert.ok(read1.every(id => !/^(door:|jcab)/.test(id)));
     assert.deepEqual(errors, []);
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }

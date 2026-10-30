@@ -6,6 +6,9 @@
 // the section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line) and the chapter's
 // 説明してみよう (FL.book.writtenHtml: its answers open with their buttons, page.js) — the same HTML as FLIGHT LAB's.
 // Lessons are written as FLIGHT LAB writes them (button[data-lesson]); page.js turns every one into a tag.
+// The pages of the book that are not sections — a part's door (FL.book.doorHtml) and the appendix 「JCAB 学科の道」
+// (FL.book.jcabRoadHtml, book-gates.js) — are FLIGHT LAB's HTML too: pageHtml('door:p1') / pageHtml('jcab'), opened
+// from the contents (button[data-page], not a section: no number, no read mark) and printed in the whole book.
 (function (G) {
   'use strict';
   const NOTE = '本文は公開情報に基づく要約と教材の説明です。数値は仮想教材値または出典のある参考値（機体ごとに要確認）。実機訓練・教官・POH/AFM・SOP・航空法規を優先してください。';
@@ -90,6 +93,22 @@
       return s + '</section>';
     }
 
+    // a page that is not a section: 'door:<part id>' (the part's door) or 'jcab' (the appendix); '' when the book has none
+    const PAGE_KEY = /^(?:door:p\d+|jcab)$/;
+    function pageBody(key) {
+      if (key === 'jcab') return BK.jcabRoadHtml ? BK.jcabRoadHtml() : '';
+      const m = /^door:(p\d+)$/.exec(key || '');
+      return m && BK.doorHtml ? BK.doorHtml(m[1]) : '';
+    }
+    function pageHtml(key) {
+      if (!PAGE_KEY.test(String(key || ''))) return '';
+      const body = pageBody(key); if (!body) return '';
+      return `<section class="tb-page-view" data-page-id="${esc(key)}"><div class="bk-chap">${key === 'jcab' ? '付録' : '部の扉'}</div>`
+        + `<div class="tb-body">${body}</div><p class="note tb-note">${esc(NOTE)}</p></section>`;
+    }
+    // the pages the book has now, in the contents' order (the doors under their parts' titles, the appendix at the end)
+    const pages = () => [...BK.PARTS.filter(p => p.door && pageBody(`door:${p.id}`)).map(p => `door:${p.id}`), ...(BK.jcabRoadHtml ? ['jcab'] : [])];
+
     // the whole book on one page (to print): a table of contents, then every chapter (each from a new page)
     function allHtml({ quizResults = null } = {}) {
       let s = '<div class="tb-all"><h1 class="tb-all-title">FLIGHT LAB 教科書（全文）</h1><nav class="tb-all-toc" aria-label="全文の目次">';
@@ -102,25 +121,32 @@
       }
       s += '</nav>';
       for (const c of BK.CHAPTERS) {
+        // a part's door before its first chapter (printed as the part's first page)
+        const p = partOf(c);
+        if (p && p.door && BK.CHAPTERS.find(x => x.part === p.id) === c) { const d = pageBody(`door:${p.id}`); if (d) s += `<article class="tb-door" data-part="${esc(p.id)}">${d}</article>`; }
         s += `<article class="tb-chapter" data-chapter="${esc(c.id)}"><h2 class="tb-chapter-title">第 ${c.n} 章　${esc(c.t)}</h2>`
           + c.secs.map(x => sectionHtml(x.id, { quizResults, level: 3 })).join('') + '</article>';
       }
+      // the appendix pages after the chapters
+      if (BK.jcabRoadHtml) s += `<article class="tb-appendix" data-page="jcab">${BK.jcabRoadHtml()}</article>`;
       return s + '</div>';
     }
 
     // the table of contents (parts → chapters → sections)
     function tocHtml(read, cur) {
-      const r = new Set(read || []);
+      const r = new Set(read || []), page = key => `<button type="button" class="tb-page${key === cur ? ' sel' : ''}" data-page="${esc(key)}"${key === cur ? ' aria-current="true"' : ''}>${key === 'jcab' ? 'JCAB 学科の道' : '扉：この部の目標と読み方'}</button>`;
       let s = '';
       for (const p of BK.PARTS) {
         const chs = BK.CHAPTERS.filter(c => c.part === p.id); if (!chs.length) continue;
         s += `<h3 class="tb-part">${esc(p.title)}</h3>`;
+        if (p.door && pageBody(`door:${p.id}`)) s += page(`door:${p.id}`);
         for (const c of chs) {
           s += `<div class="tb-toc-chap"><div class="tb-toc-ct">第 ${c.n} 章　${esc(c.t)}</div>`;
           s += c.secs.map((x, k) => `<button type="button" class="bk-item${r.has(x.id) ? ' done' : ''}${x.id === cur ? ' sel' : ''}" data-go="${esc(x.id)}"${x.id === cur ? ' aria-current="true"' : ''}><span class="bk-num">${num(c, k)}</span><span>${esc(x.t)}${deepTag(x)}</span></button>`).join('');
           s += '</div>';
         }
       }
+      if (BK.jcabRoadHtml) s += `<h3 class="tb-appx">付録</h3>${page('jcab')}`;
       return s;
     }
 
@@ -163,7 +189,7 @@
       }).join('');
     }
 
-    return { NOTE, APP_NOTE, esc, flat, isApp, lessonTitle, sectionHtml, endHtml, quizResult, allHtml, tocHtml, endText, index, search, resultsHtml };
+    return { NOTE, APP_NOTE, esc, flat, isApp, lessonTitle, sectionHtml, endHtml, quizResult, pageHtml, pages, allHtml, tocHtml, endText, index, search, resultsHtml };
   }
   G.TB = { make, NOTE, APP_NOTE, esc };
 })(globalThis);

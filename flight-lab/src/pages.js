@@ -291,7 +291,7 @@
     }
 
     // ------------------------------------------------------------ the textbook
-    let curSec = null;
+    let curSec = null, curPage = null;   // the section shown, or a page that is not a section (a part's door, the appendix)
     function renderBook(body) {
       if (!BK) { body.append(h('p', { text: '教科書のデータがありません。' })); return; }
       body.className = 'page-body split';
@@ -306,23 +306,46 @@
         for (const part of BK.PARTS) {
           const chs = BK.CHAPTERS.filter(c => c.part === part.id); if (!chs.length) continue;
           nav.append(h('h3', { text: part.title }));
+          // the part's door (DESIGN 3.2「部の扉」: FL.book.doorHtml) under its title; not a section (no number, no read mark)
+          if (!f && part.door && BK.doorHtml) nav.append(h('button', { type: 'button', class: 'bk-page' + (curPage === `door:${part.id}` ? ' sel' : ''), 'data-page': `door:${part.id}`, onclick: () => openBookPage(`door:${part.id}`) }, h('span', { text: '扉：この部の目標と読み方' })));
           for (const c of chs) for (const s of c.secs) {
             if (f && !(s.t + ' ' + BK.text(s)).toLowerCase().includes(f) && !c.t.toLowerCase().includes(f)) continue;
             // a deep section (発展, DESIGN 3.2) has its badge before the title (openSection finds the item by its last child)
-            nav.append(h('button', { type: 'button', class: 'bk-item' + (S.progress.read.includes(s.id) ? ' done' : '') + (s.id === curSec ? ' sel' : ''), onclick: () => openSection(s.id) }, h('span', { class: 'bk-num', text: `${c.n}.${c.secs.indexOf(s) + 1}` }), s.deep ? h('span', { class: 'tag bk-deep-tag', text: '発展' }) : null, h('span', { text: s.t })));
+            nav.append(h('button', { type: 'button', class: 'bk-item' + (S.progress.read.includes(s.id) ? ' done' : '') + (s.id === curSec && !curPage ? ' sel' : ''), onclick: () => openSection(s.id) }, h('span', { class: 'bk-num', text: `${c.n}.${c.secs.indexOf(s) + 1}` }), s.deep ? h('span', { class: 'tag bk-deep-tag', text: '発展' }) : null, h('span', { text: s.t })));
           }
         }
+        // the appendix pages the book makes (DESIGN 3.3 付録): 「JCAB 学科の道」 (FL.book.jcabRoadHtml, book-gates.js)
+        if (!f && BK.jcabRoadHtml) nav.append(h('h3', { text: '付録' }), h('button', { type: 'button', class: 'bk-page' + (curPage === 'jcab' ? ' sel' : ''), 'data-page': 'jcab', onclick: () => openBookPage('jcab') }, h('span', { text: 'JCAB 学科の道' })));
         if (!nav.querySelector('.bk-item')) nav.append(h('p', { class: 'mute small', text: '見つかりませんでした。' }));
         const total = BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0);
         prog.textContent = `読んだ節 ${S.progress.read.filter(id => BK.findSection(id)).length} / ${total}`;
       };
       q.addEventListener('input', () => drawNav(q.value));
       drawNav('');
-      openSection(curSec || BK.CHAPTERS[0].secs[0].id);
+      if (curPage) openBookPage(curPage); else openSection(curSec || BK.CHAPTERS[0].secs[0].id);
+    }
+    // a page of the book that is not a section: a part's door ('door:<part id>') or the appendix 「JCAB 学科の道」 ('jcab').
+    // Static textbook HTML from FL.book (trusted); its links open sections. Nothing is marked read
+    function bookPageHtml(key) {
+      if (key === 'jcab') return BK.jcabRoadHtml ? BK.jcabRoadHtml() : '';
+      const m = /^door:(p\d+)$/.exec(key || '');
+      return m && BK.doorHtml ? BK.doorHtml(m[1]) : '';
+    }
+    function openBookPage(key) {
+      const html = bookPageHtml(key), art = $('#bkArt'); if (!html || !art) return;
+      curPage = key;
+      art.innerHTML = '';
+      art.append(h('div', { class: 'bk-chap', text: key === 'jcab' ? '付録' : '部の扉' }), h('div', { html }));
+      art.append(h('p', { class: 'note', text: '本文は公開情報に基づく要約と教材の説明です。数値は仮想教材値または出典のある参考値（機体ごとに要確認）。実機訓練・教官・POH/AFM・SOP・航空法規を優先してください。' }));
+      for (const b of art.querySelectorAll('[data-sec]')) b.addEventListener('click', () => openSection(b.dataset.sec));
+      art.scrollTop = 0;
+      for (const b of document.querySelectorAll('#bkNav .bk-item.sel')) b.classList.remove('sel');
+      for (const b of document.querySelectorAll('#bkNav .bk-page')) b.classList.toggle('sel', b.dataset.page === key);
     }
     function openSection(id) {
       const x = BK.findSection(id); if (!x) return;
-      curSec = id;
+      curSec = id; curPage = null;
+      for (const b of document.querySelectorAll('#bkNav .bk-page.sel')) b.classList.remove('sel');
       if (!S.progress.read.includes(id)) { S.progress.read.push(id); save(); }
       const art = $('#bkArt'); if (!art) return;
       const { ch, sec } = x, i = ch.secs.indexOf(sec);

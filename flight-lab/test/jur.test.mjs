@@ -8,9 +8,10 @@
 //    confirmed item in the article it cites;
 //  - drawing equals the data: every box, the chapter-end table and the appendix show the item's strings and nothing
 //    else, the Japanese side only in class jur-jp / bk-jp / bk-same (what CADET leaves out: cadet/test/jur.test.mjs);
-//  - a link to Part 7 or a summary chapter only when that section is in the book (DESIGN 6.2 rules 6 and 13): none in R1.
+//  - a link to Part 7 or a summary chapter only when that section is in the book (DESIGN 6.2 rules 6 and 13): none in R1;
+//    the summary chapter g1 came in R2 (book-gates.js), Part 7 has none yet.
 //  - the boxes in the book (W08, DESIGN 3.4 ①): every section of an item's boxes that the book has shows the item, and
-//    no box is anywhere else.
+//    no box is anywhere else but a summary chapter's gN.japan, which shows every item of its gate (DESIGN 3.4 ②).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -211,17 +212,25 @@ test('the Japanese side is only in the boxes CADET leaves out: the 日本 column
 });
 
 // ------------------------------------------------------------------ links only to sections that are in the book
-test('links to Part 7 and the summary chapters: none in R1 (no such section yet); drawn once the section is in, on the Japanese side only', () => {
-  assert.ok(!J.items.some(it => it.part7.some(id => B.findSection(id))), 'no Part 7 section in the book yet (R1)');
+test('links to Part 7 and the summary chapters: drawn only once the section is in (Part 7: none yet; g1: R2), on the Japanese side only', () => {
+  assert.ok(!J.items.some(it => it.part7.some(id => B.findSection(id))), 'no Part 7 section in the book yet (R4)');
   const before = bk.jur(...J.items.map(it => it.id)) + J.items.map(it => bk.jp(it.id) + bk.same(it.id) + bk.us(it.id)).join('');
   assert.doesNotMatch(before, /data-sec=|jur-link|第 7 部/, 'no link and no words of a link without a target');
   const app = B.jurAppendix();
-  assert.doesNotMatch(app, /jur-link|第 7 部/, 'the appendix: no link to Part 7 or a summary chapter');
+  assert.doesNotMatch(app, /第 7 部/, 'the appendix: no link to Part 7');
   for (const m of app.matchAll(/data-sec="([^"]+)"/g)) assert.ok(B.findSection(m[1]), `the appendix links ${m[1]}, a section of the book`);
-  // a Part 7 section and a summary chapter come in (as book-7.js and book-gates.js will add them): the links appear
+  // the summary chapter g1 is in the book (book-gates.js, R2): the appendix links its 日米の違い for every item of the gate
+  // g1, and only for those (the summary chapters still to come — g2〜g7 — draw no link)
+  const g1 = B.CHAPTERS.find(c => c.id === 'g1');
+  assert.ok(g1 && B.findSection('g1.japan'), 'g1 and g1.japan are in the book');
+  for (const r of rows(app)) {
+    const it = J.byId(r.id), tr = app.match(new RegExp(`<tr class="bk-jur-row" data-jur="${r.id.replace(/\./g, '\\.')}">[\\s\\S]*?<\\/tr>`))[0];
+    assert.equal(/class="jur-link" data-sec="g1\.japan"/.test(tr), it.gates.includes('g1'), `${r.id}: the link to g1.japan`);
+    assert.equal((tr.match(/class="jur-link"/g) || []).length, it.gates.filter(g => B.CHAPTERS.some(c => c.id === g)).length, `${r.id}: one link per summary chapter in the book`);
+  }
+  // a Part 7 section comes in (as book-7.js will add it): the links appear
   const p7 = { id: 'jtest', part: 'p6', t: '日本の空（テスト）', secs: [{ id: 'jair.rules', t: '日本の飛行の規則', h: '<p>テスト</p>' }] };
-  const g1 = { id: 'g1', part: 'p1', t: '第 1 部のまとめ（テスト）', secs: [{ id: 'g1.review', t: '振り返り', h: '<p>テスト</p>' }, { id: 'g1.japan', t: '日米の違い', h: '<p>テスト</p>' }] };
-  withChapter(p7, () => withChapter(g1, () => {
+  withChapter(p7, () => {
     const box = bk.jur('alt.transition');
     assert.match(box, /<div class="jur-jp jur-foot">[^]*<button type="button" class="jur-link" data-sec="jair\.rules">→ 第 7 部で詳しく：日本の飛行の規則<\/button><\/div><\/div>$/);
     assert.equal((box.match(/data-sec=/g) || []).length, 1, 'jifr.rules is not in the book: no link to it');
@@ -229,9 +238,9 @@ test('links to Part 7 and the summary chapters: none in R1 (no such section yet)
     assert.match(bk.same('msa'), /class="jur-link" data-sec="jair\.rules"/);
     assert.doesNotMatch(bk.us('msa'), /data-sec|jur-link/, 'never on the US side');
     const app = B.jurAppendix(), row = rows(app).find(r => r.id === 'msa');
-    assert.ok(row && row.cells.at(-1).includes('第 7 部：日本の飛行の規則') && row.cells.at(-1).includes('第 1 部のまとめ（テスト）'), 'the appendix links Part 7 and the summary chapter');
+    assert.ok(row && row.cells.at(-1).includes('第 7 部：日本の飛行の規則') && row.cells.at(-1).includes(g1.t), 'the appendix links Part 7 and the summary chapter');
     assert.match(app, /class="jur-link" data-sec="g1\.japan"/, 'the summary chapter\'s 日米の違い');
-  }));
+  });
   assert.equal(bk.jur('alt.transition').includes('data-sec'), false, 'gone again with the sections');
 });
 
@@ -242,6 +251,9 @@ test('FL.book.jurTable: the chapter\'s items in reading order, once each, drawn 
     if (!placed) assert.equal(B.jurTable(ch.id), '', `${ch.id}: no box yet (W08 places them)`);
   }
   assert.equal(B.jurTable('no-such-chapter'), '');
+  // a summary chapter (g1〜g7) has no chapter-end table: its gN.japan draws the part's items (DESIGN 3.2, 3.4 ②)
+  assert.ok(B.html(B.findSection('g1.japan').sec).includes('data-jur="'), 'g1.japan draws boxes');
+  assert.equal(B.jurTable('g1'), '', 'g1: no chapter-end table');
   const ch = { id: 'jurt', part: 'p1', t: '日米の囲み（テスト）', secs: [
     { id: 'jurt.a', t: 'A', h: () => `<p>本文</p>${bk.jur('vmc', 'vmc.ad')}${bk.us('alcohol')}` },
     { id: 'jurt.b', t: 'B', h: () => `${bk.jp('alcohol')}${bk.same('fuel.ifr')}${bk.jur('vmc')}` }] };
@@ -257,16 +269,24 @@ test('FL.book.jurTable: the chapter\'s items in reading order, once each, drawn 
 // DESIGN 3.4 ① (W08): the box is where the US number is taught. Every section in an item's boxes that is in the book now
 // shows that item (a section still to be written gets its box in the change that registers it: DESIGN 6.2 rule 13), and
 // a box is only in a section its item lists (FL.jur says where the boxes are: the appendix's 「本の中で」 reads it)
-test('the boxes in the book: each item in every section of its boxes that the book has, and only there (DESIGN 3.4 ①)', () => {
-  let placed = 0;
+test('the boxes in the book: each item in every section of its boxes that the book has, and only there, but its summary chapters\' gN.japan (DESIGN 3.4 ① ②)', () => {
+  let placed = 0, gates = 0;
   for (const it of J.items) for (const id of it.boxes) {
     const f = B.findSection(id); if (!f) continue;
     assert.ok(B.html(f.sec).includes(`data-jur="${it.id}"`), `${it.id} → ${id}: no box`);
     placed++;
   }
   assert.ok(placed > 0);
+  // ② the summary chapter of each gate the book has shows every item of the gate in its gN.japan (g1: R2)
+  for (const it of J.items) for (const g of it.gates) {
+    const f = B.findSection(`${g}.japan`); if (!f) continue;
+    assert.ok(B.html(f.sec).includes(`data-jur="${it.id}"`), `${it.id} → ${g}.japan: not in the summary's table`);
+    gates++;
+  }
+  assert.ok(gates >= J.ofGate('g1').length && J.ofGate('g1').length > 0, `${gates} items in the summary chapters' tables`);
   for (const sec of B.CHAPTERS.flatMap(c => c.secs)) for (const [, id] of B.html(sec).matchAll(/data-jur="([^"]+)"/g)) {
-    assert.ok(J.byId(id).boxes.includes(sec.id), `${sec.id}: the box ${id} is not in FL.jur's boxes of that item`);
+    const it = J.byId(id);
+    assert.ok(it.boxes.includes(sec.id) || it.gates.some(g => sec.id === `${g}.japan`), `${sec.id}: the box ${id} is not in FL.jur's boxes (or summary chapters) of that item`);
   }
 });
 
@@ -276,8 +296,10 @@ test('FL.book.jurAppendix: all 47 items in the table\'s order, each drawn as in 
   assert.deepEqual(r.map(x => x.id), J.items.map(x => x.id));
   for (const x of r) {
     const it = J.byId(x.id);
-    // where the book meets it: the box sections that are in the book now (R1: no summary chapter, no Part 7)
-    const where = it.boxes.map(id => B.findSection(id)).filter(Boolean).map(f => f.sec.t).join('') || '—';
+    // where the book meets it: the box sections that are in the book now, then the summary chapters that are (g1: R2;
+    // no Part 7 yet)
+    const where = [...it.boxes.map(id => B.findSection(id)).filter(Boolean).map(f => f.sec.t),
+      ...it.gates.map(g => B.CHAPTERS.find(c => c.id === g)).filter(Boolean).map(c => c.t)].join('') || '—';
     assert.deepEqual(x.cells, [it.title, usText(it), jpText(it), J.CONF[it.conf], where], x.id);
   }
   const vmc = a.match(/<tr class="bk-jur-row" data-jur="vmc">[\s\S]*?<\/tr>/)[0];

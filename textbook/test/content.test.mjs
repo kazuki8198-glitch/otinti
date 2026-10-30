@@ -98,12 +98,13 @@ test('render.js: every section and chapter to HTML; the notes; the end matter es
 });
 
 // DESIGN 3.2「章末」(W08): the chapter's 日米の違い, drawn from FL.jur (FL.book.jurTable), on its last section after the
-// check questions and before the lessons; none on a chapter without a US–Japan box
-test('the end matter: the chapter\'s 日米の違い on the chapters with US–Japan boxes, and only there', () => {
+// check questions and before the lessons; none on a chapter without a US–Japan box, and none on a summary chapter
+// (g1〜g7: its gN.japan draws the part's items as its own tables — R2, book-gates.js)
+test('the end matter: the chapter\'s 日米の違い on the chapters with US–Japan boxes, and only there (not on a summary chapter)', () => {
   let n = 0;
   for (const c of BK.CHAPTERS) {
     const end = R.endHtml(c), jt = BK.jurTable(c.id);
-    assert.equal(Boolean(jt), c.secs.some(s => BK.html(s).includes('data-jur="')), `${c.id}: a table when the chapter has a box`);
+    assert.equal(Boolean(jt), !/^g\d+$/.test(c.id) && c.secs.some(s => BK.html(s).includes('data-jur="')), `${c.id}: a table when the chapter has a box (a summary chapter has none)`);
     if (!jt) { assert.doesNotMatch(end, /bk-jur-end/, c.id); continue; }
     n++;
     const at = end.indexOf(jt);
@@ -184,7 +185,7 @@ test('the photos: data URLs (WebP), each with its alt text, caption and credit (
 test('no （別の章） and no link without a target: the whole book, every section with its pager, the contents, the answers', () => {
   const ids = new Set(SECS.map(s => s.id));
   const all = R.allHtml(), anchors = new Set([...all.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
-  const pages = [all, R.tocHtml([], SECS[0].id), R.resultsHtml('VMC', R.search('VMC')), ...SECS.map(s => R.sectionHtml(s.id, { nav: true }))];
+  const pages = [all, R.tocHtml([], SECS[0].id), R.resultsHtml('VMC', R.search('VMC')), ...SECS.map(s => R.sectionHtml(s.id, { nav: true })), ...R.pages().map(R.pageHtml)];
   const answers = BK.CHAPTERS.flatMap(c => (c.quiz || []).flatMap((q, qi) => q.choices.map((x, k) => R.quizResult(c, qi, k).text)));
   for (const t of [...pages, ...answers]) assert.doesNotMatch(t, /（別の章）|\{ch:/, t.slice(0, 80));
   let links = 0;
@@ -199,4 +200,39 @@ test('no （別の章） and no link without a target: the whole book, every sec
     }
   }
   assert.ok(links > 1000, `${links} links`);
+});
+
+// DESIGN 3.2「部の扉」 and 3.3 付録 (R2: W25, registered in R2C): the pages that are not sections — the door of Part 1
+// (FL.book.doorHtml) and 「JCAB 学科の道」 (FL.book.jcabRoadHtml, book-gates.js) — open from the contents with
+// button[data-page] (not a numbered item: the contents still have one .bk-item per section), are FLIGHT LAB's HTML, and
+// are printed in the whole book (the door before the part's first chapter, the appendix after the last chapter).
+// TEXTBOOK does not load the ground-school tests (quiz.js), so the door's lessons table has no test column.
+test('render.js: the door of Part 1 and the page 「JCAB 学科の道」 — from the contents, FLIGHT LAB\'s HTML, in the whole book', () => {
+  assert.deepEqual(R.pages(), ['door:p1', 'jcab']);
+  const toc = R.tocHtml([], 'aero.lift');
+  assert.match(toc, /<h3 class="tb-part">第 1 部　地上学科（英語の座学）<\/h3><button type="button" class="tb-page" data-page="door:p1">扉：この部の目標と読み方<\/button>/);
+  assert.match(toc, /<h3 class="tb-appx">付録<\/h3><button type="button" class="tb-page" data-page="jcab">JCAB 学科の道<\/button>$/);
+  assert.equal((toc.match(/class="tb-page/g) || []).length, 2);
+  assert.match(R.tocHtml([], 'jcab'), /class="tb-page sel" data-page="jcab" aria-current="true"/);
+  const door = R.pageHtml('door:p1'), road = R.pageHtml('jcab');
+  assert.ok(door.includes(BK.doorHtml('p1')) && road.includes(BK.jcabRoadHtml()), 'FLIGHT LAB\'s HTML as it is');
+  assert.match(door, /<div class="bk-door" data-part="p1"><h3>第 1 部　地上学科（英語の座学）<\/h3>/);
+  assert.match(door, /<h4>課目と、先に読む節<\/h4>/, 'the lessons and the sections to read first');
+  assert.doesNotMatch(door, /学科テスト：/, 'no test column: TEXTBOOK has no ground-school tests');
+  assert.ok((door.match(/data-sec="/g) || []).length >= 100, 'the door links the sections to read');
+  assert.match(door, /data-sec="g1\.review">→ 第 20 章　第 1 部のまとめ/, 'the door ends with the summary chapter');
+  assert.match(road, /<div class="bk-road"><h3>JCAB 学科の道<\/h3>/);
+  for (const t of ['航空工学', '航空気象', '空中航法', '航空通信', '航空法規', '計器飛行一般']) assert.ok(road.includes(`<h4>${t}</h4>`), t);
+  assert.equal(R.pageHtml('door:p2'), '', 'a part without a door has no page');
+  assert.equal(R.pageHtml('aero.lift'), '', 'a section is not a page');
+  const all = R.allHtml();
+  assert.equal((all.match(/<article class="tb-door" data-part="p1">/g) || []).length, 1);
+  assert.ok(all.indexOf('<article class="tb-door" data-part="p1">') < all.indexOf('<article class="tb-chapter" data-chapter="aero">'), 'the door before the part\'s first chapter');
+  assert.ok(all.indexOf('<article class="tb-door" data-part="p1">') > all.indexOf('<article class="tb-chapter" data-chapter="sim">'));
+  assert.ok(all.indexOf('<article class="tb-appendix" data-page="jcab">') > all.lastIndexOf('<article class="tb-chapter"'), 'the appendix after the chapters');
+  // the summary chapter g1: at the end of Part 1, no chapter-end 日米 table (g1.japan is it)
+  const g1 = BK.CHAPTERS.find(c => c.id === 'g1');
+  assert.equal(g1.part, 'p1');
+  assert.equal(BK.CHAPTERS[g1.n].part, 'p2');
+  assert.doesNotMatch(R.endHtml(g1), /bk-jur-end/);
 });

@@ -45,6 +45,31 @@ test(`opens: the notes, ${COUNTS.secs} sections in the contents, the chapters in
   await ctx.close();
 });
 
+// DESIGN 3.2「部の扉」 and 3.3 付録 (R2): the door of Part 1 and 「JCAB 学科の道」 open from the contents (#door:p1, #jcab),
+// are not marked read, and their links open sections
+test('the door of Part 1 and 「JCAB 学科の道」: from the contents and the URL, their links open sections, not marked read', { skip }, async () => {
+  const { ctx, page, errors, requests } = await openPage(browser, { hash: 'aero.lift' });
+  await page.locator('#tbToc button[data-page="door:p1"]').click();
+  await page.waitForSelector('#tbView .bk-door');
+  assert.equal(await page.evaluate(() => location.hash), '#door:p1');
+  assert.equal(await page.evaluate(() => __tb.mode), 'page');
+  assert.equal(await page.locator('#tbToc .tb-page.sel').getAttribute('data-page'), 'door:p1');
+  assert.equal(await page.locator('#tbToc .bk-item.sel').count(), 0, 'no section selected');
+  assert.ok(await page.locator('#tbView .bk-door button[data-sec]').count() >= 100);
+  await page.locator('#tbView .bk-door button[data-sec="basics.speed"]').first().click();
+  await page.waitForFunction(() => __tb.cur === 'basics.speed' && __tb.mode === 'sec');
+  // the appendix from the URL
+  await page.evaluate(() => { location.hash = 'jcab'; });
+  await page.waitForSelector('#tbView .bk-road');
+  assert.match(await page.locator('#tbView .bk-road h3').innerText(), /JCAB 学科の道/);
+  await page.locator('#tbView .bk-road button[data-sec="g1.japan"]').click();
+  await page.waitForFunction(() => __tb.cur === 'g1.japan');
+  const read = await page.evaluate(() => JSON.parse(localStorage.getItem('textbook.read')));
+  assert.ok(!read.some(id => /^(door:|jcab)/.test(id)), read.join());
+  assert.deepEqual(errors, []); assert.deepEqual(requests, []);
+  await ctx.close();
+});
+
 test('search: a section is found and the word marked in the text (figures untouched)', { skip }, async () => {
   const { ctx, page, errors, requests } = await openPage(browser, { hash: 'aero.forces' });
   const svgBefore = await page.evaluate(() => [...document.querySelectorAll('#tbView svg')].map(s => s.outerHTML));

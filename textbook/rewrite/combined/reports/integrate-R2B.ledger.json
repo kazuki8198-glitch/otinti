@@ -9627,6 +9627,574 @@
    "id": "comm.practice#6fe5d9ca",
    "by": "W19",
    "note": "integrate-R2B：本にない文（章を drafts/radio.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#b66967ed",
+   "sec": "hf.self",
+   "text": "A：Alcohol（飲酒） ｜ 米国の規則（14 CFR 91.17）：飲んでから 8 時間以内・酔っている間・アルコール濃度 0.04 以上（血液 1 dL か、呼気 210 L あたりのアルコールのグラム数）は乗務できません。",
+   "tag": "条文",
+   "source": "14 CFR 91.17(a)(1)〜(4)（8 時間・酔っている間・0.04 以上）と同じ項の定義「Alcohol concentration means grams of alcohol per deciliter of blood or grams of alcohol per 210 liters of breath」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "reader S1：0.04 の単位を足した。前の行 hf.self#71c26c13 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#713ffc50",
+   "sec": "hf.self",
+   "text": "眠気などの副作用がある薬は、決められた飲む間隔の 5 倍の時間をあけてから飛びます。",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章「wait at least five maximal dosing intervals … before flying after taking any medication that has potentially adverse side effects」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader S2：「長い方」を後ろの文に分けた。前の行 hf.self#394f60e3 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#2a7b964e",
+   "sec": "hf.self",
+   "text": "「5〜6 時間ごと」のように幅があるときは、長い方を使います。",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章「five maximal dosing intervals」（幅のある間隔の長い方）・例「a dosing interval of 5 to 6 hours would require you to wait 30 hours」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader S2 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#84bf70c6",
+   "sec": "hf.self",
+   "text": "この薬なら、6 時間の 5 倍で 30 時間です（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章「e.g., a dosing interval of 5 to 6 hours would require you to wait 30 hours」（5 × 6 ＝ 30）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "前の行 hf.self#9c069ee4 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#da7e3bae",
+   "sec": "hf.self",
+   "text": "酒に酔った運転などで有罪になったら、60 日以内に FAA へ書面で報告します。",
+   "tag": "条文",
+   "source": "14 CFR 61.15(c)(1)（酒や薬の影響下の運転の有罪＝motor vehicle action）・(e)「not later than 60 days after the motor vehicle action」に FAA（AMC-700）へ書面で報告。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9（bk.us の囲み） ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#ffdb7826",
+   "sec": "hf.self",
+   "text": "それを理由に運転免許の取り消し・停止・申請の拒否を受けたときも、同じです（14 CFR 61.15(e)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.15(c)(2)(3)（運転免許の取り消し・停止・申請の拒否も motor vehicle action）・(e)。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#52902c30",
+   "sec": "hf.self",
+   "text": "報告しないことも、資格を拒まれたり止められたりする理由になります（14 CFR 61.15(f)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.15(f)「Failure to comply with paragraph (e) … is grounds for: (1) Denial … (2) Suspension or revocation」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#4a933727",
+   "sec": "hf.self",
+   "text": "警察官から求められたアルコールの検査を拒むことも、同じ理由になります（14 CFR 61.16・91.17(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.16（警察官の求める検査の拒否は 61.15 と同じく拒否・停止・取り消しの理由）・91.17(c)(1)（求めに応じて検査を受ける）。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#9690c2d4",
+   "sec": "hf.self",
+   "text": "緊急のときを除き、酔っている様子の人を乗せません（14 CFR 91.17(b)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.17(b)「Except in an emergency, no pilot … may allow a person who appears to be intoxicated … to be carried」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#24af713a",
+   "sec": "hf.self",
+   "text": "麻薬などが積まれていると知りながら、米国の中で飛びません（14 CFR 91.19）。",
+   "tag": "条文",
+   "source": "14 CFR 91.19(a)「no person may operate a civil aircraft within the United States with knowledge that narcotic drugs … are carried」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert S9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "id": "hf.self#f0ab73ab",
+   "by": "W20",
+   "source": "eCFR 14 CFR 91.17(a)(1)「Within 8 hours after the consumption of any alcoholic beverage」。21:00〜06:00 は 9 時間（既存の CLAIMS の行。文は変えていない）",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（source・by）"
+  },
+  {
+   "id": "hf.self#975525ba",
+   "by": "W20",
+   "source": "AIM 8-1-1 の Alcohol（a minimum of 12 to 24 hours）（既存の CLAIMS の行。文は変えていない）",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（source・by）"
+  },
+  {
+   "id": "hf.self#bc843bab",
+   "by": "W20",
+   "source": "計算（9 < 12）。AIM 8-1-1（既存の CLAIMS の行。文は変えていない）",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（source・by）"
+  },
+  {
+   "op": "add",
+   "id": "hf.fatigue#62d1640f",
+   "sec": "hf.fatigue",
+   "text": "治療でき、治療を示せば多くは身体検査に通ります（米国の AIM 8-1-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-1 OBSTRUCTIVE SLEEP APNEA「OSA can be easily treated. Most treatments are acceptable for medical certification upon demonstrating effective treatment」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert N6 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#de794c8e",
+   "sec": "hf.body",
+   "text": "まっすぐな道路の灯を、滑走路や進入灯と見まちがえることもあります（米国の AIM 8-1-5）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-5 Ground lighting illusions「Lights along a straight path, such as a road … can be mistaken for runway and approach lights」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S5 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "id": "hf.body#112e25f3",
+   "by": "W20・revise-hfadm",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（by）"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#36f602c7",
+   "sec": "hf.body",
+   "text": "旋回はバンク 10° 以下にします。",
+   "tag": "参考値",
+   "source": "AFH 第 18 章 Turns「no more than 10° of bank」（p.18-18）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert M1：10° の文と bar width の文を分けた（flight.test.mjs の語の順はそのまま）。前の行 hf.body#340a75af ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#98c9b243",
+   "sec": "hf.body",
+   "text": "降下するときは、毎分 500 ft を超えないようにします（AFH 第 18 章）。",
+   "tag": "参考値",
+   "source": "AFH 第 18 章 Descents「the resulting rate of descent should never exceed 500 fpm」（p.18-20）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S8 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#48ab6419",
+   "sec": "hf.body",
+   "text": "そして、来た方が確実に晴れていて地形が許すときは、浅いバンクで 180° 旋回して雲から出ることを、1 つの手として教えます。",
+   "tag": "教材値",
+   "source": "180° 旋回とその条件はこの本の教え方（RULINGS R.vfr-into-imc）。AFH 第 18 章は雲から出る向きを決めない。山や障害物から先に離れる文も同じ裁定の段落へ移した（factcheck N6）",
+   "by": "revise-hfadm",
+   "note": "factcheck N6：前の文頭「この本では、」は 1 つ前の文（山から離れる）に付いた。前の行 hf.body#296f3797 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "id": "hf.body#9e862111",
+   "by": "W20・revise-hfadm",
+   "tag": "教材値",
+   "source": "10° 以下は AFH 第 18 章（Turns：no more than 10° of bank）。180° 旋回とその条件（来た方が確実に晴れて地形が許すときだけ）は RULINGS R.vfr-into-imc の本の裁定（AFH・PHAK は雲の中の 180° 旋回を手順として決めない）",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（tag・source・by）"
+  },
+  {
+   "op": "add",
+   "id": "hf.motion#312748c8",
+   "sec": "hf.motion",
+   "text": "ゆっくりかかると、目から先に影響が出ます（米国の AIM 8-1-7）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-7（narrowing → gray-out → black-out → unconsciousness）と FAA CAMI「Acceleration in Aviation: G-Force」（OK-24-1154）「When the onset is gradual (about 0.1 G per sec.), visual symptoms precede GLOC」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "factcheck S2（図 gLoad のキャプション）。前の行 hf.motion#d3feb0fd ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#0d7b5222",
+   "sec": "hf.altitude",
+   "text": "最初の図（高度と酸素）の「対処できなくなるまでの時間」は米国の AIM 8-1-2 の値で、20,000 ft では 5〜12 分です。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2（18,000 ft で 20〜30 分・20,000 ft で 5〜12 分）。図 hypoxiaAltitudes（book-figs.js）が同じ値",
+   "by": "revise-hfadm",
+   "note": "factcheck N9：「上の図」を「最初の図（高度と酸素）」に。前の行 hf.altitude#0c23eb53 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#8f3b9901",
+   "sec": "hf.altitude",
+   "text": "PHAK の有効意識時間（time of useful consciousness）の表（図 17-1）は、20,000 ft を「30 分以上」としています。",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章 図 17-1 Time of useful consciousness（20,000 feet MSL：30 minutes or more）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "文を 2 つに分けた。前の行 hf.altitude#de262eb9 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#c0e62c67",
+   "sec": "hf.altitude",
+   "text": "PHAK は、アルコールを 1 オンス（約 30 mL）飲むと、体が感じる高度が約 2,000 ft 上がるとしています（PHAK 第 17 章）。",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章「drinking one ounce of alcohol can equate to an additional 2,000 feet of physiological altitude」。1 液量オンス ＝ 29.57 mL（約 30 mL）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader A6：組織毒性の表のあとへ移した。前の行 hf.altitude#2fe8d420 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#5f9eea68",
+   "sec": "hf.altitude",
+   "text": "機内の空気と酸素を混ぜて送る調節器には、100% の酸素を送る切りかえがあります（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "PHAK 第 7 章 Oxygen Systems／Diluter-Demand Oxygen Systems「An automix lever allows the regulators to automatically mix cabin air and oxygen or supply 100 percent oxygen」。revise-hfadm が 2026-10-30 に読んだ（revise-perfwb が同じ日に取り寄せた 09_phak_ch7.pdf）",
+   "by": "revise-hfadm",
+   "note": "reader A2 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#e1a87b53",
+   "sec": "hf.altitude",
+   "text": "12,500 ft を超え 14,000 ft まで ｜ 米国の規則：その高さで 30 分を超える分は、必要な最少の運航乗務員が酸素を使う（14 CFR 91.211） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.211(a)(1)「the required minimum flight crew … after that 30 minutes」・AIM 8-1-2「at the minimum, flight crew」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert N3・reader A5：乗員 → 必要な最少の運航乗務員。前の行 hf.altitude#7755c182 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#c020bc83",
+   "sec": "hf.altitude",
+   "text": "14,000 ft を超える ｜ 米国の規則：必要な最少の運航乗務員は、その高さにいる間ずっと酸素を使う ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.211(a)(2)「above 14,000 feet … the required minimum flight crew … during the entire flight time at those altitudes」。eCFR（current、2026-10-30 に読んだ）",
+   "by": "revise-hfadm",
+   "note": "expert N3。前の行 hf.altitude#a381e429 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#3295bb37",
+   "sec": "hf.altitude",
+   "text": "酸素の装置を使っているときは、まず調節器を 100% の酸素にし、装置が働いているかを確かめます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-3「the oxygen regulator should immediately be set to deliver 100 percent oxygen, and then the system checked to assure that it has been functioning effectively」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader A2：「調節器を」。前の行 hf.altitude#3562301d ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#ce2a2512",
+   "sec": "hf.altitude",
+   "text": "10,000 ft で 100% のような、よすぎる値は疑います。",
+   "tag": "参考値",
+   "source": "FAA Federal Air Surgeon「Aeromedical Advisory: A Pilot's Guide to Hypothermia and Hyperthermia」（2026-07-01 更新）「If you see readings that look too good (such as 100% at 10,000 feet MSL), be skeptical」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert N10 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#e2d54183",
+   "sec": "hf.altitude",
+   "text": "降下では、自分で耳管を開けて空気を入れないと、圧力が合いません（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Ear Block「during descent, the pilot must periodically open the eustachian tube to equalize pressure」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader A3 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#9cd00a70",
+   "sec": "hf.altitude",
+   "text": "合わないときは、鼻をつまんで口を閉じ、軽く息を押し出します（バルサルバ法、Valsalva maneuver。米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Ear Block「swallowing, yawning, tensing muscles in the throat, or if these do not work, by a combination of closing the mouth, pinching the nose closed, and attempting to blow through the nostrils (Valsalva maneuver)」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "文を 2 つに分けた。前の行 hf.altitude#044744d2 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#7a3a3aa4",
+   "sec": "hf.altitude",
+   "text": "これを ear block といいます（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Ear Block（severe ear pain and loss of hearing … rupture an ear drum）と見出し「Ear Block」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "前の「強い痛みと…鼓膜が破れる例もあります」の出典の文を「これを ear block といいます」に付け替えた。前の行 hf.altitude#3852ea30 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#cf3a752c",
+   "sec": "hf.altitude",
+   "text": "上の歯が痛んだり、血の混じった鼻汁が出たりもします（米国の AIM 8-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2 Sinus Block「A maxillary sinus block can also make the upper teeth ache. Bloody mucus may discharge from the nasal passages」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S4・reader A3 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "id": "hf.altitude#d2d8283d",
+   "by": "W20・revise-hfadm",
+   "source": "FAA AIM 8-1-2 Ear Block「An ear block is prevented by not flying with an upper respiratory infection, such as a cold or sore throat, or a nasal allergic condition」・Sinus Block「A sinus block is prevented by not flying with …」・PHAK 第 17 章「Sinus block can be avoided by not flying with an upper respiratory infection or nasal allergic condition」（耳は「nose drops or nasal sprays may reduce the risk … check with an AME」）。revise-hfadm が 2026-10-30 に PHAK の文を読み直した",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（source・by）"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#6cb19a64",
+   "sec": "hf.altitude",
+   "text": "そのあと、8,000 ft までの飛行は、少なくとも 12 時間あけます。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-2「at least 12 hours after diving that did not require a controlled ascent (i.e., non-decompression stop diving)」・飛行高度 8,000 ft まで。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader A8：減圧停止の説明を前の文に。前の行 hf.altitude#d9e8c364 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#78cd8b71",
+   "sec": "hf.altitude",
+   "text": "酸素の使用中は、まず 100% にして装置を確かめる",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章「Treatment for hypoxia includes flying at lower altitudes and/or using supplemental oxygen」・AIM 8-1-3（100% と装置）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S3：ここが大切の 2 つめ。前の行 hf.altitude#21e3b6ea ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.vision#e2a19901",
+   "sec": "hf.vision",
+   "text": "夜は、見たい物の 5〜10° 横を見て（右の「見る所」）、周りの桿体で見ます（PHAK 第 17 章）",
+   "tag": "参考値",
+   "source": "PHAK 第 17 章（暗い所では中心の感度が下がる・5〜10° 横を見る）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader V6：図 nightEye のキャプションに「見る所」。前の行 hf.vision#293a13f2 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.vision#fe659ce1",
+   "sec": "hf.vision",
+   "text": "いちばん気をつけるのは、斜め後ろからの弱い追い風です（米国の AIM 7-4-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-4-4「THE LIGHT QUARTERING TAILWIND REQUIRES MAXIMUM CAUTION」・「a light wind with a cross-runway component of 1 to 5 knots could result in the upwind vortex remaining in the touchdown zone」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S11 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.vision#d6056c4e",
+   "sec": "hf.vision",
+   "text": "そのあとは、少なくとも 2 分あけて離着陸します（米国の AIM 7-4-6）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-4-6「Departing or landing after a larger aircraft executing a low approach, missed approach, or touch-and-go landing … ensure that an interval of at least 2 minutes has elapsed」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S11 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "hf.vision#cfe2f28e",
+   "sec": "hf.vision",
+   "text": "夜の目は慣れるのに 30 分、明るい光で数秒で失う。",
+   "tag": "参考値",
+   "source": "FAA AIM（aim_html chap8_section_1） 8-1-6（暗順応に少なくとも 30 分・明るい光で数秒のうちに失う）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader V1：「戻る」→「失う」。前の行 hf.vision#8f980825 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.risk#12cd8376",
+   "sec": "adm.risk",
+   "text": "資料の例では、1 日働いたあとに、夜、慣れない空港へ野外飛行をするとき、雲高に 1,000 ft・視程に 1 SM・滑走路の長さに 1,000 ft を足しています。",
+   "tag": "参考値",
+   "source": "FAA Risk Management Handbook（FAA-H-8083-2A）第 2 章 Step 5「If multiple special conditions apply, a pilot could make an adjustment for each factor. For example, … a night cross-country flight to an unfamiliar airport, departing after a full workday … adding 1,000 feet to the ceiling value, one mile to visibility, and 1,000 feet to required runway length」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader RK2 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.risk#382e5a12",
+   "sec": "adm.risk",
+   "text": "そして、最初の 500 時間は、規則より厳しい個人の基準を勧めています（PHAK 第 2 章）。",
+   "tag": "参考値",
+   "source": "PHAK 第 2 章（最初の 500 時間は規則より厳しい個人の基準）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader RK5：「高い」→「厳しい」。前の行 adm.risk#4644973a ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.review#3df12ba5",
+   "sec": "adm.review",
+   "text": "驚愕の反射だけなら、慣れた操作は 5〜10 秒ほどでふつうにできるようになります（英国 CAA の CAP 737 第 7 章）。",
+   "tag": "参考値",
+   "source": "UK CAA CAP 737 第 7 章「A skilled motor task will be momentarily disrupted by a startle reflex but return to normal within five to ten seconds」。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "reader RV1。前の行 adm.review#79565a18 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.review#ee34be88",
+   "sec": "adm.review",
+   "text": "罰金や資格の停止を科さないのは、次の全部に当てはまるときだけです（FAA AC 00-46F）。",
+   "tag": "参考値",
+   "source": "FAA AC 00-46F 12.3 Waiver of Imposition of Sanction「although a finding of violation may be made, neither a civil penalty nor certificate suspension will be imposed if」（12.3.1〜12.3.4）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S10 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.review#63a99153",
+   "sec": "adm.review",
+   "text": "前の 5 年に、違反の処分を受けていません。",
+   "tag": "参考値",
+   "source": "FAA AC 00-46F 12.3.3（前の 5 年に FAA の処分で違反とされていない）。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S10 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "op": "add",
+   "id": "adm.review#5a16f7f7",
+   "sec": "adm.review",
+   "text": "違反から（気づいてから）10 日以内に、NASA へ報告しています。",
+   "tag": "参考値",
+   "source": "FAA AC 00-46F 12.3.4「within 10 days after the violation, or date when the person became aware or should have been aware of the violation」に NASA へ報告。revise-hfadm が 2026-10-30 に読んだ（expert-hfadm が同じ日に元の URL から取り寄せた写し）",
+   "by": "revise-hfadm",
+   "note": "expert S10 ／ integrate-R2B：章を登録したコミットで drafts/hfadm.claims.json から入れた"
+  },
+  {
+   "id": "adm.review#83c73fe3",
+   "by": "W20・revise-hfadm",
+   "source": "国土交通省「自家用操縦士等ヒューマンファクターズ訓練検討会 最終とりまとめ」（令和 8 年 2 月 24 日。改正航空法 令和 7 年 6 月 6 日公布・技能発揮訓練・間隔 2 年・最低 3 時間・義務の適用は令和 10 年 6 月頃の見込み）。W20 が 2026-10-30 に読んだ。e-Gov 法令 API v2 で、令和 7 年 12 月 1 日施行の版（327AC0000000231_20251201_507AC0000000055）に航空法第 71 条の 5 があることを factcheck-hfadm が確かめた（写し sources/egov/ にはまだないので、本文に条番号を書かない）",
+   "note": "integrate-R2B：drafts/hfadm.claims.json の値に（source・by）"
+  },
+  {
+   "id": "hf.body#7c45f4dd",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.body#340a75af",
+   "by": "W12",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.body#b80278d7",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.self#71c26c13",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.self#394f60e3",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.self#9c069ee4",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.body#40e3a478",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.body#cbd0ab3a",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.body#296f3797",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.motion#d3feb0fd",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#0c23eb53",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#de262eb9",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#2fe8d420",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#7755c182",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#a381e429",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#3562301d",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#044744d2",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#3852ea30",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#d9e8c364",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.altitude#21e3b6ea",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.vision#293a13f2",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "hf.vision#8f980825",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "adm.risk#4644973a",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "adm.review#79565a18",
+   "by": "W20",
+   "note": "integrate-R2B：本にない文（章を drafts/hfadm.js で置き換えたので、この文はもう本にない：直し役が直す前の文か、置き換えた前の本の文）。行は記録として残す（消すとパッチの流し直しで戻る）"
+  },
+  {
+   "id": "K.human.K7",
+   "by": "W20",
+   "verified": true,
+   "note": "integrate-R2B（2026-10-30）：文体の行（一次資料で確かめる事実ではない）。章 hf・adm を登録した本で check-chapter hf adm の style が error 0（体言止め・常体なし）、節の形（form）が error 0、初学者の読み（reports/reader-hfadm.md）を直し役が当てた形なので verified: true にした。確かめ役の署名は W27"
   }
  ]
 }

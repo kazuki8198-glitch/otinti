@@ -23,8 +23,9 @@
 //                        the field of view by day (look straight at it: the cones of the centre see colour and detail)
 //                        and by night (the centre is blind in dim light: look 5–10° to the side, PHAK chapter 17).
 //   new  infoProcess     adm.error — new: the simplified information-processing model of UK CAA CAP 737 (2023)
-//                        chapter 1, figure 3: senses → perception → (attention: conscious thinking in the working memory /
-//                        learned routines from the long-term memory) → response, and the feedback loop.
+//                        chapter 1, figure 3: senses → perception → attention (dashed box: conscious thinking in the working
+//                        memory only) → response, and the automatic path perception → learned routines (long-term memory)
+//                        → response outside the attention box (revise-hfadm: factcheck S1), and the feedback loop.
 //   new  swissCheese     adm.error — new: the Swiss cheese model (FAA Risk Management Handbook FAA-H-8083-2A, figure 6-1):
 //                        four layers of defence with holes; one path passes all the holes to an accident, one is stopped.
 //   new  checklistFlow   adm.check — the basic course's ch10-fig10-7「チェックリストで実施状態と再開位置を確かめる」
@@ -33,11 +34,17 @@
 //   new  saLevels        adm.sa — the basic course's ch10-fig10-8「状況認識を知覚と理解と予測に分けて確かめる」redrawn
 //                        with the textbook's example (a stronger headwind): perceive → comprehend → project, updated.
 //   new  riskMatrix      adm.risk — new: the risk assessment matrix of PHAK chapter 2, figure 2-5 (likelihood × severity
-//                        → high / serious / medium / low, the cells as in the figure) with the PHAK example marked.
+//                        → high / serious / medium / low = 高い・やや高い・中・低い; severity 壊滅的・重大・軽い・ごく小さい, so the
+//                        two axes share no word; 中 yellow, not green; the order as a legend line — revise-hfadm: reader RK1,
+//                        factcheck N10), the cells as in the figure, with the PHAK example marked.
 //   new  residualRisk    adm.risk — the basic course's ch10-fig10-10「対策を実施した後に残るリスクを確かめる」redrawn:
 //                        hazard written concretely → likelihood × severity → eliminate / reduce / control → estimate the
 //                        residual risk again (FAA Risk Management Handbook glossary) → acceptable? yes: go and keep checking
 //                        that the measure works; no: change the plan or do not fly (back to the measures). No number.
+// revise-hfadm (2026-10-30) also: gLoad's caption says gradual G shows in vision first and rapid G can take consciousness
+// without warning (FAA brochure; factcheck S2); swissCheese says its layer names are the book's examples and that green
+// is the arrow (N5, reader E3); saLevels' columns are narrower so the ① → ② → ③ arrows show (N11); nightEye marks the
+// point to look at, not an arrow toward the star (reader V6); fatigueFactors' caption explains the box colours (F4).
 // Every number drawn here is one the text gives with its source (hfadm.claims.json); text ≥ 12 (≥ 10 px at 390 px).
 (function (FL) {
   'use strict';
@@ -67,7 +74,7 @@
       s += T(10, 220, '・眠気を感じないことは、能力が落ちていない証拠ではない', { c: C.ink, a: 'start', fs: 12 });
       s += T(10, 244, '・直すのは休養と睡眠。コーヒーや気合いでは直らない', { c: C.ink, a: 'start', fs: 12 });
       s += T(10, 268, '・体内時計のずれは、時差・早朝・夜の飛行で大きくなる', { c: C.ink, a: 'start', fs: 12 });
-      return svg(400, 282, s, '図：疲れを作る条件（パイロット基礎教材の図 10-5 を描き直した模式図）。睡眠の不足・眠りの質・長く起きていること・体内時計のずれ・続けての作業・緊張や暑さが重なると、注意・反応・判断の余裕が小さくなります。眠気を感じないことは、能力が落ちていない証拠ではありません');
+      return svg(400, 282, s, '図：疲れを作る条件（パイロット基礎教材の図 10-5 を描き直した模式図）。睡眠の不足・眠りの質・長く起きていること・体内時計のずれ・続けての作業・緊張や暑さが重なると、注意・反応・判断の余裕が小さくなります。眠気を感じないことは、能力が落ちていない証拠ではありません。枠の色は、だいだいが睡眠、むらさきが体内時計、水色が作業と環境です');
     },
     // hf.altitude — the share of oxygen stays about 21 %, its partial pressure falls with the pressure (ch10-fig10-2 redrawn)
     o2Partial() {
@@ -104,7 +111,7 @@
       s += TL(304, 74, ['血が足の方へ下がる', '視野が狭くなる', '→ グレーアウト', '→ ブラックアウト → 失神'], { c: C.ink, fs: 12, lh: 18 });
       s += box(214, 164, 180, 76, C.rd) + T(304, 184, '−G（急に押す）', { c: C.rd, b: 1, fs: 12 });
       s += TL(304, 206, ['血が頭の方へ上がる', '頭痛・レッドアウト'], { c: C.ink, fs: 12, lh: 18 });
-      return svg(400, 254, s, '図：左は水平旋回の荷重倍数（G、load factor）で、1 ÷ cos（バンク角）で計算しました。60° では 2 G です。右は G が体に与える影響で、正の G では血が足の方へ下がり、目から先に影響が出ます（米国の AIM 8-1-7）');
+      return svg(400, 254, s, '図：左は水平旋回の荷重倍数（G、load factor）で、1 ÷ cos（バンク角）で計算しました。60° では 2 G です。右は G が体に与える影響で、正の G では血が足の方へ下がります。ゆっくりかかると、目から先に影響が出ます（米国の AIM 8-1-7）。急に強くかかると、見え方の変化なしに意識を失うこともあります（FAA の資料）');
     },
     // hf.vision — by day the centre sees, by night look 5–10° to the side (ch10-fig10-3 redrawn; PHAK chapter 17)
     nightEye() {
@@ -114,14 +121,14 @@
         s += `<circle cx="${cx}" cy="${cy}" r="70" fill="none" stroke="${C.mut}" stroke-width="1.2" stroke-dasharray="4 4"/>`;
         s += `<circle cx="${cx}" cy="${cy}" r="16" fill="${dark ? '#000' : C.cy}" fill-opacity="${dark ? 1 : 0.35}" stroke="${dark ? C.rd : C.cy}" stroke-width="1.5"/>`;
         if (!dark) s += T(cx + 4, cy - 2, '★', { c: C.am, fs: 14 }) + T(cx, cy + 34, '中心で見る', { c: C.ink, b: 1, fs: 12 });
-        else s += T(cx + 44, cy + 5, '★', { c: C.am, fs: 14 }) + A(cx + 18, cy, cx + 34, cy, C.gr, 2) + T(cx, cy + 34, '中心は見えにくい', { c: C.rd, b: 1, fs: 12 }) + T(cx + 44, cy - 14, '5〜10°', { c: C.gr, b: 1, fs: 12 });
+        else s += T(cx + 44, cy + 5, '★', { c: C.am, fs: 14 }) + L(cx, cy, cx + 36, cy, C.gr, 1.5, '3 3') + T(cx, cy + 4, '＋', { c: C.mut, fs: 12 }) + T(cx, cy - 24, '見る所', { c: C.ink, b: 1, fs: 12 }) + T(cx, cy + 34, '中心は見えにくい', { c: C.rd, b: 1, fs: 12 }) + T(cx + 44, cy - 14, '5〜10°', { c: C.gr, b: 1, fs: 12 });
         return s;
       };
       let s = T(100, 22, '明るい所', { c: C.ink, b: 1, fs: 13 }) + T(300, 22, '暗い所', { c: C.ink, b: 1, fs: 13 });
       s += panel(4, false) + panel(204, true);
       s += TL(100, 236, ['中心（錐体）が', '色と細かい所を見る'], { c: C.ink, fs: 12, lh: 16 });
-      s += TL(300, 236, ['周り（桿体）が弱い光を', '見る：少し横を見る'], { c: C.ink, fs: 12, lh: 16 });
-      return svg(400, 268, s, '図：明るい所では、目の中心（錐体の集まる中心窩）で色と細かい所を見ます。暗い所では中心の感度が低く、見えにくい所ができます。夜は、見たい物の 5〜10° 横を見て、周りの桿体で見ます（PHAK 第 17 章）');
+      s += TL(300, 236, ['星の 5〜10° 横を見ると、', '周り（桿体）で星が見える'], { c: C.ink, fs: 12, lh: 16 });
+      return svg(400, 268, s, '図：明るい所では、目の中心（錐体の集まる中心窩）で色と細かい所を見ます。暗い所では中心の感度が低く、見えにくい所ができます。夜は、見たい物の 5〜10° 横を見て（右の「見る所」）、周りの桿体で見ます（PHAK 第 17 章）');
     },
     // adm.error — the simplified information-processing model (UK CAA CAP 737, chapter 1, figure 3)
     infoProcess() {
@@ -130,15 +137,16 @@
       s += A(80, 75, 98, 75, C.ink, 2);
       s += box(100, 40, 82, 70, C.cy) + TL(141, 66, ['知覚', '意味をつかむ'], { c: C.ink, fs: 12, lh: 18 });
       s += A(182, 75, 200, 75, C.ink, 2);
-      s += box(202, 24, 112, 168, C.vi, { op: 0.08, dash: '6 4' }) + T(258, 40, '注意（限りがある）', { c: C.vi, b: 1, fs: 12 });
+      s += box(202, 24, 112, 92, C.vi, { op: 0.08, dash: '6 4' }) + T(258, 40, '注意（限りがある）', { c: C.vi, b: 1, fs: 12 });
       s += box(210, 50, 96, 58, C.am) + TL(258, 72, ['考える', '（作業記憶）'], { c: C.ink, fs: 12, lh: 17 });
-      s += box(210, 122, 96, 58, C.gr) + TL(258, 144, ['慣れた手順', '（長期記憶）'], { c: C.ink, fs: 12, lh: 17 });
-      s += A(314, 108, 330, 108, C.ink, 2);
+      s += box(210, 128, 96, 58, C.gr) + TL(258, 150, ['慣れた手順', '（長期記憶）'], { c: C.ink, fs: 12, lh: 17 });
+      s += A(182, 100, 208, 150, C.ink, 2) + T(176, 146, '自動', { c: C.gr, b: 1, fs: 12 });
+      s += A(314, 84, 330, 96, C.ink, 2) + A(306, 160, 330, 132, C.ink, 2);
       s += box(332, 74, 62, 68, C.rd) + TL(363, 100, ['反応', '操作・発言'], { c: C.ink, fs: 12, lh: 18 });
       s += `<path d="M363 142 L363 214 L43 214 L43 112" fill="none" stroke="${C.mut}" stroke-width="1.8" stroke-dasharray="6 4"/>` + `<path d="M43 110 L38 120 L48 120 Z" fill="${C.mut}"/>`;
       s += T(200, 232, '結果を見て、また感覚から始まる', { c: C.mut, fs: 12 });
       s += T(200, 254, 'どの段階でもエラーは起こる（聞き落とし・思い込み・押し間違い）', { c: C.ink, fs: 12 });
-      return svg(400, 266, s, '図：人が情報を受け取り、処理し、反応するまでの簡単な模式図（英国 CAA の CAP 737 第 1 章の図をもとにした）。考える作業は注意を使い、注意には限りがあります。慣れた手順は、注意をあまり使わずに進みます');
+      return svg(400, 266, s, '図：人が情報を受け取り、処理し、反応するまでの簡単な模式図（英国 CAA の CAP 737 第 1 章の図をもとにした）。考える作業は注意（点線の枠）を使い、注意には限りがあります。慣れた手順は、注意をほとんど使わずに自動で進みます');
     },
     // adm.error — the Swiss cheese model (FAA Risk Management Handbook, figure 6-1)
     swissCheese() {
@@ -154,9 +162,9 @@
       s += A(14, 60, 380, 60, C.rd, 2.5) + T(386, 50, '事故', { c: C.rd, b: 1, fs: 12, a: 'end' });
       s += A(14, 150, 168, 150, C.gr, 2.5);
       s += T(12, 50, '危険・エラー', { c: C.ink, a: 'start', fs: 12 });
-      s += T(200, 244, '緑：穴がそろわなければ、次の 1 枚で止まる', { c: C.gr, fs: 12 });
+      s += T(200, 244, '緑の矢印：穴がそろわなければ、次の 1 枚で止まる', { c: C.gr, fs: 12 });
       s += T(200, 262, '穴＝守りの弱いところ。腕と習慣を保つと穴は小さくなる', { c: C.mut, fs: 12 });
-      return svg(400, 274, s, '図：スイスチーズのモデル（FAA の Risk Management Handbook の図 6-1 をもとにした模式図）。1 枚 1 枚が守りで、穴はその弱いところです。穴が全部そろったときだけ、危険やエラーが事故まで通り抜けます');
+      return svg(400, 274, s, '図：スイスチーズのモデル（FAA の Risk Management Handbook の図 6-1 をもとにした模式図。層の名前はこの本の例）。1 枚 1 枚が守りで、穴はその弱いところです。穴が全部そろったときだけ、危険やエラーが事故まで通り抜けます');
     },
     // adm.check — the four steps of a checklist and the branch for an interruption (ch10-fig10-7 redrawn)
     checklistFlow() {
@@ -173,20 +181,20 @@
     },
     // adm.sa — perceive → comprehend → project, with the textbook's headwind example (ch10-fig10-8 redrawn)
     saLevels() {
-      const col = (x, c, n, head, lines) => box(x, 30, 124, 168, c) + T(x + 62, 52, `${n} ${head}`, { c, b: 1, fs: 13 }) + TL(x + 62, 80, lines, { c: C.ink, fs: 12, lh: 18 });
+      const col = (x, c, n, head, lines) => box(x, 30, 116, 168, c) + T(x + 58, 52, `${n} ${head}`, { c, b: 1, fs: 13 }) + TL(x + 58, 80, lines, { c: C.ink, fs: 12, lh: 18 });
       let s = col(4, C.cy, '①', '知覚', ['何が起きて', 'いるか', '', '向かい風が', '強くなり、', '地面に対する', '速さが落ちた']);
-      s += col(138, C.am, '②', '理解', ['自分の飛行に', 'どう効くか', '', '着く時刻が遅れ', '燃料と日没の', '余裕が減る']);
-      s += col(272, C.gr, '③', '予測', ['この先', 'どうなるか', '', 'このままなら', '余裕が足りない', '→ 早めに決める']);
-      s += A(128, 114, 136, 114, C.ink, 2) + A(262, 114, 270, 114, C.ink, 2);
-      s += `<path d="M334 198 L334 222 L66 222 L66 204" fill="none" stroke="${C.mut}" stroke-width="1.8" stroke-dasharray="6 4"/>` + `<path d="M66 200 L61 210 L71 210 Z" fill="${C.mut}"/>`;
+      s += col(142, C.am, '②', '理解', ['自分の飛行に', 'どう効くか', '', '着く時刻が遅れ', '燃料と日没の', '余裕が減る']);
+      s += col(280, C.gr, '③', '予測', ['この先', 'どうなるか', '', 'このままなら', '余裕が足りない', '→ 早めに決める']);
+      s += A(121, 114, 140, 114, C.ink, 2.5) + A(259, 114, 278, 114, C.ink, 2.5);
+      s += `<path d="M338 198 L338 222 L62 222 L62 204" fill="none" stroke="${C.mut}" stroke-width="1.8" stroke-dasharray="6 4"/>` + `<path d="M62 200 L57 210 L67 210 Z" fill="${C.mut}"/>`;
       s += T(200, 240, '新しい観測と通報で、くり返し更新する', { c: C.mut, fs: 12 });
       return svg(400, 252, s, '図：状況認識の 3 つの段階（パイロット基礎教材の図 10-8 を描き直した模式図）。何が起きているかに気づき（知覚）、自分の飛行への影響を理解し、この先を予測します。予測は、新しい情報でくり返し更新します');
     },
     // adm.risk — the risk assessment matrix of PHAK chapter 2, figure 2-5
     riskMatrix() {
-      const sev = ['壊滅的', '重大', '軽度', '無視できる'], lik = ['何度も起きる', 'いつか起きる', '起きにくい', 'まず起きない'];
-      const cells = [['高い', '高い', '重い', '中'], ['高い', '重い', '中', '低い'], ['重い', '中', '中', '低い'], ['中', '中', '中', '低い']];
-      const colr = { '高い': C.rd, '重い': C.am, '中': C.gr, '低い': C.mut };
+      const sev = ['壊滅的', '重大', '軽い', 'ごく小さい'], lik = ['何度も起きる', 'いつか起きる', '起きにくい', 'まず起きない'];
+      const cells = [['高い', '高い', 'やや高い', '中'], ['高い', 'やや高い', '中', '低い'], ['やや高い', '中', '中', '低い'], ['中', '中', '中', '低い']];
+      const colr = { '高い': C.rd, 'やや高い': C.am, '中': '#d8c23a', '低い': C.mut };
       const x0 = 114, y0 = 56, w = 70, h = 40;
       let s = T(254, 18, '重大さ（結果の大きさ）', { c: C.ink, b: 1, fs: 12 }) + T(10, 18, '起こりやすさ', { c: C.ink, b: 1, a: 'start', fs: 12 });
       sev.forEach((t, j) => { s += T(x0 + j * w + w / 2, 44, t, { c: C.ink, fs: 12 }); });
@@ -198,8 +206,8 @@
         });
       });
       s += `<rect x="${x0 + 1}" y="${y0 + h + 1}" width="${w - 2}" height="${h - 2}" rx="4" fill="none" stroke="${C.ink}" stroke-width="2.5"/>`;
-      s += TL(10, y0 + 4 * h + 26, ['太い枠：PHAK の例。計器で飛ぶ資格のない操縦士が雲に入る', 'ことを「いつか起きる」「壊滅的」と見積もると、高いリスク'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
-      return svg(400, y0 + 4 * h + 66, s, '図：リスク・マトリックス（PHAK 第 2 章の図 2-5 をもとにした）。起こりやすさと結果の重大さの組み合わせで、リスクを高い・重い・中・低いに分けます。高いときは飛ばないか、リスクを減らす手を打ってから飛びます');
+      s += TL(10, y0 + 4 * h + 26, ['太い枠：PHAK の例。計器で飛ぶ資格のない操縦士が雲に入る', 'ことを「いつか起きる」「壊滅的」と見積もると、高いリスク', 'リスクの順：高い ＞ やや高い ＞ 中 ＞ 低い'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      return svg(400, y0 + 4 * h + 84, s, '図：リスク・マトリックス（PHAK 第 2 章の図 2-5 をもとにした）。起こりやすさと結果の重大さの組み合わせで、リスクを高い・やや高い・中・低いに分けます。高いときは飛ばないか、リスクを減らす手を打ってから飛びます');
     },
     // adm.risk — the residual risk after the measures (ch10-fig10-10 redrawn)
     residualRisk() {

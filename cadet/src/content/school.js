@@ -1,6 +1,7 @@
 // CADET — content/school.js : ground school (M5, chapter 1 and the pre-solo test), as dialog data for the runner.
-//  - classes: ミラー 講師 (fictional) teaches the textbook's part 1 (content/book.js), a class a day: each section's key
-//    points, its figure on the classroom's screen, then two questions from FLIGHT LAB's question bank for the chapter;
+//  - classes: ミラー 講師 (fictional) teaches the textbook's ground school (content/book.js: the front part's 飛行の基本量
+//    and part 1), a class a day: each section's key points (the deep ones, 発展, left to the cadet's reading), its figure
+//    on the classroom's screen, then two questions from FLIGHT LAB's question banks for the chapters;
 //  - the training device's six lessons (FLIGHT LAB's stage 0, k1–k6): the PFD, read on the room's screen (k1 the parts
 //    one by one, k2 ten pictures to read); the radio from FLIGHT LAB's radio chapter (radio.js) — the numbers and the
 //    alphabet (k3), one whole flight's calls with their meaning (k4), read-backs (k5), listening (k6, the English
@@ -19,10 +20,15 @@ import { EXAMS, CLASSES } from '../career/career.js';
 
 export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point'];
 const SPEAKERS = { lecturer: { name_ja: PEOPLE.lecturer.title, color: PEOPLE.lecturer.color }, instructor: { name_ja: PEOPLE.instructor.title, color: PEOPLE.instructor.color }, player: { name_ja: 'あなた', color: '#f2b632' } };
-// the textbook's chapters each class covers (part 1; its introduction is not in the game's book) and the question bank
-// that goes with each chapter
+// the textbook's chapters each class covers (the front part's 飛行の基本量 and part 1; the introduction and the chapter
+// on learning in English are not in the game's book) and the question bank that goes with each chapter (basics has
+// none of its own: textbook/rewrite/combined/DESIGN.md 6.3)
 export const CLASS_CHAPTERS = CLASSES;
-const BANK_OF = { aero: 'q_aero', sys: 'q_sys', perf: 'q_perf', wx: 'q_wx', law: 'q_law', hf: 'q_hf', radio1: 'q_comm', radio2: 'q_comm', radio3: 'q_radio', radio4: 'q_radio', radio5: 'q_radio' };
+export const BANK_OF = Object.freeze({ aero: 'q_aero', sys: 'q_sys', inst: 'q_sys', perf: 'q_perf', wb: 'q_perf', wx: 'q_wx', navb: 'q_nav', law: 'q_law', hf: 'q_hf', adm: 'q_hf',
+  radio1: 'q_comm', radio2: 'q_comm', radio3: 'q_radio', radio4: 'q_radio', radio5: 'q_radio' });
+// chapters whose bank is mostly another chapter's: q_nav is the navigation of part 3 (charts, VOR, GPS, diversions); the
+// basics of navigation (navb) take only its questions that name a section of theirs
+const SECTION_QUESTIONS_ONLY = new Set(['navb']);
 export const FTD_TITLES = { k1: 'G1000 型 PFD の読み方', k2: 'PFD の読み取り（10 問）', k3: '数字とアルファベットの言い方（10 問）', k4: '1 回の飛行の交信', k5: '復唱と応答（10 問）', k6: '聞き取り（10 問）' };
 export const PASS = 80;
 
@@ -63,17 +69,36 @@ const resultNodes = (N, speaker, passText, failText) => {
 };
 
 // ---------------------------------------------------------------- a class (index into CLASS_CHAPTERS)
-export function classDialogs(FL, i, { seed = 1 } = {}) {
-  const book = gameBook(FL), ids = CLASS_CHAPTERS[i], r = rng(seed * 31 + i);
+// "A と B", "A、B と C"
+const andList = (a) => (a.length < 3 ? a.join('と') : `${a.slice(0, -1).join('、')}と${a[a.length - 1]}`);
+// what a class goes through: its chapters in the game's book; in each, the sections said (in the book's order) and the
+// deep ones (発展) left to the cadet's own reading (textbook/rewrite/combined/DESIGN.md 3.2 and 6.3); and the questions
+// it may end with — its chapters' banks (FLIGHT LAB's quiz.js), a question that names its section (its fifth element,
+// { sec }) only when that section is said in the class
+export function classPlan(FL, i) {
+  const book = gameBook(FL), ids = CLASS_CHAPTERS[i];
   if (!ids) throw new Error(`classDialogs: no class ${i}`);
-  const chs = ids.map(id => book.chapters.find(c => c.id === id)).filter(Boolean);
+  const chapters = ids.map(id => book.chapters.find(c => c.id === id)).filter(Boolean).map(c => ({
+    ch: c,
+    said: c.sections.filter(s => !s.deep).map(s => book.section(s.id)).filter(Boolean),
+    skipped: c.sections.filter(s => s.deep),
+  }));
+  const said = new Set(chapters.flatMap(c => c.said.map(s => s.id)));
+  const banks = new Map();                                                     // bank → its questions without a section too
+  for (const id of ids) { const b = BANK_OF[id]; if (b) banks.set(b, banks.get(b) || !SECTION_QUESTIONS_ONLY.has(id)); }
+  const pool = [...banks].flatMap(([b, all]) => ((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs)
+    .filter(x => (x[4] && x[4].sec ? said.has(x[4].sec) : all)));
+  return { book, chapters, pool };
+}
+export function classDialogs(FL, i, { seed = 1 } = {}) {
+  const { book, chapters, pool } = classPlan(FL, i), r = rng(seed * 31 + i);
   const N = {};
-  const titles = chs.map(c => `第 ${c.n} 章${q(c.title)}`).join('と');
+  const titles = andList(chapters.map(({ ch: c }) => `第 ${c.n} 章${q(c.title)}`));
   N.hello = { speaker: 'lecturer', text: `Good morning, everyone. 今日は${titles}です。Let's get started.`, hook: { name: 'look', arg: 'player' }, next: 'c0' };
-  chs.forEach((c, k) => {
-    const nextC = k < chs.length - 1 ? `c${k + 1}` : 'check';
-    const secs = c.sections.map(s => book.section(s.id)).filter(Boolean);
-    N[`c${k}`] = { speaker: 'lecturer', text: `${k ? 'Next, ' : ''}第 ${c.n} 章${q(c.title)}。${secs.length} 節あります。順に見ていきましょう。`, next: secs.length ? `c${k}s0` : nextC };
+  chapters.forEach(({ ch: c, said: secs, skipped }, k) => {
+    const nextC = k < chapters.length - 1 ? `c${k + 1}` : 'check';
+    const own = skipped.length ? `${andList(skipped.map(s => q(s.title.replace(/（発展）$/, ''))))}は発展です。授業では飛ばすので、教科書で読んでおいてください。` : '';
+    N[`c${k}`] = { speaker: 'lecturer', text: `${k ? 'Next, ' : ''}第 ${c.n} 章${q(c.title)}。${secs.length} 節を順に見ていきましょう。${own}`, next: secs.length ? `c${k}s0` : nextC };
     secs.forEach((sec, j) => {
       const id = `c${k}s${j}`, after = j < secs.length - 1 ? `c${k}s${j + 1}` : nextC;
       // the section's title and its first key points (two lines at most: a class goes through every section)
@@ -86,9 +111,7 @@ export function classDialogs(FL, i, { seed = 1 } = {}) {
       chain(N, id, lines, after, 'lecturer', sec.figure ? { hook: { name: 'board', arg: sec.id } } : {});
     });
   });
-  // two questions on what was taught (FLIGHT LAB's bank for the chapter), then the class is over
-  const bankIds = [...new Set(ids.map(id => BANK_OF[id]).filter(Boolean))];
-  const pool = bankIds.flatMap(b => (FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs);
+  // two questions on what was taught (FLIGHT LAB's banks for the chapters: classPlan), then the class is over
   const qs = pick(pool, 2, r).map(fromBank(book, r));
   N.check = { speaker: 'lecturer', text: 'OK. 最後に、今日のところを 2 問だけ確かめます。', next: 'q0' };
   quizNodes(N, qs, { then: 'bye' });

@@ -199,8 +199,10 @@ export function gameBook(FL) {
   const num = new Map(chs.map((c, i) => [c.id, i + 1]));
   const where = new Map();                                                     // section id → { ch, sec }
   for (const ch of chs) for (const sec of ch.secs) if (!REAL_NAMES.test(sec.t)) where.set(sec.id, { ch, sec });
+  // (a deep section, 発展, is marked: the classes leave it to the cadet's reading; the questions and the AI instructor's
+  // contents keep it: textbook/rewrite/combined/DESIGN.md 3.2 and 6.3)
   const chapters = chs.map(ch => ({ id: ch.id, n: num.get(ch.id), title: ch.t, part: ch.part,
-    sections: ch.secs.filter(s => where.has(s.id)).map(s => ({ id: s.id, title: s.t })) }));
+    sections: ch.secs.filter(s => where.has(s.id)).map(s => ({ id: s.id, title: s.t, ...(s.deep ? { deep: true } : {}) })) }));
   const exists = (id) => where.has(id);
   // {ch:id} → this book's chapter number (FL.book.html numbers them with the introduction counted)
   const fixRefs = (s) => String(s).replace(/\{ch:([a-z0-9]+)\}/g, (m, id) => (num.has(id) ? `第 ${num.get(id)} 章` : '（別の章）'));
@@ -230,7 +232,7 @@ export function gameBook(FL) {
     const cap = fig && fig[0].match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/);
     const label = svg && svg[0].match(/aria-label="([^"]*)"/);
     const out = {
-      id, title: sec.t,
+      id, title: sec.t, deep: !!sec.deep,
       chapter: { id: ch.id, n: num.get(ch.id), title: ch.t },
       // the opening sentence or two (one when two would be long), else the chapter's own summary
       summary: (prose.slice(0, 2).join('').length <= 140 ? prose.slice(0, 2).join('') : prose[0] || '') || chapterSummary(ch),

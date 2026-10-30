@@ -297,4 +297,9 @@ test('the AI instructor\'s table of contents stays within 25,000 characters; eve
   assert.equal(new Set(ids).size, ids.length, 'each section once');
   for (const id of ids) assert.ok(BOOK.section(id), id);
   assert.doesNotMatch(toc, /（別の章）|\{ch:/);
+  // every section of the game's book is named, the deep ones (発展, skipped in the classes) too: the cadet may ask
+  // about them (DESIGN 3.2 and 6.3)
+  const all = BOOK.chapters.flatMap(c => c.sections.map(s => s.id)), deep = BOOK.chapters.flatMap(c => c.sections.filter(s => s.deep).map(s => s.id));
+  assert.deepEqual(ids, all);
+  assert.ok(deep.length >= 1 && deep.every(id => ids.includes(id) && BOOK.section(id).deep), `the deep sections in the contents: ${deep.join(', ')}`);
 });

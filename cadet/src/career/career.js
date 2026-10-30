@@ -53,8 +53,11 @@ export const GROUND = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // along the way; the instructor schedules them on their own only if they are not)
 export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 't1', 't3'];
 export const ALL_CH2 = [...CH2, 'c1'];
-// the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js)
-export const CLASSES = [['aero'], ['sys', 'perf'], ['wx'], ['law', 'hf'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
+// the classes of chapter 1: the textbook's ground school (its chapters by id: the front part's 飛行の基本量 and part 1),
+// a class a day (the lecturer: content/school.js). Six classes, in this order: a save keeps the classes done by their
+// place (state.done['class:i']), so a chapter added to the book goes inside one of them, never as a seventh
+// (textbook/rewrite/combined/DESIGN.md 6.3)
+export const CLASSES = [['basics', 'aero'], ['sys', 'inst', 'perf', 'wb'], ['wx', 'navb'], ['law', 'hf', 'adm'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
 // the written tests: FLIGHT LAB's question banks (quiz.js), so many questions drawn, the pass mark
 export const EXAMS = {
   written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 28, pass: 80, room: 'planning' },

@@ -96,7 +96,7 @@
 - **問題**：気圧の単位が hPa だけ
 - **元の文**：（表）「気圧｜hPa｜1 hPa = 100 Pa」
 - **直した文**：表に 1 行足す：「気圧｜inHg　水銀柱インチ｜1 inHg ≈ 33.86 hPa（29.92 inHg ≈ 1013.2 hPa。1013.25 hPa は約 29.921 inHg）」。米国の高度計規正値は inHg で、日本の METAR も国内記事に inHg の A の群を付けます。
-- **根拠**：NIST SP 811 付録 B.9（inch of mercury, conventional＝3,386.389 Pa）https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9 、気象庁「航空気象通報式改正新旧対照表（改正第 16 号）」（国内記事の A 群）
+- **根拠**：NIST SP 811 付録 B.9（inch of mercury, conventional＝3,386.389 Pa）https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9 、気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日）（国内記事の A 群）
 - **原本のページ**：重ねて表示しない（安全・日本の法令の行ではない）
 - **合本**：W10 が書き直す（出典：understand/overview.md §5.2 K3）
 
@@ -182,7 +182,7 @@
   - 平均海面から 14,000 ft 未満で飛ぶときは、経路上の地点の QNH で規正します。出発時に出発地の QNH が得られないときは、出発点の標高で合わせます（航空法施行規則第 178 条）。
   - それ以外は、標準気圧値 1013.2 hPa で規正します（同じ条）。
   - 日本の METAR は QNH を Q の群（hPa）で報じます。国内向けの国内記事（RMK の後）には、A の群（inHg。例 A2991＝29.91 inHg）も付きます（気象庁 航空気象通報式）。
-  - 根拠：航空法施行規則第 178 条（e-Gov、令和 8 年 10 月 1 日施行の版） https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_178／気象庁「航空気象通報式改正新旧対照表（改正第 16 号）」 https://www.jma.go.jp/jma/kishou/know/kouku/2_kannsoku/27_jidoka/tsuhoshiki_newandoldsheet.pdf／気象庁 東京航空地方気象台「WEATHER TOPICS 第 54 号 気圧の観測について」（2015 年） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf（2026-10-27 確認）
+  - 根拠：航空法施行規則第 178 条（e-Gov、令和 8 年 10 月 1 日施行の版） https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_178／気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日） https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf／気象庁 東京航空地方気象台「WEATHER TOPICS 第 54 号 気圧の観測について」（2015 年） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf（2026-10-27 確認）
 - **合本**：W15 が書き直す（出典：understand/instruments.md §8.2（不足 1））
 
 ### 12. 第 4 章 20 節「GNSS の精度と信頼性」（`K.instruments.gap-2`）
@@ -289,7 +289,7 @@
   - 日本の METAR には、着陸用飛行場予報（TREND）を付けることがあります。NOSIG（大きな変化なし）か、BECMG・TEMPO で始まる変化を報じます（気象庁 航空気象通報式）。関西国際空港の TREND の有効期間は 2 時間です。
   - 例：METAR RJTT 270230Z 08005KT 040V110 9999 FEW013 SCT040 BKN160 19/16 Q1005 NOSIG（2026 年 10 月 27 日の羽田）。
   - 国内向けには、RMK の後に国内記事が続きます。雲ごとの量・雲形・高さや、A の群（inHg）の QNH などです。例：RMK 1CU025 A2997（気象庁 羽田の資料）。
-  - 根拠：気象庁「航空気象通報式改正新旧対照表（改正第 16 号）」 https://www.jma.go.jp/jma/kishou/know/kouku/2_kannsoku/27_jidoka/tsuhoshiki_newandoldsheet.pdf／気象庁 関西航空地方気象台「飛行場予報（航空気象予報業務）」 https://www.data.jma.go.jp/kansai-airport/works/yoho/taf/taf.html／aviationweather.gov（NOAA）の RJTT の METAR（2026-10-27 に取得） https://aviationweather.gov/api/data/metar?ids=RJTT&hours=2／気象庁 東京航空地方気象台「WEATHER TOPICS 第 54 号 気圧の観測について」（2015 年） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf（2026-10-27 確認）
+  - 根拠：気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日） https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf／気象庁 関西航空地方気象台「飛行場予報（航空気象予報業務）」 https://www.data.jma.go.jp/kansai-airport/works/yoho/taf/taf.html／aviationweather.gov（NOAA）の RJTT の METAR（2026-10-27 に取得） https://aviationweather.gov/api/data/metar?ids=RJTT&hours=2／気象庁 東京航空地方気象台「WEATHER TOPICS 第 54 号 気圧の観測について」（2015 年） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf（2026-10-27 確認）
 - **合本**：W40（ほか W17）が書き直す（出典：understand/weather.md §5.2 K2）
 
 ### 22. 第 7 章 7 節「断熱変化と大気の安定度」（`K.weather.K3`）
@@ -311,7 +311,7 @@
   - 低層ウィンドシャーは、地表からおおむね 500 m（1,600 ft）までのウィンドシャーです（気象庁 中部航空地方気象台）。
   - 羽田空港では、空港低層風情報（ALWIN）が「WS/MB xxKT xNM RWYxx FNA」の形の情報を出します（気象庁 東京航空地方気象台）。
   - METAR では、WS の群（例 WS R34R・WS ALL RWY）で低層のウィンドシャーを報じます（気象庁 航空気象通報式）。
-  - 根拠：気象庁 中部航空地方気象台「空港気象ドップラーレーダー」 https://www.data.jma.go.jp/chubu-airport/ymyx/draw.html／気象庁 東京航空地方気象台「WEATHER TOPICS 第 102 号 強風乱流時に発生するマイクロバーストについて」（2026 年 3 月） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20260324.pdf／気象庁「航空気象通報式改正新旧対照表（改正第 16 号）」 https://www.jma.go.jp/jma/kishou/know/kouku/2_kannsoku/27_jidoka/tsuhoshiki_newandoldsheet.pdf（2026-10-27 確認）
+  - 根拠：気象庁 中部航空地方気象台「空港気象ドップラーレーダー」 https://www.data.jma.go.jp/chubu-airport/ymyx/draw.html／気象庁 東京航空地方気象台「WEATHER TOPICS 第 102 号 強風乱流時に発生するマイクロバーストについて」（2026 年 3 月） https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20260324.pdf／気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日） https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf（2026-10-27 確認）
 - **合本**：W17（ほか W40）が書き直す（出典：understand/weather.md §5.2 K4）
 
 ### 24. 第 7 章 図 7-1〜7-12（`K.weather.K5`）

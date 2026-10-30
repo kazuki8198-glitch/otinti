@@ -34,7 +34,7 @@
   const ecfr = s => ({ t: `14 CFR ${s}（eCFR）`, url: `https://www.ecfr.gov/current/title-14/section-${s}` });
   const AIM = ch => `https://www.faa.gov/air_traffic/publications/atpubs/aim_html/${ch}.html`;
   const AFH13 = { t: 'FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf' };
-  const JMA_CODE = { t: '気象庁「航空気象通報式改正新旧対照表（改正第 16 号）」', url: 'https://www.jma.go.jp/jma/kishou/know/kouku/2_kannsoku/27_jidoka/tsuhoshiki_newandoldsheet.pdf' };
+  const JMA_CODE = { t: '気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日）', url: 'https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf' };
   const JMA_HND_P = { t: '気象庁 東京航空地方気象台「WEATHER TOPICS 第 54 号 気圧の観測について」（2015 年）', url: 'https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf' };
 
   const KINDS = Object.freeze({ safety: '〔安全〕', law: '日本の法令', system: '日本の制度・情報', source: '出典' });

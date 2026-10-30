@@ -15,14 +15,17 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
   // world (x, z) <-> runway frame (x across, z = −along); the frame is rotated by frameYaw about the threshold
   const toFrame = (x, z) => [x * cy - z * sy, x * sy + z * cy];
   const toWorld = (fx, fz) => [fx * cy + fz * sy, -fx * sy + fz * cy];
-  const st = { x: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, speed: 0, phase: 0, bob: 0, bobK: 0, lastStepPhase: 0, foot: 0 };
+  const st = { x: 0, z: 0, y: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, speed: 0, phase: 0, bob: 0, bobK: 0, lastStepPhase: 0, foot: 0 };
+  // (st.y: the feet's height above the ground G — 0 on the ground floor and outdoors; the stairs and the upper
+  // floors are boxes (collide.js groundAt), so walking up a flight raises it tread by tread, and setPose puts it
+  // back to 0: every teleport in the game lands on the ground floor or outdoors)
   let auto = null;                                          // scripted input (tests, cut-scenes): { forward, strafe, run }
   const euler = new THREE.Euler(0, 0, 0, 'YXZ');
   let fovNow = camera.fov;
 
-  function setPose(x, z, yaw, pitch = 0) { st.x = x; st.z = z; st.yaw = yaw; st.pitch = pitch; st.vx = st.vz = 0; apply(0); }
+  function setPose(x, z, yaw, pitch = 0) { st.x = x; st.z = z; st.y = 0; st.yaw = yaw; st.pitch = pitch; st.vx = st.vz = 0; apply(0); }
   function lookAt(x, y, z) {
-    const dx = x - st.x, dz = z - st.z, dy = y - (G + BODY.eye);
+    const dx = x - st.x, dz = z - st.z, dy = y - (G + st.y + BODY.eye);
     st.yaw = Math.atan2(-dx, -dz); st.pitch = Math.atan2(dy, Math.hypot(dx, dz)); apply(0);
   }
   function apply(dt) {
@@ -30,7 +33,7 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     st.bobK += ((bobOn ? 1 : 0) * Math.min(1, st.speed / 1.4) - st.bobK) * Math.min(1, dt * 6);
     // the head dips at each foot strike (phase = k / 2) and sways once per pair of steps
     const bobY = (Math.abs(Math.sin(st.phase * Math.PI * 2)) - 0.6) * 0.035 * st.bobK, bobX = Math.sin(st.phase * Math.PI * 2) * 0.015 * st.bobK;
-    camera.position.set(st.x + Math.cos(st.yaw) * bobX, G + BODY.eye + bobY, st.z - Math.sin(st.yaw) * bobX);
+    camera.position.set(st.x + Math.cos(st.yaw) * bobX, G + st.y + BODY.eye + bobY, st.z - Math.sin(st.yaw) * bobX);
     euler.set(st.pitch, st.yaw, 0); camera.quaternion.setFromEuler(euler);
     const fov = settings.get('fov');
     if (Math.abs(fov - fovNow) > 0.01) { fovNow = fov; camera.fov = fov; camera.updateProjectionMatrix(); }
@@ -73,7 +76,7 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     st.vx += (wx - st.vx) * k; st.vz += (wz - st.vz) * k;
     // move with collisions, in the frame
     const [px, pz] = toFrame(st.x, st.z);
-    const go = (sx, sz) => { const [dx, dz] = toFrame(sx, sz); return world.move({ x: px, y: 0, z: pz }, dx, dz, BODY); };
+    const go = (sx, sz) => { const [dx, dz] = toFrame(sx, sz); return world.move({ x: px, y: st.y, z: pz }, dx, dz, BODY); };
     let r;
     if (!leash) r = go(st.vx * dt, st.vz * dt);
     else {
@@ -93,6 +96,13 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     }
     const [nx, nz] = toWorld(r.x, r.z);
     const moved = Math.hypot(nx - st.x, nz - st.z);
+    // the ground under the new place (a tread, an upper floor's slab, or 0): up is a step (taken at once, as the
+    // collision already allowed it), down is a fall of a few metres a second (off a stair's side, or a floor's edge)
+    if (dt > 0) {
+      const g = world.groundAt(r.x, r.z, st.y, BODY);
+      if (g > st.y) st.y = g;
+      else if (g < st.y) st.y = Math.max(g, st.y - dt * 4.5);
+    }
     if (dt > 0) {
       // against a wall only the part of the velocity pressed into it is lost; the part along it stays, so sliding
       // keeps the wish's speed along the wall at any frame rate
@@ -118,6 +128,6 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     state: st, update, setPose, lookAt, toFrame, toWorld, apply,
     setAuto(a) { auto = a; },
     get position() { return { x: st.x, z: st.z }; },
-    get framePos() { const [fx, fz] = toFrame(st.x, st.z); return { x: fx, z: fz, a: -fz, c: fx }; },
+    get framePos() { const [fx, fz] = toFrame(st.x, st.z); return { x: fx, z: fz, a: -fz, c: fx, y: st.y }; },
   };
 }

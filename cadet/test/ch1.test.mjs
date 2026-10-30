@@ -66,11 +66,13 @@ test('the first day\'s introductory flight: a talk of its own with 8 decisions o
   }
   // (a cadet who never touches the yoke: the hints, his lines and the tasks' ends still come within 2 minutes)
   assert.ok(summarize(introLines(L, { hands: 'none' }).lines).longestGap <= 120);
-  // declined: no flight; the offer its one decision and its one line more (the day was 3.4 min before it)
+  // declined: no flight; the offer its one decision and its one line more (the day was 3.4 min before the
+  // graphics merge; it is 3.45 now — the dispatcher sits at her desk, a longer walk there and back, and the
+  // way home is said in the dorm's words: measured +3.1 s on this day, the offer's own bound unchanged)
   const fly = await measureCh1({ pace: 'need', seed: 1 }), no = await measureCh1({ pace: 'need', seed: 1, intro: 'no' }), d = no.days[0];
   const ask = d.talks.find(x => x.label === 'meet').lines.find(l => l.node === 'fly:ask');
   assert.ok(!d.talks.some(x => x.label === 'intro')); assert.equal(d.decisions, 1);
-  assert.ok(ask && ask.t <= 12, `the offer: ${ask && ask.t} s`); assert.ok(d.time <= 3.4 * 60 + 12, `${(d.time / 60).toFixed(2)} min`);
+  assert.ok(ask && ask.t <= 12, `the offer: ${ask && ask.t} s`); assert.ok(d.time <= 3.45 * 60 + 12, `${(d.time / 60).toFixed(2)} min`);
   // (its lines are no class's: what is heard, and every question with what was said before it, the same either way)
   assert.deepEqual(fly.asked, no.asked); assert.deepEqual(fly.heard, no.heard);
   assert.deepEqual(fly.days.slice(1).map(x => x.time), no.days.slice(1).map(x => x.time));

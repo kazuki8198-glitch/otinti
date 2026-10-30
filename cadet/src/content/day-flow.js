@@ -31,8 +31,8 @@ export function dayToast(st, sch, { missed = 0, short = false } = {}) {
     if ((sch || []).some(x => x.kind === 'exam')) return `今日は学科試験、${isOff(st.day + 1) ? '初飛行は休みの次の日' : '明日は初飛行'}`;
   }
   if ((sch || []).some(x => x.kind === 'off')) return (sch || []).some(x => x.kind === 'event')
-    ? '今日は日曜、休みです。ラウンジの朝日さんが、今週の復習に誘っています（しなくてもいい）。正面入口から寮に帰れば明日になります'
-    : '今日は日曜、休みです。正面入口から寮に帰れば明日になります';
+    ? '今日は日曜、休みです。ラウンジの朝日さんが、今週の復習に誘っています（しなくてもいい）。寮の自室で寝れば明日になります'
+    : '今日は日曜、休みです。寮の自室で寝れば明日になります';
   const i = classToday(sch);
   if (i >= 0) {
     // (a question missed before: said instead of the tablet's hint — one line still; the afternoon's the plan's)
@@ -73,9 +73,9 @@ export const PROLOGUE_WORDS = {
   morning: ['入社の日です。ロビーで、主任教官の話が始まります', '入社の日。ロビーで主任教官の話'],
   ceremony: ['運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', '案内：運航管理へ'],
   tour: ['午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', '午後：ブリーフィング室 1'],
-  meet: ['夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', '夕方：寮へは正面入口から'],
+  meet: ['夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、駐車場の先の寮へ。自室のベッドで寝ます', '夕方：寮は駐車場の先'],
   // (back from the introductory flight, at the lobby's apron doors)
-  intro: ['空から戻りました。夕方です。ラウンジで同期と話せます。今日を終えるときは、正面入口から寮へ', '夕方：寮へは正面入口から'],
+  intro: ['空から戻りました。夕方です。ラウンジで同期と話せます。今日を終えるときは、駐車場の先の寮へ。自室のベッドで寝ます', '夕方：寮は駐車場の先'],
 };
 export const prologueWord = (k, { short = false } = {}) => PROLOGUE_WORDS[k][short ? 1 : 0];
 // (tomorrow in a few words: the skipping cadet's dorm card)
@@ -93,7 +93,7 @@ function shortTomorrow(st, { nextFtd } = {}) {
 export function doneLine(st, o = {}) {
   const t = tomorrowText(st, o);
   if (!t) return null;
-  return st.day <= 2 ? `今日の予定は終わり。${t}。正面入口から寮に帰ると次の日になります` : `今日の予定は終わり、${t}`;
+  return st.day <= 2 ? `今日の予定は終わり。${t}。寮の自室のベッドで寝ると次の日になります` : `今日の予定は終わり、${t}`;
 }
 // the dorm's card: the day said back, and what the evening's study is
 export function dormCard(st, sch, { short = false, nextFtd } = {}) {

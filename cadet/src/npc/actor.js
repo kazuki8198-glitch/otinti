@@ -697,6 +697,10 @@ export function createActor(opts = {}) {
   const HY = 0, HP = 2, EY = 4, EP = 6, MO = 8, TN = 10;
   const G = new Float64Array(CH.length), F = new Float64Array(CH.length);
   let time = 0, gDef = null, gName = null, gT = 0, fadeT = 1;
+  // walking (Phase 2): walkGoal 0..1 (1 ≈ a natural 1.25 m/s, set by setWalk), walkAmt eases towards it, walkPhase
+  // runs the cycle (a full cycle — two steps — per ~1.3 m). The ankles are driven on the cycle and the leg IK does
+  // the rest; the arms swing against the legs, the hips bob twice a cycle.
+  let walkGoal = 0, walkAmt = 0, walkPhase = 0;
   let blinkIn = 1.5 + R1() * 3, blinkT = -1, wanderIn = 2 + R1() * 2, wanderY = 0, wanderP = -2 * DEG, microIn = 1, microY = 0, microP = 0, lastHyT = 0;
   let sylT = 0, sylDur = 0, sylAmp = 0, sylLeft = 6, beatIn = 1.5;
   const tv = new THREE.Vector3(), pv = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
@@ -1031,6 +1035,11 @@ export function createActor(opts = {}) {
 
     // ---- the body: breathing, weight shift (hips sway, the spine keeps the shoulders level), looking. Seated: the hips
     // stay where the seat put them, the back reclined against the seat back, the neck bringing the head level again.
+    // walking and crouching (o.crouch: 0..1, a mechanic at work) feed the pose below
+    walkAmt += (walkGoal - walkAmt) * Math.min(1, dt / 0.16);
+    if (Math.abs(walkGoal - walkAmt) < 0.003) walkAmt = walkGoal;
+    walkPhase += dt * walkAmt * 6.0;
+    const cro = clamp(o.crouch || 0, 0, 1);
     const br = 0.5 - 0.5 * Math.cos(time * TAU / 4.3 + ph[0]);
     const w1 = 0.65 * Math.sin(time * TAU / 11.3 + ph[1]) + 0.35 * Math.sin(time * TAU / 7.1 + ph[2]), w2 = Math.sin(time * TAU / 13.7 + ph[3]);
     const sat = seat.on, hRoll = sat ? 0 : 1.5 * DEG * w1, hYaw = sat ? 0 : 1.3 * DEG * w2;
@@ -1041,9 +1050,15 @@ export function createActor(opts = {}) {
       hips.position.set(0.015 * w1, P.hips[1] - 0.003 * w1 * w1, 0);
       hips.rotation.set(0.5 * DEG * w2, hYaw, hRoll);
       spine.rotation.set(0.8 * DEG, -0.5 * hYaw + 0.45 * turn, -0.5 * hRoll);
+      if (walkAmt > 0.01) {          // the walk's bob and sway; crouching drops the hips (the knees bend by IK)
+        hips.position.y += -0.014 * walkAmt + 0.02 * walkAmt * Math.abs(Math.cos(walkPhase));
+        hips.rotation.z += 0.045 * walkAmt * Math.sin(walkPhase);
+        hips.rotation.y += 0.05 * walkAmt * Math.sin(walkPhase);
+      }
+      if (cro > 0) { hips.position.y -= 0.36 * cro; spine.rotation.x += 0.55 * cro; }
     }
     const Y = S[HY] - turn, Pt = S[HP], chestYaw = 0.12 * Y, rest = Y - chestYaw;   // Y: the head's turn on top of the body's
-    chest.rotation.set((sat ? SEAT_POSE.chest + 0.5 * SEAT_POINT.lean * lean : -0.8 * DEG) - 0.6 * DEG * br + G[C_.chestP], chestYaw + 0.55 * turn - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
+    chest.rotation.set((sat ? SEAT_POSE.chest + 0.5 * SEAT_POINT.lean * lean : -0.8 * DEG) - 0.6 * DEG * br + G[C_.chestP] + 0.3 * cro, chestYaw + 0.55 * turn - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
     torsoMesh.scale.set(1 + 0.006 * br, 1, 1 + 0.014 * br);
     const nod = S[TN];
     neck.rotation.set(-0.4 * Pt + 0.6 * DEG * br + G[C_.neckP] + 0.4 * nod, 0.4 * rest, 0, 'YXZ');
@@ -1061,8 +1076,9 @@ export function createActor(opts = {}) {
         poseArm(arm[SIDES[i]], c[0], c[1], c[2], c[3], c[4], c[5], G[i ? C_.clavR : C_.clavL], br);
       }
     } else {
-      poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL], 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
-      poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR], 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
+      const swing = 0.34 * walkAmt * Math.cos(walkPhase);   // the arms swing against the legs
+      poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL] - swing, 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
+      poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR] + swing, 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
     }
     // pointing: the arm turns towards its target. It does not cross the body (at most a little past the middle), and it
     // reaches back only out to its own side (a board behind and to the left: the left arm, out to the side and back).
@@ -1083,6 +1099,14 @@ export function createActor(opts = {}) {
       q1.setFromUnitVectors(DOWN, v1);
       a.ua.quaternion.slerp(q1, aim);
     }
+    // the feet on the walk cycle (standing only: seated, the ankles stay where the seat put them). Each ankle
+    // swings forward through its step and lifts as it comes through; at rest the bind ankles are restored exactly.
+    if (!sat) {
+      if (walkAmt > 0.01) for (const L of SIDES) {
+        const l = leg[L], phw = walkPhase + (L === 'L' ? 0 : Math.PI);
+        l.ankle.set(l.s * P.ankle[0], ANKLE_Y + Math.max(0, Math.sin(phw)) * 0.07 * walkAmt, P.ankle[2] + 0.30 * walkAmt * Math.cos(phw));
+      } else for (const L of SIDES) { const l = leg[L]; l.ankle.set(l.s * P.ankle[0], P.ankle[1], P.ankle[2]); }
+    }
     solveLeg(leg.L); solveLeg(leg.R);
 
     // ---- eyes: towards the target in the head's frame (the eyes do the first 15°), then lids and mouth
@@ -1096,7 +1120,7 @@ export function createActor(opts = {}) {
     spring(S, MO, mouthT, 42, dt);
     const m = clamp(S[MO], 0, 1); mouth.morphTargetInfluences[0] = m;
 
-    state.headYaw = Y; state.headPitch = Pt; state.eyeYaw = S[EY]; state.eyePitch = S[EP]; state.blink = close; state.mouth = m; state.gesture = gName;
+    state.headYaw = Y; state.headPitch = Pt; state.eyeYaw = S[EY]; state.eyePitch = S[EP]; state.blink = close; state.mouth = m; state.gesture = gName; state.walk = walkAmt; state.crouch = cro;
     if (inCrowd) applyDraw();
   }
 
@@ -1106,6 +1130,10 @@ export function createActor(opts = {}) {
     // sits down (seated in the root's frame: see setSeated above; SEATED_PA28.seat for the Archer's right seat) or, with
     // null, stands up again; true when done
     setSeated,
+    // walking on the spot the root is moved through (npc/walker-npc.js moves the root; this only poses): 0..1,
+    // 1 ≈ a natural pace. The cycle follows in update() while it is above 0.
+    setWalk(v) { walkGoal = clamp(Number(v) || 0, 0, 1); },
+    get walking() { return walkAmt; },
     get seated() { return seat.on; },
     // npc/crowd.js: join (drawn by the crowd while standing), the parts, what it reads each frame
     crowd: { join() { inCrowd = true; applyDraw(); }, parts: crowdParts, view },

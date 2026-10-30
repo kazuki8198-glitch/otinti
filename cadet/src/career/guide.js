@@ -15,14 +15,14 @@ const WHO_JA = { chief: '真壁 主任教官', examiner: '黒田 審査官' };
 //      decided, briefed (today's briefing heard: the chief's on the check ride's day), walk: { done, total }, flown }
 export function nextStep(s) {
   const plan = (s.plan || []).filter(x => x.kind !== 'off');
-  if (s.graduated) return { text: '修了しました。ラウンジで同期と話したり、航空日誌を見返したり（Tab）。正面入口から寮へ帰れます', who: null, room: 'outside', at: 'entrance' };
-  if (!plan.length) return { text: '今日は休日。ラウンジで休んでも、自習してもいい。正面入口から寮に帰ると次の日になります', who: null, room: 'outside', at: 'entrance' };
+  if (s.graduated) return { text: '修了しました。ラウンジで同期と話したり、航空日誌を見返したり（Tab）。寮は駐車場の先、自室のベッドで今日を終えられます', who: null, room: 'outside', at: 'entrance' };
+  if (!plan.length) return { text: '今日は休日。ラウンジで休んでも、自習してもいい。寮の自室のベッドで寝ると次の日になります', who: null, room: 'outside', at: 'entrance' };
   const cur = plan.find(x => x.state === 'now' || x.state === 'retry' || x.state === 'later');
   if (!cur) {
     const evening = s.slot === 'evening';
     // (chapter 1: tomorrow said — content/day-flow.js doneLine)
-    return { text: s.doneText ? s.doneText : evening ? '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります'
-      : '今日の予定は終わりました。正面入口から寮に帰ると、次の日になります', who: null, room: 'outside', at: 'entrance' };
+    return { text: s.doneText ? s.doneText : evening ? '今日の予定は終わり。寮の談話室で同期と話せます。自室のベッドで寝ると次の日になります'
+      : '今日の予定は終わりました。寮の自室のベッドで寝ると、次の日になります', who: null, room: 'outside', at: 'entrance' };
   }
   const later = ORDER.indexOf(cur.slot) > ORDER.indexOf(s.slot) ? `${SLOT_JA[cur.slot]}：` : '';
   if (FLYING.has(cur.kind)) {

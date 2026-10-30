@@ -39,11 +39,13 @@ test('academy: rooms lie inside the building and do not overlap', () => {
   }
   for (let i = 0; i < S.rooms.length; i++) for (let j = i + 1; j < S.rooms.length; j++) {
     const p = S.rooms[i], q = S.rooms[j];
+    // (Phase 3: rooms on different storeys share the plan by design — the second floor stands over the first)
+    if ((p.level || 1) !== (q.level || 1)) continue;
     const da = Math.min(p.a1, q.a1) - Math.max(p.a0, q.a0), dc = Math.min(p.c1, q.c1) - Math.max(p.c0, q.c0);
     assert.ok(!(da > 1e-3 && dc > 1e-3), `${p.id} overlaps ${q.id}`);
   }
   // the ground floor is covered: no gaps bigger than a wall between the rooms
-  let area = 0; for (const r of S.rooms) area += (r.a1 - r.a0) * (r.c1 - r.c0);
+  let area = 0; for (const r of S.rooms) if ((r.level || 1) === 1) area += (r.a1 - r.a0) * (r.c1 - r.c0);
   const full = (IN.a1 - IN.a0) * (IN.c1 - IN.c0) + (A.lob1 - A.lob0) * (IN.c0 - A.glassC);
   assert.ok(area > full * 0.97 && area <= full + 1e-3, `rooms cover ${(area / full * 100).toFixed(1)} % of the floor`);
 });
@@ -62,6 +64,14 @@ test('academy: every door is on the wall between the rooms it joins, wide enough
       }
       const r = room(id); assert.ok(r, `${d.id}: unknown room ${id}`);
       const edges = d.wall === 'a' ? [r.a0, r.a1] : [r.c0, r.c1], span = d.wall === 'a' ? [r.c0, r.c1] : [r.a0, r.a1];
+      // (Phase 3: a bulkhead door — the roof's — sits in the stair house's own wall inside both rooms' plans,
+      // not on a spec room edge; it must still lie within both rooms, across and along)
+      if (d.bulkhead) {
+        const across = d.wall === 'a' ? [r.a0, r.a1] : [r.c0, r.c1], along = d.wall === 'a' ? [r.c0, r.c1] : [r.a0, r.a1];
+        assert.ok(d.at > across[0] && d.at < across[1], `${d.id}: bulkhead wall not inside ${id}`);
+        assert.ok(d.from >= along[0] - E && d.to <= along[1] + E, `${d.id}: not within ${id}'s plan`);
+        continue;
+      }
       assert.ok(edges.some(x => Math.abs(x - d.at) < 0.05), `${d.id}: not on an edge of ${id}`);
       assert.ok(d.from >= span[0] - E && d.to <= span[1] + E, `${d.id}: not within ${id}'s wall`);
     }
@@ -69,6 +79,9 @@ test('academy: every door is on the wall between the rooms it joins, wide enough
   for (let i = 0; i < S.doors.length; i++) for (let j = i + 1; j < S.doors.length; j++) {
     const p = S.doors[i], q = S.doors[j];
     if (p.wall !== q.wall || Math.abs(p.at - q.at) > 0.05) continue;
+    // (Phase 3: doors stacked in the same wall on different floors — the WC's door below, the AV room's above —
+    // share the plan without overlapping)
+    if (Math.abs((p.y || 0) - (q.y || 0)) > 0.5) continue;
     assert.ok(p.to <= q.from + E || q.to <= p.from + E, `${p.id} overlaps ${q.id}`);
   }
 });
@@ -89,7 +102,8 @@ test('academy: the things to examine are in their rooms, at eye level, with text
     assert.ok(!ids.has(it.id), `duplicate ${it.id}`); ids.add(it.id);
     const r = room(it.room); assert.ok(r, `${it.id}: room ${it.room}`);
     assert.ok(inRoom(r, it.a, it.c), `${it.id}: not inside ${it.room}`);
-    assert.ok(it.y >= 0.3 && it.y <= 2.9, `${it.id}: height ${it.y}`);
+    // (Phase 3: the height is read from the room's own floor — a second-floor target stands on the slab)
+    assert.ok(it.y - (r.floorY || 0) >= 0.3 && it.y - (r.floorY || 0) <= 2.9, `${it.id}: height ${it.y}`);
     assert.ok(it.prompt_ja && it.title_ja && it.text_ja && it.text_ja.length > 20, `${it.id}: text`);
     assert.ok(!/undefined|NaN|\[object/.test(it.text_ja + it.title_ja), `${it.id}: broken text`);
   }

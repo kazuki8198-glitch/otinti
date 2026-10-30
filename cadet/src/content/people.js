@@ -13,6 +13,8 @@ export const PEOPLE = {
     look: { tag: 'SAEKI', bars: 0, tie: false, badge: true, hair: 'bun' }, colors: { shirt: 0x24456e, pocket: 0x213f66, button: 0x1a2c44, hair: 0x241c18, trousers: 0x2a2d33 } },
   mechanic: { name: '大城 剛', title: '大城さん（整備士）', role: '整備士：機体の不具合はここへ', color: '#f2d36b', height: 1.74,
     look: { tag: 'OSHIRO', bars: 0, tie: false, badge: false, lanyard: false, hair: 'crop' }, colors: { shirt: 0x5d6b78, pocket: 0x55626e, button: 0x3c444c, trousers: 0x5d6b78, skin: 0xc58f6c } },
+  controller: { name: '高嶺 葵', title: '高嶺さん（管制官）', role: '管制官：LAB タワー（見学は管制室で）', color: '#8fe3d0', height: 1.68,
+    look: { tag: 'TAKANE', bars: 0, tie: false, badge: true, hair: 'bun' }, colors: { shirt: 0xdfe5ea, pocket: 0xccd4db, hair: 0x33261c, skin: 0xe2b494, trousers: 0x2e3138 } },
   kiryu: { name: '桐生 蓮', title: '桐生', role: '同期の訓練生（何でもよくできる）', color: '#c9b6ff', height: 1.82, peer: true,
     look: { tag: 'KIRYU', bars: 1 }, colors: { hair: 0x1c1a1a } },
   asahi: { name: '朝日 さくら', title: '朝日', role: '同期の訓練生（明るく、まわりをよく見ている）', color: '#ffc4a8', height: 1.63, peer: true,
@@ -27,9 +29,15 @@ export const PEERS = ['kiryu', 'asahi', 'mori'];
 
 // where each one stands: { a, c, face: { a, c } } by the time of day; null: not in the academy then (gone home, flying)
 // (the instructor's own places stay main.js's: his room, the apron by today's aircraft)
+// (Phase 2) a place may also say: seat { h (the cushion's top, m), z (the ankles ahead, m) } — the person sits
+// there (npc/cast.js works the seated pose out from it); act — what their hands and eyes are doing there
+// ('read' a book, 'type' at the desk's screen, 'work' on the aircraft, 'map' at the planning map)
 const AT = {
   counter: { a: 670.0, c: 254.7, face: { a: 670.0, c: 258.0 } },               // the dispatch counter, behind it
-  apron: { a: 640.2, c: 214.6, face: { a: 636.5, c: 208.0 } },                 // on the apron, by today's aircraft's tail
+  dispatchSeat: { a: 667.0, c: 250.4, face: { a: 667.0, c: 254.0 }, seat: { h: 0.51 }, act: 'type' },   // her desk's chair, at the screen
+  apron: { a: 640.2, c: 214.6, face: { a: 636.5, c: 208.0 }, act: 'work' },    // on the apron, by today's aircraft's tail, at work on it
+  hangarWork: { a: 566.5, c: 253.5, face: { a: 563.0, c: 258.0 }, act: 'work' },   // (Phase 4) in hangar 2, at work on the aircraft kept there
+  towerCab: { a: 722.6, c: 261.5, y: 17.2, face: { a: 722.6, c: 250.0 }, seat: { h: 0.51 } },   // the tower cab's south-west console (content/tower-spec.js)
   // (chapter 1's evening there: the same place, turned to the cadet coming from the academy — the Archer behind him)
   apronEvent: { a: 640.2, c: 214.6, face: { a: 641.0, c: 222.0 } },
   chiefRoom: { a: 672.6, c: 270.8, face: { a: 668.0, c: 266.0 } },             // the instructors' room
@@ -37,8 +45,14 @@ const AT = {
   classroom: { a: 622.3, c: 256.6, face: { a: 627.0, c: 254.6 } },             // briefing room 2, at the whiteboard
   sim: { a: 628.6, c: 268.6, face: { a: 622.0, c: 270.6 } },                   // the training device room, by its screen
   planning: { a: 684.0, c: 268.0, face: { a: 690.0, c: 270.0 } },              // the planning room (the written tests)
-  lounge1: { a: 692.6, c: 253.9, face: { a: 695.2, c: 252.6 } }, lounge2: { a: 697.6, c: 253.9, face: { a: 695.2, c: 253.0 } }, lounge3: { a: 690.8, c: 257.1, face: { a: 693.0, c: 255.0 } },
+  // the lounge's sofas and its study table's chair (furniture of academy-spec's lounge)
+  lounge1: { a: 693.0, c: 251.0, face: { a: 695.2, c: 253.0 }, seat: { h: 0.48, z: 0.46 } }, lounge2: { a: 697.5, c: 251.0, face: { a: 695.2, c: 253.0 }, seat: { h: 0.48, z: 0.46 } },
+  lounge3: { a: 691.0, c: 257.5, face: { a: 691.0, c: 258.6 }, seat: { h: 0.51 }, act: 'read' },
+  // the dormitory's common room (content/dorm-spec.js): where the cadets spend the evening now that the dorm is a place
+  dormCommon1: { a: 632.0, c: 383.0, face: { a: 637.6, c: 383.0 }, seat: { h: 0.48, z: 0.46 }, act: 'read' }, dormCommon2: { a: 637.6, c: 383.0, face: { a: 632.0, c: 383.0 }, seat: { h: 0.48, z: 0.46 } },
+  dormCommon3: { a: 635.4, c: 387.6, face: { a: 634.0, c: 387.6 }, seat: { h: 0.51 }, act: 'read' },
   pilot1: { a: 681.0, c: 252.6, face: { a: 682.0, c: 254.0 } }, pilot2: { a: 683.2, c: 252.6, face: { a: 682.0, c: 254.0 } },
+  pilotMap: { a: 683.6, c: 259.8, face: { a: 683.6, c: 261.0 }, act: 'map' },   // at the pilot room's planning map
   lobby1: { a: 650.6, c: 262.4, face: { a: 652.0, c: 266.0 } }, lobby2: { a: 652.2, c: 263.8, face: { a: 650.8, c: 262.6 } }, lobby3: { a: 657.6, c: 265.2, face: { a: 655.0, c: 266.5 } },
   // (M6) the examiner's place in the instructors' room; the graduation in the lobby: everyone in a half circle round
   // the plaque, facing the chief instructor
@@ -54,13 +68,19 @@ export function placeOf(id, slot, chapter, what = []) {
   const has = (k) => what.some(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
   // (chapter 1's evening event: its person stays at their place — career.js CH1_EVENTS)
   if (slot === 'evening' && !PEERS.includes(id) && what.some(x => x.kind === 'event' && x.who === id)) return id === 'dispatcher' ? AT.counter : id === 'mechanic' ? AT.apronEvent : id === 'chief' ? AT.chiefRoom : null;
-  if (slot === 'evening') return PEERS.includes(id) ? AT[`lounge${PEERS.indexOf(id) + 1}`] : null;
+  if (slot === 'evening') {
+    if (!PEERS.includes(id)) return null;
+    // (chapter 1's evening event with one of them is at the academy, as its words say; the rest are home at the dorm)
+    if (chapter === 'ch1' && what.some(x => x.kind === 'event' && x.who === id)) return AT[`lounge${PEERS.indexOf(id) + 1}`];
+    return AT[`dormCommon${PEERS.indexOf(id) + 1}`];
+  }
   // (M6) the graduation morning: everyone in the lobby
   if (what.some(x => x.kind === 'graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;
   if (id === 'examiner') return chapter === 'ch6' && has('checkride') ? AT.examRoom : null;
   switch (id) {
-    case 'dispatcher': return AT.counter;
-    case 'mechanic': return AT.apron;
+    case 'dispatcher': return AT.dispatchSeat;         // (at her desk; the counter is for the evening event and the tour)
+    case 'controller': return AT.towerCab;             // (on the tower, all day: the cab is staffed while the field is open)
+    case 'mechanic': return slot === 'pm' ? AT.hangarWork : AT.apron;   // (afternoons in the workshop hangar)
     case 'chief': return chapter === 'prologue' && slot === 'morning' ? AT.lobbyFront : AT.chiefRoom;
     case 'lecturer':
       if (chapter === 'prologue') return slot === 'morning' ? { ...AT.lobbyFront, a: 657.4, c: 267.2 } : null;
@@ -71,11 +91,13 @@ export function placeOf(id, slot, chapter, what = []) {
     default:
       if (!PEERS.includes(id)) return null;
       if (chapter === 'prologue' && slot === 'morning') return AT[`lobby${PEERS.indexOf(id) + 1}`];
-      if (chapter === 'ch1' && has('class')) return { ...AT.classroom, a: 627.4 + PEERS.indexOf(id) * 1.2, c: 257.4, face: AT.classroom };
-      if (chapter === 'ch1' && has('ftd')) return { a: 613.0 + PEERS.indexOf(id) * 5, c: 266.2, face: { a: 613.0 + PEERS.indexOf(id) * 5, c: 268.0 } };
+      // in class they sit in briefing room 2's chairs (the row on the table's far side), facing the lecturer
+      if (chapter === 'ch1' && has('class')) return { a: 625.2 + PEERS.indexOf(id) * 1.2, c: 255.9, face: { a: 622.3, c: 255.9 }, seat: { h: 0.51 } };
+      // at the device they sit in the sim stations' chairs, facing their screens
+      if (chapter === 'ch1' && has('ftd')) return { a: 613.0 + PEERS.indexOf(id) * 5, c: 266.6, face: { a: 613.0 + PEERS.indexOf(id) * 5, c: 268.0 }, seat: { h: 0.51 } };
       // (chapter 1's event with one of them — Sunday's review with 朝日: in the lounge, as the day's word says)
       if (chapter === 'ch1' && what.some(x => x.kind === 'event' && x.who === id)) return AT[`lounge${PEERS.indexOf(id) + 1}`];
-      // the rest of the day: two of them planning in the pilot room, one studying in the lounge
-      return id === 'kiryu' ? AT.pilot1 : id === 'asahi' ? AT.pilot2 : AT.lounge3;
+      // the rest of the day: one planning at the pilot room's table, one at its map, one studying in the lounge
+      return id === 'kiryu' ? AT.pilot1 : id === 'asahi' ? AT.pilotMap : AT.lounge3;
   }
 }

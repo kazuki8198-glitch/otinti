@@ -129,7 +129,9 @@ const drinksFace = (g, w, h) => {
 };
 
 // ---------------------------------------------------------------- the pieces (front towards +Z)
-const WALL = new Set(['whiteboard', 'wall_screen', 'flight_status_board', 'bulletin_board', 'map_wall', 'sign_board', 'wall_clock', 'exit_sign', 'headset_rack']);
+// (headset_rack is not here: its height is built into the piece, so it must take the floor's y like any other
+// furniture — the wall pieces below draw at opts.y, an absolute height, instead)
+const WALL = new Set(['whiteboard', 'wall_screen', 'flight_status_board', 'bulletin_board', 'map_wall', 'sign_board', 'wall_clock', 'exit_sign']);
 const BUILDERS = {
   desk(P, M) {
     P.rbox(M.oak, 1.4, 0.035, 0.72, 0, 0.74, 0, 0.008);
@@ -244,6 +246,142 @@ const BUILDERS = {
     P.rbox(M.black, 0.34, 0.45, 0.38, 0, 1.13, -0.02, 0.03); P.rbox(M.chrome, 0.1, 0.06, 0.06, 0, 1.03, 0.16, 0.01);
     P.cyl(M.white, 0.035, 0.03, 0.08, -0.22, 0.94, 0.08, 12); P.cyl(M.white, 0.035, 0.03, 0.08, 0.24, 0.94, 0.0, 12);
     P.collide(0.7, 0.5, 1.36);
+  },
+  bed(P, M) {
+    // a dormitory single bed: the head towards −z, a navy blanket over the foot two-thirds
+    for (const x of [-0.44, 0.44]) for (const z of [-0.95, 0.95]) P.rbox(M.oak, 0.06, 0.18, 0.06, x, 0.09, z, 0.004);
+    P.rbox(M.oak, 1.0, 0.16, 2.05, 0, 0.26, 0, 0.01);
+    P.rbox(M.oak, 1.0, 0.72, 0.05, 0, 0.62, -1.03, 0.01);
+    P.rbox(M.white, 0.96, 0.18, 1.98, 0, 0.43, 0, 0.03);
+    P.rbox(M.white, 0.6, 0.1, 0.36, 0, 0.56, -0.74, 0.04);
+    P.rbox(M.navy, 0.98, 0.07, 1.28, 0, 0.53, 0.32, 0.03);
+    P.rbox(M.gold, 0.98, 0.02, 0.06, 0, 0.55, -0.28, 0.004);
+    P.collide(1.02, 2.07, 0.7);
+  },
+  wardrobe(P, M) {
+    P.rbox(M.oak, 1.2, 2.0, 0.55, 0, 1.0, 0, 0.012);
+    for (const x of [-0.29, 0.29]) P.rbox(M.white, 0.54, 1.86, 0.02, x, 0.98, 0.285, 0.006);
+    for (const x of [-0.07, 0.07]) P.rbox(M.chrome, 0.02, 0.28, 0.03, x, 1.0, 0.3, 0.006);
+    P.rbox(M.oak, 1.26, 0.05, 0.6, 0, 2.02, 0, 0.008);
+    P.collide(1.22, 0.6, 2.05);
+  },
+  kitchen_counter(P, M) {
+    P.rbox(M.white, 3.0, 0.88, 0.65, 0, 0.44, 0, 0.01);
+    P.rbox(M.oak, 3.06, 0.05, 0.72, 0, 0.925, 0, 0.008);
+    for (const x of [-1.0, 0, 1.0]) P.rbox(M.navyHard, 0.86, 0.6, 0.015, x, 0.48, 0.333, 0.004);
+    // the sink (left) with its tap, the hob (right) with four rings
+    P.rbox(M.alu, 0.72, 0.03, 0.46, -0.85, 0.955, 0, 0.004);
+    P.cyl(M.chrome, 0.016, 0.016, 0.3, -0.85, 1.1, -0.24, 8);
+    { const spout = new THREE.CylinderGeometry(0.013, 0.013, 0.26, 8); spout.rotateX(Math.PI / 2); spout.translate(-0.85, 1.24, -0.12); P.add(M.chrome, spout); }
+    P.rbox(M.black, 0.62, 0.015, 0.5, 0.85, 0.955, 0, 0.004);
+    for (const [x, z, r] of [[0.68, -0.12, 0.09], [1.02, -0.12, 0.07], [0.68, 0.14, 0.07], [1.02, 0.14, 0.1]]) P.cyl(M.metal, r, r, 0.012, x, 0.968, z, 16);
+    P.cyl(M.chrome, 0.07, 0.09, 0.16, 0.05, 1.03, -0.15, 12);                        // a kettle by the hob
+    P.collide(3.06, 0.74, 0.98);
+  },
+  washing_machine(P, M) {
+    P.rbox(M.white, 0.65, 0.9, 0.6, 0, 0.45, 0, 0.025);
+    P.rbox(M.grey, 0.63, 0.09, 0.58, 0, 0.885, 0, 0.01);
+    P.rbox(M.black, 0.16, 0.05, 0.01, -0.18, 0.83, 0.305, 0.003);
+    P.cyl(M.chrome, 0.035, 0.035, 0.02, 0.2, 0.83, 0.305, 12);
+    { const door = new THREE.CylinderGeometry(0.24, 0.24, 0.035, 24); door.rotateX(Math.PI / 2); door.translate(0, 0.46, 0.295); P.add(M.black, door); }
+    { const drum = new THREE.CylinderGeometry(0.19, 0.19, 0.04, 24); drum.rotateX(Math.PI / 2); drum.translate(0, 0.46, 0.3); P.add(M.grey, drum); }
+    P.collide(0.67, 0.62, 0.92);
+  },
+  shower_booth(P, M) {
+    // a frosted-glass cubicle: back and one side closed, a half door at the front, the tray and the shower column
+    P.rbox(M.white, 1.05, 0.08, 1.05, 0, 0.04, 0, 0.01);
+    P.rbox(M.blueWater, 1.0, 2.0, 0.035, 0, 1.05, -0.49, 0.004);
+    P.rbox(M.blueWater, 0.035, 2.0, 0.95, -0.49, 1.05, 0, 0.004);
+    P.rbox(M.blueWater, 0.58, 1.9, 0.03, 0.2, 1.0, 0.49, 0.004);
+    P.rbox(M.chrome, 1.0, 0.04, 0.04, 0, 2.06, -0.49, 0.004);
+    P.cyl(M.chrome, 0.014, 0.014, 0.85, 0.32, 1.6, -0.44, 8);
+    P.cyl(M.chrome, 0.09, 0.09, 0.02, 0.32, 2.04, -0.4, 14);
+    P.cyl(M.chrome, 0.03, 0.03, 0.03, 0.32, 1.15, -0.45, 10);
+    P.collide(1.05, 1.05, 2.05);
+  },
+  // ---------------------------------------------------------------- the tower and the hangars (Phase 4)
+  atc_console(P, M) {
+    // a controller's desk: a sloped console with two scopes (a radar sweep and a strip bay drawn as faces), a
+    // keyboard shelf and the light-gun on its hook. Its front faces local +Z (the controller sits behind it).
+    P.rbox(M.charcoal, 1.7, 0.78, 0.62, 0, 0.39, -0.06, 0.02);
+    P.rbox(M.black, 1.7, 0.5, 0.1, 0, 1.0, -0.3, 0.01);
+    const scope = (g, w, h) => {
+      g.fillStyle = '#06130b'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = 'rgba(80,255,160,0.5)'; g.lineWidth = 1.5;
+      for (const r of [0.16, 0.3, 0.44]) { g.beginPath(); g.arc(w / 2, h / 2, h * r, 0, 6.29); g.stroke(); }
+      g.beginPath(); g.moveTo(w * 0.1, h / 2); g.lineTo(w * 0.9, h / 2); g.moveTo(w / 2, h * 0.05); g.lineTo(w / 2, h * 0.95); g.stroke();
+      const gr = g.createLinearGradient(w / 2, h / 2, w, 0); gr.addColorStop(0, 'rgba(120,255,180,0.55)'); gr.addColorStop(1, 'rgba(120,255,180,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(w / 2, h / 2); g.lineTo(w * 0.98, h * 0.08); g.lineTo(w * 0.98, h * 0.3); g.closePath(); g.fill();
+      g.fillStyle = '#baffd9'; for (const [x, y] of [[0.36, 0.38], [0.6, 0.55], [0.44, 0.66], [0.68, 0.3]]) g.fillRect(w * x, h * y, 4, 4);
+      g.font = `600 ${Math.round(h * 0.07)}px monospace`; g.fillStyle = '#7dffb0'; g.fillText('LAB TWR', w * 0.06, h * 0.14);
+    };
+    const strips = (g, w, h) => {
+      g.fillStyle = '#10151c'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 5; i++) { g.fillStyle = i % 2 ? '#e8ecdf' : '#dfe8f2'; g.fillRect(w * 0.06, h * (0.08 + i * 0.17), w * 0.88, h * 0.12); g.fillStyle = '#33414f'; g.fillRect(w * 0.1, h * (0.115 + i * 0.17), w * (0.3 + (i % 3) * 0.14), h * 0.045); }
+    };
+    P.face(scope, 0.62, 0.44, -0.42, 1.02, -0.245, { emissive: 0.75, px: 256, key: 'atc-scope' });
+    P.face(strips, 0.62, 0.44, 0.42, 1.02, -0.245, { emissive: 0.5, px: 256, key: 'atc-strips' });
+    P.rbox(M.black, 0.5, 0.02, 0.18, -0.3, 0.8, 0.12, 0.004);                        // the keyboard shelf
+    P.cyl(M.red, 0.025, 0.035, 0.16, 0.78, 0.92, 0.05, 10);                          // the light gun, hung at the end
+    P.collide(1.72, 0.72, 1.26);
+  },
+  workbench(P, M) {
+    P.rbox(M.oak, 2.2, 0.05, 0.8, 0, 0.88, 0, 0.01);
+    for (const x of [-1.02, 1.02]) P.rbox(M.metal, 0.06, 0.86, 0.7, x, 0.43, 0, 0.008);
+    P.rbox(M.metal, 2.1, 0.04, 0.72, 0, 0.2, 0, 0.006);
+    for (const [x, m] of [[-0.7, M.red], [-0.35, M.steelLocker], [0.1, M.navyHard], [0.55, M.red]]) P.rbox(m, 0.26, 0.16, 0.34, x, 0.99, 0.05, 0.01);   // tool boxes
+    P.rbox(M.metal, 0.3, 0.22, 0.06, 0.85, 1.02, -0.2, 0.008);                       // the vice
+    P.rbox(M.white, 0.4, 0.01, 0.3, -0.1, 0.915, 0.18, 0.002);                       // an opened manual
+    P.collide(2.2, 0.8, 0.92);
+  },
+  tool_cabinet(P, M) {
+    P.rbox(M.red, 0.9, 1.8, 0.45, 0, 0.9, 0, 0.015);
+    for (let i = 0; i < 4; i++) { P.rbox(M.black, 0.8, 0.015, 0.012, 0, 0.35 + i * 0.42, 0.232, 0.003); P.rbox(M.chrome, 0.22, 0.02, 0.02, 0, 0.42 + i * 0.42, 0.24, 0.005); }
+    for (const x of [-0.3, 0.3]) { const w = new THREE.CylinderGeometry(0.05, 0.05, 0.03, 10); w.rotateX(Math.PI / 2); w.translate(x, 0.05, 0.2); P.add(M.rubber, w); }
+    P.collide(0.9, 0.45, 1.8);
+  },
+  parts_shelf(P, M) {
+    for (const x of [-0.88, 0.88]) P.rbox(M.metal, 0.05, 2.0, 0.4, x, 1.0, 0, 0.006);
+    for (let i = 0; i < 5; i++) P.rbox(M.metal, 1.8, 0.03, 0.4, 0, 0.12 + i * 0.47, 0, 0.005);
+    let k = 0;
+    for (let i = 0; i < 4; i++) { let x = -0.82; while (x < 0.6) { const w = 0.24 + ((k * 29) % 4) * 0.07, h = 0.2 + ((k * 17) % 3) * 0.06; P.rbox(k % 3 ? M.grey : M.navyHard, w, h, 0.32, x + w / 2, 0.135 + i * 0.47 + h / 2, 0, 0.008); P.rbox(M.white, 0.12, 0.06, 0.003, x + w / 2, 0.135 + i * 0.47 + h / 2, 0.165, 0); x += w + 0.05; k++; } }
+    P.collide(1.8, 0.42, 2.0);
+  },
+  tire_stack(P, M) {
+    for (let i = 0; i < 3; i++) { const t = new THREE.TorusGeometry(0.26, 0.105, 10, 22); t.rotateX(Math.PI / 2); t.translate(0, 0.13 + i * 0.21, 0); P.add(M.rubber, t); const hub = new THREE.CylinderGeometry(0.13, 0.13, 0.05, 14); hub.translate(0, 0.13 + i * 0.21, 0); P.add(M.alu, hub); }
+    P.collide(0.62, 0.62, 0.68);
+  },
+  step_ladder(P, M) {
+    for (const s of [-1, 1]) { const leg = new THREE.BoxGeometry(0.045, 1.5, 0.03); leg.translate(s * 0.26, 0.72, 0); leg.rotateX(s * 0.0); P.add(M.alu, leg); const leg2 = new THREE.BoxGeometry(0.045, 1.5, 0.03); leg2.rotateX(0.42); leg2.translate(s * 0.26, 0.7, -0.3); P.add(M.alu, leg2); }
+    for (let i = 0; i < 4; i++) P.rbox(M.alu, 0.56, 0.025, 0.24, 0, 0.32 + i * 0.34, 0.02 - i * 0.02, 0.004);
+    P.rbox(M.alu, 0.56, 0.03, 0.3, 0, 1.5, -0.08, 0.004);
+    P.collide(0.6, 0.75, 1.52);
+  },
+  // ---------------------------------------------------------------- small things (Phase 3): the lived-in layer.
+  // No collider of their own (they sit on desks and tables), so a room gains detail without new draw calls (the
+  // kit merges them with everything else of their material) and without blocking the walk.
+  paper_stack(P, M) {
+    for (let i = 0; i < 5; i++) { const g = new THREE.BoxGeometry(0.21, 0.004, 0.297); g.rotateY((i * 37 % 11 - 5) * 0.02); g.translate((i % 3 - 1) * 0.004, 0.003 + i * 0.0045, (i % 2) * 0.004); P.add(M.white, g); }
+    P.rbox(M.red, 0.05, 0.012, 0.05, 0.07, 0.028, 0.08, 0.002);                       // a binder clip on top
+  },
+  cup(P, M) {
+    P.cyl(M.white, 0.032, 0.026, 0.075, 0, 0.038, 0, 12);
+    P.cyl(M.black, 0.028, 0.028, 0.006, 0, 0.072, 0, 12);                            // the coffee in it
+    const ear = new THREE.TorusGeometry(0.02, 0.005, 6, 12, Math.PI); ear.rotateZ(-Math.PI / 2); ear.translate(0.036, 0.04, 0); P.add(M.white, ear);
+  },
+  bag(P, M) {
+    // a flight bag: a dark box body, a handle, a gold stripe (it stands on the floor, so it does block, a little)
+    P.rbox(M.black, 0.42, 0.34, 0.2, 0, 0.19, 0, 0.03);
+    P.rbox(M.gold, 0.42, 0.025, 0.205, 0, 0.3, 0, 0.004);
+    for (const x of [-0.09, 0.09]) P.rbox(M.black, 0.025, 0.09, 0.03, x, 0.4, 0, 0.006);
+    P.rbox(M.black, 0.2, 0.025, 0.03, 0, 0.445, 0, 0.006);
+    P.rbox(M.white, 0.12, 0.08, 0.004, 0, 0.2, 0.102, 0.002);                         // a chart poking out of the pocket
+    P.collide(0.44, 0.22, 0.46);
+  },
+  umbrella_stand(P, M) {
+    P.cyl(M.alu, 0.14, 0.11, 0.5, 0, 0.25, 0, 14);
+    for (const [x, z, h] of [[-0.05, 0.02, 0.95], [0.06, -0.03, 0.8]]) { const g = new THREE.CylinderGeometry(0.008, 0.008, h, 6); g.translate(x, h / 2 + 0.2, z); P.add(M.black, g); const tip = new THREE.CylinderGeometry(0.035, 0.01, 0.22, 8); tip.translate(x, h + 0.28, z); P.add(M.navyHard, tip); }
+    P.collide(0.3, 0.3, 0.5);
   },
   kneeboard_shelf(P, M) {
     P.rbox(M.oak, 1.0, 1.1, 0.4, 0, 0.55, 0, 0.01);
@@ -382,15 +520,15 @@ function paletteFor(mats) {
 }
 
 export function createPropKit() {
-  const M = materials();
+  let M = null; const mats = () => M || (M = materials());   // (lazy: types() alone needs no canvas — the tests read it in Node)
   const placed = [];
   return {
     types: () => Object.keys(BUILDERS),
     place(type, { a, c, rot = 0, y = 0, opts = {} } = {}) {
       const b = BUILDERS[type];
       const P = new Piece();
-      if (!b) { console.warn('props: unknown type', type); P.rbox(M.grey, 0.5, 0.5, 0.5, 0, 0.25, 0); P.collide(0.5, 0.5, 0.5); }
-      else b(P, M, { ...opts, note: opts.note });
+      if (!b) { console.warn('props: unknown type', type); P.rbox(mats().grey, 0.5, 0.5, 0.5, 0, 0.25, 0); P.collide(0.5, 0.5, 0.5); }
+      else b(P, mats(), { ...opts, note: opts.note });
       placed.push({ type, a, c, rot, y: type === 'ceiling_light' ? y : (WALL.has(type) ? 0 : y), P });
       return P;
     },
@@ -406,7 +544,7 @@ export function createPropKit() {
         const zone = zoneOf(it.a, it.c);
         for (const [mat, g0] of it.P.parts) { const g = (g0.index ? g0.toNonIndexed() : g0); g.applyMatrix4(m4); bucket(mat, zone).push(g); }
         for (const [mat, g0] of it.P.faces) { const g = g0.index ? g0.toNonIndexed() : g0; g.applyMatrix4(m4); bucket(mat, zone).push(g); }
-        if (it.P.box) colliders.push({ ...placeBox(it.P.box, it.c, -it.a, it.rot), type: it.type });
+        if (it.P.box) { const pb = placeBox(it.P.box, it.c, -it.a, it.rot); colliders.push({ ...pb, y0: pb.y0 + it.y, y1: pb.y1 + it.y, type: it.type }); }   // (a piece placed on an upper floor: its box stands there too)
         for (const an of it.P.anchors) { const v = new THREE.Vector3(an.x, an.y, an.z).applyMatrix4(m4); anchors.push({ type: it.type, key: an.key, a: -v.z, c: v.x, x: v.x, y: v.y, z: v.z }); }
       }
       // plain materials (one colour, roughness and metalness, no texture) share one material per zone: a small palette

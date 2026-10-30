@@ -83,7 +83,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     for (const p of m.plan) { const [c, t] = status(p.state); put(ul, put(make('li'), make('span', 'st ' + c, t), make('span', '', `${p.slotName}　${p.title}`))); }
     put(plan, ul);
     if (m.canWait) put(plan, btn('次の予定まで待つ', () => { act.wait(); draw(); }, 'tb-btn ghost'));
-    if (m.evening) put(plan, make('div', 'tb-note', '今日はここまで。正面入口から寮に帰ると、次の日になります。'));
+    if (m.evening) put(plan, make('div', 'tb-note', '今日はここまで。寮の自室のベッドで寝ると、次の日になります。'));
     // (M8) after the graduation: the epilogue again (Haneda, the right seat of the 737)
     if (m.graduated && act.epilogue) put(plan, btn('終章：羽田の 737（もう一度）', () => { close(); act.epilogue(); }, 'tb-btn ghost'));
     const wx = put(make('div', 'tb-card'), make('h3', '', `天気：${m.weather.ja}`),

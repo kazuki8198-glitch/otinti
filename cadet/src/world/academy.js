@@ -20,7 +20,8 @@ const IN = { a0: 608.4, a1: 701.6, c0: 248.4, c1: 277.6 };
 const near = (x, y, e = 0.06) => Math.abs(x - y) < e;
 
 // ---------------------------------------------------------------- floor and ceiling textures (drawn at start-up)
-function floorMaterials() {
+// (shared with the dormitory: world/dorm.js builds its rooms from the same floors)
+export function floorMaterials() {
   // a seeded random for the speckles (index arithmetic would leave a visible lattice)
   let seed = 9001; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
   const carpet = canvasTexture(512, 512, (g, w, h) => {
@@ -103,8 +104,10 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
 
   // ---------------------------------------------------------------- the exterior walls with ground-floor windows
   const outsideDoors = (spec.doors || []).filter(d => (d.rooms || []).includes('outside'));
-  // one exterior wall: 'c' walls run along a (constant c from t0 to t1), 'a' walls run along c
-  function exteriorWall(kind, t0, t1, s0, s1, win, glassFace) {
+  // one exterior wall: 'c' walls run along a (constant c from t0 to t1), 'a' walls run along c.
+  // upperWin (Phase 3): over the built second floor, the upper ribbon window is real glass too, not a tinted
+  // sheet over solid plaster — the second floor's rooms get the apron's light.
+  function exteriorWall(kind, t0, t1, s0, s1, win, glassFace, upperWin = false) {
     const at = kind === 'c' ? (near(t0, A.c0) ? IN.c0 : IN.c1) : (near(t0, A.a0) ? IN.a0 : IN.a1);
     const doors = outsideDoors.filter(d => d.wall === kind && (near(d.at, at, 0.5) || near(d.at, (t0 + t1) / 2, 0.5)) && d.from >= s0 && d.to <= s1);
     const B = (mat, u0, u1, y0, y1, collide = true) => (kind === 'c' ? box(mat, u0, u1, t0, t1, y0, y1, collide) : box(mat, t0, t1, u0, u1, y0, y1, collide));
@@ -130,10 +133,14 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
         if (kind === 'c') { box(M.white, u0, u1, inward > 0 ? t1 : t0 - 0.22, inward > 0 ? t1 + 0.22 : t0, A.sill - 0.03, A.sill, false); box(M.trim, u0, u1, inward > 0 ? t0 - 0.12 : t1, inward > 0 ? t0 : t1 + 0.12, A.sill - 0.05, A.sill, false); }
         else { box(M.white, inward > 0 ? t1 : t0 - 0.22, inward > 0 ? t1 + 0.22 : t0, u0, u1, A.sill - 0.03, A.sill, false); box(M.trim, inward > 0 ? t0 - 0.12 : t1, inward > 0 ? t0 : t1 + 0.12, u0, u1, A.sill - 0.05, A.sill, false); }
       } else B(M.plaster, u0, u1, 0, A.slab);
-      // the upper floor: solid, with the tinted ribbon window outside
-      B(M.plaster, u0, u1, A.slab + 0.4, A.H, false);
+      // the upper floor: solid, with the tinted ribbon window outside — or, over the built second floor, a real
+      // window band (plaster below and above, clear glass between, at the ground floor's own heights + the slab)
+      if (upperWin && glazed) {
+        B(M.plaster, u0, u1, A.slab + 0.4, 5.0, false); B(M.plaster, u0, u1, 6.7, A.H, false);
+        glassPane(kind, (t0 + t1) / 2, u0, u1, 5.0, 6.7);
+      } else B(M.plaster, u0, u1, A.slab + 0.4, A.H, false);
     }
-    if (win) panel(upperGlass, glassFace, kind === 'c' ? (glassFace === 'w' ? t0 - 0.02 : t1 + 0.02) : (glassFace === 's' ? t0 - 0.02 : t1 + 0.02), win[0], win[1], 5.0, 6.7);
+    if (win && !upperWin) panel(upperGlass, glassFace, kind === 'c' ? (glassFace === 'w' ? t0 - 0.02 : t1 + 0.02) : (glassFace === 's' ? t0 - 0.02 : t1 + 0.02), win[0], win[1], 5.0, 6.7);
     return doors;
   }
   // a pane of clear glass with its frame and mullions every 1.5 m, centred in the wall
@@ -146,11 +153,14 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
     const n = Math.max(1, Math.round((u1 - u0) / 1.5));
     for (let k = 0; k <= n; k++) { const u = u0 + (u1 - u0) * k / n; fr(u - 0.03, u + 0.03, y0, y1); }
   }
-  // apron side (two parts either side of the lobby), car-park side, the two ends
-  exteriorWall('c', A.c0, A.c0 + A.wall, A.a0, A.lob0, [A.a0 + 1.5, A.lob0 - 1.5], 'w');
+  // apron side (two parts either side of the lobby), car-park side, the two ends. The second floor is built over
+  // the south wing (a up to the lobby), so its walls — the apron side, the car-park side up to a 646, and the
+  // south end — get real upper windows; the north wing's upper floor stays a tinted shell.
+  exteriorWall('c', A.c0, A.c0 + A.wall, A.a0, A.lob0, [A.a0 + 1.5, A.lob0 - 1.5], 'w', true);
   exteriorWall('c', A.c0, A.c0 + A.wall, A.lob1, A.a1, [A.lob1 + 1.5, A.a1 - 1.5], 'w');
-  const carDoors = exteriorWall('c', A.c1 - A.wall, A.c1, A.a0, A.a1, [A.a0 + 1.5, A.a1 - 1.5], 'e');
-  exteriorWall('a', A.a0, A.a0 + A.wall, A.c0, A.c1, [A.c0 + 2, A.c1 - 2], 's');
+  const carDoors = [...exteriorWall('c', A.c1 - A.wall, A.c1, A.a0, A.lob0, [A.a0 + 1.5, A.lob0 - 1.5], 'e', true),
+    ...exteriorWall('c', A.c1 - A.wall, A.c1, A.lob0, A.a1, [A.lob0 + 1.5, A.a1 - 1.5], 'e')];
+  exteriorWall('a', A.a0, A.a0 + A.wall, A.c0, A.c1, [A.c0 + 2, A.c1 - 2], 's', true);
   exteriorWall('a', A.a1 - A.wall, A.a1, A.c0, A.c1, [A.c0 + 2, A.c1 - 2], 'n');
   // the lobby: returns closing the recess, the glass front (two storeys, mullions every 2 m, a transom), the airside doors
   box(M.plaster, A.lob0 - 0.4, A.lob0, A.c0 + A.wall, A.glassC, 0, A.H); box(M.plaster, A.lob1, A.lob1 + 0.4, A.c0 + A.wall, A.glassC, 0, A.H);
@@ -167,17 +177,28 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
     box(M.mullion, A.lob0, A.lob1, A.glassC - 0.08, A.glassC + 0.08, 3.9, 4.1, false);
     box(M.plaster, A.lob0, A.lob1, A.glassC, A.c1 - A.wall, A.H - 0.4, A.H, false);         // the lobby's roof slab
   }
-  // the floor slab between the storeys, except over the lobby; the exterior band; the parapet; the roof
-  box(M.trim, A.a0 + A.wall, A.lob0, A.c0 + A.wall, A.c1 - A.wall, A.slab, A.slab + 0.4, false);
+  // the floor slab between the storeys, except over the lobby — and except over the stairwell (a 637–646,
+  // c 263.6–277.6), where the flight rises through it (Phase 3); the exterior band; the parapet; the roof
+  box(M.trim, A.a0 + A.wall, A.lob0, A.c0 + A.wall, 263.6, A.slab, A.slab + 0.4, false);
+  box(M.trim, A.a0 + A.wall, 637.0, 263.6, A.c1 - A.wall, A.slab, A.slab + 0.4, false);
   box(M.trim, A.lob1, A.a1 - A.wall, A.c0 + A.wall, A.c1 - A.wall, A.slab, A.slab + 0.4, false);
   box(M.trim, A.a0 - 0.1, A.a1 + 0.1, A.c0 - 0.1, A.c0, A.slab, A.slab + 0.4, false); box(M.trim, A.a0 - 0.1, A.a1 + 0.1, A.c1, A.c1 + 0.1, A.slab, A.slab + 0.4, false);
   box(M.trim, A.a0 - 0.1, A.a0, A.c0, A.c1, A.slab, A.slab + 0.4, false); box(M.trim, A.a1, A.a1 + 0.1, A.c0, A.c1, A.slab, A.slab + 0.4, false);
-  box(M.trim, A.a0 - 0.15, A.a1 + 0.15, A.c0 - 0.15, A.c1 + 0.15, A.H, A.H + 0.9, false);
-  box(M.roofFlat, A.a0, A.a1, A.c0, A.c1, A.H - 0.2, A.H + 0.05, false);
+  // the parapet: a ring at the roof's edge (it was a solid slab over the whole roof until the roof became a
+  // place to stand — Phase 3); its boxes are colliders, so the roof's edge holds the walker
+  box(M.trim, A.a0 - 0.15, A.a1 + 0.15, A.c0 - 0.15, A.c0, A.H, A.H + 0.9, true);
+  box(M.trim, A.a0 - 0.15, A.a1 + 0.15, A.c1, A.c1 + 0.15, A.H, A.H + 0.9, true);
+  box(M.trim, A.a0 - 0.15, A.a0, A.c0, A.c1, A.H, A.H + 0.9, true);
+  box(M.trim, A.a1, A.a1 + 0.15, A.c0, A.c1, A.H, A.H + 0.9, true);
+  // the roof slab, with the stair bulkhead's opening cut out of it (a 640–646.2, c 268–270.4)
+  box(M.roofFlat, A.a0, A.a1, A.c0, 268.0, A.H - 0.2, A.H + 0.05, false);
+  box(M.roofFlat, A.a0, A.a1, 270.4, A.c1, A.H - 0.2, A.H + 0.05, false);
+  box(M.roofFlat, A.a0, 640.0, 268.0, 270.4, A.H - 0.2, A.H + 0.05, false);
+  box(M.roofFlat, 646.2, A.a1, 268.0, 270.4, A.H - 0.2, A.H + 0.05, false);
   // the entrance canopy over the walkway and its columns; rooftop plant; the stair house
   box(M.white, A.lob0 - 3, A.lob1 + 3, A.c0 - 4.5, A.glassC, 3.3, 3.6, false);
   for (const a of [A.lob0 - 2.5, A.lob1 + 2.5]) box(M.steel, a - 0.12, a + 0.12, A.c0 - 4.2, A.c0 - 3.96, 0, 3.3);
-  for (let i = 0; i < 4; i++) box(M.steel, A.a0 + 12 + i * 9, A.a0 + 16 + i * 9, A.c0 + 9, A.c0 + 12, A.H + 0.05, A.H + 1.6, false);
+  for (let i = 0; i < 4; i++) box(M.steel, A.a0 + 12 + i * 9, A.a0 + 16 + i * 9, A.c0 + 9, A.c0 + 12, A.H + 0.05, A.H + 1.6, true);
   box(M.plaster, A.a1 - 14, A.a1 - 8, A.c1 - 9, A.c1 - 3, A.H, A.H + 3, false);
   // a small canopy over the car-park entrance
   for (const d of carDoors) box(M.white, d.from - 1.5, d.to + 1.5, A.c1, A.c1 + 2.6, 2.9, 3.1, false);
@@ -191,47 +212,102 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
 
   // ---------------------------------------------------------------- the rooms
   const rooms = spec.rooms || [];
-  const roomOf = (a, c) => rooms.find(r => a >= r.a0 && a <= r.a1 && c >= r.c0 && c <= r.c1) || null;
+  // a point can be in two rooms at once now (a second-floor room over a ground-floor one): with no height given
+  // the first (the ground floor's, listed first) answers, as before; with a height, the room whose floor the
+  // height stands on
+  const roomOf = (a, c, y = null) => {
+    const rs = rooms.filter(r => a >= r.a0 && a <= r.a1 && c >= r.c0 && c <= r.c1);
+    if (!rs.length) return null;
+    if (y == null) return rs[0];
+    let best = null;
+    for (const r of rs) if ((r.floorY || 0) <= y + 0.6 && (!best || (r.floorY || 0) > (best.floorY || 0))) best = r;
+    return best || rs[0];
+  };
   for (const r of rooms) {
-    flat(F[r.floor] || F.vinyl, r.a0, r.a1, r.c0, r.c1, 0.02);
-    flat(F.ceiling, r.a0, r.a1, r.c0, r.c1, r.ceiling, true);
+    const fy = r.floorY || 0, rects = r.floorRects || [[r.a0, r.a1, r.c0, r.c1]];
+    for (const [a0, a1, c0, c1] of rects) {
+      flat(F[r.floor] || F.vinyl, a0, a1, c0, c1, fy + 0.02);
+      // an upper floor's slab as a collider (its top is the floor): what the walker stands on up there
+      if (fy > 0 && world) world.add({ x0: c0, x1: c1, y0: fy - 0.35, y1: fy, z0: -a1, z1: -a0, tag: 'floor' });
+    }
+    if (!r.open) flat(F.ceiling, r.a0, r.a1, r.c0, r.c1, r.ceiling, true);
   }
-  // interior walls: every room edge that is not an exterior wall, merged per line; height = the taller ceiling beside it
-  const lines = new Map();                      // key → { kind, at, spans: [[u0, u1, h]] }
+  // interior walls: every room edge that is not an exterior wall, merged per line AND per floor (a second-floor
+  // wall stands on the slab, over the ground floor's wall on the same line); height = the taller ceiling beside it
+  const lines = new Map();                      // key → { kind, at, base, spans: [[u0, u1, ceiling]] }
   const exterior = (kind, at, u0, u1) => (kind === 'c' ? near(at, IN.c0) || near(at, IN.c1) || (near(at, A.glassC) && u0 >= A.lob0 - 0.01 && u1 <= A.lob1 + 0.01) : near(at, IN.a0) || near(at, IN.a1));
-  const addEdge = (kind, at, u0, u1, h) => {
+  const addEdge = (kind, at, u0, u1, h, base) => {
     if (exterior(kind, at, u0, u1)) return;
-    const key = kind + ':' + at.toFixed(2);
-    if (!lines.has(key)) lines.set(key, { kind, at, spans: [] });
+    const key = kind + ':' + at.toFixed(2) + ':' + base.toFixed(2);
+    if (!lines.has(key)) lines.set(key, { kind, at, base, spans: [] });
     lines.get(key).spans.push([u0, u1, h]);
   };
   for (const r of rooms) {
-    addEdge('a', r.a0, r.c0, r.c1, r.ceiling); addEdge('a', r.a1, r.c0, r.c1, r.ceiling);
-    addEdge('c', r.c0, r.a0, r.a1, r.ceiling); addEdge('c', r.c1, r.a0, r.a1, r.ceiling);
+    const base = r.floorY || 0;
+    addEdge('a', r.a0, r.c0, r.c1, r.ceiling, base); addEdge('a', r.a1, r.c0, r.c1, r.ceiling, base);
+    addEdge('c', r.c0, r.a0, r.a1, r.ceiling, base); addEdge('c', r.c1, r.a0, r.a1, r.ceiling, base);
   }
   const T = 0.12;
   for (const ln of lines.values()) {
     const xs = [...new Set(ln.spans.flatMap(s => [s[0], s[1]]))].sort((p, q) => p - q);
-    const doorsHere = (spec.doors || []).filter(d => d.wall === ln.kind && near(d.at, ln.at));
+    // the doors on this line, on this floor (a door's y is its floor; graph edges build nothing)
+    const doorsHere = (spec.doors || []).filter(d => d.wall === ln.kind && near(d.at, ln.at) && !d.graph && Math.abs((d.y || 0) - ln.base) < 0.5);
     for (const d of doorsHere) { xs.push(d.from, d.to); }
     xs.sort((p, q) => p - q);
+    // a wall under a floor built above it stops at that floor's slab (the upper wall stands on its own line)
+    const capAt = (mid) => {
+      let cap = Infinity;
+      for (const o of lines.values()) {
+        if (o === ln || o.kind !== ln.kind || !near(o.at, ln.at) || o.base <= ln.base) continue;
+        if (o.spans.some(s => mid > s[0] && mid < s[1])) cap = Math.min(cap, o.base);
+      }
+      return cap;
+    };
     for (let i = 0; i < xs.length - 1; i++) {
       const u0 = xs[i], u1 = xs[i + 1]; if (u1 - u0 < 1e-3) continue;
       const mid = (u0 + u1) / 2;
       const hs = ln.spans.filter(s => mid > s[0] && mid < s[1]).map(s => s[2]); if (!hs.length) continue;
-      // beside the double-height lobby the wall goes up to the roof; elsewhere just above the suspended ceiling
-      const h = Math.max(...hs) > 4 ? A.H - 0.2 : Math.max(...hs) + 0.02;
+      // beside the double-height lobby the ground floor's wall goes up to the roof; elsewhere just above the
+      // suspended ceiling — and never through the floor above
+      let h = ln.base === 0 && Math.max(...hs) > 4 ? A.H - 0.2 : Math.max(...hs) + 0.02;
+      h = Math.min(h, capAt(mid));
+      if (h <= ln.base + 0.1) continue;
       const door = doorsHere.find(d => mid > d.from && mid < d.to);
       const mat = M.inner;
       const W = (y0, y1, collide) => (ln.kind === 'a' ? box(mat, ln.at - T / 2, ln.at + T / 2, u0, u1, y0, y1, collide) : box(mat, u0, u1, ln.at - T / 2, ln.at + T / 2, y0, y1, collide));
-      if (door) { W(door.kind === 'opening' ? Math.min(2.8, h) : A.doorH, h, false); continue; }
-      W(0, h, true);
+      if (door) { W(ln.base + (door.kind === 'opening' ? Math.min(2.8, h - ln.base) : A.doorH), h, false); continue; }
+      W(ln.base, h, true);
       // skirting boards on both faces
       for (const s of [-1, 1]) {
-        if (ln.kind === 'a') box(M.skirting, ln.at + s * (T / 2) - (s < 0 ? 0.012 : 0), ln.at + s * (T / 2) + (s > 0 ? 0.012 : 0), u0, u1, 0.02, 0.11, false);
-        else box(M.skirting, u0, u1, ln.at + s * (T / 2) - (s < 0 ? 0.012 : 0), ln.at + s * (T / 2) + (s > 0 ? 0.012 : 0), 0.02, 0.11, false);
+        if (ln.kind === 'a') box(M.skirting, ln.at + s * (T / 2) - (s < 0 ? 0.012 : 0), ln.at + s * (T / 2) + (s > 0 ? 0.012 : 0), u0, u1, ln.base + 0.02, ln.base + 0.11, false);
+        else box(M.skirting, u0, u1, ln.at + s * (T / 2) - (s < 0 ? 0.012 : 0), ln.at + s * (T / 2) + (s > 0 ? 0.012 : 0), ln.base + 0.02, ln.base + 0.11, false);
       }
     }
+  }
+
+  // ---------------------------------------------------------------- the stairs and the roof (Phase 3)
+  // Flight 1 rises in the stairwell's west lane (c 264–266.4) from a 645.4 to the landing at a 640.2 (its top
+  // tread is the second floor, 4.22); flight 2 climbs from the landing in the c 268–270.4 lane to the roof
+  // (8.27), through the slab's and the roof's openings, into the bulkhead whose door (d-roof) opens to the roof.
+  {
+    const F2 = 4.22, RF = 8.27;
+    const n1 = 20, run1 = (645.4 - 640.2) / n1;
+    for (let i = 0; i < n1; i++) { const top = F2 * (i + 1) / n1; box(M.trim, 645.4 - run1 * (i + 1), 645.4 - run1 * i, 264.0, 266.4, 0, top); }
+    const n2 = 18, run2 = (645.42 - 640.2) / n2;
+    for (let i = 0; i < n2; i++) { const top = F2 + (RF - F2) * (i + 1) / n2; box(M.trim, 640.2 + run2 * i, 640.2 + run2 * (i + 1), 268.0, 270.4, top - 0.28, top); }
+    const sg = new THREE.BoxGeometry(2.4, 0.14, Math.hypot(5.22, RF - F2) + 0.3);
+    sg.rotateX(Math.atan2(RF - F2, 5.22)); sg.translate(269.2, (F2 + RF) / 2 - 0.34, -(640.2 + 645.42) / 2); add(M.steel, sg);
+    // the landing's railing along the well's edge, except where the two flights arrive and leave
+    box(M.steel, 640.05, 640.35, 266.4, 268.0, F2, F2 + 0.9);
+    box(M.steel, 640.05, 640.35, 270.4, 277.6, F2, F2 + 0.9);
+    // the bulkhead: the c 270.4 wall, the a 646 end wall, and the c 268 wall with the door's opening in it
+    // (a 645.0–646.0, the door's own span from the spec), a lintel over the door, and its little roof
+    box(M.plaster, 640.0, 646.2, 270.4, 270.65, RF, 10.6);
+    box(M.plaster, 646.0, 646.25, 268.0, 270.4, 7.3, 10.6);
+    box(M.plaster, 640.0, 645.0, 267.75, 268.0, RF, 10.6);
+    box(M.plaster, 645.0, 646.0, 267.75, 268.0, RF + A.doorH, 10.6);
+    box(M.plaster, 646.0, 646.25, 267.75, 268.0, RF, 10.6);
+    box(M.roofFlat, 639.8, 646.4, 267.6, 270.8, 10.6, 10.8, false);
   }
 
   // ---------------------------------------------------------------- doors
@@ -263,7 +339,7 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
       else if (f.type === 'sign_board' && it) opts.text = { title: it.title_ja, lines: [] };
       if (f.y != null) opts.y = f.y;
       if (f.note) opts.note = f.note;
-      const piece = kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, opts });
+      const piece = kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, y: (r.floorY || 0) + (f.yOff || 0), opts });
       // the boards and screens can be drawn on again later (the instructor shows a figure)
       if ((f.type === 'whiteboard' || f.type === 'wall_screen') && piece.faces[0]) {
         const mat = piece.faces[0][0], key = r.id + ':' + f.type;

@@ -231,7 +231,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(st.done['intro:no'], 1, 'declined: kept, not offered again');
     assert.equal((await ev(() => window.__cadet.career.flags())).met_instructor, true);
     // the evening: the cadets in the lounge; the instructor and the staff gone home
-    for (const id of ['kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 688, `${id} in the lounge`); t = await talkThrough(id); assert.ok(t.lines.length, id); }
+    for (const id of ['kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 628 && w.a < 641 && w.c > 379, `${id} in the dormitory's common room`); t = await talkThrough(id); assert.ok(t.lines.length, id); }
     assert.equal(await ev(() => window.__cadet.career.where('dispatcher')), null);
     // home through the front door (the guide: the entrance): the night, the card, the next morning — chapter 1
     t = await playGuide([], 'home');

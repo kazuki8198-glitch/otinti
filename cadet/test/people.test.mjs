@@ -29,12 +29,12 @@ function talk(data, state, id, ctx, pick) {
   return { lines, hooks };
 }
 
-test('people: nine of them (the examiner with M6), each with a look and a place for each time of day', () => {
-  assert.deepEqual(Object.keys(PEOPLE).sort(), ['asahi', 'chief', 'dispatcher', 'examiner', 'instructor', 'kiryu', 'lecturer', 'mechanic', 'mori']);
+test('people: ten of them (the examiner with M6, the controller with Phase 4), each with a look and a place for each time of day', () => {
+  assert.deepEqual(Object.keys(PEOPLE).sort(), ['asahi', 'chief', 'controller', 'dispatcher', 'examiner', 'instructor', 'kiryu', 'lecturer', 'mechanic', 'mori']);
   assert.deepEqual(PEERS, ['kiryu', 'asahi', 'mori']);
   for (const [id, p] of Object.entries(PEOPLE)) { assert.ok(p.name && p.title && p.role, id); assert.ok(!REAL.test(JSON.stringify(p)), id); }
-  // the evening: the cadets in the lounge, the staff gone
-  for (const id of PEERS) assert.ok(placeOf(id, 'evening', 'ch1').a > 688, id);
+  // the evening: the cadets in the dormitory's common room, the staff gone
+  for (const id of PEERS) { const w = placeOf(id, 'evening', 'ch1'); assert.ok(w && w.a > 628 && w.a < 641 && w.c > 379 && w.c < 390, `${id} at the dorm: ${JSON.stringify(w)}`); }
   for (const id of ['dispatcher', 'mechanic', 'chief', 'lecturer']) assert.equal(placeOf(id, 'evening', 'ch2'), null, id);
   // (Sunday in chapter 1: 朝日 in the lounge for the week's review, as the morning's word says; the others as any day)
   const sunday = [{ slot: 'am', kind: 'off' }, { slot: 'am', kind: 'event', id: 'week', who: 'asahi' }];

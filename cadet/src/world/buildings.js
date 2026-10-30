@@ -6,9 +6,10 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { tex, canvasTexture, corrugatedNormal, windowTexture, windowMask } from '../render/textures.js';
 import { metricMaterial, glassMaterial } from '../render/materials.js';
-import { HANGARS } from './layout.js';
+import { HANGARS, TOWER } from './layout.js';
+import { hangarSpec } from '../content/hangar-spec.js';
 
-export function buildBuildings(L, { world = null } = {}) {
+export function buildBuildings(L, { world = null, kit = null } = {}) {
   const frame = new THREE.Group(); frame.name = 'buildings';
   frame.position.set(0, L.G, 0); frame.rotation.y = L.frameYaw;          // x = across, z = −along
 
@@ -81,15 +82,55 @@ export function buildBuildings(L, { world = null } = {}) {
     // small personnel door and windows in the gable end facing south
     box(M.dark, a0 - 0.05, a0, c1 - 6, c1 - 5, 0, 2.1);
   };
-  for (const hg of HANGARS) hangar(hg.a0, hg.a1, hg.c0, hg.c1, hg.h, hg.open, hg.open ? M.metalWallB : M.metalWall);
+  HANGARS.forEach((hg, i) => hangar(hg.a0, hg.a1, hg.c0, hg.c1, hg.h, hg.open, i === 1 ? M.metalWallB : M.metalWall));
 
-  // ---------------------------------------------------------------- the tower (fictional, decorative)
+  // ---------------------------------------------------------------- the hangars' insides (Phase 4): the
+  // workshop's benches, tools and parts, and the spare hangar's shelves — the prop kit, merged as everywhere
+  const hangarTargets = [];
+  if (kit) {
+    const hs = hangarSpec();
+    for (const area of hs.areas) {
+    for (const f of area.furniture || []) kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, opts: {} });
+      for (const it of area.interactables || []) hangarTargets.push({ id: 'ex:' + it.id, frame: [it.c, it.y, -it.a], radius: 0.55, prompt: it.prompt_ja, title: it.title_ja, text: it.text_ja, room: it.room });
+    }
+    const built = kit.build({ zoneOf: (a, c) => { const ar = hs.areas.find(x => a >= x.hangar.a0 && a <= x.hangar.a1 && c >= x.hangar.c0 && c <= x.hangar.c1); return ar ? ar.id : 'hangars'; } });
+    frame.add(built.group);
+    if (world) for (const b of built.colliders) world.add({ ...b, tag: b.type || 'prop' });
+  }
+
+  // ---------------------------------------------------------------- the tower (fictional): since Phase 4 a
+  // hollow shell — the base's walls (a window band, the entrance in the west wall), the shaft's walls with
+  // the stair door's opening in its south face, the slab between them cut round the shaft. Its inside
+  // (hall, stair, cab floor) is world/tower.js.
   {
-    const a = 721, c = 262;
-    box(M.plaster, a - 9, a + 9, c - 9, c + 9, 0, 3.6);
-    panel(glass, 'w', c - 9.02, a - 7.5, a + 7.5, 1.0, 2.7);
-    box(M.trim, a - 9.2, a + 9.2, c - 9.2, c + 9.2, 3.6, 4.0);
-    box(M.plaster, a - 2.4, a + 2.4, c - 2.4, c + 2.4, 3.6, 17);
+    const T = TOWER, a = T.a, c = T.c;
+    // a base wall along a at across [w0, w1]: plaster below and above the window band, glass in it, and a
+    // header (no band) over the entrance's span when doorAt is given
+    const baseWall = (w0, w1, doorAt = null) => {
+      const segs = doorAt ? [[T.b0, doorAt[0]], [doorAt[0], doorAt[1]], [doorAt[1], T.b1]] : [[T.b0, T.b1]];
+      for (const [s0, s1] of segs) {
+        if (s1 - s0 < 1e-3) continue;
+        const isDoor = doorAt && s0 >= doorAt[0] - 1e-6 && s1 <= doorAt[1] + 1e-6;
+        if (isDoor) { box(M.plaster, s0, s1, w0, w1, T.doorH, T.baseTop); continue; }
+        box(M.plaster, s0, s1, w0, w1, 0, 1.0); box(M.plaster, s0, s1, w0, w1, 2.7, T.baseTop);
+        const pane = new THREE.BoxGeometry(w1 - w0 - 0.1, 1.7, s1 - s0); pane.translate((w0 + w1) / 2, 1.85, -(s0 + s1) / 2); add(lobbyGlass, pane);
+        if (world) world.add({ x0: w0 + 0.05, x1: w1 - 0.05, y0: 1.0, y1: 2.7, z0: -s1, z1: -s0, tag: 'building' });
+      }
+    };
+    baseWall(T.c0, T.c0 + 0.4, [720.1, 721.9]);                     // the west wall, with the entrance
+    baseWall(T.c1 - 0.4, T.c1);                                     // the east wall
+    box(M.plaster, T.b0, T.b0 + 0.4, T.c0, T.c1, 0, T.baseTop);     // the north and south ends
+    box(M.plaster, T.b1 - 0.4, T.b1, T.c0, T.c1, 0, T.baseTop);
+    panel(glass, 'w', T.c0 - 0.02, T.b0 + 1.5, T.b1 - 1.5, 1.0, 2.7);
+    // the slab over the hall, cut round the shaft
+    box(M.trim, T.b0, T.s0, T.c0, T.c1, T.baseTop, T.baseTop + 0.4, false); box(M.trim, T.s1, T.b1, T.c0, T.c1, T.baseTop, T.baseTop + 0.4, false);
+    box(M.trim, T.s0, T.s1, T.c0, T.sc0, T.baseTop, T.baseTop + 0.4, false); box(M.trim, T.s0, T.s1, T.sc1, T.c1, T.baseTop, T.baseTop + 0.4, false);
+    // the shaft's walls, from the ground to the cab: the south face has the stair door's opening (c 260.4–261.6)
+    const w = T.wall;
+    box(M.plaster, T.s0, T.s1, T.sc0, T.sc0 + w, 0, 17); box(M.plaster, T.s0, T.s1, T.sc1 - w, T.sc1, 0, 17);
+    box(M.plaster, T.s0, T.s0 + w, T.sc0 + w, T.sc1 - w, 0, 17);
+    box(M.plaster, T.s1 - w, T.s1, T.sc0 + w, 260.4, 0, 17); box(M.plaster, T.s1 - w, T.s1, 261.6, T.sc1 - w, 0, 17);
+    box(M.plaster, T.s1 - w, T.s1, 260.4, 261.6, T.doorH, 17);
     // the cab: eight glass faces leaning out, a dark roof, the beacon
     const cab = new THREE.CylinderGeometry(4.0, 3.4, 3.4, 8, 1, true); cab.rotateY(Math.PI / 8); cab.translate(c, 18.7, -a); add(lobbyGlass, cab);
     const floor = new THREE.CylinderGeometry(3.6, 3.6, 0.4, 8); floor.rotateY(Math.PI / 8); floor.translate(c, 17.0, -a); add(M.trim, floor);
@@ -130,7 +171,7 @@ export function buildBuildings(L, { world = null } = {}) {
     frame.add(m);
   }
   return {
-    group: frame,
+    group: frame, targets: hangarTargets,
     setNight(k) { glass.emissiveIntensity = 0.9 * k; lobbyGlass.emissiveIntensity = 0; },
   };
 }

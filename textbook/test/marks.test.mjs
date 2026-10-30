@@ -58,7 +58,8 @@ test('render.js: 説明してみよう on each chapter\'s last section — after
   const idx = R.index(), hit = findOnlyInWritten();
   assert.ok(hit, 'a word only in a written answer');
   assert.deepEqual(R.search(hit.word, idx).map(h => [h.id, h.inEnd]), [[hit.ch.secs.at(-1).id, true]]);
-  // 発展 in the contents (none is deep yet: one is made so here, then put back)
+  // 発展 in the contents: aero.lift is made deep here, then put back; the book's own deep sections (R2: aero.struct …) carry
+  // the mark, and only they
   const s = BK.findSection('aero.lift').sec;
   s.deep = true;
   try {
@@ -66,7 +67,10 @@ test('render.js: 説明してみよう on each chapter\'s last section — after
     assert.match(R.allHtml(), /data-jump="aero\.lift">[^<]*<\/a> <span class="tag bk-deep-tag">発展<\/span>/);
     assert.match(R.sectionHtml('aero.lift'), /<span class="bk-scope bk-deep-tag">発展<\/span>/);
   } finally { delete s.deep; }
-  assert.doesNotMatch(R.tocHtml([], null), /bk-deep-tag/);
+  const toc = R.tocHtml([], null), deep = BK.CHAPTERS.flatMap(c => c.secs).filter(x => x.deep);
+  assert.ok(deep.length >= 1 && deep.every(x => x.id !== 'aero.lift'), deep.map(x => x.id).join());
+  assert.equal((toc.match(/bk-deep-tag/g) || []).length, deep.length);
+  for (const x of deep) assert.match(toc, new RegExp(`data-go="${x.id.replace('.', '\\.')}"><span class="bk-num">[0-9.]+</span><span>[^<]* <span class="tag bk-deep-tag">発展</span>`), x.id);
 });
 
 // 10 letters of a written answer found there only: in no section (nor a chapter's English title or summary), in no

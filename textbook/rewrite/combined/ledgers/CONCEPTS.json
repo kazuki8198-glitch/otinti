@@ -1,11 +1,11 @@
 {
   "ledger": "CONCEPTS",
   "version": 1,
-  "updated": "2026-10-29",
+  "updated": "2026-10-30",
   "by": "W03",
   "about": "1 つの概念に住所は 1 つ（DESIGN 3.2・5 章の基準 15）。address の節に完全な説明と太字の定義（<b>語（English）</b>）を 1 回だけ。recalls の節は「思い出そう」（maxLines 行以内）で address へリンクする。kind:distinguish は 3.5 の「必ず区別するもの」。行は増やしてよい（README.md）",
   "counts": { "rows": 23, "address": 17, "distinguish": 6 },
-  "applied": [ "W10-basics.ledger.json", "R1V.ledger.json" ],
+  "applied": [ "W10-basics.ledger.json", "R1V.ledger.json", "W13.ledger.json" ],
   "rows": [
     {"id":"C.pitot-static-blockage","kind":"address","name":"ピトー静圧の詰まりの表","address":"sys.g1000","recalls":["ifr.instr"],"maxLines":2,"basis":"DESIGN 3.2 既知の対・3.3 ifr.instr「詰まりの表は sys.g1000 を 2 行で」","unit":"W15","recallUnits":["W30"],"status":"open","where":null,"by":null,"checkedBy":null,"note":""},
     {"id":"C.compass-errors","kind":"address","name":"コンパスの誤差","address":"sys.compass","recalls":["ifr.partial"],"maxLines":3,"basis":"DESIGN 3.2 既知の対","unit":"W15","recallUnits":["W30"],"status":"open","where":null,"by":null,"checkedBy":null,"note":""},
@@ -29,6 +29,6 @@
     {"id":"C.notam-vs-ais","kind":"distinguish","name":"ノータム（NOTAM）と航空情報（AIP・NOTAM などの総称）","address":"law.special","recalls":[],"distinct":[{"term":"ノータム（NOTAM）","address":"law.special"},{"term":"航空情報","address":"jair.ais"}],"maxLines":null,"basis":"DESIGN 3.5「必ず区別するもの」","unit":"W19","recallUnits":[],"status":"open","where":null,"by":null,"checkedBy":null,"note":"用語の表（FL.terms・W04）でも区別する"},
     {"id":"C.pic-vs-captain","kind":"distinguish","name":"機長（PIC）とキャプテン（職位）・PF と PM","address":"basics.crew","recalls":[],"distinct":[{"term":"機長（PIC）・職位・PF/PM の 3 層","address":"basics.crew"}],"maxLines":null,"basis":"DESIGN 3.5「必ず区別するもの」","unit":"W10","recallUnits":[],"status":"done","where":"flight-lab/src/book-0.js basics.crew（住所。職位のキャプテンと法令上の役割の機長（PIC）を書き分ける）","by":"W10","checkedBy":"R1V","note":"用語の表（FL.terms・W04）でも区別する ／ 統合 P5（2026-10-29）：住所の節ができた（呼び戻す節はない。check-concepts の警告なし） ／ R1V（2026-10-29）：basics.crew が職位（キャプテン・副操縦士）・法令上の役割（機長（PIC））・操作の役割（PF・PM）を書き分け、太字の定義は住所のこの節だけ（check-concepts に警告なし）であることを確かめた。14 CFR 1.1・91.3 と航空法第 73 条の囲みも一次資料と合う"},
     {"id":"C.ceiling-vs-cloudbase","kind":"distinguish","name":"雲高（シーリング）と雲底","address":"wx.metar","recalls":[],"distinct":[{"term":"雲高（シーリング）","address":"wx.metar"},{"term":"雲底","address":"wx.cloud"}],"maxLines":null,"basis":"DESIGN 3.5「必ず区別するもの」","unit":"W17","recallUnits":[],"status":"open","where":null,"by":null,"checkedBy":null,"note":"用語の表（FL.terms・W04）でも区別する"},
-    {"id":"C.weight-units","kind":"distinguish","name":"重量（実務では lb・kg）","address":"aero.forces","recalls":[],"distinct":[{"term":"重量（Weight）","address":"aero.forces"},{"term":"単位と換算","address":"basics.units"}],"maxLines":null,"basis":"DESIGN 3.5「必ず区別するもの」","unit":"W13","recallUnits":[],"status":"open","where":null,"by":null,"checkedBy":null,"note":"用語の表（FL.terms・W04）でも区別する"}
+    {"id":"C.weight-units","kind":"distinguish","name":"重量（実務では lb・kg）","address":"aero.forces","recalls":[],"distinct":[{"term":"重量（Weight）","address":"aero.forces"},{"term":"単位と換算","address":"basics.units"}],"maxLines":null,"basis":"DESIGN 3.5「必ず区別するもの」","unit":"W13","recallUnits":[],"status":"done","where":"drafts/aero.js aero.forces（重量の定義と単位の段落）・思い出そう → basics.units（lb と kg の換算）","by":"W13","checkedBy":null,"note":"用語の表（FL.terms・W04）でも区別する ／ W13（2026-10-30）：章 aero の下書き drafts/aero.js。このパッチは、章を登録するコミットで取り込む"}
   ]
 }

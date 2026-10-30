@@ -27,6 +27,15 @@ import { STATUS, SIGNED, REQUIRED, FILES, ledgerOfId, UNIT, checkPatchFile } fro
 // ---- the plan (DESIGN 3.3) and the original basic course ----------------------------------------------------------
 const { plannedBook, jurItems, kiso } = await import(path.join(HERE, 'src', 'design.mjs'));
 const BOOK = plannedBook();
+// the sections the book has now: a ★ section of DESIGN 3.3 is "not there yet" only while the book does not have it (the
+// chapter units register new sections from R1's P5 on; added by the R2B integrator). Without the book, DESIGN's ★ decides.
+let IN_BOOK = null;
+try {
+  const { loadBook } = await import(path.join(COMBINED, 'tools', 'lib', 'load.mjs'));
+  const { FL } = await loadBook({ extra: false });
+  IN_BOOK = new Set(FL.book.CHAPTERS.flatMap(c => c.secs.map(s => s.id)));
+} catch (e) { notes.push(`the book could not be loaded (${e.message}): DESIGN 3.3's ★ marks decide which sections are not there yet`); }
+const notYet = s => !!BOOK.secs.get(s)?.isNew && !(IN_BOOK && IN_BOOK.has(s));
 const JUR = new Set(jurItems().map(x => x.id));
 const K = kiso();
 const DEST = /^(door:p[0-7]|summary:[a-z0-9]+|written:[a-z0-9]+)$/;
@@ -138,7 +147,7 @@ for (const name of ['JCAB-MAP', 'ACS-MAP']) {
     const at = `${name} ${r.id}`;
     if (!r.sections.length && !r.excluded) { unmapped++; err(at, '節も「対象外（理由）」もない（未対応）'); }
     for (const s of r.sections) if (!BOOK.secs.has(s)) err(at, `節 "${s}" が DESIGN 3.3 の目次にない`);
-    const missing = r.sections.filter(s => BOOK.secs.get(s)?.isNew);
+    const missing = r.sections.filter(notYet);
     if (r.status === 'mapped' && missing.length) err(at, `status mapped なのにまだない節がある（${missing.join('・')}）：open にする`);
     if (r.topicMap) for (const [t, ss] of Object.entries(r.topicMap)) for (const s of ss) if (!r.sections.includes(s)) err(at, `topicMap の「${t}」の ${s} が sections にない`);
   }

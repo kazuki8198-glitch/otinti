@@ -29,7 +29,7 @@ test(`opens: the notes, ${COUNTS.secs} sections in the contents, the chapters in
   assert.deepEqual(await page.evaluate(() => FL.book.CHAPTERS.map(c => c.id)), ORDER);
   assert.equal(await page.evaluate(() => __tb.cur), 'aero.lift');
   assert.equal(await page.evaluate(() => document.getElementById('aero.lift') !== null), true);
-  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '5.2');   // the front part's four chapters first (W09, W10; DESIGN 6.1)
+  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '5.3');   // the front part's four chapters first (W09, W10), then aero.wing before aero.lift (R2; DESIGN 6.1)
   assert.match(await page.locator('#tbToc .bk-item.sel').innerText(), /✓|揚力/);
   assert.ok(await page.locator('#tbView .tb-note').count() === 1);
   // the next section, the URL follows (replaceState)
@@ -163,13 +163,13 @@ test(`the whole book (#all): ${COUNTS.chapters} chapters, ${COUNTS.quiz} questio
   });
   assert.equal(imgs.length, COUNTS.photos);
   for (const [src, w, links] of imgs) { assert.equal(src, 'data:image/webp;base64'); assert.ok(w > 0, 'decoded'); assert.equal(links, 2); }
-  // print: the "考えてみよう" boxes open, then close again
+  // print: the "考えてみよう" boxes and the folds (もっと深く・計算演習: bk.deep, bk.drill) open, then close again
   const closed = await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length);
-  assert.equal(closed, COUNTS.details);
+  assert.equal(closed, COUNTS.details + COUNTS.folds);
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), 0);
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
-  assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), COUNTS.details);
+  assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), COUNTS.details + COUNTS.folds);
   await page.emulateMedia({ media: 'print' });
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.bk-fig')).backgroundColor), BOARD);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.tb-head')).display), 'none');

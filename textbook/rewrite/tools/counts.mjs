@@ -11,5 +11,5 @@ const BK = ctx.FL.book, secs = BK.CHAPTERS.flatMap(c => c.secs), sum = k => BK.C
 const html = secs.map(s => BK.html(s)).join('\n');
 const c = { parts: BK.PARTS.length, chapters: BK.CHAPTERS.length, secs: secs.length, quiz: sum('quiz'), terms: sum('terms'), examples: sum('examples'), cautions: sum('cautions'), refs: sum('refs'), lessons: sum('lessons'),
   figs: (html.match(/<figure class="bk-fig"><svg /g) || []).length, photos: (html.match(/<figure class="bk-photo"/g) || []).length, calcs: (html.match(/data-calc="/g) || []).length,
-  simTags: (html.match(/<div class="bk-sim">[\s\S]*?<\/div>/g) || []).reduce((a, b) => a + (b.match(/data-lesson=/g) || []).length, 0), details: (html.match(/<details class="bk-q">/g) || []).length };
+  simTags: (html.match(/<div class="bk-sim">[\s\S]*?<\/div>/g) || []).reduce((a, b) => a + (b.match(/data-lesson=/g) || []).length, 0), details: (html.match(/<details class="bk-q">/g) || []).length, folds: (html.match(/<details class="bk-(?:deep|drill)">/g) || []).length };
 console.log('export const COUNTS = ' + JSON.stringify(c).replace(/"(\w+)":/g, '$1: ').replace(/,/g, ', ') + ';');

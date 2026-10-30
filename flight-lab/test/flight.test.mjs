@@ -411,15 +411,17 @@ test('syllabus: the stall lessons teach the AFH recovery order, as the textbook 
   }
   assert.match(plain(SC.lesson('a7').brief.join('')), /③出力を必要なだけ足す（ここではフルパワーでゴーアラウンド）/);
   assert.match(plain(SC.lesson('a8').brief.join('')), /③出力は必要なだけ足す（もう全開なので、全開を確かめる）/);
-  // the recovery step (a7, a8 and the check c1): the same words in the same order, the same grading as before
+  // the recovery step (a7, a8 and the check c1): the same words in the same order. The grading: a secondary stall fails; the
+  // altitude lost is a reference row that never fails (the owner's decision 11, DECISIONS.md; TEST-CONSTANTS.md)
   for (const id of ['a7', 'a8', 'c1']) {
     const r = recovery(id);
     assert.ok(r, `${id}: a recovery step`);
     inOrder(r.say, ['①機首を下げて迎え角を減らす', '②翼を水平', '③出力を必要なだけ', '④速度が付いたら元の経路'], `${id} say`);
     inOrder(r.g, ['W で機首を水平線付近', '失速警報が止まるまで', 'A / D で翼を水平', 'R で出力を足す', '上昇姿勢'], `${id} g`);
     const rows = r.result({ level: { k: 1 } }, { start: 3000, min: 2750, second: false });
-    assert.deepEqual(rows.map(x => [x.name, x.std, x.pass]), [['回復で失った高度', '300 ft 以内', true], ['二次失速', 'なし', true]], `${id}: grading`);
-    assert.equal(r.result({ level: { k: 1 } }, { start: 3000, min: 2650, second: true }).some(x => x.pass), false, `${id}: 350 ft and a secondary stall fail`);
+    assert.deepEqual(rows.map(x => [x.name, x.std, x.pass]), [['回復で失った高度（参考）', '参考：合否に使わない（目安 300 ft）', true], ['二次失速', 'なし', true]], `${id}: grading`);
+    assert.ok(r.result({ level: { k: 1 } }, { start: 3000, min: 2400, second: false }).every(x => x.pass), `${id}: 600 ft lost alone does not fail`);
+    assert.deepEqual(r.result({ level: { k: 1 } }, { start: 3000, min: 2650, second: true }).map(x => x.pass), [true, false], `${id}: a secondary stall fails`);
   }
   // the textbook says the same order (the lesson links these sections)
   inOrder(BK.text(BK.findSection('aero.stall').sec), ['まず自動操縦を切', '迎え角を減ら', '翼を水平', '出力を必要'], 'aero.stall');

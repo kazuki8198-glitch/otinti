@@ -27,6 +27,11 @@
 //    cgTail         aero.stab    (重量（重心）)
 //    liftFlow       aero.lift    (ERRATA T.aero.T-10 in the figure too: 「下面の圧力は上がる」 → 上面の圧力が下面より低い — the
 //                                text was fixed in R1 (W07a), the label and the caption were not)
+//  revise-aero (2026-10-30, reports/revise-aero.md) added and changed:
+//    vn             aero.vn      REDRAWN as a schematic (expert-aero E-M1): the POH's VO left of the corner VS√n, no speed scale
+//    dihedralSlip   aero.stab    NEW (reader-aero B1): dihedral works through the sideslip (PHAK 25C chapter 5, figure 5-29)
+//    powerCurve (power available lowered and named 利用馬力), spinSpiral (the descending wing more deeply stalled: AC 61-67C;
+//    the caption says which row is the POH's), gustEnvelope (「数値は目安」, VA/VC/VD named), forces (教材値 in the caption)
 // Figures before a term's definition use the word only where the chapter's first use 「正式名（通称、English）」 comes earlier
 // in the text (STYLE「用語」: the checker reads the figures' words too).
 (function (FL) {
@@ -84,7 +89,7 @@
       s += A(206, 140, 206, 230, C.mut, 4) + T(214, 222, '重量（Weight）', { c: C.mut, b: 1, a: 'start', fs: 14 }) + T(214, 240, '機体・燃料・人・荷物の重さ', { c: C.ink, a: 'start', fs: 12 });
       s += A(284, 132, 340, 132, C.am, 4) + T(392, 116, '推力（Thrust）', { c: C.am, b: 1, a: 'end', fs: 14 }) + T(392, 156, 'プロペラが前へ引く', { c: C.ink, a: 'end', fs: 12 });
       s += A(116, 132, 60, 132, C.rd, 4) + T(8, 116, '抗力（Drag）', { c: C.rd, b: 1, a: 'start', fs: 14 }) + T(8, 156, '空気の抵抗', { c: C.ink, a: 'start', fs: 12 });
-      return svg(400, 252, s, '図：飛んでいる飛行機に働く 4 つの力。高度も速度も変わらない水平飛行では、揚力＝重量、推力＝抗力でつり合っています（矢印の長さは模式的。巡航では揚力は抗力の約 9 倍）');
+      return svg(400, 252, s, '図：飛んでいる飛行機に働く 4 つの力。高度も速度も変わらない水平飛行では、揚力＝重量、推力＝抗力でつり合っています（矢印の長さは模式的。巡航では揚力は抗力の約 9 倍：教材値）');
     },
     turnForces() {
       // seen from behind, banked 30° to the right: the lift tilts with the wings; its upward part holds the weight up,
@@ -223,15 +228,15 @@
     powerCurve() {
       const W = 400, H = 290, m = { l: 46, r: 16, t: 26, b: 40 }, vmax = 1.78, pmax = 6.2;
       const X = v => m.l + v / vmax * (W - m.l - m.r), Y = p => H - m.b - p / pmax * (H - m.t - m.b);
-      const Pr = v => v ** 3 + 1 / v, vs = 0.56, vmp = 3 ** -0.25, avail = v => 5.1 - 0.5 * (v - 0.9) ** 2;
+      const Pr = v => v ** 3 + 1 / v, vs = 0.56, vmp = 3 ** -0.25, avail = v => 4.6 - 1.3 * (v - 1.25) ** 2;   // revise-aero: lower, so it clears the labels; its excess over Pr is largest between VMP and L/D max
       let s = L(m.l, H - m.b, W - m.r, H - m.b, C.mut, 1.5) + L(m.l, m.t, m.l, H - m.b, C.mut, 1.5);
       s += T((m.l + W - m.r) / 2, H - 10, '速度 →', { c: C.mut, fs: 12 }) + T(16, (m.t + H - m.b) / 2, '必要パワー（＝抗力×速度）→', { c: C.mut, fs: 12, rot: -90 });
       // the region of reversed command (stall → minimum power) and the normal region
       s += `<rect x="${X(vs).toFixed(1)}" y="${m.t}" width="${(X(vmp) - X(vs)).toFixed(1)}" height="${H - m.b - m.t}" fill="${C.rd}" fill-opacity="0.13"/>`;
       s += L(X(vs), m.t, X(vs), H - m.b, C.rd, 1.4, '4 3') + T(X(vs) - 3, H - m.b + 15, '失速', { c: C.rd, fs: 12, a: 'middle' });
-      const curve = []; for (let v = vs; v <= 1.72; v += 0.01) curve.push([X(v), Y(Pr(v))]);
+      const curve = []; for (let v = vs; v <= 1.66; v += 0.01) curve.push([X(v), Y(Pr(v))]);
       const av = []; for (let v = 0.5; v <= 1.74; v += 0.02) av.push([X(v), Y(avail(v))]);
-      s += P(av, C.am, 2, 'none', '7 4') + T(X(1.7), Y(avail(1.6)) + 20, '使えるいちばん大きいパワー', { c: C.am, fs: 12, a: 'end', halo: 1 });
+      s += P(av, C.am, 2, 'none', '7 4') + T(X(1.05), Y(avail(1.05)) - 10, '使えるパワー（利用馬力）', { c: C.am, b: 1, fs: 12, halo: 1 });
       s += P(curve, C.cy, 3);
       // tangent from the origin: L/D max (power/speed least = drag least)
       s += L(X(0), Y(0), X(1.32), Y(2.64), C.gr, 1.4, '5 4') + `<circle cx="${X(1).toFixed(1)}" cy="${Y(2).toFixed(1)}" r="5" fill="${C.gr}"/>`;
@@ -241,7 +246,7 @@
       s += T(X((vs + vmp) / 2), m.t + 16, '逆操作域', { c: C.rd, b: 1, fs: 12 }) + T(X((vs + vmp) / 2), m.t + 32, '遅いほど多くのパワー', { c: C.ink, fs: 12 });
       s += T(X(1.42), m.t + 16, '通常の操作域', { c: C.cy, b: 1, fs: 12 }) + T(X(1.42), m.t + 32, '速いほど多くのパワー', { c: C.ink, fs: 12 });
       s += T(X(1.5), Y(Pr(1.5)) + 26, '必要パワー', { c: C.cy, b: 1, a: 'start', fs: 12, halo: 1 });
-      return svg(W, H, s, '図：速度と必要パワー（模式図。数値は特定の機体のものではない）。水平飛行を続けるのに要るパワーは、ある速度で最小になります。それより遅い側（赤い帯）では、遅くするほど多くのパワーが要ります（逆操作域）。原点からの線が曲線に接する点が、揚抗比が最大の速度です');
+      return svg(W, H, s, '図：速度と必要パワー（模式図。数値は特定の機体のものではない）。水平飛行を続けるのに要るパワーは、ある速度で最小になります。それより遅い側（赤い帯）では、遅くするほど多くのパワーが要ります（逆操作域）。原点からの線が曲線に接する点が、揚抗比が最大の速度です（線の傾き＝パワー ÷ 速度＝抗力が最小）。破線は使えるパワーで、2 本の差が余剰パワーです');
     },
     // aero.power — ch01-fig8 redrawn: the forces in a power-off glide and the glide triangle (angles drawn large)
     glideTriangle() {
@@ -296,6 +301,50 @@
       s += T(200, 196, '3 つとも、最初は元へ戻る向きに動く（正の静安定）', { c: C.ink, fs: 12 });
       return svg(400, 206, s, '図：動安定（ずれたあとの揺れが、時間とともにどうなるか。数学の例で、実際の機体の測定ではない）。3 つとも最初は元へ戻る向きに動きますが、揺れが小さくなるのは左の「減衰する」だけです');
     },
+    // aero.vn — redrawn by revise-aero as a SCHEMATIC (expert-aero E-M1): the POH's VO lies at or left of the corner where the
+    // stall line meets +3.8 G (old 14 CFR 23.1507: VO ≤ VS√n; VS is a computed stalling speed, so the corner is not drawn from the
+    // 50 KIAS indicated value and the speed axis has no scale). Load factors are the POH's normal category (+3.8 / −1.5).
+    vn() {
+      const W = 400, H = 280, m = { l: 44, r: 12, t: 30, b: 38 }, v1 = 3.1, nLo = -2, nHi = 4.6, nP = 3.8, nN = -1.5;
+      const X = v => m.l + v / v1 * (W - m.l - m.r), Y = n => H - m.b - (n - nLo) / (nHi - nLo) * (H - m.t - m.b);
+      const vs = 1, corner = vs * Math.sqrt(nP), vo = 1.85, vno = 2.4, vne = 2.95, vsN = 1.07, vn = vsN * Math.sqrt(-nN);
+      let s = L(m.l, Y(0), W - m.r, Y(0), C.mut, 1.2) + L(m.l, m.t, m.l, H - m.b, C.mut, 1.2);
+      for (const [n, t] of [[0, '0'], [1, '1'], [nP, '+3.8'], [nN, '−1.5']]) s += T(m.l - 6, Y(n) + 4, t, { c: C.mut, fs: 12, a: 'end' });
+      s += T(14, (m.t + H - m.b) / 2, '荷重倍数 n（G）', { c: C.mut, fs: 12, rot: -90 }) + T((m.l + W - m.r) / 2, H - 8, '速度 →（模式図。目盛りなし）', { c: C.mut, fs: 12 });
+      // guides from the axis to the limit lines
+      s += L(m.l, Y(nP), X(corner), Y(nP), C.rd, 1, '3 4') + L(m.l, Y(nN), X(vn), Y(nN), C.rd, 1, '3 4');
+      // the envelope: the stall line up to the corner, +3.8 to VNE, −1.5 back to the negative stall line
+      const up = []; for (let v = 0; v <= corner; v += 0.02) up.push([X(v), Y((v / vs) ** 2)]);
+      up.push([X(corner), Y(nP)]);
+      const dn = []; for (let v = vn; v >= 0; v -= 0.02) dn.push([X(v), Y(-((v / vsN) ** 2))]);
+      const env = [...up, [X(vne), Y(nP)], [X(vne), Y(nN)], [X(vn), Y(nN)], ...dn, [X(0), Y(0)]];
+      s += P(env, C.cy, 2, 'rgba(95,212,255,.10)');
+      // the operating speeds (POH): VO left of the corner, VNO, VNE
+      for (const [v, t, c] of [[vo, 'VO', C.gr], [vno, 'VNO', C.am], [vne, 'VNE', C.rd]]) s += L(X(v), Y(nP) - 4, X(v), Y(nN), c, 1.4, '4 3') + T(X(v), 22, t, { c, b: 1, fs: 12 });
+      // the corner and 1 G at VS1
+      s += `<circle cx="${X(corner).toFixed(1)}" cy="${Y(nP).toFixed(1)}" r="4" fill="${C.ink}"/>` + T(X(corner) - 14, Y(nP) + 12, '失速速度 × √3.8 の角 →', { c: C.ink, fs: 12, a: 'end', halo: 1 });
+      s += `<circle cx="${X(vs).toFixed(1)}" cy="${Y(1).toFixed(1)}" r="3.5" fill="${C.ink}"/>` + T(X(vs) + 7, Y(1) + 16, '1 G で失速（VS1）', { c: C.ink, fs: 12, a: 'start', halo: 1 });
+      s += T(m.l + 6, Y(nP) - 7, '制限荷重倍数（POH の普通類）', { c: C.rd, b: 1, fs: 12, a: 'start', halo: 1 }) + T(X(2.15), Y(nN) + 16, '−の制限荷重倍数', { c: C.rd, b: 1, fs: 12, halo: 1 });
+      s += T(X(0.45), Y(2.4), '失速', { c: C.ink, b: 1, fs: 12, halo: 1 }) + T(X(2.13), Y(1.3), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 });
+      return svg(W, H, s, '図：V-n 線図の模式図（Archer III の POH の普通類の制限荷重倍数 +3.8 G／−1.5 G）。曲線の左は失速です。失速の線は、失速速度 × √3.8 の角で +3.8 G の線に届きます。POH の VO（最大運用運動速度）は、この角より左（遅い側）にあります。上と下の線を超えると、機体が変形・損傷する危険があります');
+    },
+    // aero.stab — new (reader-aero B1; DESIGN 3.3 names ch01-fig13 for this section): dihedral works through the sideslip
+    dihedralSlip() {
+      const cx = 200, cy = 118, bank = 20;
+      let s = T(12, 22, '後ろから見た図（突風で右へ傾いた）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += planeFront(cx, cy, 1.6, { bank, gear: false });
+      // the sideslip toward the lower (right) wing: the air comes from the right
+      for (const y of [146, 166]) s += A(392, y, 334, y, C.cy, 2.5);
+      s += T(392, 132, '横滑りの風', { c: C.cy, b: 1, a: 'end', fs: 12, halo: 1 });
+      // lift: more on the lower wing, less on the upper wing
+      s += A(270, 142, 262, 70, C.gr, 4) + T(258, 64, '揚力が増える', { c: C.gr, b: 1, a: 'end', fs: 12, halo: 1 });
+      s += A(132, 100, 136, 64, C.gr, 2.5) + T(132, 52, '揚力が減る', { c: C.gr, b: 1, fs: 12, halo: 1 });
+      s += T(300, 196, '下がった翼', { c: C.ink, fs: 12, halo: 1 }) + T(300, 212, '迎え角が大きくなる', { c: C.ink, fs: 12, halo: 1 }) + T(132, 140, '上がった翼', { c: C.ink, fs: 12, halo: 1 });
+      // the airplane rolls back toward wings level
+      s += ARC(cx, cy, 150, 206, 186, C.vi, 2.5) + T(14, 124, '水平へ戻る', { c: C.vi, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += `<rect x="12" y="222" width="376" height="28" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 241, '横滑りで、下がった翼の迎え角が増え、水平へ戻る', { c: C.gr, b: 1, fs: 12 });
+      return svg(400, 258, s, '図：上反角が横安定を生むしくみ（後ろから見た模式図）。機体が右へ傾くと、下がった右の翼の側へ横滑りし、横から風が当たります。上反角があると、下がった翼の迎え角が大きくなって揚力が増え、上がった翼は揚力が減るので、機体は水平へ戻ります（PHAK 第 5 章）');
+    },
     // aero.spin — new: spin and spiral dive side by side (AFH 3C chapter 5)
     spinSpiral() {
       let s = T(104, 22, 'スピン', { c: C.rd, b: 1, fs: 14 }) + T(296, 22, 'スパイラル', { c: C.am, b: 1, fs: 14 });
@@ -304,14 +353,14 @@
       for (let t = 0; t <= 3.2; t += 0.02) { cork.push([104 + 16 * Math.sin(t * 2 * Math.PI), 40 + t * 30 + 5 * Math.cos(t * 2 * Math.PI)]); wide.push([296 + (52 - t * 10) * Math.sin(t * 1.6 * Math.PI), 40 + t * 30 + 12 * Math.cos(t * 1.6 * Math.PI)]); }
       s += P(cork, C.rd, 2.2) + P(wide, C.am, 2.2);
       s += A(104, 128, 104, 142, C.rd, 2.5) + A(296, 128, 296, 142, C.am, 2.5);
-      const rows = [['翼', 'どちらかが失速している', '失速していない'], ['速度', '低く、ほぼ一定', 'どんどん増える'], ['回復の最初', '方向舵を回転と反対へ', '出力を絞り、少し押す']];
+      const rows = [['翼', '下がる翼がより深く失速', '失速していない'], ['速度', '低く、ほぼ一定', 'どんどん増える'], ['回復の最初', '方向舵を回転と反対へ', '出力を絞り、少し押す']];
       rows.forEach(([k, a, b], i) => {
         const y = 168 + i * 30;
         s += `<rect x="8" y="${y - 16}" width="384" height="26" rx="5" fill="${i % 2 ? C.bg : 'rgba(150,176,206,.08)'}"/>`;
         s += T(200, y + 1, k, { c: C.mut, b: 1, fs: 12 }) + T(104, y + 1, a, { c: C.ink, fs: 12 }) + T(296, y + 1, b, { c: C.ink, fs: 12 });
       });
       s += `<rect x="8" y="${168 + 3 * 30 - 12}" width="384" height="26" rx="6" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(200, 168 + 3 * 30 + 6, '回る向きは旋回傾斜計で見る（すべり計の玉は使わない）', { c: C.cy, b: 1, fs: 12 });
-      return svg(400, 276, s, '図：スピンとスパイラルの違い（AFH 第 5 章から）。スピンは少なくとも片方の翼が失速したまま、速度が低く一定のまま回って落ちます。スパイラルは翼が失速しておらず、速度と荷重倍数がどんどん増えます。回復の手順が違うので、まず見分けます');
+      return svg(400, 276, s, '図：スピンとスパイラルの違い（AFH 第 5 章・AC 61-67C と Archer の POH から。スピンの回復の最初は Archer の POH の手順、スパイラルは AFH の型）。スピンは少なくとも片方の翼が失速したまま、速度が低く一定のまま回って落ちます。スパイラルは翼が失速しておらず、速度と荷重倍数がどんどん増えます。回復の手順が違うので、まず見分けます');
     },
     // aero.struct — new: the maneuvering envelope and the gust lines (schematic; the shape of the old 14 CFR 23.333, no numbers)
     gustEnvelope() {
@@ -334,8 +383,8 @@
       s += T(X(1.9), Y(nP) - 8, '＋制限荷重倍数', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(X(2.2), Y(nN) + 18, '－制限荷重倍数', { c: C.cy, b: 1, fs: 12, halo: 1 });
       s += T(X(0.5), Y(2.6), '失速', { c: C.ink, b: 1, fs: 12, halo: 1 });
       s += T(X(2.0), Y(1.55), '運動包囲線図', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(X(3.05), Y(-1.1), '突風の線', { c: C.am, b: 1, fs: 12, halo: 1 });
-      s += T(W - m.r, 18, '模式図（数値なし）', { c: C.am, b: 1, a: 'end', fs: 12 }) + T((m.l + W - m.r) / 2 - 30, H - 6, '速度（等価対気速度）→', { c: C.mut, fs: 12 });
-      return svg(W, H, s, '図：運動包囲線図（青）と突風の線（橙の破線）の模式図。運動包囲線図は、失速の線と制限荷重倍数の線で囲まれた、操縦でかかる荷重の範囲です。突風の線は、決めた強さの上向き・下向きの突風を受けたときの荷重倍数で、速いほど大きくなります。設計は両方を囲む範囲で強さを確かめます');
+      s += T(W - m.r, 18, '模式図（数値は目安）', { c: C.am, b: 1, a: 'end', fs: 12 }) + T((m.l + W - m.r) / 2 - 30, H - 6, '速度（等価対気速度）→', { c: C.mut, fs: 12 });
+      return svg(W, H, s, '図：運動包囲線図（青）と突風の線（橙の破線）の模式図。運動包囲線図は、失速の線と制限荷重倍数の線で囲まれた、操縦でかかる荷重の範囲です。突風の線は、決めた強さの上向き・下向きの突風を受けたときの荷重倍数で、速いほど大きくなります。設計は両方を囲む範囲で強さを確かめます。VA は設計運動速度、VC は設計巡航速度、VD は設計急降下速度です');
     },
   });
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

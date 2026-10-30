@@ -428,42 +428,6 @@
       s += T(200, yb + 12, '下へ行くほど短く、使う言葉が決まっている', { c: C.mut, fs: 12 });
       return svg(400, yb + 22, s, '図：3 つの場面と話し方の例。授業ではふつうの英語でていねいに、操縦席の操縦教員には短くはっきり、管制との無線では意味の決まった言葉で話します。どの場面でも、分からないときは推測せずに聞き直します');
     },
-    forces() {
-      // the course's Archer in cruise (110 KIAS, sea level): lift = weight ≈ 10,300 N, drag ≈ 1,160 N — drawn about 9 : 1 would hide
-      // thrust and drag, so they are drawn shorter but not to scale (the caption says so)
-      let s = planeSide(200, 132, 1.5, { gear: false });
-      s += A(206, 124, 206, 34, C.gr, 4) + T(214, 40, '揚力（Lift）', { c: C.gr, b: 1, a: 'start', fs: 14 }) + T(214, 58, '翼が空気から受ける上向きの力', { c: C.ink, a: 'start', fs: 12 });
-      s += A(206, 140, 206, 230, C.mut, 4) + T(214, 222, '重力（Weight）', { c: C.mut, b: 1, a: 'start', fs: 14 }) + T(214, 240, '機体・燃料・人・荷物の重さ', { c: C.ink, a: 'start', fs: 12 });
-      s += A(284, 132, 340, 132, C.am, 4) + T(392, 116, '推力（Thrust）', { c: C.am, b: 1, a: 'end', fs: 14 }) + T(392, 156, 'プロペラが前へ引く', { c: C.ink, a: 'end', fs: 12 });
-      s += A(116, 132, 60, 132, C.rd, 4) + T(8, 116, '抗力（Drag）', { c: C.rd, b: 1, a: 'start', fs: 14 }) + T(8, 156, '空気の抵抗', { c: C.ink, a: 'start', fs: 12 });
-      return svg(400, 252, s, '図：飛んでいる飛行機に働く 4 つの力。高度も速度も変わらない水平飛行では、揚力＝重力、推力＝抗力でつり合っています（矢印の長さは模式的。巡航では揚力は抗力の約 9 倍）');
-    },
-    liftFlow() {
-      // a cambered airfoil (NACA 2412 shape) at a small angle of attack; the air bends up a little ahead of it and is
-      // turned downward behind it (drawn exaggerated so it can be seen)
-      const t = 0.12, m = 0.02, pp = 0.4, aoa = 7 * DEG, x0 = 112, y0 = 128, ch = 180, dw = 13 * DEG;
-      const yt = x => 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4);
-      const yc = x => x < pp ? m / (pp * pp) * (2 * pp * x - x * x) : m / ((1 - pp) ** 2) * (1 - 2 * pp + 2 * pp * x - x * x);
-      const tr = (x, y) => [x0 + x * ch * Math.cos(aoa) + y * ch * Math.sin(aoa), y0 + x * ch * Math.sin(aoa) - y * ch * Math.cos(aoa)];
-      const up = [], lo = [];
-      for (let i = 0; i <= 40; i++) { const x = (1 - Math.cos(Math.PI * i / 40)) / 2; up.push(tr(x, yc(x) + yt(x))); lo.push(tr(x, yc(x) - yt(x))); }
-      const xTE = x0 + ch * Math.cos(aoa), yTE = y0 + ch * Math.sin(aoa);
-      // the middle line of the flow: level far ahead, a little upwash before the leading edge, along the wing, downward behind
-      const mid = x => x < x0 ? y0 - 10 * Math.exp(-(((x - x0) / 40) ** 2)) : x <= xTE ? y0 - 10 * (1 - (x - x0) / (xTE - x0)) + (x - x0) * Math.tan(aoa) : yTE + (x - xTE) * Math.tan(dw) * Math.exp(-(x - xTE) / 220);
-      const thick = x => { const u = clamp(((x - x0) / (ch * Math.cos(aoa)) + 0.12) / 1.12, 0, 1); return t * ch * 0.55 * Math.sin(Math.PI * u) ** 0.8; };
-      let s = '';
-      for (const off of [-78, -50, -24, 26, 52, 80]) {
-        const d = Math.exp(-Math.abs(off) / 70), pts = [];
-        for (let x = 6; x <= 394; x += 4) pts.push([x, y0 + off * 0.9 + (mid(x) - y0) * d + (off < 0 ? -1 : 1) * thick(x) * d * 0.9]);
-        s += P(pts, C.cy, 1.4);
-      }
-      s += P([...up, ...lo.reverse()], C.ink, 1.2, PLANE);
-      s += A(10, 22, 70, 22, C.cy, 2) + T(76, 27, '相対風（前から来る空気）', { c: C.cy, a: 'start', fs: 12, halo: 1 });
-      s += T(150, 86, '上面：圧力が低い', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(150, 186, '下面：圧力が高い', { c: C.am, b: 1, fs: 13, halo: 1 });
-      s += A(214, 126, 214, 58, C.gr, 4) + T(224, 62, '揚力', { c: C.gr, b: 1, a: 'start', fs: 15, halo: 1 });
-      s += A(318, 166, 352, 206, C.vi, 3) + T(392, 226, '空気を下へ曲げる', { c: C.vi, b: 1, a: 'end', fs: 12, halo: 1 }) + T(392, 242, '（吹き下ろし）', { c: C.vi, a: 'end', fs: 12, halo: 1 });
-      return svg(400, 252, s, '図：翼が揚力を生むしくみ。翼は前から来る空気を下へ曲げ、その反作用で上へ押されます。このとき上面の圧力は下がり、下面の圧力は上がります');
-    },
     aoa() {
       // two panels: a climb and a descent with the same angle of attack (angles exaggerated so they can be seen)
       const wedge = (cx, cy, r, a0, a1, c, op) => { const p = a => [cx + r * Math.cos(-a * DEG), cy + r * Math.sin(-a * DEG)], [x0, y0] = p(a0), [x1, y1] = p(a1);
@@ -615,42 +579,6 @@
       leg.forEach(([c, t, l1, l2], i) => { const y = 34 + i * 58; s += `<rect x="246" y="${y - 11}" width="16" height="10" fill="${c}"/>` + T(268, y, t, { c, b: 1, a: 'start', fs: 13 }) + T(246, y + 18, l1, { c: C.ink, a: 'start', fs: 12 }) + T(246, y + 34, l2, { c: C.ink, a: 'start', fs: 12 }); });
       return svg(400, 260, s, `図：速度計の色の帯（この教材の Archer の値）。白はフラップを使える範囲、緑は通常の範囲、黄色は穏やかな空気のときだけ使う範囲、赤い線は超えてはいけない速度です。針は進入速度 ${v.appr} kt`);
     },
-    vn() {
-      // a normal-category V-n diagram (+3.8 G / −1.5 G, the Archer III POH), the speeds from the course's Archer (FL.physics).
-      // The stall line goes through Vs1 at 1 G (n = (V / Vs1)², the POH's 50 KIAS) and meets +3.8 G at Vs1·√3.8 ≈ 97 kt; the POH's
-      // Va (VO) 113 KIAS lies above that corner — the old 14 CFR 23.335(c) asks only that VA be not less than VS·√n (VS a computed
-      // stalling speed, design speeds in EAS), so the figure marks both and the caption says why
-      const v = ac('pa28').v, W = 400, H = 280, nP = 3.8, nN = -1.5;
-      const f = frame(W, H, 0, 170, -2, 4.6, [0, 40, 80, 120, 160], [-2, -1, 0, 1, 2, 3, 4], '指示対気速度（kt）', '荷重倍数 n（G）', { l: 44, r: 12, t: 30, b: 38 });
-      const va = v.va, vs = v.s1, vc = vs * Math.sqrt(nP), vsN = vs * 1.07;   // the stall line through Vs1 at 1 G; the negative side a schematic
-      const up = []; for (let x = 0; x <= vc; x += 1) up.push([f.X(x), f.Y((x / vs) ** 2)]);
-      const xn = Math.sqrt(-nN) * vsN, dn = []; for (let x = 0; x <= xn; x += 1) dn.push([f.X(x), f.Y(-((x / vsN) ** 2))]);
-      let s = f.s + L(f.X(0), f.Y(0), f.X(170), f.Y(0), C.mut, 1);
-      s += `<path d="M${f.X(0)} ${f.Y(0)} ${up.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${f.X(vc).toFixed(1)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nN)} L${f.X(xn)} ${f.Y(nN)} ${dn.reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.1)" stroke="${C.cy}" stroke-width="2"/>`;
-      s += L(f.X(v.no), f.Y(nP), f.X(v.no), f.Y(nN), C.am, 1.4, '4 3') + T(f.X(v.no) - 4, 20, `Vno ${v.no}`, { c: C.am, fs: 12, b: 1, a: 'end' }) + T(f.X(v.ne) + 6, 20, `Vne ${v.ne}`, { c: C.rd, fs: 12, b: 1, a: 'end' });
-      s += L(f.X(va), f.Y(nP), f.X(va), f.Y(0), C.gr, 1.4, '4 3') + T(f.X(va) + 5, f.Y(2.65), `Va ${va}`, { c: C.gr, fs: 12, b: 1, a: 'start', halo: 1 });
-      // Vs1 at 1 G and the corner where the stall line meets the limit load factor
-      s += `<circle cx="${f.X(vs).toFixed(1)}" cy="${f.Y(1)}" r="3.5" fill="${C.ink}"/>` + T(f.X(vs) + 6, f.Y(1) + 15, `1 G で Vs1 ${vs}`, { c: C.ink, fs: 12, a: 'start', halo: 1 });
-      s += `<circle cx="${f.X(vc).toFixed(1)}" cy="${f.Y(nP)}" r="3.5" fill="${C.ink}"/>` + T(f.X(vc) + 6, f.Y(nP) + 16, `約 ${Math.round(vc)} kt`, { c: C.ink, fs: 12, a: 'start', halo: 1 });
-      s += T(f.X(22), f.Y(2.4), '失速', { c: C.ink, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(1.5), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 }) + T(f.X(104), f.Y(nP) - 6, `+${nP} G（制限荷重倍数）`, { c: C.rd, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(nN) + 18, `−${-nN} G`, { c: C.rd, fs: 12, b: 1, halo: 1 });
-      return svg(W, H, s, `図：V-n 線図（Archer III の POH の普通類の制限荷重倍数 +${nP} G／−${-nN} G。速度も Archer の値）。曲線の左は失速です。失速の線は 1 G で Vs1 ${vs} kt を通り、約 ${Math.round(vc)} kt（${vs}×√${nP}）で +${nP} G に届きます。上と下の線（制限荷重倍数）を超えると、機体が変形・損傷する危険があります（制限の 1.5 倍の終極荷重を超えると壊れる危険）。POH の Va ${va} kt（最大重量）は約 ${Math.round(vc)} kt より大きい値です。米国の設計の規則は、Va を「失速速度×√制限荷重倍数」より小さくしないことだけを求めます（旧 14 CFR 23.335(c)。設計の速度は等価対気速度、失速速度は計算の値）。Va は軽いほど小さくなります`);
-    },
-    turnForces() {
-      // seen from behind, banked 30° to the right: the lift tilts with the wings; its upward part holds the weight up,
-      // its sideways part pulls the airplane round the turn
-      const bank = 30, n = 1 / Math.cos(bank * DEG), Wp = 96, Lp = Wp * n, cx = 160, cy = 172;
-      const lx = cx + Lp * Math.sin(bank * DEG), ly = cy - Lp * Math.cos(bank * DEG);
-      let s = T(12, 22, '後ろから見た図（右へ 30° バンク）', { c: C.ink, b: 1, a: 'start', fs: 13 });
-      s += planeFront(cx, cy, 1.5, { bank, gear: false });
-      s += L(cx, cy, cx, ly, C.gr, 1.5, '5 4') + L(cx, ly, lx, ly, C.gr, 1.5, '5 4');
-      s += A(cx, cy, lx, ly, C.gr, 4) + A(cx, cy, cx, cy + Wp, C.mut, 4) + A(cx, cy + 1, lx, cy + 1, C.am, 3.5);
-      s += ARC(cx, cy, 64, -90, -90 + bank, C.vi, 2, false) + T(cx + 22, cy - 70, `${bank}°`, { c: C.vi, b: 1, fs: 13, halo: 1 });
-      s += T(lx + 6, ly - 6, `揚力（${n.toFixed(2)} 倍）`, { c: C.gr, b: 1, a: 'start', fs: 13, halo: 1 }) + T(cx - 8, ly + 22, '上向きの分', { c: C.gr, b: 1, a: 'end', fs: 12, halo: 1 }) + T(cx - 8, ly + 38, '＝重力を支える', { c: C.gr, a: 'end', fs: 12, halo: 1 });
-      s += T(lx + 10, cy - 30, '横向きの分', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 }) + T(lx + 10, cy - 14, '＝旋回の中心へ引く力', { c: C.am, a: 'start', fs: 12, halo: 1 });
-      s += T(cx + 8, cy + Wp - 4, '重力', { c: C.mut, b: 1, a: 'start', fs: 13, halo: 1 }) + T(392, cy + 20, '旋回の中心 →', { c: C.am, a: 'end', fs: 12 });
-      s += `<rect x="12" y="282" width="376" height="30" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 302, `高度を保つには揚力を ${n.toFixed(2)} 倍に＝荷重倍数 ${n.toFixed(2)} G`, { c: C.gr, b: 1, fs: 13 });
-      return svg(400, 320, s, `図：旋回の力。機体を傾けると揚力も傾き、その横向きの分で曲がります。上向きの分が減るので、高度を保つには揚力を増やします（30° バンクで ${n.toFixed(2)} 倍）`);
-    },
     turnTable() {
       return table(['バンク角', '荷重倍数', '失速速度の増加', '100 kt での旋回率', '100 kt での旋回半径'], [10, 20, 30, 45, 60, 75].map(b => {
         const tn = Math.tan(b * DEG), n = 1 / Math.cos(b * DEG);
@@ -677,19 +605,6 @@
       box.forEach(([t, sub], i) => { const y = 30 + i * 66; s += `<rect x="226" y="${y - 17}" width="168" height="60" rx="7" fill="${C.vi}" fill-opacity="0.1" stroke="${C.vi}"/>` + T(234, y, t, { c: C.vi, b: 1, a: 'start', fs: 12 }) + TL(234, y + 18, sub, { c: C.ink, a: 'start', fs: 12, lh: 16 }); });
       s += T(310, 300, '高出力・低速・機首上げで強い', { c: C.am, b: 1, fs: 12 });
       return svg(400, 312, s, '図：左偏向傾向（上から見た図・上昇中）。操縦席から見て時計回りのプロペラでは、4 つの原因で機首が左へ向こうとするので、右ラダーで打ち消します（PHAK。ジャイロ効果は機首の向きを変えている間だけ働く）');
-    },
-    cgTail() {
-      // longitudinal balance: the centre of gravity ahead of the wing's lift, the tail pushing down (a seesaw)
-      const y = 132, cg = 214, cl = 188, tail = 92;            // the nose is to the right: the CG ahead (right) of the lift
-      let s = planeSide(200, y, 1.9, { gear: false });
-      s += `<circle cx="${cg}" cy="${y}" r="8" fill="#0b1422" stroke="${C.ink}" stroke-width="2"/><path d="M${cg} ${y - 8} A8 8 0 0 1 ${cg + 8} ${y} L${cg} ${y} Z M${cg} ${y + 8} A8 8 0 0 1 ${cg - 8} ${y} L${cg} ${y} Z" fill="${C.ink}"/>`;
-      s += A(cl, y - 6, cl, y - 96, C.gr, 4) + T(cl - 8, y - 84, '揚力（主翼）', { c: C.gr, b: 1, a: 'end', fs: 13, halo: 1 });
-      s += A(cg, y + 10, cg, y + 96, C.mut, 4) + T(cg - 8, y + 92, '重力（重心）', { c: C.mut, b: 1, a: 'end', fs: 13, halo: 1 });
-      s += A(tail, y - 50, tail, y - 8, C.am, 4) + T(tail, y - 58, '尾翼の下向きの力', { c: C.am, b: 1, fs: 13, halo: 1 });
-      s += L(cl, y + 24, cg, y + 24, C.ink, 1.5) + L(cl, y + 18, cl, y + 30, C.ink, 1.5) + T(cl - 6, y + 48, '重心は揚力より前（機首側）', { c: C.ink, fs: 12, a: 'end', halo: 1 });
-      s += ARC(cl, y, 120, -24, 20, C.rd, 2.5) + T(392, y + 76, '重心が前なので', { c: C.rd, fs: 12, a: 'end', halo: 1 }) + T(392, y + 92, '機首は下がろうとする', { c: C.rd, fs: 12, a: 'end', halo: 1 });
-      s += T(12, 22, '横から見た図（縦の釣り合い）', { c: C.ink, b: 1, a: 'start', fs: 13 });
-      return svg(400, 252, s, '図：縦の釣り合い。重心は主翼の揚力の中心より前にあり、機首は下がろうとします。それを水平尾翼の下向きの力が支えています。この形が、速度を一定に保とうとする性質（縦の安定）を生みます');
     },
     stability() {
       const cup = (x, lab, sub, path, ball, c) => `<path d="${path}" stroke="${C.cy}" stroke-width="2.5" fill="none"/><circle cx="${ball[0]}" cy="${ball[1]}" r="9" fill="${C.am}"/>` + T(x, 132, lab, { c, b: 1, fs: 13 }) + TL(x, 150, sub, { c: C.ink, fs: 12, lh: 16 });
@@ -2225,6 +2140,343 @@
       return svg(400, 290, s, '図：スロットルを全開にしてから推力が増えるまで（模式図）。ジェットエンジンはアイドルからの加速が遅く、全開まで、長いと 10 秒ほどかかります（AFH 第 16 章）。だから、出力は早めに・先回りして使います');
     },
   };
+  // ---- the figures of Part 1's chapter 'aero' (R2: drafts/aero-figs.js by W13 and revise-aero, registered in R2B). New: wingTerms,
+  // boundaryLayer, climbForces, powerCurve, glideTriangle, bankLoad, dynStability, spinSpiral, gustEnvelope, dihedralSlip;
+  // redrawn under their names (the old functions removed above): forces, turnForces, cgTail, liftFlow, vn. The block holds
+  // the helpers that differ from the ones at the top of this file (as the draft drew with them).
+  {
+  // the draft's own helpers where they differ from the ones at the top of this file
+  const A = (x1, y1, x2, y2, c, w = 3) => { const a = Math.atan2(y2 - y1, x2 - x1), hh = 9; return L(x1, y1, x2, y2, c, w) + `<path d="M${x2} ${y2} L${(x2 - hh * Math.cos(a - 0.45)).toFixed(1)} ${(y2 - hh * Math.sin(a - 0.45)).toFixed(1)} L${(x2 - hh * Math.cos(a + 0.45)).toFixed(1)} ${(y2 - hh * Math.sin(a + 0.45)).toFixed(1)} Z" fill="${c}"/>`; };
+  const planeSide = (x, y, k = 1, o = {}) => `<g transform="translate(${x} ${y}) rotate(${-(o.pitch || 0)}) scale(${k})">`
+    + `<path d="M50 -1 C48 -8 38 -11 26 -12 L14 -16 C2 -18 -10 -16 -18 -12 L-50 -5 L-50 1 L-14 6 C6 8 30 7 44 5 C49 4 51 2 50 -1 Z" fill="${PLANE}"/>`
+    + `<path d="M12 -15 C4 -17 -6 -16 -14 -12 L-12 -9 L10 -9 Z" fill="${GLASS}"/><path d="M-38 -6 L-50 -27 L-57 -27 L-54 -3 Z" fill="${PLANE}"/>`
+    + `<rect x="-60" y="-4" width="20" height="3.5" rx="1.5" fill="${PLANE2}"/><ellipse cx="6" cy="5" rx="19" ry="2.6" fill="${PLANE2}"/>`
+    + (o.gear === false ? '' : `<path d="M2 7 L0 15 M40 5 L40 15" stroke="${PLANE2}" stroke-width="2"/><circle cx="0" cy="16" r="3.4" fill="#5b6b7e"/><circle cx="40" cy="16" r="3" fill="#5b6b7e"/>`)
+    + `<line x1="52" y1="-15" x2="52" y2="13" stroke="${C.mut}" stroke-width="2.5" stroke-linecap="round"/></g>`;
+  // the mean camber line, for a chord from (x0, y0) of length ch, nose up by a degrees (screen: y down)
+  const airfoil = (x0, y0, ch, a = 0, m = 0.04, p = 0.4, t = 0.12, n = 40) => {
+    // chord direction (cos r, sin r) and the airfoil's "up" (sin r, −cos r) on the screen (y down): nose up by a degrees
+    const r = a * DEG, at = (x, y) => [x0 + ch * (x * Math.cos(r) + y * Math.sin(r)), y0 + ch * (x * Math.sin(r) - y * Math.cos(r))];
+    const up = [], lo = [], mean = [];
+    for (let i = 0; i <= n; i++) {
+      const x = (1 - Math.cos(Math.PI * i / n)) / 2;
+      const yt = 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4);
+      const yc = x < p ? m / (p * p) * (2 * p * x - x * x) : m / ((1 - p) ** 2) * ((1 - 2 * p) + 2 * p * x - x * x);
+      up.push(at(x, yc + yt)); lo.push(at(x, yc - yt)); mean.push(at(x, yc));
+    }
+    const camber = x => (x < p ? m / (p * p) * (2 * p * x - x * x) : m / ((1 - p) ** 2) * ((1 - 2 * p) + 2 * p * x - x * x));
+    return { up, lo, mean, le: at(0, 0), te: at(1, 0), point: at, camber };
+  };
+
+  Object.assign(FIG, {
+    // ---------------------------------------------------------------- redrawn under the same name (重力 → 重量)
+    forces() {
+      // the course's Archer in cruise (110 KIAS, sea level): lift = weight ≈ 10,300 N, drag ≈ 1,160 N — drawn about 9 : 1 would hide
+      // thrust and drag, so they are drawn shorter but not to scale (the caption says so)
+      let s = planeSide(200, 132, 1.5, { gear: false });
+      s += A(206, 124, 206, 34, C.gr, 4) + T(214, 40, '揚力（Lift）', { c: C.gr, b: 1, a: 'start', fs: 14 }) + T(214, 58, '翼が空気から受ける上向きの力', { c: C.ink, a: 'start', fs: 12 });
+      s += A(206, 140, 206, 230, C.mut, 4) + T(214, 222, '重量（Weight）', { c: C.mut, b: 1, a: 'start', fs: 14 }) + T(214, 240, '機体・燃料・人・荷物の重さ', { c: C.ink, a: 'start', fs: 12 });
+      s += A(284, 132, 340, 132, C.am, 4) + T(392, 116, '推力（Thrust）', { c: C.am, b: 1, a: 'end', fs: 14 }) + T(392, 156, 'プロペラが前へ引く', { c: C.ink, a: 'end', fs: 12 });
+      s += A(116, 132, 60, 132, C.rd, 4) + T(8, 116, '抗力（Drag）', { c: C.rd, b: 1, a: 'start', fs: 14 }) + T(8, 156, '空気の抵抗', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 252, s, '図：飛んでいる飛行機に働く 4 つの力。高度も速度も変わらない水平飛行では、揚力＝重量、推力＝抗力でつり合っています（矢印の長さは模式的。巡航では揚力は抗力の約 9 倍：教材値）');
+    },
+    turnForces() {
+      // seen from behind, banked 30° to the right: the lift tilts with the wings; its upward part holds the weight up,
+      // its sideways part pulls the airplane round the turn
+      const bank = 30, n = 1 / Math.cos(bank * DEG), Wp = 96, Lp = Wp * n, cx = 160, cy = 172;
+      const lx = cx + Lp * Math.sin(bank * DEG), ly = cy - Lp * Math.cos(bank * DEG);
+      let s = T(12, 22, '後ろから見た図（右へ 30° バンク）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += planeFront(cx, cy, 1.5, { bank, gear: false });
+      s += L(cx, cy, cx, ly, C.gr, 1.5, '5 4') + L(cx, ly, lx, ly, C.gr, 1.5, '5 4');
+      s += A(cx, cy, lx, ly, C.gr, 4) + A(cx, cy, cx, cy + Wp, C.mut, 4) + A(cx, cy + 1, lx, cy + 1, C.am, 3.5);
+      s += ARC(cx, cy, 64, -90, -90 + bank, C.vi, 2, false) + T(cx + 22, cy - 70, `${bank}°`, { c: C.vi, b: 1, fs: 13, halo: 1 });
+      s += T(lx + 6, ly - 6, `揚力（${n.toFixed(2)} 倍）`, { c: C.gr, b: 1, a: 'start', fs: 13, halo: 1 }) + T(cx - 8, ly + 22, '上向きの分', { c: C.gr, b: 1, a: 'end', fs: 12, halo: 1 }) + T(cx - 8, ly + 38, '＝重量を支える', { c: C.gr, a: 'end', fs: 12, halo: 1 });
+      s += T(lx + 10, cy - 30, '横向きの分', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 }) + T(lx + 10, cy - 14, '＝旋回の中心へ引く力', { c: C.am, a: 'start', fs: 12, halo: 1 });
+      s += T(cx + 8, cy + Wp - 4, '重量', { c: C.mut, b: 1, a: 'start', fs: 13, halo: 1 }) + T(392, cy + 20, '旋回の中心 →', { c: C.am, a: 'end', fs: 12 });
+      s += `<rect x="12" y="282" width="376" height="30" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 302, `高度を保つには揚力を ${n.toFixed(2)} 倍に＝荷重倍数 ${n.toFixed(2)} G`, { c: C.gr, b: 1, fs: 13 });
+      return svg(400, 320, s, `図：旋回の力。機体を傾けると揚力も傾き、その横向きの分で曲がります。上向きの分が減るので、高度を保つには揚力を増やします（30° バンクで ${n.toFixed(2)} 倍）`);
+    },
+    cgTail() {
+      // longitudinal balance: the centre of gravity ahead of the wing's lift, the tail pushing down (a seesaw)
+      const y = 132, cg = 214, cl = 188, tail = 92;            // the nose is to the right: the CG ahead (right) of the lift
+      let s = planeSide(200, y, 1.9, { gear: false });
+      s += `<circle cx="${cg}" cy="${y}" r="8" fill="#0b1422" stroke="${C.ink}" stroke-width="2"/><path d="M${cg} ${y - 8} A8 8 0 0 1 ${cg + 8} ${y} L${cg} ${y} Z M${cg} ${y + 8} A8 8 0 0 1 ${cg - 8} ${y} L${cg} ${y} Z" fill="${C.ink}"/>`;
+      s += A(cl, y - 6, cl, y - 96, C.gr, 4) + T(cl - 8, y - 84, '揚力（主翼）', { c: C.gr, b: 1, a: 'end', fs: 13, halo: 1 });
+      s += A(cg, y + 10, cg, y + 96, C.mut, 4) + T(cg - 8, y + 92, '重量（重心）', { c: C.mut, b: 1, a: 'end', fs: 13, halo: 1 });
+      s += A(tail, y - 50, tail, y - 8, C.am, 4) + T(tail, y - 58, '尾翼の下向きの力', { c: C.am, b: 1, fs: 13, halo: 1 });
+      s += L(cl, y + 24, cg, y + 24, C.ink, 1.5) + L(cl, y + 18, cl, y + 30, C.ink, 1.5) + T(cl - 6, y + 48, '重心は揚力より前（機首側）', { c: C.ink, fs: 12, a: 'end', halo: 1 });
+      s += ARC(cl, y, 120, -24, 20, C.rd, 2.5) + T(392, y + 76, '重心が前なので', { c: C.rd, fs: 12, a: 'end', halo: 1 }) + T(392, y + 92, '機首は下がろうとする', { c: C.rd, fs: 12, a: 'end', halo: 1 });
+      s += T(12, 22, '横から見た図（縦の釣り合い）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      return svg(400, 252, s, '図：縦の釣り合い。重心は主翼の揚力の中心より前にあり、機首は下がろうとします。それを水平尾翼の下向きの力が支えています。この形が、速度を一定に保とうとする性質（縦の安定）を生みます');
+    },
+
+    liftFlow() {
+      // a cambered airfoil (NACA 2412 shape) at a small angle of attack; the air bends up a little ahead of it and is
+      // turned downward behind it (drawn exaggerated so it can be seen)
+      const t = 0.12, m = 0.02, pp = 0.4, aoa = 7 * DEG, x0 = 112, y0 = 128, ch = 180, dw = 13 * DEG;
+      const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+      const yt = x => 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4);
+      const yc = x => x < pp ? m / (pp * pp) * (2 * pp * x - x * x) : m / ((1 - pp) ** 2) * (1 - 2 * pp + 2 * pp * x - x * x);
+      const tr = (x, y) => [x0 + x * ch * Math.cos(aoa) + y * ch * Math.sin(aoa), y0 + x * ch * Math.sin(aoa) - y * ch * Math.cos(aoa)];
+      const up = [], lo = [];
+      for (let i = 0; i <= 40; i++) { const x = (1 - Math.cos(Math.PI * i / 40)) / 2; up.push(tr(x, yc(x) + yt(x))); lo.push(tr(x, yc(x) - yt(x))); }
+      const xTE = x0 + ch * Math.cos(aoa), yTE = y0 + ch * Math.sin(aoa);
+      const mid = x => x < x0 ? y0 - 10 * Math.exp(-(((x - x0) / 40) ** 2)) : x <= xTE ? y0 - 10 * (1 - (x - x0) / (xTE - x0)) + (x - x0) * Math.tan(aoa) : yTE + (x - xTE) * Math.tan(dw) * Math.exp(-(x - xTE) / 220);
+      const thick = x => { const u = clamp(((x - x0) / (ch * Math.cos(aoa)) + 0.12) / 1.12, 0, 1); return t * ch * 0.55 * Math.sin(Math.PI * u) ** 0.8; };
+      let s = '';
+      for (const off of [-78, -50, -24, 26, 52, 80]) {
+        const d = Math.exp(-Math.abs(off) / 70), pts = [];
+        for (let x = 6; x <= 394; x += 4) pts.push([x, y0 + off * 0.9 + (mid(x) - y0) * d + (off < 0 ? -1 : 1) * thick(x) * d * 0.9]);
+        s += P(pts, C.cy, 1.4);
+      }
+      s += P([...up, ...lo.reverse()], C.ink, 1.2, PLANE);
+      s += A(10, 22, 70, 22, C.cy, 2) + T(76, 27, '相対風（前から来る空気）', { c: C.cy, a: 'start', fs: 12, halo: 1 });
+      s += T(150, 86, '上面：圧力が低い', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(150, 186, '下面：上面より圧力が高い', { c: C.am, b: 1, fs: 13, halo: 1 });
+      s += A(214, 126, 214, 58, C.gr, 4) + T(224, 62, '揚力', { c: C.gr, b: 1, a: 'start', fs: 15, halo: 1 });
+      s += A(318, 166, 352, 206, C.vi, 3) + T(392, 226, '空気を下へ曲げる', { c: C.vi, b: 1, a: 'end', fs: 12, halo: 1 }) + T(392, 242, '（吹き下ろし）', { c: C.vi, a: 'end', fs: 12, halo: 1 });
+      return svg(400, 252, s, '図：翼が揚力を生むしくみ。翼は前から来る空気を下へ曲げ、その反作用で上へ押されます。このとき上面の圧力が下面より低くなり、その差が翼を押し上げます。2 つは同じ力の別の見方です');
+    },
+
+    // ---------------------------------------------------------------- new: the basic course's figures redrawn, and new figures
+    // aero.forces — ch01-fig12 redrawn: a steady climb (the angle drawn large so the parts can be seen)
+    climbForces() {
+      const g = 12, r = g * DEG, cx = 190, cy = 132, Wl = 102, Ll = Wl * Math.cos(r), Dl = 34, Ws = Wl * Math.sin(r);
+      const fx = Math.cos(r), fy = -Math.sin(r);             // forward along the path (screen: up to the right)
+      let s = T(12, 22, '一定の速さで上昇しているとき（角度は大きく描いた）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      // the path through the centre of gravity, a horizontal line forward from it, and the climb angle between them
+      s += L(cx - 176 * fx, cy - 176 * fy, cx + 200 * fx, cy + 200 * fy, C.cy, 1.5, '6 4') + L(cx, cy, cx + 176, cy, C.mut, 1, '4 4');
+      s += ARC(cx, cy, 128, -g, 0, C.vi, 2, false) + T(cx + 134, cy - 10, 'γ', { c: C.vi, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += planeSide(cx, cy, 1.05, { pitch: g, gear: false });
+      // lift ⟂ path, weight down and its part ⟂ path; along the path: drag and the rearward part of weight behind the tail,
+      // thrust ahead of the nose
+      const lx = cx - Ll * Math.sin(r), ly = cy - Ll * Math.cos(r);
+      s += A(cx, cy, lx.toFixed(1), ly.toFixed(1), C.gr, 4) + T(lx + 10, ly + 6, '揚力 L ＝ W cos γ', { c: C.gr, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += A(cx, cy, cx, cy + Wl, C.mut, 4) + T(cx - 8, cy + Wl, '重量 W', { c: C.mut, b: 1, a: 'end', fs: 13, halo: 1 });
+      const wcx = cx + Ll * Math.sin(r), wcy = cy + Ll * Math.cos(r);
+      s += L(cx, cy, wcx.toFixed(1), wcy.toFixed(1), C.mut, 1.6, '5 3') + L(cx, cy + Wl, wcx.toFixed(1), wcy.toFixed(1), C.mut, 1, '2 3') + T(wcx + 8, wcy + 2, 'W cos γ', { c: C.mut, a: 'start', fs: 12, halo: 1 });
+      const bx = cx - 72 * fx, by = cy - 72 * fy, dx = bx - Dl * fx, dy = by - Dl * fy, sx = dx - Ws * fx, sy = dy - Ws * fy;
+      s += A(bx.toFixed(1), by.toFixed(1), dx.toFixed(1), dy.toFixed(1), C.rd, 4) + A(dx.toFixed(1), dy.toFixed(1), sx.toFixed(1), sy.toFixed(1), C.am, 4);
+      s += T((bx + dx) / 2 + 6, (by + dy) / 2 + 26, '抗力 D', { c: C.rd, b: 1, fs: 12, halo: 1 }) + T(sx + 4, sy + 30, 'W sin γ', { c: C.am, b: 1, a: 'middle', fs: 12, halo: 1 }) + T(sx + 4, sy + 46, '（後ろ向きの分）', { c: C.am, a: 'middle', fs: 12, halo: 1 });
+      const tl = Dl + Ws, t0x = cx + 58 * fx, t0y = cy + 58 * fy, tx = t0x + tl * fx, ty = t0y + tl * fy;
+      s += A(t0x.toFixed(1), t0y.toFixed(1), tx.toFixed(1), ty.toFixed(1), C.am, 4) + T(t0x + 6, t0y + 30, '推力 T', { c: C.am, b: 1, a: 'start', fs: 13, halo: 1 }) + T(t0x + 6, t0y + 46, '＝ D ＋ W sin γ', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += `<rect x="12" y="258" width="376" height="30" rx="6" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(200, 278, '揚力は重量より少し小さい。推力が後ろ向きの分も引き受ける', { c: C.cy, b: 1, fs: 12 });
+      return svg(400, 296, s, '図：一定の速さで上昇しているときの力（角度は大きく描いた模式図）。重量を、経路に直角の分（W cos γ）と経路に沿って後ろ向きの分（W sin γ）に分けます。揚力は直角の分とつり合い、推力は抗力と後ろ向きの分の両方とつり合います');
+    },
+    // aero.wing — ch01-fig1 redrawn: the airfoil section and the planform
+    wingTerms() {
+      const x0 = 70, y0 = 92, ch = 260, f = airfoil(x0, y0, ch, 0, 0.05, 0.4, 0.13);
+      let s = T(12, 22, '翼型（翼を前後に切った断面）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += P([...f.up, ...f.lo.slice().reverse()], C.ink, 1.3, PLANE + '33');
+      s += L(x0 - 6, y0, x0 + ch + 6, y0, C.am, 2, '7 4') + P(f.mean, C.cy, 2, 'none', '2 3');
+      s += `<circle cx="${x0}" cy="${y0}" r="3.5" fill="${C.ink}"/><circle cx="${x0 + ch}" cy="${y0}" r="3.5" fill="${C.ink}"/>`;
+      s += T(x0 - 10, y0 + 5, '前縁', { c: C.ink, b: 1, a: 'end', fs: 12 }) + T(x0 + ch + 10, y0 + 5, '後縁', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      const mp = f.point(0.62, f.camber(0.62));
+      s += L(mp[0], mp[1], mp[0] + 30, 50, C.cy, 1) + T(mp[0] + 32, 46, '平均キャンバー線', { c: C.cy, b: 1, a: 'start', fs: 12 });
+      s += T(x0 + 90, y0 + 22, '翼弦線（chord line）', { c: C.am, b: 1, a: 'middle', fs: 12 });
+      s += A(x0 + 2, y0 + 44, x0 + ch - 2, y0 + 44, C.mut, 1.5) + A(x0 + ch - 2, y0 + 44, x0 + 2, y0 + 44, C.mut, 1.5) + T(x0 + ch / 2, y0 + 60, '翼弦長 c', { c: C.ink, fs: 12 });
+      // the planform: a straight inner part and tapered outer parts (a semi-tapered wing like the Archer's; not to scale)
+      const yt = 186, top = 200, le = (x) => top + (Math.abs(x - 200) > 60 ? (Math.abs(x - 200) - 60) * 0.05 : 0), te = (x) => top + 46 - (Math.abs(x - 200) > 60 ? (Math.abs(x - 200) - 60) * 0.11 : 0);
+      s += T(12, yt, '平面形（上から見た翼）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      const xs = [36, 140, 260, 364], pts = [...xs.map(x => [x, le(x)]), ...xs.slice().reverse().map(x => [x, te(x)])];
+      s += P([...pts, pts[0]], C.cy, 1.6, 'rgba(95,212,255,.12)');
+      s += A(150, top + 3, 150, top + 43, C.mut, 1.4) + A(150, top + 43, 150, top + 3, C.mut, 1.4) + T(142, top + 28, 'c', { c: C.ink, a: 'end', fs: 12 });
+      s += T(262, top + 28, 'S＝翼面積（上から見た面積）', { c: C.cy, b: 1, fs: 12 });
+      s += A(38, 268, 362, 268, C.mut, 1.5) + A(362, 268, 38, 268, C.mut, 1.5) + T(200, 286, '翼幅 b（翼端から翼端まで）', { c: C.ink, fs: 12 });
+      s += `<rect x="12" y="298" width="376" height="28" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 317, 'アスペクト比（aspect ratio）＝ b² ÷ S', { c: C.gr, b: 1, fs: 13 });
+      return svg(400, 334, s, '図：翼を表す言葉。上は翼型（断面）で、前縁と後縁を結ぶ直線が翼弦線、上面と下面のまん中を結ぶ線が平均キャンバー線です。下は平面形で、翼面積は上から見た面積です（上面と下面の合計ではありません）。長方形の翼なら、b² ÷ S は b ÷ c と同じです。形は説明のための模式図');
+    },
+    // aero.wing — ch01-fig4 redrawn: the boundary layer and separation
+    boundaryLayer() {
+      let s = T(12, 22, '境界層：表面に近いほど空気は遅い', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      const sy = 136, d = 80, x0 = 30, len = 168;
+      s += `<rect x="18" y="${sy}" width="214" height="9" fill="#5b6b7e"/>` + T(124, sy + 28, '翼の表面（空気の速さはほぼ 0）', { c: C.ink, fs: 12 });
+      const tips = [];
+      for (const h of [4, 14, 28, 44, 62, 80]) { const u = 1 - (1 - Math.min(h, d) / d) ** 2, y = sy - h; tips.push([x0 + 6 + u * len, y]); s += A(x0, y, x0 + 6 + u * len, y, C.gr, 2); }
+      s += P([[x0, sy], ...tips], C.cy, 2);
+      s += L(18, sy - d, 232, sy - d, C.mut, 1, '4 3');
+      s += L(244, sy - d, 244, sy, C.am, 1.5) + L(240, sy - d, 248, sy - d, C.am, 1.5) + L(240, sy, 248, sy, C.am, 1.5) + T(254, sy - 46, '境界層', { c: C.am, b: 1, a: 'start', fs: 13 }) + T(254, sy - 28, '（厚さは大きく', { c: C.ink, a: 'start', fs: 12 }) + T(254, sy - 12, '描いた）', { c: C.ink, a: 'start', fs: 12 });
+      s += T(254, sy - d - 4, '外の流れの速さ', { c: C.ink, a: 'start', fs: 12 });
+      // separation at a high angle of attack
+      const y1 = 196, x1 = 70, ch = 176, a = 15, f = airfoil(x1, 286, ch, a, 0.04, 0.4, 0.12);
+      s += T(12, y1, 'はく離：迎え角が大きいと、流れが表面から離れる', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      const sp = f.up[12];
+      for (const off of [10, 22, 34]) {
+        const pts = [[16, f.up[0][1] - off + 6]];
+        for (let i = 3; i <= 12; i++) pts.push([f.up[i][0], f.up[i][1] - off]);
+        pts.push([sp[0] + 70, sp[1] - off - 8], [392, sp[1] - off - 20]);
+        s += P(pts, C.cy, 1.5);
+      }
+      s += P([[16, f.lo[0][1] + 14], [x1 + 10, f.lo[2][1] + 14], [f.lo[20][0], f.lo[20][1] + 13], [f.lo[40][0], f.lo[40][1] + 12], [392, f.lo[40][1] + 22]], C.cy, 1.5);
+      s += P([...f.up, ...f.lo.slice().reverse()], C.ink, 1.3, PLANE);
+      for (let k = 0; k < 3; k++) { const cx = sp[0] + 26 + k * 34, cy = sp[1] + 2 + k * 11; s += `<path d="M${(cx - 8).toFixed(1)} ${cy.toFixed(1)} a8 6 0 1 1 8 6 a4.5 3.5 0 1 1 -3.5 -4.5" stroke="${C.rd}" stroke-width="1.6" fill="none"/>`; }
+      s += `<circle cx="${sp[0].toFixed(1)}" cy="${sp[1].toFixed(1)}" r="4.5" fill="${C.rd}"/>` + L(sp[0], sp[1] - 5, sp[0] - 18, y1 + 22, C.rd, 1.2) + T(sp[0] - 20, y1 + 20, 'はく離点', { c: C.rd, b: 1, a: 'end', fs: 12 });
+      s += T(16, 352, '後ろに渦ができ、揚力が減る', { c: C.rd, a: 'start', fs: 12 });
+      return svg(400, 362, s, '図：境界層とはく離（模式図。厚さや位置は大きく描いた）。上：翼の表面では空気がほとんど止まり、表面から離れるほど外の流れの速さに近づきます。下：迎え角が大きいと、境界層の流れが上面から離れ（はく離）、揚力が減ります');
+    },
+    // aero.power — a schematic power-required curve (PHAK 25C chapter 11, figure 11-14): no type's numbers
+    powerCurve() {
+      const W = 400, H = 290, m = { l: 46, r: 16, t: 26, b: 40 }, vmax = 1.78, pmax = 6.2;
+      const X = v => m.l + v / vmax * (W - m.l - m.r), Y = p => H - m.b - p / pmax * (H - m.t - m.b);
+      const Pr = v => v ** 3 + 1 / v, vs = 0.56, vmp = 3 ** -0.25, avail = v => 4.6 - 1.3 * (v - 1.25) ** 2;   // revise-aero: lower, so it clears the labels; its excess over Pr is largest between VMP and L/D max
+      let s = L(m.l, H - m.b, W - m.r, H - m.b, C.mut, 1.5) + L(m.l, m.t, m.l, H - m.b, C.mut, 1.5);
+      s += T((m.l + W - m.r) / 2, H - 10, '速度 →', { c: C.mut, fs: 12 }) + T(16, (m.t + H - m.b) / 2, '必要パワー（＝抗力×速度）→', { c: C.mut, fs: 12, rot: -90 });
+      // the region of reversed command (stall → minimum power) and the normal region
+      s += `<rect x="${X(vs).toFixed(1)}" y="${m.t}" width="${(X(vmp) - X(vs)).toFixed(1)}" height="${H - m.b - m.t}" fill="${C.rd}" fill-opacity="0.13"/>`;
+      s += L(X(vs), m.t, X(vs), H - m.b, C.rd, 1.4, '4 3') + T(X(vs) - 3, H - m.b + 15, '失速', { c: C.rd, fs: 12, a: 'middle' });
+      const curve = []; for (let v = vs; v <= 1.66; v += 0.01) curve.push([X(v), Y(Pr(v))]);
+      const av = []; for (let v = 0.5; v <= 1.74; v += 0.02) av.push([X(v), Y(avail(v))]);
+      s += P(av, C.am, 2, 'none', '7 4') + T(X(1.05), Y(avail(1.05)) - 10, '使えるパワー（利用馬力）', { c: C.am, b: 1, fs: 12, halo: 1 });
+      s += P(curve, C.cy, 3);
+      // tangent from the origin: L/D max (power/speed least = drag least)
+      s += L(X(0), Y(0), X(1.32), Y(2.64), C.gr, 1.4, '5 4') + `<circle cx="${X(1).toFixed(1)}" cy="${Y(2).toFixed(1)}" r="5" fill="${C.gr}"/>`;
+      s += T(X(1) + 8, Y(2) + 22, '揚抗比が最大', { c: C.gr, b: 1, a: 'start', fs: 12, halo: 1 }) + T(X(1) + 8, Y(2) + 38, '（最も遠くへ滑空）', { c: C.gr, a: 'start', fs: 12, halo: 1 });
+      s += `<circle cx="${X(vmp).toFixed(1)}" cy="${Y(Pr(vmp)).toFixed(1)}" r="5" fill="${C.vi}"/>`;
+      s += T(X(vmp), Y(Pr(vmp)) - 34, '必要パワーが最小', { c: C.vi, b: 1, fs: 12, halo: 1 }) + T(X(vmp), Y(Pr(vmp)) - 18, '（最も長く飛べる）', { c: C.vi, fs: 12, halo: 1 });
+      s += T(X((vs + vmp) / 2), m.t + 16, '逆操作域', { c: C.rd, b: 1, fs: 12 }) + T(X((vs + vmp) / 2), m.t + 32, '遅いほど多くのパワー', { c: C.ink, fs: 12 });
+      s += T(X(1.42), m.t + 16, '通常の操作域', { c: C.cy, b: 1, fs: 12 }) + T(X(1.42), m.t + 32, '速いほど多くのパワー', { c: C.ink, fs: 12 });
+      s += T(X(1.5), Y(Pr(1.5)) + 26, '必要パワー', { c: C.cy, b: 1, a: 'start', fs: 12, halo: 1 });
+      return svg(W, H, s, '図：速度と必要パワー（模式図。数値は特定の機体のものではない）。水平飛行を続けるのに要るパワーは、ある速度で最小になります。それより遅い側（赤い帯）では、遅くするほど多くのパワーが要ります（逆操作域）。原点からの線が曲線に接する点が、揚抗比が最大の速度です（線の傾き＝パワー ÷ 速度＝抗力が最小）。破線は使えるパワーで、2 本の差が余剰パワーです');
+    },
+    // aero.power — ch01-fig8 redrawn: the forces in a power-off glide and the glide triangle (angles drawn large)
+    glideTriangle() {
+      const g = 14, r = g * DEG, cx = 112, cy = 112;
+      let s = T(12, 22, '推力のない滑空（角度は大きく描いた）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += L(20, cy - 92 * Math.tan(r), 216, cy + 104 * Math.tan(r), C.cy, 1.5, '6 4');
+      s += planeSide(cx, cy, 0.85, { pitch: -g + 4, gear: false });
+      const lx = cx + 78 * Math.sin(r), ly = cy - 78 * Math.cos(r), bx = cx - 56 * Math.cos(r), by = cy - 56 * Math.sin(r), dx = bx - 36 * Math.cos(r), dy = by - 36 * Math.sin(r);
+      s += A(cx, cy, lx.toFixed(1), ly.toFixed(1), C.gr, 4) + T(lx + 6, ly + 4, '揚力 L', { c: C.gr, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += A(bx.toFixed(1), by.toFixed(1), dx.toFixed(1), dy.toFixed(1), C.rd, 4) + T(dx + 8, dy + 26, '抗力 D', { c: C.rd, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += A(cx, cy, cx, cy + 82, C.mut, 4) + T(cx + 8, cy + 80, '重量 W', { c: C.mut, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += T(20, 222, '重量の前向きの分が、', { c: C.ink, a: 'start', fs: 12 }) + T(20, 238, '抗力とつり合う', { c: C.ink, a: 'start', fs: 12 });
+      // the triangle: height lost h and distance d
+      const tx0 = 244, ty0 = 64, tx1 = 384, ty1 = 186;
+      s += P([[tx0, ty0], [tx1, ty1], [tx0, ty1], [tx0, ty0]], C.cy, 1.6, 'rgba(95,212,255,.08)');
+      s += T(tx0 - 6, (ty0 + ty1) / 2 - 4, '高度差', { c: C.ink, a: 'end', fs: 12 }) + T(tx0 - 6, (ty0 + ty1) / 2 + 12, 'h', { c: C.ink, a: 'end', fs: 12 }) + T((tx0 + tx1) / 2, ty1 + 18, '水平距離 d', { c: C.ink, fs: 12 });
+      s += T((tx0 + tx1) / 2 + 22, (ty0 + ty1) / 2 - 10, '滑空の経路', { c: C.cy, a: 'start', fs: 12, halo: 1 });
+      s += `<rect x="236" y="214" width="156" height="28" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(314, 233, '無風なら d ÷ h ＝ L ÷ D', { c: C.gr, b: 1, fs: 12 });
+      return svg(400, 250, s, '図：推力のない滑空（角度は大きく描いた模式図）。重量の前向きの分が抗力とつり合い、飛行機は経路に沿って一定の速さで降ります。風がなければ、進む距離と失う高度の比（d ÷ h）は揚抗比（L ÷ D）と同じです');
+    },
+    // aero.turn — ch01-fig11 redrawn: the load factor and the stall speed ratio against bank (level, coordinated turn; computed)
+    bankLoad() {
+      const W = 400, H = 270, m = { l: 44, r: 16, t: 34, b: 40 }, b0 = 0, b1 = 80, n0 = 1, n1 = 5;
+      const X = b => m.l + (b - b0) / (b1 - b0) * (W - m.l - m.r), Y = n => H - m.b - (n - n0) / (n1 - n0) * (H - m.t - m.b);
+      let s = '';
+      for (const b of [0, 15, 30, 45, 60, 75]) s += L(X(b), m.t, X(b), H - m.b, C.grid, 1) + T(X(b), H - m.b + 16, `${b}°`, { c: C.mut, fs: 12 });
+      for (const n of [1, 2, 3, 4, 5]) s += L(m.l, Y(n), W - m.r, Y(n), C.grid, 1) + T(m.l - 6, Y(n) + 4, n, { c: C.mut, fs: 12, a: 'end' });
+      s += T((m.l + W - m.r) / 2, H - 6, 'バンク角（高度を保つ釣り合い旋回）', { c: C.mut, fs: 12 }) + T(14, (m.t + H - m.b) / 2, '倍', { c: C.mut, fs: 12 });
+      const nn = [], sq = [];
+      for (let b = 0; b <= 79.5; b += 0.5) { const n = 1 / Math.cos(b * DEG); if (n <= n1) nn.push([X(b), Y(n)]); if (Math.sqrt(n) <= n1) sq.push([X(b), Y(Math.sqrt(n))]); }
+      s += L(m.l, Y(3.8), W - m.r, Y(3.8), C.rd, 1.5, '5 4') + T(m.l + 6, Y(3.8) - 6, 'POH の普通類の制限 +3.8 G', { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += P(sq, C.am, 2.5) + P(nn, C.cy, 3);
+      const bx = Math.acos(1 / 3.8) / DEG;
+      s += `<circle cx="${X(bx).toFixed(1)}" cy="${Y(3.8).toFixed(1)}" r="4" fill="${C.rd}"/>` + T(X(bx) - 8, Y(3.8) + 18, `約 ${Math.round(bx)}°`, { c: C.rd, b: 1, a: 'end', fs: 12, halo: 1 });
+      for (const b of [30, 45, 60]) { const n = 1 / Math.cos(b * DEG); s += `<circle cx="${X(b)}" cy="${Y(n).toFixed(1)}" r="3.5" fill="${C.cy}"/><circle cx="${X(b)}" cy="${Y(Math.sqrt(n)).toFixed(1)}" r="3.5" fill="${C.am}"/>`; }
+      s += T(X(60) - 6, Y(2) - 6, '60° で 2.00', { c: C.cy, b: 1, a: 'end', fs: 12, halo: 1 }) + T(X(60) + 6, Y(Math.SQRT2) + 18, '1.41', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += L(m.l + 8, 16, m.l + 30, 16, C.cy, 3) + T(m.l + 34, 20, '荷重倍数 n ＝ 1 ÷ cos（バンク角）', { c: C.cy, b: 1, a: 'start', fs: 12 });
+      s += L(m.l + 8, Y(4.6), m.l + 30, Y(4.6), C.am, 2.5) + T(m.l + 34, Y(4.6) + 4, '失速速度の倍率 √n', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
+      return svg(W, H, s, '図：バンク角と荷重倍数・失速速度の倍率（高度を保つ釣り合い旋回の式から計算）。60° で荷重倍数は 2、失速速度は約 1.41 倍です。約 75° で、POH の普通類の制限 +3.8 G に届きます。おすすめのバンク角を示す図ではありません');
+    },
+    // aero.stab — ch01-fig13 redrawn: dynamic stability (arbitrary units: not a measured airplane)
+    dynStability() {
+      let s = '';
+      const panel = (x, title, sub, c, amp) => {
+        let t = `<rect x="${x}" y="8" width="124" height="166" rx="8" fill="${c}" fill-opacity="0.06" stroke="${c}" stroke-opacity="0.5"/>`;
+        t += T(x + 62, 28, title, { c, b: 1, fs: 13 }) + T(x + 62, 46, sub, { c: C.ink, fs: 12 });
+        t += L(x + 8, 108, x + 116, 108, C.mut, 1, '4 3');
+        const pts = []; for (let k = 0; k <= 100; k++) { const tt = k / 100; pts.push([x + 10 + tt * 104, 108 - amp(tt) * Math.cos(tt * 4.2 * Math.PI)]); }
+        return t + P(pts, c, 2.4) + T(x + 62, 164, '時間 →', { c: C.mut, fs: 12 });
+      };
+      s += panel(8, '減衰する', '正の動安定', C.gr, t => 40 * Math.exp(-3.2 * t)) + panel(138, '続く', '中立', C.am, () => 32) + panel(268, '発散する', '負の動安定', C.rd, t => 12 * Math.exp(1.25 * t));
+      s += T(200, 196, '3 つとも、最初は元へ戻る向きに動く（正の静安定）', { c: C.ink, fs: 12 });
+      return svg(400, 206, s, '図：動安定（ずれたあとの揺れが、時間とともにどうなるか。数学の例で、実際の機体の測定ではない）。3 つとも最初は元へ戻る向きに動きますが、揺れが小さくなるのは左の「減衰する」だけです');
+    },
+    // aero.vn — redrawn by revise-aero as a SCHEMATIC (expert-aero E-M1): the POH's VO lies at or left of the corner where the
+    // stall line meets +3.8 G (old 14 CFR 23.1507: VO ≤ VS√n; VS is a computed stalling speed, so the corner is not drawn from the
+    // 50 KIAS indicated value and the speed axis has no scale). Load factors are the POH's normal category (+3.8 / −1.5).
+    vn() {
+      const W = 400, H = 280, m = { l: 44, r: 12, t: 30, b: 38 }, v1 = 3.1, nLo = -2, nHi = 4.6, nP = 3.8, nN = -1.5;
+      const X = v => m.l + v / v1 * (W - m.l - m.r), Y = n => H - m.b - (n - nLo) / (nHi - nLo) * (H - m.t - m.b);
+      const vs = 1, corner = vs * Math.sqrt(nP), vo = 1.85, vno = 2.4, vne = 2.95, vsN = 1.07, vn = vsN * Math.sqrt(-nN);
+      let s = L(m.l, Y(0), W - m.r, Y(0), C.mut, 1.2) + L(m.l, m.t, m.l, H - m.b, C.mut, 1.2);
+      for (const [n, t] of [[0, '0'], [1, '1'], [nP, '+3.8'], [nN, '−1.5']]) s += T(m.l - 6, Y(n) + 4, t, { c: C.mut, fs: 12, a: 'end' });
+      s += T(14, (m.t + H - m.b) / 2, '荷重倍数 n（G）', { c: C.mut, fs: 12, rot: -90 }) + T((m.l + W - m.r) / 2, H - 8, '速度 →（模式図。目盛りなし）', { c: C.mut, fs: 12 });
+      // guides from the axis to the limit lines
+      s += L(m.l, Y(nP), X(corner), Y(nP), C.rd, 1, '3 4') + L(m.l, Y(nN), X(vn), Y(nN), C.rd, 1, '3 4');
+      // the envelope: the stall line up to the corner, +3.8 to VNE, −1.5 back to the negative stall line
+      const up = []; for (let v = 0; v <= corner; v += 0.02) up.push([X(v), Y((v / vs) ** 2)]);
+      up.push([X(corner), Y(nP)]);
+      const dn = []; for (let v = vn; v >= 0; v -= 0.02) dn.push([X(v), Y(-((v / vsN) ** 2))]);
+      const env = [...up, [X(vne), Y(nP)], [X(vne), Y(nN)], [X(vn), Y(nN)], ...dn, [X(0), Y(0)]];
+      s += P(env, C.cy, 2, 'rgba(95,212,255,.10)');
+      // the operating speeds (POH): VO left of the corner, VNO, VNE
+      for (const [v, t, c] of [[vo, 'VO', C.gr], [vno, 'VNO', C.am], [vne, 'VNE', C.rd]]) s += L(X(v), Y(nP) - 4, X(v), Y(nN), c, 1.4, '4 3') + T(X(v), 22, t, { c, b: 1, fs: 12 });
+      // the corner and 1 G at VS1
+      s += `<circle cx="${X(corner).toFixed(1)}" cy="${Y(nP).toFixed(1)}" r="4" fill="${C.ink}"/>` + T(X(corner) - 14, Y(nP) + 12, '失速速度 × √3.8 の角 →', { c: C.ink, fs: 12, a: 'end', halo: 1 });
+      s += `<circle cx="${X(vs).toFixed(1)}" cy="${Y(1).toFixed(1)}" r="3.5" fill="${C.ink}"/>` + T(X(vs) + 7, Y(1) + 16, '1 G で失速（VS1）', { c: C.ink, fs: 12, a: 'start', halo: 1 });
+      s += T(m.l + 6, Y(nP) - 7, '制限荷重倍数（POH の普通類）', { c: C.rd, b: 1, fs: 12, a: 'start', halo: 1 }) + T(X(2.15), Y(nN) + 16, '−の制限荷重倍数', { c: C.rd, b: 1, fs: 12, halo: 1 });
+      s += T(X(0.45), Y(2.4), '失速', { c: C.ink, b: 1, fs: 12, halo: 1 }) + T(X(2.13), Y(1.3), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 });
+      return svg(W, H, s, '図：V-n 線図の模式図（Archer III の POH の普通類の制限荷重倍数 +3.8 G／−1.5 G）。曲線の左は失速です。失速の線は、失速速度 × √3.8 の角で +3.8 G の線に届きます。POH の VO（最大運用運動速度）は、この角より左（遅い側）にあります。上と下の線を超えると、機体が変形・損傷する危険があります');
+    },
+    // aero.stab — new (reader-aero B1; DESIGN 3.3 names ch01-fig13 for this section): dihedral works through the sideslip
+    dihedralSlip() {
+      const cx = 200, cy = 118, bank = 20;
+      let s = T(12, 22, '後ろから見た図（突風で右へ傾いた）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += planeFront(cx, cy, 1.6, { bank, gear: false });
+      // the sideslip toward the lower (right) wing: the air comes from the right
+      for (const y of [146, 166]) s += A(392, y, 334, y, C.cy, 2.5);
+      s += T(392, 132, '横滑りの風', { c: C.cy, b: 1, a: 'end', fs: 12, halo: 1 });
+      // lift: more on the lower wing, less on the upper wing
+      s += A(270, 142, 262, 70, C.gr, 4) + T(258, 64, '揚力が増える', { c: C.gr, b: 1, a: 'end', fs: 12, halo: 1 });
+      s += A(132, 100, 136, 64, C.gr, 2.5) + T(132, 52, '揚力が減る', { c: C.gr, b: 1, fs: 12, halo: 1 });
+      s += T(300, 196, '下がった翼', { c: C.ink, fs: 12, halo: 1 }) + T(300, 212, '迎え角が大きくなる', { c: C.ink, fs: 12, halo: 1 }) + T(132, 140, '上がった翼', { c: C.ink, fs: 12, halo: 1 });
+      // the airplane rolls back toward wings level
+      s += ARC(cx, cy, 150, 206, 186, C.vi, 2.5) + T(14, 124, '水平へ戻る', { c: C.vi, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += `<rect x="12" y="222" width="376" height="28" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 241, '横滑りで、下がった翼の迎え角が増え、水平へ戻る', { c: C.gr, b: 1, fs: 12 });
+      return svg(400, 258, s, '図：上反角が横安定を生むしくみ（後ろから見た模式図）。機体が右へ傾くと、下がった右の翼の側へ横滑りし、横から風が当たります。上反角があると、下がった翼の迎え角が大きくなって揚力が増え、上がった翼は揚力が減るので、機体は水平へ戻ります（PHAK 第 5 章）');
+    },
+    // aero.spin — new: spin and spiral dive side by side (AFH 3C chapter 5)
+    spinSpiral() {
+      let s = T(104, 22, 'スピン', { c: C.rd, b: 1, fs: 14 }) + T(296, 22, 'スパイラル', { c: C.am, b: 1, fs: 14 });
+      // the paths: a tight corkscrew nearly straight down, and a wide descending turn that tightens
+      const cork = [], wide = [];
+      for (let t = 0; t <= 3.2; t += 0.02) { cork.push([104 + 16 * Math.sin(t * 2 * Math.PI), 40 + t * 30 + 5 * Math.cos(t * 2 * Math.PI)]); wide.push([296 + (52 - t * 10) * Math.sin(t * 1.6 * Math.PI), 40 + t * 30 + 12 * Math.cos(t * 1.6 * Math.PI)]); }
+      s += P(cork, C.rd, 2.2) + P(wide, C.am, 2.2);
+      s += A(104, 128, 104, 142, C.rd, 2.5) + A(296, 128, 296, 142, C.am, 2.5);
+      const rows = [['翼', '下がる翼がより深く失速', '失速していない'], ['速度', '低く、ほぼ一定', 'どんどん増える'], ['回復の最初', '方向舵を回転と反対へ', '出力を絞り、少し押す']];
+      rows.forEach(([k, a, b], i) => {
+        const y = 168 + i * 30;
+        s += `<rect x="8" y="${y - 16}" width="384" height="26" rx="5" fill="${i % 2 ? C.bg : 'rgba(150,176,206,.08)'}"/>`;
+        s += T(200, y + 1, k, { c: C.mut, b: 1, fs: 12 }) + T(104, y + 1, a, { c: C.ink, fs: 12 }) + T(296, y + 1, b, { c: C.ink, fs: 12 });
+      });
+      s += `<rect x="8" y="${168 + 3 * 30 - 12}" width="384" height="26" rx="6" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(200, 168 + 3 * 30 + 6, '回る向きは旋回傾斜計で見る（すべり計の玉は使わない）', { c: C.cy, b: 1, fs: 12 });
+      return svg(400, 276, s, '図：スピンとスパイラルの違い（AFH 第 5 章・AC 61-67C と Archer の POH から。スピンの回復の最初は Archer の POH の手順、スパイラルは AFH の型）。スピンは少なくとも片方の翼が失速したまま、速度が低く一定のまま回って落ちます。スパイラルは翼が失速しておらず、速度と荷重倍数がどんどん増えます。回復の手順が違うので、まず見分けます');
+    },
+    // aero.struct — new: the maneuvering envelope and the gust lines (schematic; the shape of the old 14 CFR 23.333, no numbers)
+    gustEnvelope() {
+      const W = 400, H = 300, m = { l: 40, r: 16, t: 30, b: 42 }, v1 = 3.7, nLo = -2.2, nHi = 4.6;
+      const X = v => m.l + v / v1 * (W - m.l - m.r), Y = n => H - m.b - (n - nLo) / (nHi - nLo) * (H - m.t - m.b);
+      const nP = 3.8, nN = -1.52, va = Math.sqrt(nP), vc = 2.7, vd = 3.45, vsN = 1.15;
+      let s = L(m.l, Y(0), W - m.r, Y(0), C.mut, 1.2) + L(m.l, m.t, m.l, H - m.b, C.mut, 1.2);
+      for (const n of [-1, 1, 2, 3, 4]) s += T(m.l - 6, Y(n) + 4, n, { c: C.mut, fs: 12, a: 'end' });
+      s += T(m.l - 6, Y(0) + 4, '0', { c: C.mut, fs: 12, a: 'end' }) + T(14, (m.t + H - m.b) / 2, '荷重倍数 n', { c: C.mut, fs: 12, rot: -90 });
+      // maneuvering envelope: stall curves, +limit to VD, −limit at VC rising to 0 at VD (normal category)
+      const up = []; for (let v = 0; v <= va; v += 0.02) up.push([X(v), Y(v * v)]);
+      const vn = Math.sqrt(-nN) * vsN, dn = []; for (let v = vn; v >= 0; v -= 0.02) dn.push([X(v), Y(-((v / vsN) ** 2))]);
+      const env = [...up, [X(va), Y(nP)], [X(vd), Y(nP)], [X(vd), Y(0)], [X(vc), Y(nN)], [X(vn), Y(nN)], ...dn];
+      s += P([...env, env[0]], C.cy, 2.2, 'rgba(95,212,255,.10)');
+      // gust lines from n = 1 at zero speed: the stronger gust to VC, the weaker one to VD, and the envelope they make
+      const g1 = 0.72, g2 = g1 * 0.5;
+      const gp = [[X(0), Y(1)], [X(vc), Y(1 + g1 * vc)], [X(vd), Y(1 + g2 * vd)], [X(vd), Y(1 - g2 * vd)], [X(vc), Y(1 - g1 * vc)], [X(0), Y(1)]];
+      s += P(gp, C.am, 2, 'none', '6 4');
+      for (const [v, t, c] of [[va, 'VA', C.gr], [vc, 'VC', C.ink], [vd, 'VD', C.rd]]) s += L(X(v), Y(0), X(v), H - m.b + 4, c, 1, '3 3') + T(X(v), H - m.b + 18, t, { c, b: 1, fs: 12 });
+      s += T(X(1.9), Y(nP) - 8, '＋制限荷重倍数', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(X(2.2), Y(nN) + 18, '－制限荷重倍数', { c: C.cy, b: 1, fs: 12, halo: 1 });
+      s += T(X(0.5), Y(2.6), '失速', { c: C.ink, b: 1, fs: 12, halo: 1 });
+      s += T(X(2.0), Y(1.55), '運動包囲線図', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(X(3.05), Y(-1.1), '突風の線', { c: C.am, b: 1, fs: 12, halo: 1 });
+      s += T(W - m.r, 18, '模式図（数値は目安）', { c: C.am, b: 1, a: 'end', fs: 12 }) + T((m.l + W - m.r) / 2 - 30, H - 6, '速度（等価対気速度）→', { c: C.mut, fs: 12 });
+      return svg(W, H, s, '図：運動包囲線図（青）と突風の線（橙の破線）の模式図。運動包囲線図は、失速の線と制限荷重倍数の線で囲まれた、操縦でかかる荷重の範囲です。突風の線は、決めた強さの上向き・下向きの突風を受けたときの荷重倍数で、速いほど大きくなります。設計は両方を囲む範囲で強さを確かめます。VA は設計運動速度、VC は設計巡航速度、VD は設計急降下速度です');
+    },
+  });
+  }
 
   // ---------------------------------------------------------------- calculators inside the text
   const ARCHER_WB = {

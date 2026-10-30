@@ -2542,6 +2542,14 @@
    "builtOn": "2026-10-30",
    "by": "integrate-R2",
    "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。R2 で k1・k2 に inst.pfd など（W07d2・APP.lesson-k1k2）"
+  },
+  {
+   "id": "book.size",
+   "built": "FLIGHT-LAB.html 10,800,572 バイト（10.30 MiB）・CADET.html 10,451,177 バイト（9.97 MiB）・TEXTBOOK.html 7,135,832 バイト",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの出力を作り直したコミット 12820d5 の大きさ（12 MiB・15 MiB の上限の内）。教科書の写真 81 枚はデコード後 3,364,306 バイト（4.0 MiB の内）。AI 教官の目次（2.5 万字以下）は cadet/test/ai.test.mjs が確かめる"
   }
  ]
 }

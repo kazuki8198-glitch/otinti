@@ -6,13 +6,13 @@
 
 ## 今の状態（2026-10-30）
 
-- **版**：**R2（第 1 部 地上学科）を閉じた**（[`reports/integrate-R2.md`](reports/integrate-R2.md)）。R2 の確かめ（DESIGN 7.2 の W27 のうち、事実の二人目 [factcheck2-R2](reports/factcheck2-R2.md)・本文だけで解けるか [answerable-R2](reports/answerable-R2.md)・〔安全〕の文の安全レビュー [safety-R2](reports/safety-R2.md)）を統合した：3 つの報告に must はなく、should 6 つ（安全 S1〜S3・解けるか G1・事実 S1・S2）と nit 7 つを直すか、直さない理由を書いた。3 つの出力を作り直した（ビルドのコミットは下の「出力」）。W21（第 1 部の図）は R2 ではしていない（R3 の始め：「次」）。本は 7 部・34 章・208 節のまま。
+- **版**：**R2（第 1 部 地上学科）を閉じた**（[`reports/integrate-R2.md`](reports/integrate-R2.md)）。R2 の確かめ（DESIGN 7.2 の W27 のうち、事実の二人目 [factcheck2-R2](reports/factcheck2-R2.md)・本文だけで解けるか [answerable-R2](reports/answerable-R2.md)・〔安全〕の文の安全レビュー [safety-R2](reports/safety-R2.md)）を統合した：3 つの報告に must はなく、should 6 つ（安全 S1〜S3・解けるか G1・事実 S1・S2）と nit 7 つを直すか、直さない理由を書いた。3 つの出力を作り直した（ビルドのコミット `12820d5`）。W21（第 1 部の図）は R2 ではしていない（R3 の始め：「次」）。本は 7 部・34 章・208 節のまま。
 - **R2C**：R2（第 1 部）の W23・W24・W25・W26・W07d2 を本に入れた（R2C）**（[`reports/integrate-R2C.md`](reports/integrate-R2C.md)）：第 1 部のまとめの章 `g1`（新しいファイル `book-gates.js`、第 20 章）・第 1 部の扉（`PARTS` の p1 の `door`、`FL.book.doorHtml`）・付録のページ「JCAB 学科の道」（`FL.book.jcabRoadHtml`）を FLIGHT LAB と TEXTBOOK に、用語の表 `FL.terms` を 436 語に（序部と第 1 部の本文の名前と初出の形をそろえた）、学科テストの 14 分野に第 1 部の 81 問（145 → 226）、CADET の授業 6 回の中に新しい章（`basics`・`inst`・`wb`・`navb`・`adm`）と `deep` を飛ばす講義、課目と教科書の食い違いの 26 行（W07d2）。本は **7 部・34 章・208 節**、第 1 部は DESIGN 3.3 の **16 章・118 節**、`#aero.lift` は 5.3。CADET のゲームの本は 30 章・193 節のまま（`g1` は CADET に出ない）。R2 の残りは W21 図・W27 R2 の確かめと、版の最後の出力の作り直し。
 - **R2B**：第 1 部の章を本に入れた。R2B（章の単位 W13〜W20 の下書き 9 つ：`aero`・`sys`・`inst`・`perf`・`wb`・`wx`・`navb`・`law`・`radio1`〜`radio5`・`hf`・`adm`）を統合し、章ごとにコミットした（[`reports/integrate-R2B.md`](reports/integrate-R2B.md)）。第 1 部は 15 章（`g1` を除く）・116 節、本は 7 部・33 章・206 節。6 つの移動（`sys.g1000`・`sys.compass` → `inst`、`perf.wb`・`perf.wbex` → `wb`）を済ませた。所有者の判断 11（失速の課目の高度は参考の行）を入れた。
 - **R2A**：W10b 描く部品・W22 写真の仕組みとクレジット・R1V R1 の確かめの残りを統合した（[`reports/integrate-R2A.md`](reports/integrate-R2A.md)）。
 - **R1**：**R1（誤りの修正・日米の違い・序部）を閉じた**。P1（W01・W02・W03・W05）、P2（W04・W04b・W06）、P3（W07a・W07b・W07c・W07f・W07d・W11）、P4（W09・W08a・W08b・W08c）、P5（W10：序部の 3 章）、W12（R1 の確かめ）を統合してコミットした（`reports/integrate-R1.md`）。R1 の本は 7 部・29 章・167 節。
 - **テスト**（`textbook/rewrite/tools/testall.sh`、R2 の締めの木）：FLIGHT LAB 92/92・TEXTBOOK 36/36・CADET 269/269（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 3。R2C の統合も 92/92・36/36・269/269（[`reports/integrate-R2C.md`](reports/integrate-R2C.md) の 3）。R2B の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R2A の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R1 の締めは 83/83・22/22・266/266）。
-- **出力**（`FLIGHT-LAB.html`・`TEXTBOOK.html`・`CADET.html`）：R2 の締めで作り直してコミットした（ビルドのコミットは、出力のコミットのあとに書く。`textbook/README.md`・`cadet/README.md` の raw.githack のリンクはこのコミットを指す。大きさは下の「R2 の締め」の基準 25）。R1 の締めのビルドは `2097b59`。
+- **出力**（`FLIGHT-LAB.html`・`TEXTBOOK.html`・`CADET.html`）：R2 の締めで作り直してコミットした（ビルドのコミット `12820d5`。`textbook/README.md`・`cadet/README.md` の raw.githack のリンクはこのコミットを指す。大きさは下の「R2 の締め」の基準 25）。R1 の締めのビルドは `2097b59`。
 
 ## できたこと
 
@@ -93,7 +93,7 @@
 | 25 | 全テストと容量 | **満たす** | `testall.sh`（92/92・36/36・269/269）、出力の大きさ（下の行） | — |
 | 26 | 学習記録 | **満たす**（R2 は記録の形を変えていない） | FLIGHT LAB の消毒・統合・書き出しのテスト | `readAt`・`review` は R5 |
 
-基準 25 の大きさ：出力を作り直したあとに書く。
+基準 25 の大きさ（ビルドのコミット `12820d5`）：FLIGHT-LAB.html 10,800,572 バイト（10.30 MiB／12 MiB）・CADET.html 10,451,177 バイト（9.97 MiB／15 MiB）・TEXTBOOK.html 7,135,832 バイト、教科書の写真 81 枚はデコード後 3,364,306 バイト（3.21 MiB／4.0 MiB、いちばん大きい 1 枚 117,344 バイト）、CADET の AI 教官の目次は 2.5 万字以下（`cadet/test/ai.test.mjs`）。R1 の締め（`2097b59`）は 9,791,707・9,458,671・4,759,132 バイト。
 
 ほかの基準（2・19・20）：2 は R2 で閉じた RULINGS の A・B・C が本文・囲み・用語の表と合う（`check-ledgers.mjs`）が、開いた行が残る（R3・R4）。19 は R4。20 は記述問題の構造の lint error 0（`check-questions.mjs`）。
 

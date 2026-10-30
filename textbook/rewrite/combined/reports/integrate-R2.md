@@ -66,9 +66,9 @@ W21（第 1 部の図）はこの回の単位にない（R3 の始めへ：PROGR
 
 1. `217dafd` W27（safety-R2・answerable-R2）：本と課目の直し（`book-0.js`・`book-1.js`・`book-2.js`・`book-gates.js`・`syllabus.js`）と 2 つの報告。この木で速いテスト 89/89・36/36・248/248（一時の索引で作った木を確かめ、その木をそのままコミットした）。
 2. `1ed4943` W27（factcheck2-R2）：台帳の道具（`op: "remove"`）・`check-claims.mjs`・台帳（署名・外した行・CLAIMS の 4 行・COUNTS）・3 つのパッチ・報告。
-3. 統合（PROGRESS・DESIGN の付記 11・この報告）。
-4. 出力の作り直し（3 つの HTML）。
-5. README の raw.githack のリンクと、PROGRESS とこの報告にビルドのコミットと大きさ。
+3. 統合は `3cb7c62`（PROGRESS・DESIGN の付記 11・この報告）。
+4. `12820d5` 出力の作り直し（`3cb7c62` から `node build.mjs`）：FLIGHT-LAB.html 10,800,572 バイト（10.30 MiB／12 MiB）・TEXTBOOK.html 7,135,832 バイト・CADET.html 10,451,177 バイト（9.97 MiB／15 MiB）、教科書の写真 81 枚はデコード後 3,364,306 バイト（3.21 MiB／4.0 MiB）。この木で `testall.sh` 92/92・36/36・269/269。
+5. README の raw.githack のリンクを `12820d5` に（`textbook/README.md`・`cadet/README.md`、`flight-lab/README.md` に v2.6 の行）、PROGRESS とこの報告にビルドのコミットと大きさ、COUNTS `book.size`。
 
 ## 6. 未解決のこと（PROGRESS の「未解決」にも書いた）
 

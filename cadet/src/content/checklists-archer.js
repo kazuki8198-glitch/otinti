@@ -2,6 +2,10 @@
 // air): before the start, the start, after the start, the run-up, after landing and the shutdown. Written for the game
 // from the published PA-28-181 training checklists' items, simplified; the aircraft's POH and the school's checklist
 // govern. The before-takeoff and before-landing checklists are FLIGHT LAB's own (in its lessons t1 and t3).
+// The game's trainer has a key for the magnetos and the start and one master switch. The G1000 Archer III's POH
+// (VB-2266) and the published school checklist (R.archerCk) have left and right magneto switches and a starter switch
+// on the overhead panel, and BATT MASTR and ALTR switches: the instructor says so where the item is (it differs by
+// year and equipment — the aircraft's own checklist governs; ERRATA SYNC.cadet-checklist-mag).
 // Each item: [name, what (the setting), test(c) → true when it is set (null: the cadet confirms it, Enter or a click),
 // the cockpit control to look at (its id in aircraft/cockpit.js), a note the instructor adds, set(c): what the
 // instructor's hands do for it when the cadet leaves it to him (null: nothing to set)]. c: { sw, sys, s, park,
@@ -19,12 +23,12 @@ export const CHECKLISTS = {
   start: { title: 'エンジン始動（STARTING ENGINE・冷えているとき）', items: [
     ['ミクスチャー', 'フル リッチ（いちばん前）', c => c.sw.mixture >= 0.95, 'mixture', 'ミクスチャーは赤いレバーです。いちばん前まで。', c => { c.sw.mixture = 1; }],
     ['スロットル', '1/4 インチ開く', c => c.s.thr >= 0.03 && c.s.thr <= 0.16, 'throttle', 'ほんの少しだけ。ホイールで 1 目盛りです。', c => c.setThr(0.05)],
-    ['マスター スイッチ', 'ON', c => c.sw.master, 'sw.master', '赤いスイッチです。', c => { c.sw.master = true; }],
+    ['マスター スイッチ', 'ON', c => c.sw.master, 'sw.master', '赤いスイッチです。G1000 の Archer III では BATT MASTR と ALTR の 2 つに分かれています。年式や装備で違います。', c => { c.sw.master = true; }],
     ['ビーコン', 'ON', c => c.sw.beacon, 'sw.beacon', '周りの人に「エンジンをかけます」と知らせる灯火です。', c => { c.sw.beacon = true; }],
     ['燃料ポンプ', 'ON', c => c.sw.fuelPump, 'sw.fuelPump', '', c => { c.sw.fuelPump = true; }],
     ['プライマー', '2〜3 回', c => c.sys.primes >= 2 || c.sys.running, 'primer', 'エンジンが冷えているので、燃料を少し送っておきます。押しすぎないように。', c => { if (c.sys.primes < 3) c.prime(); }],
     ['プロペラの周り', '人がいないことを確かめ、「クリア！」', null, null, '窓から周りを見て、大きな声で「プロペラ、クリア！」。', null],
-    ['マグネトー', 'START（かかったら離す）', c => c.sys.running, 'mag', 'キーを START まで回します。かかったら手を離すと BOTH に戻ります。', c => { if (!c.sys.cranking && !c.sys.running) c.sw.mag = 'START'; }],
+    ['マグネトー', 'START（かかったら離す）', c => c.sys.running, 'mag', 'キーを START まで回します。かかったら手を離すと BOTH に戻ります。この機体はキー式です。G1000 の Archer III は、天井のパネルの左右のマグネトーのスイッチと、始動のスイッチを使います。', c => { if (!c.sys.cranking && !c.sys.running) c.sw.mag = 'START'; }],
     ['スロットル', '1,000 rpm', c => c.sys.running && near(c.rpm, 1000, 160), 'throttle', '', c => c.setThr(0.045)],
     ['油圧', '30 秒以内に上がる', c => c.sys.running && c.sys.oil > 25, null, 'MFD のエンジン計器で確かめます。', null],
   ] },

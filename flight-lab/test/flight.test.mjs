@@ -432,6 +432,64 @@ test('syllabus: the stall lessons teach the AFH recovery order, as the textbook 
   assert.deepEqual(SC.lesson('a5').book, ['aero.turn', 'aero.vn', 'ops.turns']);
 });
 
+// (W07d's second run, ERRATA SYNC.*: the lessons said what the textbook and the primary sources say) a7 enters the stall
+// from a stabilised approach descent (AFH p. 5-17, ACS PA.VII.B); x2's brief, standard and grading say the same ±60 m (a
+// teaching width, the ACS's named beside it, as the textbook ops.short shows both); m1 grades the gear at the 500 ft its standard says; m2's bank is about 2° (AFH ch. 13);
+// m3 keeps the automatic rudder off with the left engine at idle; n2's estimate is the heading (wind-corrected) and the
+// time on the new leg; n3's numbers come from the navaid data; i5 joins the glide slope from below; t4 and the keys name
+// Shift+V; the distress call is in AIM 6-3-2's order; the ILS hint is the IFH's pitch for the path, power for the speed
+test('syllabus: the lessons agree with the textbook and the sources (W07d2: a7 entry, x2 standard, m1 gear, m2 bank, m3 rudder, n2, n3, i5, t4, mayday, ILS)', () => {
+  const a7 = SC.lesson('a7').steps.map(s => s.name);
+  assert.deepEqual(a7.slice(0, 3), ['進入の降下を安定させる', '失速への進入', '失速からの回復']);
+  assert.equal(SC.lesson('a7').steps[0].g.pwr, 'idle');
+  // x2: the brief, the standard and the grading agree (±60 m); m1: 500 ft
+  const x2 = SC.lesson('x2').steps.find(s => s.name === '短距離接地');
+  const zone = along => x2.result({ level: { k: 1 } }, { td: { along: 300 + along, fpm: 200, cross: 0, kias: 62, onRunway: true, noseFirst: false, latV: 0, crab: 0 }, stopAlong: 300 + along + 200 }).find(r => r.name === '接地位置').pass;
+  assert.deepEqual([zone(-70), zone(-55), zone(0), zone(55), zone(70)], [false, true, true, true, false]);
+  for (const t of [SC.lesson('x2').std, SC.lesson('x2').brief.join('')]) assert.match(t, /±60 m|前後 60 m/);
+  assert.match(SC.lesson('x2').std, /ACS/);
+  const m1 = SC.lesson('m1').steps.find(s => s.name === '正の上昇・脚上げ');
+  assert.equal(m1.result({ s: { gearDown: false }, last: { aglR: 550 } }, {})[0].pass, false, 'm1: UP above 500 ft fails');
+  assert.equal(m1.result({ s: { gearDown: false }, last: { aglR: 450 } }, {})[0].pass, true);
+  // m2: about 2° toward the live engine, 0–4°; the brief and the say
+  const m2 = SC.lesson('m2'), hold = m2.steps.find(s => s.name === '片発で飛ぶ（Vyse）');
+  assert.deepEqual([hold.tgt.bank[0]({ s: { eng: [{ failed: true }, {}] } }), hold.tgt.bank[1]], [2, 2]);
+  assert.match(m2.brief.join(''), /約 2° バンク/); assert.doesNotMatch(m2.brief.join('') + hold.say + SC.lesson('m4').brief.join(''), /2〜5°/);
+  assert.match(m2.brief.join(''), /ゆっくり<\/b>絞って/);
+  assert.match(SC.lesson('m4').brief.join(''), /全部前.*脚 UP.*Identify/);
+  // m3: the automatic rudder stays off though no engine has failed
+  const L3 = SC.startLesson('m3', 'basic'); L3.s.opts.autoRud = true; P.step(L3.s, DT); SC.update(L3, DT);
+  assert.equal(L3.s.opts.autoRud, false, 'm3: no automatic rudder');
+  assert.ok(L3.s.eng.every(e => !e.failed), 'm3: the left engine idles, it has not failed');
+  // n2: the heading is the course corrected for the wind, the time is on the new leg
+  const L2 = SC.startLesson('n2', 'basic'), t2 = SY.estimateTruth(L2);
+  assert.ok(Number.isFinite(t2.crs) && Number.isFinite(t2.gs), JSON.stringify(t2));
+  const wca = ((t2.brg - t2.crs + 540) % 360) - 180;
+  assert.ok(Math.abs(wca) > 0.5 && Math.abs(wca) < 15, `the wind correction ${wca}°`);
+  assert.ok(Math.abs(t2.eteMin - t2.dist / t2.gs * 60) < 0.15, 'the time at the groundspeed on the new course');
+  // n3: from the navaid data (the point the lesson ends at: 600 m north of the threshold)
+  const vor = A.NAVAIDS.find(x => x.type === 'VOR'), pt = { n: P.LAB_RWY.n + 600, e: P.LAB_RWY.e };
+  const brg = Math.round(A.trueToMag(A.neBearing(vor, pt), P.MAGVAR_W)), nm = A.neDistNm(vor, pt).toFixed(1);
+  assert.ok(SC.lesson('n3').steps.at(-1).say.includes(`約 ${brg}°・${nm} NM`), SC.lesson('n3').steps.at(-1).say);
+  assert.ok(SC.lesson('n3').brief.join('').includes(`約 ${nm} NM`));
+  // i5: the start (17 km out) puts the localizer intercept below the glide slope
+  assert.equal(SC.lesson('i5').setup.km, 17);
+  // t4 and the key text: Shift+V raises the flaps one step
+  assert.match(SC.lesson('t4').brief.join(''), /Shift\+V で 1 段ずつ/); assert.match(SY.KEYS.flaps, /Shift\+V＝/);
+  assert.deepEqual(FL.ui ? FL.ui.parseKeys(SY.KEYS.flaps).map(p => p.keys) : [['V'], ['Shift+V']], [['V'], ['Shift+V']]);
+  // the distress call: nature → intentions → position → altitude (AIM 6-3-2), and its source
+  const L5 = SC.startLesson('e3', 'basic'), q = SC.ATC_Q.mayday(L5), ok = q.opts[q.ok];
+  const at = w => ok.indexOf(w);
+  assert.ok(at('engine failure') < at('landing LAB runway 36') && at('landing LAB runway 36') < at('of LAB') && at('of LAB') < at('feet'), ok);
+  assert.match(q.why, /AIM 6-3-2/); assert.doesNotMatch(q.why, /6-3-1/);
+  assert.match(SC.ATC_Q.lost(L5).why, /訓練で使われる語呂 5C/); assert.doesNotMatch(SC.ATC_Q.lost(L5).why, /AIM 6-2 の考え方/);
+  // the ILS: the descent rate with the nose, the speed with the power (IFH, the textbook ifr.ils)
+  assert.match(SC.HOW.ils, /機首を少し下げて降下率/); assert.match(SC.HOW.ils, /速度のずれは出力/);
+  // the before-landing checklist has the published checklist's fuel pump and landing light
+  const bl = SC.CHECKLISTS.before_landing.items.map(i => i[0]);
+  for (const w of ['電動燃料ポンプ', '着陸灯']) assert.ok(bl.includes(w), w);
+});
+
 // (DESIGN 5 criterion 7「①〜⑦の文はテストで確かめる」, the safety review reports/safety-R1.md) the seven items, as the
 // review checked them against the AFH, the AIM, the AWH and 14 CFR: ① the failed engine found by the feet and checked by
 // the throttle, slowly (me.oei) ② a lost visual reference while circling: a climbing turn toward the landing runway (ifr.np,

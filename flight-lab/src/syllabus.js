@@ -14,7 +14,7 @@
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const KEYS = {
     pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝スロットル減（Shift で一気に全開 / アイドル）',
-    trim: 'T＝いまの速度でトリム（手放しで水平）', flaps: 'V＝フラップを 1 段下げる（最後まで行くと UP に戻る）', brake: 'B / Space＝ブレーキ', gear: 'G＝脚の上げ下げ',
+    trim: 'T＝いまの速度でトリム（手放しで水平）', flaps: 'V＝フラップを 1 段下げる（最後まで行くと UP に戻る）・Shift+V＝フラップを 1 段上げる', brake: 'B / Space＝ブレーキ', gear: 'G＝脚の上げ下げ',
     feather: '[＝左のプロペラをフェザー・]＝右のプロペラをフェザー', rtrim: 'Z / X＝ラダートリム 左 / 右（片発で足を楽に）',
   };
   const k = (...a) => a.map(x => KEYS[x] || x).join('　');
@@ -22,9 +22,16 @@
   const rwyNm = L => { const s = ph.ne(L.s); return Math.hypot(s.n - (ph.LAB_RWY.n + 600), s.e - ph.LAB_RWY.e) / 1852; };
   const liveSide = L => (L.s.eng[0].failed ? 1 : -1);            // +1: the right engine runs (bank right), −1: the left
   const deadName = L => (L.s.eng[0].failed ? '左' : '右');
+  const MC_UNDER = 4;                                              // m3: the deceleration also ends this many kt under the red line
   // grade "maintain" only after the speed has been "established" (ACS: establish Vyse, then hold it): the transition is not counted,
   // but a pilot who never gets there never holds the targets, so the continuous hold still fails
   // (after giveUp seconds the grading starts anyway, so flying around the target forever is not a way to avoid it)
+  // from the LAB VOR to the point lesson n3 ends at (600 m north of the runway's threshold: rwyNm): magnetic bearing and
+  // distance from the navaid data, not hand-written (ERRATA SYNC.n3-numbers)
+  const VOR_RWY = (() => {
+    const A = FL.avionics, vor = A.NAVAIDS.find(x => x.type === 'VOR'), pt = { n: ph.LAB_RWY.n + 600, e: ph.LAB_RWY.e };   // (avionics.js loads before this file: modules.mjs CORE)
+    return { brg: Math.round(A.trueToMag(A.neBearing(vor, pt), ph.MAGVAR_W)), nm: +A.neDistNm(vor, pt).toFixed(1) };
+  })();
   const established = (kt, tol, after = 0, giveUp = 30) => (c, L, st) => st.t > after && (st.cap || st.t > giveUp || (Math.abs(c.kias - kt) <= tol * L.level.k && (st.cap = true)));
   const establishedVs = (fpm, tol, after = 0, giveUp = 25) => (c, L, st) => st.t > after && (st.capV || st.t > giveUp || (Math.abs(c.vs - fpm) <= tol * L.level.k && (st.capV = true)));
 
@@ -37,7 +44,7 @@
         say: `ファイナル：${vref} kt・3°（PAPI 赤 2 白 2）でセンターラインに乗る。地上 500 ft で安定していなければゴーアラウンド`,
         tgt: { spd: T_SPD(vref, 5), cl: [0, 30], gp: [3, 0.9] }, gradeWhen: c => c.aglR < 500 && c.aglR > 60 && c.along < 250, until: c => c.aglR < 40 || c.onGround, max: 360, grade: true },
       { name: o.short ? '短距離接地' : '接地', keys: k('thr', 'pitch', 'brake'),
-        g: '目安：滑走路の端を越えたらアイドル（F）。地上 10〜15 ft から滑走路の先を見ながら S で少しずつ機首を上げ、最後は機首上げ 約 5〜8°。直し方：浮き上がったら引くのを止めて待つ、沈みが速ければ少し強く引く',
+        g: '目安：滑走路の端を越えたらアイドル（F）。地上 10〜15 ft から、前方の滑走路を下へ浅い角度（10〜15°）で見ながら S で少しずつ機首を上げ、最後は機首上げ 約 5〜8°（近すぎる所を見ると高くフレアし、遠くを見すぎると地面との近さが分からない：AFH 第 9 章）。直し方：浮き上がったら引くのを止めて待つ、沈みが速ければ少し強く引く',
         say: o.short ? '目標点（端から 300 m の太い標識）に接地。すぐにアイドル・ブレーキ（B）' : '滑走路の端を越えたらアイドル、地上 10〜15 ft でフレアして主輪から接地。止まるまでセンターラインを保つ',
         until: c => c.onGround && c.gsK < 3, max: 150,
         check: (c, L, st) => {
@@ -48,6 +55,9 @@
         result: (L, st) => {
           const td = st.td, kk = L.level.k;
           if (!td) return [{ name: '接地', val: 'していない', std: '—', pass: false }];
+          // the touchdown zones are teaching values, wider than the ACS and including some ground short of the mark (the
+          // private pilot ACS PA.IV.F.S10 / PA.IV.B: on the point or within 200 / 400 ft beyond it). The textbook (ops.flare,
+          // ops.short) shows both; the brief and the standard of x2 say ±60 m as graded (ERRATA SYNC.x2-zone)
           const sink = Math.round(300 * kk), du = td.along - 300, zone = o.short ? [Math.round(-60 * kk), Math.round(60 * kk)] : [Math.round(-100 * kk), Math.round(400 * kk)], cl = +(6 * kk).toFixed(1);
           const rows = [
             { name: '接地の降下率', val: `${td.fpm} fpm`, std: `${sink} fpm 以下`, pass: td.fpm <= sink },
@@ -113,9 +123,9 @@
             { name: 'トリムで手放し水平飛行', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr', 'trim'), say: 'W / S で高度 {alt0} ft を保ち、昇降率が 0 付近になったら T。手を離して保つ', tgt: { alt: T_ALT(100) }, hold: 20, max: 120, grade: true, gradeWhen: (c, L, st) => st.t > 8 },
           ] },
         { id: 'a2', title: '直線水平飛行', goal: '高度・針路・速度を同時に保つ', aircraft: 'pa28',
-          why: '巡航・航法・計器飛行のすべての基本。「外 8 割・計器 2 割」で姿勢を作り、計器で確認して小さく直す習慣をつける。',
-          brief: ['視線は「外の水平線 8 割、計器 2 割」。姿勢の基準は窓の外の水平線、確認は PFD。', '高度が 50 ft ずれたら機首を 1〜2° 動かして戻す。速度はスロットル（R / F）で。速度を変えたらトリム（T）を取り直す。', '計器の見方（クロスチェック）：姿勢 → 高度 → 姿勢 → 方位 → 姿勢 → 速度…と、姿勢表示を中心に目を動かす。'],
-          std: '高度 ±100 ft・針路 ±10°・速度 ±10 kt を連続 20 秒（自家用 ACS の水平直線飛行の許容幅を参考）', setup: { at: 'area', kt: 100, hdg: 90 }, book: ['ops.sl'],
+          why: '巡航・航法・計器飛行のすべての基本。「外 9 割・計器 1 割」（AFH）で姿勢を作り、計器で確認して小さく直す習慣をつける。',
+          brief: ['視線は「外の水平線 9 割、計器 1 割」（AFH：注意の約 9 割は外、計器は 1 割まで）。姿勢の基準は窓の外の水平線、確認は PFD。', '高度が 50 ft ずれたら機首を 1〜2° 動かして戻す。速度はスロットル（R / F）で。速度を変えたらトリム（T）を取り直す。', '計器の見方（クロスチェック）：姿勢 → 高度 → 姿勢 → 方位 → 姿勢 → 速度…と、姿勢表示を中心に目を動かす。'],
+          std: '高度 ±100 ft・針路 ±10°・速度 ±10 kt を連続 20 秒（教材の値。自家用 ACS の直線水平飛行は計器だけで飛ぶ課目にあり、±200 ft・±20°・±10 kt）', setup: { at: 'area', kt: 100, hdg: 90 }, book: ['ops.sl'],
           steps: [stepSL('直線水平飛行', 100, 20, { keys: k('pitch', 'roll', 'thr', 'trim') })] },
         { id: 'a3', title: '上昇・降下・レベルオフ', goal: '一定の速度で上昇・降下し、目標高度で水平に戻す', aircraft: 'pa28',
           why: '上昇は速度を機首で、降下率は出力で決める——「何で何を直すか」を体で覚える。レベルオフの遅れは高度逸脱（管制の指示違反）の原因になる。',
@@ -149,10 +159,14 @@
           ] },
         { id: 'a7', title: 'パワーオフ失速と回復', goal: '着陸形態での失速を体験し、迎え角を先に減らして確実に回復する', aircraft: 'pa28',
           why: '着陸進入中の失速（ベースからファイナルの旋回など）は重大事故の典型。兆候（警報・振動・舵の軽さ）を知り、迷わず「機首を下げる」を体に覚えさせる。',
-          brief: ['フラップ 25°、パワーアイドル。高度を保つように機首をゆっくり上げ続けると失速します（警報と振動）。', '<b>回復の順番（AFH の型）</b>：自動操縦のある機体では、まず自動操縦を切る（この教材の Archer にはない）。そのあとは、<b>①機首を下げて迎え角を減らす（失速警報が止まるまで） ②翼を水平にする ③出力を必要なだけ足す（ここではフルパワーでゴーアラウンド） ④速度が付いたら元の経路（上昇）へなめらかに戻す</b>。', 'フラップは上昇に移ってから段階的に上げる。', '迎え角を減らす前に出力やエルロンで直そうとするのは、AFH が挙げるよくある間違い。回復中に引きすぎると 2 回目の失速（二次失速）。'],
+          brief: [`入り方（AFH・自家用 ACS）：フラップ 25°・パワーアイドルで、進入の速度（${AR.appr} kt）の降下を安定させます。そこから機首をなめらかに上げ、失速するまでその姿勢を保ちます（警報と振動）。`, '<b>回復の順番（AFH の型）</b>：自動操縦のある機体では、まず自動操縦を切る（この教材の Archer にはない）。そのあとは、<b>①機首を下げて迎え角を減らす（失速警報が止まるまで） ②翼を水平にする ③出力を必要なだけ足す（ここではフルパワーでゴーアラウンド） ④速度が付いたら元の経路（上昇）へなめらかに戻す</b>。', 'フラップは上昇に移ってから段階的に上げる。', '迎え角を減らす前に出力やエルロンで直そうとするのは、AFH が挙げるよくある間違い。回復中に引きすぎると 2 回目の失速（二次失速）。'],
           std: '二次失速なし・回復で失う高度は参考（目安 300 ft。合否に使わない。ACS に高度の損失の基準はない）・針路 ±20°', setup: { at: 'area', kt: 75, hdg: 90, flaps: 2, thr: 0.2 }, book: ['aero.stall', 'ops.stall'],
           steps: [
-            { name: '失速への進入', keys: k('thr', 'pitch'), g: '目安：スロットル アイドル（F）。高度を保つように、1 秒に 1° くらいのペースで S を短く押して機首を上げ続ける。失速警報 → 振動（バフェット）→ 機首や片翼が落ちる、の順に来る', say: 'アイドルにし、高度を保つように機首をゆっくり上げ続けて失速させる', until: c => c.stall && c.kias < 52, max: 100 },
+            // the entry as the AFH (FAA-H-8083-3C p. 5-17) and the private pilot ACS (PA.VII.B.S3-S5) describe it: a stabilised
+            // descent at the approach speed in the landing configuration, then the nose raised smoothly (ERRATA SYNC.a7-entry)
+            { name: '進入の降下を安定させる', g: { kt: AR.appr, pwr: 'idle', flaps: 2, how: 'glide' }, keys: k('thr', 'pitch'), say: `アイドルにし、機首を下げて進入の速度 ${AR.appr} kt の降下を安定させる`,
+              until: (c, L, st) => st.t > 8 && Math.abs(c.kias - AR.appr) <= 5, max: 45 },
+            { name: '失速への進入', keys: k('pitch'), g: '目安：アイドルのまま、進入の姿勢から 1 秒に 1° くらいのペースで S を短く押して機首を上げ、失速するまでその姿勢を保つ。失速警報 → 振動（バフェット）→ 機首や片翼が落ちる、の順に来る', say: '進入の姿勢から機首をなめらかに上げ、失速するまで保つ', until: c => c.stall && c.kias < 52, max: 100 },
             stallRecovery(AR.x - 4),
           ] },
         { id: 'a8', title: 'パワーオン失速と回復', goal: '離陸・上昇中の失速を体験し回復する', aircraft: 'pa28',
@@ -175,11 +189,11 @@
           ] },
         { id: 't2', title: '場周経路（トラフィックパターン）', goal: 'ダウンウインドから左場周を飛んで着陸する', aircraft: 'pa28',
           why: '空港の周りの決まった経路（場周経路）を全員が同じ高さ・同じ形で飛ぶことで、互いを見つけやすくし衝突を防ぐ（AIM 4-3-3）。高度・位置・速度・外形変更の段取りが着陸の質を決める。',
-          brief: ['左場周（LAB RWY 36）。<b>ダウンウインド</b>：地上 1,000 ft、90 kt、滑走路から約 1.6 km 離れて平行に（磁方位 180°）。', '滑走路の進入端の真横（アビーム）で<b>パワーを絞り（約 1,500 rpm）、フラップ 10°</b>、降下開始。', '進入端が斜め後ろ 45° に見えたら左旋回して<b>ベース</b>（方位 090°）、フラップ 25°、75 kt。', `最終進入（<b>ファイナル</b>）はセンターラインに合わせて ${AR.appr} kt、フラップ 40°。PAPI が赤 2 白 2 なら正しい角度（3°）。`],
+          brief: ['左場周（LAB RWY 36）。<b>ダウンウインド</b>：地上 1,000 ft、90 kt、滑走路から約 1.6 km 離れて平行に（磁方位 180°）。', '滑走路の進入端の真横（アビーム）で<b>パワーを絞り、フラップ 10°</b>、80 kt・約 500 fpm で降下開始（rpm の目安は画面の「目安」。この教材のモデルでは約 1,650 rpm）。', '進入端が斜め後ろ 45° に見えたら左旋回して<b>ベース</b>（方位 090°）、フラップ 25°、75 kt。', `最終進入（<b>ファイナル</b>）はセンターラインに合わせて ${AR.appr} kt、フラップ 40°。PAPI が赤 2 白 2 なら正しい角度（3°）。`],
           std: `ダウンウインド 高度 ±100 ft・速度 ±10 kt、ファイナル ${AR.appr} ±5 kt、接地は下の着陸基準`, setup: { at: 'downwind' }, book: ['ops.pattern'],
           steps: [
             { name: '着陸許可の復唱', atc: 'landing' },
-            { name: 'ダウンウインド', g: { kt: 90, how: 'level' }, keys: k('pitch', 'roll', 'thr', 'trim'), say: 'ダウンウインド：地上 1,000 ft・90 kt・滑走路と平行（方位 180°）。着陸前点検を思い出す', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.along < 0, max: 150, grade: true },
+            { name: 'ダウンウインド', g: { kt: 90, how: 'level' }, keys: k('pitch', 'roll', 'thr', 'trim'), say: 'ダウンウインド：地上 1,000 ft・90 kt・滑走路と平行（方位 180°）。着陸前点検（燃料ポンプ・燃料セレクター・ミクスチャー・着陸灯）を思い出す', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.along < 0, max: 150, grade: true },
             { name: '降下開始（アビーム）', g: { kt: 80, fpm: -500, flaps: 1, how: 'pattern' }, keys: k('thr', 'flaps', 'pitch'), say: '進入端の真横。パワーを絞り（F）、フラップ 10°（V）。80 kt で降下開始', until: c => c.along < -800, max: 100,
               check: (c, L, st) => { if (c.flaps >= 1) st.flap = true; }, result: (L, st) => [{ name: 'フラップ 10°', val: st.flap ? '操作した' : 'していない', std: 'アビームで', pass: !!st.flap }] },
             { name: 'ベース', g: { kt: 75, fpm: -500, flaps: 2, how: 'pattern' }, keys: k('roll', 'flaps', 'thr'), say: '左旋回してベース（方位 090°）。フラップ 25°、75 kt で降下。センターラインの延長に近づいたら左旋回してファイナルへ', until: c => Math.abs(c.cross) < 150 && Math.abs(w180(c.hdg - 360)) < 40 && c.along < -400, max: 180, tgt: { spd: T_SPD(75, 12) }, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
@@ -192,7 +206,7 @@
           steps: [{ name: '着陸前点検', checklist: 'before_landing' }, ...landingSteps(AR.appr)] },
         { id: 't4', title: '着陸復行（ゴーアラウンド）', goal: '進入を中止して安全に上昇へ移る', aircraft: 'pa28',
           why: 'ゴーアラウンドは失敗ではなく、安全のための正しい判断。迷わず実行できるよう手順を体に覚えさせる。最大の危険はフラップを一度に上げて沈むこと、と機首の上げすぎ。',
-          brief: [`「ゴーアラウンド」：<b>①フルパワー（R）②機首を上昇姿勢へ ③フラップを 25° に（V を押して 1 段ずつ…この教材では一周して UP に戻るので注意）④正の上昇を確認 ⑤${AR.x}〜${AR.y} kt で上昇、フラップを段階的に上げる</b>。`, '沈み込まないことが最重要です。'],
+          brief: [`「ゴーアラウンド」：<b>①フルパワー（R）②機首を上昇姿勢へ ③フラップを 25° に上げる（Shift+V で 1 段ずつ。V は下げるキーで、40° から押すと一度に UP になる）④正の上昇を確認 ⑤${AR.x}〜${AR.y} kt で上昇、フラップを段階的に上げる</b>。`, '沈み込まないことが最重要です。'],
           std: '指示から 3 秒以内にフルパワー・高度損失 50 ft 以内・地上 800 ft まで上昇', setup: { at: 'final', km: 4 }, book: ['ops.goaround'],
           steps: [
             { name: '進入', g: { kt: AR.appr, fpm: -370, flaps: 3, how: 'approach' }, keys: k('thr', 'pitch'), say: `${AR.appr} kt・3° で進入を続ける`, tgt: { spd: T_SPD(AR.appr, 8), cl: [0, 40] }, until: c => c.aglR < 300, max: 180, grade: true, gradeWhen: c => c.aglR < 900 },
@@ -212,7 +226,7 @@
           ] },
         { id: 'e2', title: '離陸直後のエンジン故障', goal: '低高度のエンジン故障で、滑空速度を保ってほぼ正面に降りる', aircraft: 'pa28',
           why: '低高度で引き返そうとする旋回（いわゆる「インポッシブル・ターン」）は失速・スピンの典型事故。正面の安全な場所へ、速度を保って降りる。',
-          brief: [`<b>すぐに機首を下げて ${AR.glide} kt（最良滑空速度）</b>。これが最優先（Aviate）。`, '<b>引き返さない</b>。左右 30° 以内の、できるだけ平らな場所へ。', 'フラップは降りる場所が確実になってから。接地直前にフレア。'],
+          brief: [`<b>すぐに機首を下げて ${AR.glide} kt（最良滑空速度）</b>。これが最優先（Aviate）。`, '<b>引き返さない</b>。正面か少し横（AFH 第 18 章。この教材の目安は左右 30° 以内）の、できるだけ平らな場所へ。', 'フラップは降りる場所が確実になってから。接地直前にフレア。'],
           std: `5 秒以内に滑空姿勢・滑空速度 ${AR.glide} ±10 kt・針路 ±30°・安全に接地`, setup: { at: 'runway' }, book: ['emg.engine'],
           steps: [
             takeoffRoll(AR.rotate),
@@ -235,7 +249,7 @@
           ] },
         { id: 'c1', title: 'ソロ前の審査（模擬 Check Flight）', goal: '離陸・空中操作・失速・緊急・着陸を通しで審査', aircraft: 'pa28',
           why: '公開情報では、レッスン 12 回の後の審査に合格するとソロへ進む。ここではその「通し」の練習を、これまでの課目の基準で行う（実際の審査基準ではない）。',
-          brief: ['審査官の指示に従って飛びます。<b>1 項目でも基準外なら不合格</b>。', '内容：離陸 → 直線水平 → 急旋回（左）→ パワーオフ失速 → 模擬エンジン故障（滑走路へ滑空・着陸）。', '各項目の前に目標値を声に出して確認しましょう（教官に伝えるつもりで）。'],
+          brief: ['審査官の指示に従って飛びます。採点では、<b>どれか 1 項目でも基準を外れると不合格</b>です。実際の審査は、外れたときに自分で気づいてすぐ直せるかも見ます（教科書「ソロ前の審査」）。', '内容：離陸 → 直線水平 → 急旋回（左）→ パワーオフ失速 → 模擬エンジン故障（滑走路へ滑空・着陸）。この組み合わせはこの教材の選び方です。', '米国の 14 CFR 61.87(d) のソロ前の訓練項目には急旋回はなく、低速飛行・場周経路・ゴーアラウンドなどが入ります。', '各項目の前に目標値を声に出して確認しましょう（教官に伝えるつもりで）。'],
           std: '各課目の基準と同じ', setup: { at: 'runway' }, book: ['solo.check'],
           steps: [
             { name: '離陸前点検', checklist: 'before_takeoff' },
@@ -245,7 +259,7 @@
             { name: '水平へ', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr', 'trim'), say: '水平飛行に移り 100 kt へ。トリムを取る', until: (c, L, st) => st.t > 25, max: 30, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 50) * 50; L.hdg0 = Math.round(c.hdg) || 360; } },
             stepSL('直線水平飛行', 100, 20, { keys: k('pitch', 'roll', 'thr', 'trim') }),
             ...stepTurn(-1, 45, '左急旋回', { kt: 95, tgt: { spd: T_SPD(95) } }),
-            { name: '失速の準備', keys: k('thr', 'flaps', 'pitch'), g: '目安：スロットル アイドル・フラップ 25°。高度を保つように機首を上げ続ける', say: 'フラップ 25°・パワーアイドル。高度を保ちながら失速させる', until: c => c.stall && c.kias < 52, max: 150 },
+            { name: '失速の準備', keys: k('thr', 'flaps', 'pitch'), g: `目安：スロットル アイドル・フラップ 25°。進入の速度（${AR.appr} kt）の降下を安定させてから、機首をなめらかに上げて失速するまで保つ`, say: 'フラップ 25°・パワーアイドル。進入の速度で降下を安定させてから、機首を上げて失速させる', until: c => c.stall && c.kias < 52, max: 150 },
             stallRecovery(AR.x - 4),
             { name: '模擬エンジン故障', g: { kt: AR.glide, pwr: 'dead', how: 'glide' }, keys: k('pitch', 'roll', 'flaps'), say: `エンジン故障！ ${AR.glide} kt で滑走路へ滑空し着陸`, fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 700, grade: true, tgt: { spd: [AR.glide, 8] }, gradeWhen: c => c.aglR > 300,
               check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; } },
@@ -257,14 +271,14 @@
       desc: '公開情報では、地図と上空の風から針路を計算して目的地へ飛ぶ Navigation 訓練、目的地変更、エンジン停止の想定、現在地を見失った場合の対処を訓練する。',
       lessons: [
         { id: 'x1', title: '横風着陸', goal: '横風の中で、機体をまっすぐ滑走路に接地させる', aircraft: 'pa28',
-          why: '横風で流されたまま接地すると、脚に横向きの力がかかって滑走路を外れる（ランウェイエクスカーション）。Archer の実証横風成分は 17 kt（それ以上が禁止という意味ではないが、技量と相談）。',
+          why: '横風で流されたまま接地すると、脚に横向きの力がかかって滑走路を外れる（ランウェイエクスカーション）。Archer の実証横風成分は 17 kt（それ以上が禁止という意味ではないが、技量と相談）。米国の 14 CFR 61.87(d)(3) は、ソロの前に通常と横風の離着陸の訓練を求めている（課程表でソロのあとのこの段階に置いたのは、この教材の選び方）。',
           brief: ['進入中は<b>機首を風上に向けたクラブ</b>でセンターラインを保つ（航跡を合わせる）。', '接地直前に<b>風下側のラダーで機首を滑走路と平行</b>にし、<b>風上側の翼を少し下げて（エルロン）</b>流されないようにする（ウイングロー）。', '接地後もエルロンは風上側へ。速度が落ちるほど大きく。'],
           std: '通常着陸の基準＋接地時の横流れ 1.5 m/s 以下・機首方向 ±5°', setup: { at: 'final', km: 5, wind: { rel: 60, kt: 12, gust: 1.3 } }, book: ['ops.xwind'],
           steps: [...landingSteps(AR.appr, { xwind: true })] },
         { id: 'x2', title: '短距離着陸', goal: '目標点に正確に接地し、短い距離で止まる', aircraft: 'pa28',
           why: '短い滑走路・障害物のある空港で使う技術。速度と進入角の正確さがそのまま接地点の正確さになる。自家用 ACS の Short-Field Landing。',
-          brief: [`フラップ 40°、<b>${AR.apprShort} kt</b> で正確に 3° の進入。`, '目標点（滑走路端から 300 m）の手前 0〜先 60 m 以内に接地（基礎レベル）。', '接地したらすぐにアイドル、ブレーキ（B を押し続ける）。'],
-          std: '接地：目標点 ±60 m・接地後 400 m 以内に停止', setup: { at: 'final', km: 4.5, flaps: 3, kt: AR.apprShort }, book: ['ops.short'],
+          brief: [`フラップ 40°、<b>${AR.apprShort} kt</b> で正確に 3° の進入。`, '目標点（滑走路端から 300 m）の前後 60 m 以内に接地（基礎レベル。教材の幅で、実地試験では目標点の手前は不可）。', '接地したらすぐにアイドル、ブレーキ（B を押し続ける）。'],
+          std: '接地：目標点 ±60 m（教材の幅。自家用 ACS は指定点の上か、その先 200 ft 以内で、手前は不可）・接地後 400 m 以内に停止', setup: { at: 'final', km: 4.5, flaps: 3, kt: AR.apprShort }, book: ['ops.short'],
           steps: [...landingSteps(AR.apprShort, { short: true })] },
         { id: 'x3', title: '短距離離陸', goal: '最短の距離で浮揚し、Vx で障害物を越える', aircraft: 'pa28',
           why: '短い滑走路や前方の障害物を越える離陸。Vx（最良上昇角速度）は「水平距離あたり最も高く」上がれる速度。自家用 ACS の Short-Field Takeoff。',
@@ -286,8 +300,8 @@
           ] },
         { id: 'n2', title: '推測航法と目的地変更', goal: '針路と時間で目標へ飛び、途中の目的地変更で新しい針路・距離・時間を見積もる', aircraft: 'pa28',
           why: '公開情報では「地図に線を引き上空の風から針路を計算して目的地へ飛ぶ」「目的地変更に伴う再計算」を訓練する。計算（見積もり）→ 実行 → 確認、を素早く回す力。',
-          brief: ['最初は LAB-A（架空の訓練点・赤い塔）へ。MFD の地図で方位と距離を確認し、風で流される分だけ風上へ針路を修正する。', '途中で「目的地変更」：LAB-F へ。<b>針路（磁方位）・距離（NM）・所要時間（分）</b>を見積もって入力し、すぐに新しい針路へ。', '見積もりのコツ：MFD の地図のレンジ環で距離、対地速度 GS で時間（距離 ÷ GS × 60）。'],
-          std: '高度 ±200 ft・各目標の 1 NM 以内に到達・見積もり：針路 ±15°、距離と時間 ±20%', setup: { at: 'away', from: 'rwy', brg: 10, km: 2, altFt: 3000, hdg: 50, kt: 105, fpl: ['LABRW', 'LABEA'], wind: { rel: 270, kt: 12, gust: 0.6 } }, book: ['nav.dr', 'nav.divert'],
+          brief: ['最初は LAB-A（架空の訓練点・橙の塔）へ。MFD の地図で方位と距離を確認し、風で流される分だけ風上へ針路を修正する。', '途中で「目的地変更」：LAB-F へ。<b>針路（磁方位）・距離（NM）・所要時間（分）</b>を見積もって入力し、すぐに新しい針路へ。', '見積もりのコツ：MFD の地図のレンジ環で距離、対地速度 GS で時間（距離 ÷ GS × 60）。'],
+          std: '高度 ±200 ft・各目標の 1 NM 以内に到達・見積もり：針路 ±15°、距離と時間 ±20%（見積もりの幅は教材の値。自家用 ACS は妥当な見積もりを求める）', setup: { at: 'away', from: 'rwy', brg: 10, km: 2, altFt: 3000, hdg: 50, kt: 105, fpl: ['LABRW', 'LABEA'], wind: { rel: 270, kt: 12, gust: 0.6 } }, book: ['nav.dr', 'nav.divert'],
           steps: [
             { name: 'LAB-A へ', g: { kt: 105, how: 'level' }, keys: k('roll', 'pitch', 'thr', 'trim'), say: 'LAB-A（架空の訓練点）へ向かう。MFD の地図と GPS の DTK を見て、風上へ修正', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => distNm(L, 'LABEA') < 1.0 * L.level.k, max: 900, grade: true },
             { name: '目的地変更：見積もり', estimate: 'LABEF', keys: '下の入力欄に針路・距離・時間 → 「見積もりを確定」', say: '目的地変更！ LAB-F へ。針路（磁）・距離（NM）・所要時間（分）を見積もって入力し、すぐに旋回', until: (c, L) => !!L.estimate, max: 150,
@@ -296,15 +310,15 @@
             { name: 'LAB-F へ', g: { kt: 105, how: 'level' }, keys: k('roll', 'pitch', 'thr'), say: 'LAB-F へ向かう（MFD の D→ を使ってもよい）。到着を確認', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => distNm(L, 'LABEF') < 1.0 * L.level.k, max: 900, grade: true },
           ] },
         { id: 'n3', title: '現在地を見失ったとき（GPS 故障）', goal: 'GPS が使えない中、VOR と DME で位置を確かめて飛行場へ戻る', aircraft: 'pa28',
-          why: '公開情報では「現在地を見失った場合の対処」も訓練する。慌てずに 5C（Climb・Communicate・Confess・Comply・Conserve）、使える航法装置で位置を確かめる。',
-          brief: ['GPS が故障し、MFD の地図と GPS のコースが使えなくなります。', '①管制に正直に伝える（1〜3 キー）②CDI を NAV1（LAB VOR 113.50）に ③CRS を回して針が中央・TO になる方位＝局への方位 ④局へ向かい、DME の距離が減ることを確かめる ⑤局から LAB RWY へ（局の西南西 約 5.6 NM）。', '高度を上げると電波が届きやすく、地上の目標も見つけやすい（Climb）。燃料を節約（Conserve）。'],
+          why: '公開情報では「現在地を見失った場合の対処」も訓練する。慌てずに、訓練で使われる語呂 5C（Climb・Communicate・Confess・Comply・Conserve）を思い出し、使える航法装置で位置を確かめる。',
+          brief: ['GPS が故障し、MFD の地図と GPS のコースが使えなくなります。', `①管制に正直に伝える（1〜3 キー）②CDI を NAV1（LAB VOR 113.50）に ③CRS を回して針が中央・TO になる方位＝局への方位 ④局へ向かい、DME の距離が減ることを確かめる ⑤局から LAB RWY へ（局の西南西 約 ${VOR_RWY.nm} NM）。`, '高度を上げると電波が届きやすく、地上の目標も見つけやすい（Climb）。燃料を節約（Conserve）。'],
           std: 'VOR 局の 1 NM 以内を通過・LAB RWY の 2 NM 以内に戻る・高度 ±300 ft', setup: { at: 'away', brg: 30, km: 20, altFt: 3000, hdg: 120, kt: 100 }, book: ['nav.lost', 'nav.vor'],
           steps: [
             { name: 'GPS 故障', say: 'GPS 信号を失いました（MFD の地図が使えません）。落ち着いて、まず高度と姿勢を保つ', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr'), fail: 'gps', dur: 8 },
             { name: '管制へ', atc: 'lost' },
             { name: 'VOR で位置を確かめる', g: { kt: 100, how: 'level' }, keys: 'パネルの CDI → NAV1、CRS −/+（局への方位を探す）', say: 'CDI を NAV1 に。CRS を回して針が中央・TO になる方位を探し、その方位へ旋回', until: (c, L) => L.av.cdi === 'NAV1' && Math.abs(c.cdi) < 1.5 && Math.abs(w180(c.hdg - c.brgV)) < 25, max: 300 },
             { name: 'VOR 局へ', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch'), say: '針を中央に保って局へ。DME（距離）が減ることを確かめる', tgt: { alt: [L => L.alt0, 300] }, until: c => c.dmeV < 1.0, max: 900, grade: true },
-            { name: 'LAB RWY へ', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch'), say: 'LAB VOR から LAB RWY へ（局から方位 約 250°・5.6 NM）。滑走路が見えたら報告のつもりで', tgt: { alt: [L => L.alt0, 300] }, until: (c, L) => rwyNm(L) < 2, max: 600, grade: true },
+            { name: 'LAB RWY へ', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch'), say: `LAB VOR から LAB RWY へ（局から方位 約 ${VOR_RWY.brg}°・${VOR_RWY.nm} NM）。滑走路が見えたら報告のつもりで`, tgt: { alt: [L => L.alt0, 300] }, until: (c, L) => rwyNm(L) < 2, max: 600, grade: true },
           ] },
       ] },
     // ======================================================================= 3
@@ -313,7 +327,7 @@
       lessons: [
         { id: 'i1', title: '基本計器飛行', goal: '計器だけで水平・標準旋回・上昇降下', aircraft: 'pa28',
           why: '雲の中では体の感覚（前庭感覚）が当てにならず、錯覚で姿勢を誤る（空間識失調）。計器を正しい順で見て、姿勢を作る（Attitude Instrument Flying）。',
-          brief: ['外は見えません。<b>姿勢表示を中心に、放射状に目を動かす</b>（姿勢→高度→姿勢→方位→姿勢→速度）。', '標準旋回率（1 秒に 3°）：PFD の方位表示の上のマゼンタの線（旋回率の目安）を 3°/秒の印に合わせる。100 kt でバンク約 17°（速度 ÷ 10 ＋ 7）。', '上昇・降下は 500 fpm（VSI）。'],
+          brief: ['外は見えません。<b>姿勢表示を中心に、放射状に目を動かす</b>（姿勢→高度→姿勢→方位→姿勢→速度）。', '標準旋回率（1 秒に 3°）：100 kt でバンク約 17°（速度 ÷ 10 ＋ 7）にし、方位が 10 秒で約 30° 変わるかで確かめる（この教材の PFD には旋回率の表示はない）。', '上昇・降下は 500 fpm（VSI）。'],
           std: '水平 ±100 ft ±10°、旋回率 3 ±1 °/秒、昇降率 500 ±150 fpm（計器飛行 ACS を参考にした教材値）', setup: { at: 'area', kt: 100, hdg: 90, hood: true }, book: ['ifr.scan'],
           steps: [
             stepSL('計器による水平飛行', 100, 30, { keys: k('pitch', 'roll', 'thr', 'trim') }),
@@ -359,7 +373,7 @@
         { id: 'i5', title: 'ILS 進入', goal: 'ローカライザーとグライドスロープに乗って、決心高度まで計器で進入する', aircraft: 'pa28',
           why: 'ILS は雲の下限が低いときに滑走路へ降りるための精密進入。決心高度（DA）で滑走路が見えなければ必ず進入復行（ミスト・アプローチ）する。',
           brief: ['NAV1 が I-LAB（109.90）、CDI が NAV1（LOC）。<b>CDI の針＝ローカライザー（左右）、右端の菱形＝グライドスロープ（上下）</b>。', '針が動き始めたら滑走路の方位 360° へ旋回して乗る。菱形が中央に下りてきたら、パワーを絞り 80 kt・約 −430 fpm で降下（フラップ 10°）。', '<b>決心高度（地上 200 ft）</b>でフードが外れ、滑走路が見えたら着陸。'],
-          std: 'LOC・GS ±1 ドット（地上 1,000〜200 ft の 85% 以上）＋着陸', setup: { at: 'ils', km: 14, altFt: 2000, hood: true, nav: 'ILS' }, book: ['ifr.ils'],
+          std: 'LOC・GS ±1 ドット（地上 1,000〜200 ft の 85% 以上）＋着陸', setup: { at: 'ils', km: 17, altFt: 2000, hood: true, nav: 'ILS' }, book: ['ifr.ils'],
           steps: [
             { name: '進入許可の復唱', atc: 'ils' },
             { name: 'ローカライザー会合', g: { kt: 90, how: 'level' }, keys: k('roll', 'pitch', 'thr'), say: '針路 330° で会合。CDI の針が中央に近づいたら滑走路方位 360° へ', until: c => Math.abs(c.loc) < 1 && Math.abs(w180(c.hdg - 360)) < 15, max: 420 },
@@ -382,12 +396,12 @@
             { name: '離陸許可の復唱', atc: 'takeoff' },
             takeoffRoll(SM.rotate, { twin: true }),
             { name: '正の上昇・脚上げ', g: { kt: SM.y, pwr: 'full', how: 'climbFull' }, keys: k('gear', 'pitch'), say: '正の上昇を確認して脚 UP（G）', until: (c, L) => !c.gearDown || c.aglR > 600, max: 60,
-              result: (L, st) => [{ name: '脚上げ', val: !L.s.gearDown ? `地上 ${Math.round(L.last.aglR)} ft で UP` : '上げていない', std: '地上 500 ft まで', pass: !L.s.gearDown && L.last.aglR <= 600 }] },
+              result: (L, st) => [{ name: '脚上げ', val: !L.s.gearDown ? `地上 ${Math.round(L.last.aglR)} ft で UP` : '上げていない', std: '地上 500 ft まで', pass: !L.s.gearDown && L.last.aglR <= 500 }] },
             { name: '上昇', g: { kt: SM.y, pwr: 'full', how: 'climbFull' }, keys: k('pitch', 'trim'), say: `${SM.y} kt で地上 1,500 ft まで上昇`, tgt: { spd: T_SPD(SM.y), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 300, until: c => c.aglR > 1500, max: 200, grade: true },
           ] },
         { id: 'm2', title: '上空での片発停止（Identify・Verify・Feather）', goal: '片方のエンジンが止まったとき、方向を保ち、止まった側を特定してフェザーする', aircraft: 'pa44',
           why: '片発になると、生きているエンジンの推力で機首が止まった側へ振られ（非対称推力）、止まったプロペラの抗力が加わる。ラダーで方向を保ち、正しいエンジンをフェザーしないと上昇できない。生きているエンジンを止めるのが最悪の誤り。',
-          brief: [`まず<b>方向を保つ</b>：機首が振られる側と反対のラダー（機首が左へ振られたら E）。<b>速度 ${SM.yse} kt（青線 Vyse）</b>。`, '<b>Identify（特定）</b>：踏んでいない足の側のエンジンが止まっている（Dead foot, dead engine）。<b>Verify（確認）</b>：そのスロットルを絞っても何も変わらないこと（教材では説明のみ）。<b>Feather</b>：[＝左・]＝右 のキーでプロペラを止めて抗力を減らす。', '生きているエンジン側へ<b>2〜5° バンク</b>するとラダーが少なくて済み、横滑りが減る。キーボードでは Z / X のラダートリムで足を楽に。'],
+          brief: [`まず<b>方向を保つ</b>：機首が振られる側と反対のラダー（機首が左へ振られたら E）。<b>速度 ${SM.yse} kt（青線 Vyse）</b>。`, '<b>Identify（特定）</b>：踏んでいない足の側のエンジンが止まっている（Dead foot, dead engine）。<b>Verify（確認）</b>：そのスロットルを<b>ゆっくり</b>絞っても何も変わらないこと（教材では説明のみ）。<b>Feather</b>：[＝左・]＝右 のキーでプロペラを止めて抗力を減らす。', '方向を保てたら、生きているエンジン側へ<b>約 2° バンク</b>（ボールは生きている側へ 1/3〜1/2）。横滑りがいちばん少なく、上昇性能がいちばんよい（AFH 第 13 章。方向を止めるために最初の一瞬は 5〜10° 使ってよい）。キーボードでは Z / X のラダートリムで足を楽に。'],
           std: '針路 ±20°（故障直後）・30 秒以内に正しいエンジンをフェザー・その後 Vyse ±5 kt・針路 ±10° を連続保持', setup: { at: 'area', kt: 120, hdg: 90, altFt: 4000, gear: false }, book: ['me.oei', 'me.vmc'],
           steps: [
             { name: '巡航', g: { kt: 120, how: 'level' }, keys: k('pitch', 'thr'), say: '巡航中。まもなく片方のエンジンが止まります。フルパワー（R）で備える', dur: 10, onEnd: (L) => { L.s.opts.autoRud = false; } },
@@ -396,36 +410,36 @@
               check: (c, L, st) => { st.dev = Math.max(st.dev || 0, Math.abs(w180(c.hdg - st.h0))); },
               result: (L, st) => { const good = L.s.eng.every(e => !e.feather || e.failed), when = st.t; return [{ name: 'フェザーした側', val: L.s.eng.some(e => e.feather) ? (good ? `止まった${deadName(L)}エンジン` : '生きているエンジン（重大な誤り）') : 'フェザーしていない', std: '止まったエンジン', pass: good && L.s.eng.some(e => e.feather) }, { name: 'フェザーまで', val: `${Math.round(when)} 秒`, std: '30 秒以内', pass: when <= 30 }]; },
               stopOnFail: '片発停止の処置が基準外でした' },
-            { name: '片発で飛ぶ（Vyse）', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll', 'rtrim'), say: `Vyse ${SM.yse} kt、生きているエンジン側へ 2〜5° バンク、針路 {hdg0}° を保つ`, tgt: { spd: [SM.yse, 5], hdg: T_HDG(10), bank: [L => 3 * liveSide(L), 3, 'fixed'] }, hold: 30, max: 150, grade: true, gradeWhen: established(SM.yse, 5, 4) },
+            { name: '片発で飛ぶ（Vyse）', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll', 'rtrim'), say: `Vyse ${SM.yse} kt、生きているエンジン側へ約 2° バンク、針路 {hdg0}° を保つ`, tgt: { spd: [SM.yse, 5], hdg: T_HDG(10), bank: [L => 2 * liveSide(L), 2, 'fixed'] }, hold: 30, max: 150, grade: true, gradeWhen: established(SM.yse, 5, 4) },
             { name: '管制へ連絡', atc: 'oei' },
           ] },
-        { id: 'm3', title: 'Vmc デモンストレーション', goal: '片発で速度を下げると方向が保てなくなる速度（Vmc）を知り、正しく回復する', aircraft: 'pa44',
+        { id: 'm3', title: 'Vmc デモンストレーション', goal: '片発で速度を下げると方向が保てなくなる速度（Vmc）を知り、正しく回復する', aircraft: 'pa44', autoRudOff: true,
           why: 'Vmc（赤線）より遅いと、ラダーをいっぱいに使っても方向を保てず、機体は止まった側へ横転する（Vmc ロール）。低高度では致命的。兆候が出たら「生きている側の出力を絞り、機首を下げる」で必ず回復できることを体験する（ACS の Vmc Demonstration）。',
           brief: [`左エンジンをアイドル（模擬停止）、右エンジン全開。機首を上げて<b>1 秒に約 1 kt</b> ずつ減速。ラダーで方向を保つ。`, '<b>方向が保てなくなる（ラダーいっぱいでも機首が止まった側へ回る）・失速警報・振動</b>のどれかが出たら即回復。', `<b>回復：①生きているエンジンの出力を絞る（F）②機首を下げる ③${SM.sse} kt（Vsse）以上に加速 ④方向を戻したら徐々に出力</b>。`],
-          std: '兆候から 3 秒以内に出力を減らす・回復で失う高度 300 ft 以内・失速しない', setup: { at: 'area', kt: 100, hdg: 90, altFt: 5000, gear: false, thr: 0.8 }, book: ['me.vmc'],
+          std: '兆候から 3 秒以内に出力を減らす・回復で失う高度 300 ft 以内（教材の基準。自家用 ACS は高度ではなく、入りの針路 ±20° で回復）・失速しない', setup: { at: 'area', kt: 100, hdg: 90, altFt: 5000, gear: false, thr: 0.8 }, book: ['me.vmc'],
           steps: [
-            { name: '準備（左を模擬停止）', g: { kt: SM.sse + 8, how: 'level' }, keys: k('thr', 'rud', 'rtrim'), say: '左エンジンをアイドル（模擬停止）にします。右は全開（R）。ラダーで方向を保って Vsse 82 kt へ',
-              onStart: (L) => { L.s.opts.autoRud = false; L.s.eng[0].thr = 0; }, until: (c, L, st) => st.t > 8 && c.thr > 0.95 && c.kias < SM.sse + 12, max: 60 },
+            { name: '準備（左を模擬停止）', g: { kt: SM.sse + 10, how: 'level' }, keys: k('thr', 'rud', 'rtrim'), say: `左エンジンをアイドル（模擬停止）にします。右は全開（R）。ラダーで方向を保って ${SM.sse + 10} kt（Vsse ${SM.sse} kt の約 10 kt 上）へ`,
+              onStart: (L) => { L.s.opts.autoRud = false; L.s.eng[0].thr = 0; }, until: (c, L, st) => st.t > 8 && c.thr > 0.95 && c.kias < SM.sse + 14, max: 60 },
             { name: '減速（Vmc に近づく）', g: '目安：S で機首を少しずつ上げ、1 秒に 1 kt くらいで減速。E（右ラダー）を増やして方向を保つ。ラダーがいっぱいになっても機首が左へ回り始めたら、それが Vmc', keys: k('pitch', 'rud'), say: 'ゆっくり減速。方向が保てなくなる・失速警報、のどれかで回復へ',
-              onStart: (L, c, st) => { st.h0 = c.hdg; }, until: (c, L, st) => c.stall || Math.abs(w180(c.hdg - st.h0)) > 15 || c.kias < SM.mc - 4, max: 120,
-              onEnd: (L, c, st) => { L.vmcAt = Math.round(c.kias); } },
+              onStart: (L, c, st) => { st.h0 = c.hdg; }, until: (c, L, st) => c.stall || Math.abs(w180(c.hdg - st.h0)) > 15 || c.kias < SM.mc - MC_UNDER, max: 120,
+              onEnd: (L, c, st) => { L.vmcAt = Math.round(c.kias); L.vmcWhy = c.stall ? '失速警報' : Math.abs(w180(c.hdg - st.h0)) > 15 ? '方向が保てない' : `赤線より ${MC_UNDER} kt 遅い`; } },
             { name: '回復', g: { kt: SM.sse, how: 'level' }, keys: k('thr', 'pitch', 'rud'), say: '回復！ 右エンジンの出力を絞る（F）→ 機首を下げる → Vsse 以上へ加速 → 方向を戻す',
               onStart: (L, c, st) => { st.start = c.alt; st.min = c.alt; st.cut = null; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); if (st.cut === null && c.thr < 0.7) st.cut = st.t; if (st.t > 3 && c.stall) st.stall = true; },
               until: (c, L, st) => c.kias > SM.sse && st.t > 3, max: 45, grade: true,
-              result: (L, st) => [{ name: '方向を失った速度', val: `${L.vmcAt || '—'} kt`, std: `参考：赤線 ${SM.mc} kt（条件で変わる）`, pass: true },
+              result: (L, st) => [{ name: '回復を始めた速度（参考）', val: `${L.vmcAt || '—'} kt${L.vmcWhy ? `（${L.vmcWhy}）` : ''}`, std: `参考：赤線 ${SM.mc} kt（Vmc は条件で変わる）`, pass: true },
                 { name: '出力を減らすまで', val: st.cut === null ? '—' : `${st.cut.toFixed(1)} 秒`, std: '3 秒以内', pass: st.cut !== null && st.cut <= 3 },
                 { name: '回復で失った高度', val: `${Math.round(st.start - st.min)} ft`, std: `${Math.round(300 * L.level.k)} ft 以内`, pass: st.start - st.min <= 300 * L.level.k }, { name: '失速', val: st.stall ? 'あり' : 'なし', std: 'なし', pass: !st.stall }] },
             { name: '両エンジンへ', g: { kt: SM.y + 10, how: 'level' }, keys: k('thr'), say: '左エンジンの出力を戻します。巡航へ', onStart: (L) => { L.s.eng[0].thr = null; }, dur: 8 },
           ] },
         { id: 'm4', title: '離陸直後の片発停止', goal: '浮揚直後に片方のエンジンが止まっても、Vyse で上昇を続ける', aircraft: 'pa44',
           why: '双発機の最も危険な場面。脚と止まったプロペラの抗力で、何もしなければ上昇できない。速度（Vyse）・脚 UP・フェザーを数秒で。',
-          brief: [`浮揚後、片方のエンジンが止まります：<b>①方向（ラダー）②Vyse ${SM.yse} kt ③脚 UP（G）④Identify・Verify・Feather（[ / ]）</b>。`, '生きている側へ 2〜5° バンク。上昇率は小さい（数百 fpm）ので、まっすぐ・速度を守る。', '地上 1,000 ft まで上昇したら、場周経路で戻る準備（この課目はそこまで）。'],
+          brief: [`浮揚後、片方のエンジンが止まります：<b>①方向（ラダー）②Vyse ${SM.yse} kt ③出力は全部前（離陸の出力のまま）④脚 UP（G）・フラップ UP（この課目は 0°）⑤Identify・Verify・Feather（[ / ]）</b>。`, '方向を保てたら、生きている側へ約 2° バンク（ボールは生きている側へ 1/3〜1/2。最初の一瞬は 5〜10° 使ってよい）。上昇率は小さい（数百 fpm）ので、まっすぐ・速度を守る。', '地上 1,000 ft まで上昇したら、場周経路で戻る準備（この課目はそこまで）。'],
           std: `Vyse ${SM.yse} ±5 kt・30 秒以内にフェザー・針路 ±20°・地上 1,000 ft まで上昇`, setup: { at: 'runway' }, book: ['me.oei'],
           steps: [
             { name: '離陸許可の復唱', atc: 'takeoff' },
             takeoffRoll(SM.rotate, { twin: true }),
             { name: '脚上げ', g: { kt: SM.y, pwr: 'full', how: 'climbFull' }, keys: k('gear', 'pitch'), say: '正の上昇で脚 UP（G）', until: c => c.aglR > 250, max: 60 },
-            { name: '片発停止！', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('rud', 'pitch', 'gear', 'feather', 'rtrim'), say: 'エンジン故障！ 方向 → Vyse → 脚 UP → 止まった側をフェザー',
+            { name: '片発停止！', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('rud', 'pitch', 'gear', 'feather', 'rtrim'), say: 'エンジン故障！ 方向 → Vyse → 全部前 → 脚 UP → 止まった側をフェザー',
               onStart: (L, c, st) => { SC.failNow(L, (L.s.seed || 7) % 2 ? 'engR' : 'engL'); L.s.opts.autoRud = false; st.h0 = c.hdg; }, tgt: { spd: [SM.yse, 5], rhdg: [0, 20] }, grade: true, gradeWhen: (c, L, st) => st.t > 6,
               until: (c, L, st) => L.s.eng.some(e => e.feather) && st.t > 8, max: 60,
               result: (L, st) => { const good = L.s.eng.every(e => !e.feather || e.failed) && L.s.eng.some(e => e.feather); return [{ name: 'フェザー', val: good ? `止まった${deadName(L)}エンジン（${Math.round(st.t)} 秒）` : L.s.eng.some(e => e.feather) ? '生きているエンジン（重大な誤り）' : 'していない', std: '30 秒以内・止まった側', pass: good && st.t <= 30 }, { name: '脚', val: L.s.gearDown ? 'DOWN のまま' : 'UP', std: 'UP', pass: !L.s.gearDown }]; },
@@ -433,9 +447,9 @@
             { name: '片発で上昇', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll'), say: `Vyse ${SM.yse} kt で地上 1,000 ft まで上昇`, tgt: { spd: [SM.yse, 5], rhdg: [0, 15] }, until: c => c.aglR > 1000, max: 300, grade: true, gradeWhen: established(SM.yse, 5, 3) },
           ] },
         { id: 'm5', title: '片発の進入と着陸', goal: '片発のまま安定した進入をして着陸する', aircraft: 'pa44',
-          why: '片発ではゴーアラウンドの性能がほとんどない。着陸が確実になるまで脚とフラップを出しすぎず、Vyse を保つ。',
-          brief: [`左エンジンはフェザー済み。<b>${SM.yse} kt（Vyse）</b>で進入し、着陸が確実（滑走路に届く）になってから脚 DOWN・フラップ。`, '生きているエンジンの出力を変えると機首が振れるので、ラダーも一緒に。', 'GUMPS（着陸前点検）を忘れずに。'],
-          std: `ファイナル ${SM.yse} ±5 kt・接地は着陸の基準`, setup: { at: 'final', km: 5, kt: SM.yse, flaps: 0, gear: false, onStart: L => { L.s.eng[0].failed = true; L.s.eng[0].feather = true; L.fail.engL = 0; L.s.opts.autoRud = false; } }, book: ['me.oei'],
+          why: '片発ではゴーアラウンドの性能がほとんどない。着陸が確実になるまで Vyse より遅くせず、最後のフラップも出さない。',
+          brief: [`左エンジンはフェザー済み。<b>${SM.yse} kt（Vyse）</b>より遅くせずに進入し、着陸が確実（滑走路に届く）になってから ${SM.yse - 4} kt へ（教材の値。Seminole の公開チェックリストの最終進入速度は 90 kt）。最後のフラップも着陸が確実になってから（AFH 第 13 章。機体の POH の手順が優先）。`, 'この課目はファイナル 5 km から始まり、最初の GUMPS（着陸前点検）で脚 DOWN・フラップ 10°。AFH は性能に余裕があれば早めに脚を下ろす（遅くとも着陸点の真横まで）とし、Seminole の公開チェックリストは着陸が確実になってから脚 DOWN。実機は機体の手順で。', '生きているエンジンの出力を変えると機首が振れるので、ラダーも一緒に。'],
+          std: `ファイナル（地上 500 ft から下）${SM.yse - 4} ±5 kt（教材の値）・それまでは Vyse ${SM.yse} kt より遅くしない・接地は着陸の基準`, setup: { at: 'final', km: 5, kt: SM.yse, flaps: 0, gear: false, onStart: L => { L.s.eng[0].failed = true; L.s.eng[0].feather = true; L.fail.engL = 0; L.s.opts.autoRud = false; } }, book: ['me.oei'],
           steps: [
             { name: '着陸前点検（GUMPS）', checklist: 'ms_before_landing' },
             ...landingSteps(SM.yse - 4, { twin: true, flaps: 1 }),
@@ -447,26 +461,34 @@
       lessons: [
         { id: 'r1', title: 'TEM：脅威を予測して管理する', goal: '出発前に脅威を挙げ、飛行中の変化に早めに気づいて対処する', aircraft: 'pa28',
           why: 'TEM（Threat and Error Management）は、事故の多くが「予想できた脅威」や「気づけたエラー」の積み重ねで起きる、という考え方。出発前のブリーフィングで脅威を言葉にしておくと、起きたときに速く対処できる。',
-          brief: ['出発前ブリーフィング：今日の脅威（突風を伴う横風、場周の他機、自分の疲れ…）を挙げ、対策を決める（1〜3 キーで答える）。', '飛行中、管制の指示と自分の理解が食い違う場面が来ます。聞き返す・確認するのが正しい対処。', '最後は横風の中で着陸。'],
+          brief: ['出発前ブリーフィング：今日の脅威（突風を伴う横風、場周の他機、自分の疲れ…）を挙げ、対策を決める（1〜3 キーで答える）。', '飛行中、管制の指示と自分の理解が食い違う場面が来ます。聞き返す・確認するのが正しい対処。', `最後は横風の中で着陸（進入速度は ${AR.appr + 4} kt：突風の分を足した教材の値）。`],
           std: '各判断の正解・横風着陸の基準', setup: { at: 'downwind', wind: { rel: 70, kt: 10, gust: 1.6 } }, book: ['crm.tem'],
           steps: [
             { name: 'ブリーフィング：最大の脅威', atc: L => ({ msg: `（今日の LAB：風 ${L.windStr}、突風あり。場周には訓練機がほかに 2 機。あなたは寝不足気味。）最も対策が必要な脅威と対策の組み合わせは？`,
               opts: ['突風を伴う横風 → 進入速度に突風分の半分を足し、安定しなければ早めにゴーアラウンド', '他機 → 無線を切って集中する', '寝不足 → コーヒーを飲めば問題ない'], ok: 0,
-              why: '突風を伴う横風は着陸の大きな脅威。突風成分の半分を進入速度に足すのは広く教えられている目安（POH・教官の指示が優先）。寝不足も脅威で、IMSAFE で自分を点検する（重ければ飛ばない判断も）。' }) },
+              why: `突風を伴う横風は着陸の大きな脅威。突風の分（最大の風速と平均の風速の差）の半分を進入速度に足すのは AFH 第 9 章にもある目安（POH・教官の指示が優先。この課目は ${AR.appr + 4} kt で進入する教材の値）。寝不足も脅威で、IMSAFE で自分を点検する（重ければ飛ばない判断も）。` }) },
             { name: '着陸許可の復唱', atc: 'landing' },
             { name: 'ダウンウインド', g: { kt: 90, how: 'level' }, keys: k('pitch', 'roll', 'thr'), say: 'ダウンウインド：地上 1,000 ft・90 kt・方位 180°', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.along < 300, max: 150, grade: true },
             { name: '食い違いに気づく', atc: L => ({ msg: `LAB Tower: "${L.call}, extend downwind, number two, follow the Cessna on a two-mile final, cleared to land runway 18."`,
               opts: [`Say again the runway for ${L.callShort}?（使用中は 36 のはず：確認する）`, `Cleared to land runway 18, ${L.callShort}.`, '（無線は返さず、そのまま 36 へ）'], ok: 0,
-              why: '先ほどの許可は 36。食い違いは「Say again」で確認する。聞き間違い・言い間違いはどちらにも起きる（エラー）。確認すればエラーは管理できる。' }) },
+              why: '先ほどの許可は 36。食い違いは「Say again」で確認する。管制の言い間違いなら脅威（管制のエラー）、自分の聞き違いならエラー（TEM の分け方）。どちらも確認すれば管理できる。' }) },
             { name: 'ベースへ', g: { kt: 75, fpm: -500, flaps: 2, how: 'pattern' }, keys: k('thr', 'flaps', 'roll'), say: '「Runway 36, cleared to land」と再確認できた想定。アビームからパワー・フラップ、ベース・ファイナルへ', until: c => Math.abs(c.cross) < 150 && Math.abs(w180(c.hdg - 360)) < 40 && c.along < -400, max: 300 },
             ...landingSteps(AR.appr + 4, { xwind: true }),
           ] },
       ] },
   ];
-  // the diversion estimate (lesson n2): the truth, then the rows
+  // the diversion estimate (lesson n2): the truth, then the rows. The heading is the magnetic course to the new point
+  // corrected for the wind (the wind correction angle at the present true airspeed), the time is the distance at the
+  // groundspeed ON THAT COURSE — what the names say (ERRATA SYNC.n2-grading); brg is the heading (the field the rows and
+  // the scripted pilots read), crs the course without the wind
   function estimateTruth(L, id = 'LABEF') {
-    const A = FL.avionics, w = A.wpt(id), pos = ph.ne(L.s), dist = A.neDistNm(pos, w), brg = A.trueToMag(A.neBearing(pos, w), ph.MAGVAR_W), gs = Math.max(60, L.s.out.gs || 100);
-    return { brg: Math.round(brg), dist: +dist.toFixed(1), eteMin: +(dist / gs * 60).toFixed(1) };
+    const A = FL.avionics, w = A.wpt(id), pos = ph.ne(L.s), dist = A.neDistNm(pos, w), crsT = A.neBearing(pos, w);
+    // (the wind at the aircraft: the flight model's own, which grows with height above the surface value in s.wind)
+    const tas = Math.max(60, L.s.out.tas || 100), W = L.s.wind || { fromDeg: 0, kt: 0 }, wkt = Number.isFinite(L.s.out.windKt) ? L.s.out.windKt : (W.kt || 0), rel = (W.fromDeg - crsT) * Math.PI / 180;
+    const wca = Math.asin(Math.max(-1, Math.min(1, wkt * Math.sin(rel) / tas))) * 180 / Math.PI;
+    const gs = Math.max(30, tas * Math.cos(wca * Math.PI / 180) - wkt * Math.cos(rel));
+    const mag = t => ((Math.round(A.trueToMag(t, ph.MAGVAR_W)) % 360) + 360) % 360 || 360;
+    return { brg: mag(crsT + wca), crs: mag(crsT), dist: +dist.toFixed(1), eteMin: +(dist / gs * 60).toFixed(1), gs: Math.round(gs) };
   }
   function submitEstimate(L, input) {
     const truth = estimateTruth(L), num = v => (Number.isFinite(+v) && String(v).trim() !== '' ? +v : NaN);

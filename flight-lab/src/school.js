@@ -51,8 +51,8 @@
     approach: '進入角が深い（PAPI の白が多い）ならパワーを少し絞り、浅い（赤が多い）なら足す。速度のずれは機首で直す',
     slow: '低速では速度は機首、高度はパワー。高度が下がればパワーを足し、速度が落ちれば機首を下げる',
     pattern: 'このままでは低くなりそうならパワーを足し、高くなりそうなら絞る。速度のずれは機首で直す',
-    ils: 'GS の菱形が下（自分が高い）ならパワーを少し絞り、上（低い）なら足す。CDI の針の方へ 2〜5° ずつ針路を直す。速度のずれは機首で',
-    oei: '速度は機首で（青線 Vyse を割らない）。生きているエンジン側へ 2〜5° バンクし、ボールは生きている側へ半分。止まった側の足は踏まない（Dead foot, dead engine）',
+    ils: 'GS の菱形が下（自分が高い）なら機首を少し下げて降下率を約 100 fpm 増やし、上（低い）なら機首を少し上げて減らす。速度のずれは出力で（IFH：ピッチで降下率、出力で速度）。CDI の針の方へ 2〜5° ずつ針路を直す',
+    oei: '速度は機首で（青線 Vyse を割らない）。方向を保てたら生きているエンジン側へ約 2° バンクし、ボールは生きている側へ 1/3〜1/2（AFH 第 13 章）。止まった側の足は踏まない（Dead foot, dead engine）',
   };
   // o: {kt, fpm, pwr: 'full' | 'idle' | 'dead', flaps, gear, bank, how, oei}
   function guideText(s, o, L) {
@@ -98,8 +98,11 @@
       ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く（W / S / A / D / Q / E で確認）'], ['計器（G1000 型）', 'PFD・MFD 異常なし、高度計規正（BARO）'],
       ['燃料セレクター', '燃料の多い側（教材では未実装）'], ['フラップ', 'UP（通常離陸）', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T でリセット）', s => Math.abs(s.trim) < 0.05],
       ['スロットル', 'アイドル', s => s.thr < 0.1], ['離陸の計画', s => `Vr ${s.A.v.rotate}・Vy ${s.A.v.y}。浮揚前の異常は止まる、浮揚後のエンジン故障は正面へ`] ] },
+    // (the published Archer III checklist's BEFORE LANDING, in its order, shortened: seat and belts, electric fuel pump ON,
+    // fuel selector fullest tank, mixture full rich, landing light ON — R.archerCk; ERRATA SYNC.before-landing-checklist)
     before_landing: { title: '着陸前点検（BEFORE LANDING・教材の簡略版）', items: [
-      ['燃料セレクター', '燃料の多い側（教材では未実装）'], ['ミクスチャー', 'RICH（教材では未実装）'], ['フラップ', '進入に合わせて下げる（V キー）', s => s.flapIdx >= 1],
+      ['座席・シートベルト', '調整・着用'], ['電動燃料ポンプ', 'ON（教材では未実装）'], ['燃料セレクター', '燃料の多い側（教材では未実装）'], ['ミクスチャー', 'RICH（教材では未実装）'], ['着陸灯', 'ON（教材では未実装）'],
+      ['フラップ', '進入に合わせて下げる（V キー）', s => s.flapIdx >= 1],
       ['進入速度', s => `${s.A.v.appr} kt（短距離 ${s.A.v.apprShort || s.A.v.appr - 5} kt）`], ['着陸許可', '受領・復唱'] ] },
     ms_before_takeoff: { title: '離陸前点検・双発（BEFORE TAKEOFF・教材の簡略版）', items: [
       ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く'], ['フラップ', 'UP', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T）', s => Math.abs(s.trim) < 0.05],
@@ -110,11 +113,18 @@
       ['P：Props', '前（教材では自動）'], ['S：Switches / Seatbelts', '着陸灯 ON・ベルト着用'] ] },
     ms_engine_failure: { title: '片発停止の記憶操作（教材の簡略版・機体の POH が優先）', items: [
       ['ピッチ', s => `機首を下げて Vyse ${s.A.v.yse} kt（青線）を保つ`], ['出力', 'ミクスチャー・プロペラ・スロットル 前（全開）'], ['外形', 'フラップ UP・脚 UP（G）', s => s.flapIdx === 0 && !s.gearDown],
-      ['Identify（特定）', '踏んでいない足の側＝止まったエンジン（Dead foot, dead engine）'], ['Verify（確認）', '止まったと思う側のスロットルを絞っても何も変わらないこと'],
+      ['Identify（特定）', '踏んでいない足の側＝止まったエンジン（Dead foot, dead engine）'], ['Verify（確認）', '止まったと思う側のスロットルをゆっくり絞っても何も変わらないこと'],
       ['Feather（フェザー）', '止まった側のプロペラをフェザー（[ ＝ 左・] ＝ 右）', s => s.eng.some(e => e.failed && e.feather)] ] },
   };
 
   // ---------------------------------------------------------------- ATC read-back questions (LAB Tower and LAB Approach are FICTIONAL)
+  // where the aircraft is from LAB, as a pilot says it ("3 miles east of LAB"): from the present position (the distress call)
+  function posFromLab(L) {
+    const ph = P(), R = ph.LAB_RWY, p = ph.ne(L.s), dn = p.n - R.n, de = p.e - R.e, nm = Math.max(1, Math.round(Math.hypot(dn, de) / 1852));
+    const dirs = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
+    const brgM = w360(AV().trueToMag(Math.atan2(de, dn) / DEG, ph.MAGVAR_W));
+    return `${nm} mile${nm > 1 ? 's' : ''} ${dirs[Math.round(brgM / 45) % 8]} of LAB`;
+  }
   const ATC_Q = {
     takeoff: L => ({ msg: `LAB Tower: "${L.call}, wind ${L.windStr}, runway 36, cleared for takeoff."`,
       opts: [`Runway 36, cleared for takeoff, ${L.callShort}.`, `Roger, ${L.callShort}.`, 'Cleared for takeoff.'], ok: 0,
@@ -135,12 +145,12 @@
       opts: [`Direct LAB-F, maintain ${L.alt0.toLocaleString('en-US')}, ${L.callShort}.`, `Roger, ${L.callShort}.`, `Direct LAB-A, ${L.callShort}.`], ok: 0,
       why: '目的地変更の指示は「どこへ（直行先）・高度」を復唱します。' }),
     mayday: L => ({ msg: '（エンジンが止まりました。最初に送る無線として正しいものは？）',
-      opts: [`Mayday, Mayday, Mayday, LAB Tower, ${L.callShort}, engine failure, ${L.posStr || '5 miles north'}, ${L.alt0.toLocaleString('en-US')} feet, landing LAB runway 36.`,
+      opts: [`Mayday, Mayday, Mayday, LAB Tower, ${L.callShort}, engine failure, landing LAB runway 36, ${posFromLab(L)}, ${L.alt0.toLocaleString('en-US')} feet.`,
         `LAB Tower, ${L.callShort}, request landing.`, `Pan-pan, ${L.callShort}, low fuel.`], ok: 0,
-      why: '遭難（すぐに助けが必要）なら MAYDAY を 3 回、相手・コールサイン・状況・位置・高度・意図の順（AIM 6-3-1 の考え方）。ただし最優先は操縦（Aviate → Navigate → Communicate）。' }),
+      why: '遭難（すぐに助けが必要）なら MAYDAY を 3 回、相手・コールサイン・状況・意図・位置・高度の順（AIM 6-3-2 の並び。言えるだけでよい）。ただし最優先は操縦（Aviate → Navigate → Communicate）。' }),
     lost: L => ({ msg: '（現在地がわからなくなりました。管制に助けを求める無線は？）',
       opts: [`LAB Approach, ${L.callShort}, unsure of position, ${L.alt0.toLocaleString('en-US')} feet, request assistance.`, `LAB Approach, ${L.callShort}, request flight following.`, `Mayday, Mayday, Mayday, ${L.callShort}, lost.`], ok: 0,
-      why: '迷ったら早めに正直に伝える（Confess）。燃料や天候に余裕がなければ緊急の宣言もためらわない。AIM 6-2 の考え方（5C：Climb, Communicate, Confess, Comply, Conserve）。' }),
+      why: '迷ったら早めに正直に伝える（Confess）。燃料や天候に余裕がなければ緊急の宣言もためらわない。訓練で使われる語呂 5C（Climb, Communicate, Confess, Comply, Conserve。PHAK・AIM の言葉ではない）。' }),
     oei: L => ({ msg: `（片発停止。管制へ伝える内容は？）`,
       opts: [`LAB Tower, ${L.callShort}, engine failure, left engine feathered, returning for landing runway 36.`, `LAB Tower, ${L.callShort}, request touch and go.`, `${L.callShort}, all normal.`], ok: 0,
       why: '状況（片発停止・どちらのエンジン）と意図（戻って着陸）を短く伝えます。双発の片発停止は多くの場合「緊急（Mayday / Pan-pan）」として扱われ、優先して着陸させてもらえます。' }),
@@ -219,7 +229,9 @@
       ph.placeInAir(s, n, e, altFt, R.trueHdg, kt, -3, fl, null);
       L.hdg0 = 360; L.alt0 = Math.round(altFt);
     } else if (su.at === 'ils') {
-      const D = (su.km || 14) * 1000, [n, e] = ph.rwyToNE(R, 300 - D, su.cross != null ? su.cross : 3200);
+      // (17 km out, 3,200 m east, 2,000 ft: the 30° intercept meets the localizer about 12 km out, a little BELOW the glide
+      // slope, so it is joined from below — from 14 km it was about 370 ft above it: ERRATA SYNC.i5-intercept)
+      const D = (su.km || 17) * 1000, [n, e] = ph.rwyToNE(R, 300 - D, su.cross != null ? su.cross : 3200);
       L.intHdg = su.intHdg || 330; L.alt0 = su.altFt || 2000;
       ph.placeInAir(s, n, e, L.alt0, magToTrue(L.intHdg), su.kt || 90, 0, 0, null);
       L.hdg0 = L.intHdg;
@@ -315,8 +327,9 @@
     // keep the history for the record (every 2 s)
     if (L.t >= L.nextSample) { L.nextSample = L.t + 2; if (L.hist.alt.length < 1800) { L.hist.alt.push(Math.round(c.alt)); L.hist.ias.push(Math.round(c.kias)); } }
     const S = L.def.steps[L.step]; if (!S) return;
-    // one engine out in a lesson: no automatic rudder (the lesson is about the pilot's own feet: dead foot, dead engine)
-    if (L.s.A.twin && L.s.eng.some(e => e.failed)) L.s.opts.autoRud = false;
+    // one engine out in a lesson: no automatic rudder (the lesson is about the pilot's own feet: dead foot, dead engine);
+    // also a lesson that idles one engine without failing it (m3's Vmc demonstration: autoRudOff, ERRATA SYNC.m3-speed)
+    if (L.s.A.twin && (L.def.autoRudOff || L.s.eng.some(e => e.failed))) L.s.opts.autoRud = false;
     const st = L.st; st.t += dt;
     st.turned += st.lastHdg == null ? 0 : w180(c.hdg - st.lastHdg); st.lastHdg = c.hdg;
     if (L.s.crashed) { crashed(L, L.s.crashReason); return; }
@@ -355,7 +368,8 @@
     const [k, , d] = worst, hi = d > 0;
     const g = S.g && typeof S.g === 'object' ? S.g : null;
     // which control fixes the airspeed depends on the phase (power fixed → the nose sets the speed)
-    const pitchForSpeed = !!g && (!!g.pwr || ['rate', 'approach', 'ils', 'pattern', 'slow', 'glide', 'climbFull', 'oei'].includes(g.how)), slow = g && g.how === 'slow';
+    // (the ILS: the IFH's pitch for the descent rate (the glide slope), power for the airspeed — as the textbook ifr.ils)
+    const pitchForSpeed = !!g && (!!g.pwr || ['rate', 'approach', 'pattern', 'slow', 'glide', 'climbFull', 'oei'].includes(g.how)), slow = g && g.how === 'slow';
     const M = {
       alt: slow ? (hi ? `高度が ${Math.round(d)} ft 高い：パワーを少し絞る` : `高度が ${Math.round(-d)} ft 低い：パワーを足す（低速では高度はパワー）`) : hi ? `高度が ${Math.round(d)} ft 高い：機首を 1〜2° 下げる（W を軽く）` : `高度が ${Math.round(-d)} ft 低い：機首を 1〜2° 上げ（S を軽く）、速度が落ちるならパワーも`,
       aglR: hi ? '高い：パワーを絞って降下率を増やす' : '低い：パワーを足して降下を浅く',
@@ -372,7 +386,7 @@
     };
     if (k === 'gp') return d > 0 ? '進入が高い（PAPI の白が多い）：パワーを少し絞る' : '進入が低い（PAPI の赤が多い）：パワーを足す';
     if (k === 'cdi' || k === 'loc') return d > 0 ? 'CDI の針が右：右へ修正（針の方へ）' : 'CDI の針が左：左へ修正（針の方へ）';
-    if (k === 'gs') return d > 0 ? 'グライドスロープより低い（菱形が上）：降下を浅く（パワー＋）' : 'グライドスロープより高い（菱形が下）：降下率を増やす（パワー−）';
+    if (k === 'gs') return d > 0 ? 'グライドスロープより低い（菱形が上）：機首を少し上げて降下を浅く（速度が落ちるならパワー＋）' : 'グライドスロープより高い（菱形が下）：機首を少し下げて降下率を増やす（速度が増えるならパワー−）';
     return M[k] || '';
   }
   function finishStep(L, S, st, c, timeout) {

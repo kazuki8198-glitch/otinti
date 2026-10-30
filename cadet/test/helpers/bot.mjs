@@ -123,7 +123,7 @@ export function makeBot(FL) {
         s.thr = 1; if (!s.gearDown) {} else if (c.aglR > 50) s.gearDown = false;
         { const kt = g.kt || L.V.yse; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - kt), -4, 10)); }
         const live = s.eng[0].failed ? 1 : -1;
-        bankTo(s, 3 * live + clamp(w180((tv('hdg') != null ? hdg : c.rwyHdg && /上昇/.test(name) ? 360 : hdg) - c.hdg) * 0.5, -5, 5));
+        bankTo(s, 2 * live + clamp(w180((tv('hdg') != null ? hdg : c.rwyHdg && /上昇/.test(name) ? 360 : hdg) - c.hdg) * 0.5, -6, 6));   // about 2° toward the live engine (AFH ch. 13; FLIGHT LAB's bot.mjs)
         return;
       }
       s.thr = 0; speedPitch(s, c, g.kt || L.V.glide, dt);
@@ -163,7 +163,7 @@ export function makeBot(FL) {
       const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 30, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30) + (how === 'approach' ? st.xI : 0)) + crab;
       headTo(s, c, lat, 20);
     }
-    else if (how === 'oei') { s.thr = 1; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - g.kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - g.kt), -4, 10)); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 3 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }
+    else if (how === 'oei') { s.thr = 1; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - g.kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - g.kt), -4, 10)); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 2 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }
     else if (how === 'slow') { speedPitch(s, c, g.kt, dt); const e = alt - c.alt; st.iThr = clamp(st.iThr + e * 0.0004 * dt, -0.3, 0.3); s.thr = clamp(0.55 + e * 0.004 + st.iThr, 0, 1); headTo(s, c, hdg, 10); }
     else {
       // level: altitude by the nose, speed by the throttle; heading (or the CDI, or a waypoint)

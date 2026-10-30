@@ -13,17 +13,29 @@
     vfr: { label: 'FAA VFR Charts（セクショナルチャート等）', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/' },
     ana: { label: 'ANA「未来の翼が生まれる場所へ」（サンフォード訓練レポート）', url: 'https://www.anahd.co.jp/ana_news/2025/10/28/20251028.html' },
   };
-  // the runways (lengths: public data; the layout below is schematic: relative positions only)
+  // the runways: the lengths are the public data; the positions are the runway ends' coordinates in the FAA's airport data
+  // (effective 2026-10-01, as AirNav shows it — the same 8 points the textbook's figure sfbLayout draws, checked in
+  // textbook/rewrite/combined/reports/factcheck-radio.md), put on the local plane the way the avionics put every point
+  // (FL.avionics.latLonToNe: the display origin is at Sanford). Each end: [N 28° minutes, W 081° minutes]. The diagram
+  // is still a SCHEMATIC (taxiways and the hot spot drawn roughly), NOT FOR NAVIGATION (ERRATA SYNC.sanford-diagram)
+  const ENDS = { '9L': [46.904128, 15.357287], '27R': [46.907332, 13.296698], '9C': [46.707225, 14.728423], '27C': [46.708125, 14.058365],
+    '9R': [46.196700, 14.030183], '27L': [46.198235, 12.936635], '18': [46.997100, 14.087235], '36': [46.006722, 14.085012] };
+  const R_E = 6371000, DEG = Math.PI / 180, ORIGIN = (FL.avionics && FL.avionics.ORIGIN) || { lat: 28.777, lon: -81.238 };
+  const toNe = ([latMin, lonMin]) => {
+    const lat = 28 + latMin / 60, lon = -(81 + lonMin / 60);
+    if (FL.avionics && FL.avionics.latLonToNe) return FL.avionics.latLonToNe(lat, lon);
+    return { n: (lat - ORIGIN.lat) * DEG * R_E, e: (lon - ORIGIN.lon) * DEG * R_E * Math.cos(ORIGIN.lat * DEG) };
+  };
   const RUNWAYS = [
-    { id: '09L/27R', lenFt: 11002, note: 'FAA：主要運用滑走路（primary operations runway）', n: 520, e: 0, hdg: 84, w: 46 },
-    { id: '09C/27C', lenFt: 3578, note: 'FAA：Hot Spot HS1（誘導路 C との取り違え）に関係', n: 210, e: -700, hdg: 84, w: 23 },
-    { id: '09R/27L', lenFt: 5839, note: 'FAA：主要な飛行訓練用滑走路（primary flight training runway）', n: -150, e: 250, hdg: 84, w: 30 },
-    { id: '18/36', lenFt: 6002, note: '平行滑走路と交差する滑走路', n: -100, e: 1250, hdg: 174, w: 46 },
+    { id: '09L/27R', lenFt: 11002, note: 'FAA：主要運用滑走路（primary operations runway）', w: 46 },
+    { id: '09C/27C', lenFt: 3578, note: 'FAA：Hot Spot HS1（誘導路 C との取り違え）に関係', w: 23 },
+    { id: '09R/27L', lenFt: 5839, note: 'FAA：主要な飛行訓練用滑走路（primary flight training runway）', w: 30 },
+    { id: '18/36', lenFt: 6002, note: '平行滑走路と交差する滑走路', w: 46 },
   ];
-  // endpoints on the local plane (for the MFD map): schematic, around the display origin
+  // endpoints on the local plane (for the MFD map and the diagram), the centre and the true direction from end 1 to end 2
   for (const r of RUNWAYS) {
-    const L = r.lenFt / 3.28084 / 2, h = r.hdg * Math.PI / 180;
-    r.n1 = r.n - Math.cos(h) * L; r.e1 = r.e - Math.sin(h) * L; r.n2 = r.n + Math.cos(h) * L; r.e2 = r.e + Math.sin(h) * L;
+    const [a, b] = r.id.split('/').map(x => x.replace(/^0/, '')), p1 = toNe(ENDS[a]), p2 = toNe(ENDS[b]);
+    Object.assign(r, { n1: p1.n, e1: p1.e, n2: p2.n, e2: p2.e, n: (p1.n + p2.n) / 2, e: (p1.e + p2.e) / 2, hdg: Math.round((Math.atan2(p2.e - p1.e, p2.n - p1.n) / DEG + 360) % 360) });
   }
   const FACTS = [
     { k: '事実', t: 'SFB は Orlando International（KMCO）の北約 20 マイルにあり、訓練前の学生から経験豊富な機長まで、操縦者の経験は幅広い。', src: 'faa' },
@@ -140,26 +152,31 @@
       refs: ['faa', 'aim'],
     },
   ];
-  // the schematic diagram (SVG), clearly labelled: positions are schematic, NOT FOR NAVIGATION
+  // the schematic diagram (SVG), clearly labelled NOT FOR NAVIGATION: the runways from their ends (north up, to scale),
+  // the hot spot HS1 where runway 18 meets 27C (FAA From the Flight Deck: SFB); taxiways left out, as in the textbook's sfbLayout
+  const LABEL_OFF = { '09R': [14, 22], '27C': [40, 5] };
   function diagramSvg() {
-    const W = 640, H = 420, sc = 0.13, cx = W / 2 + 40, cy = H / 2;
+    const W = 640, H = 420, sc = 0.13;
+    const ns = RUNWAYS.flatMap(r => [r.n1, r.n2]), es = RUNWAYS.flatMap(r => [r.e1, r.e2]);
+    const nc = (Math.min(...ns) + Math.max(...ns)) / 2, ec = (Math.min(...es) + Math.max(...es)) / 2, cx = W / 2 - ec * sc, cy = H / 2 + 10 + nc * sc;
     const pt = (n, e) => [cx + e * sc, cy - n * sc];
     let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Sanford 空港の模式図（NOT FOR NAVIGATION）"><rect width="${W}" height="${H}" fill="#0d151f"/>`;
     for (const r of RUNWAYS) {
       const [x1, y1] = pt(r.n1, r.e1), [x2, y2] = pt(r.n2, r.e2);
       const hot = r.id === '09C/27C';
       s += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${hot ? '#e8edf2' : '#c3ccd6'}" stroke-width="${Math.max(4, r.w * sc * 1.3).toFixed(1)}" stroke-linecap="butt"/>`;
-      const [a, b] = r.id.split('/');
-      s += `<text x="${(x1 - (x2 - x1) * 0.06).toFixed(1)}" y="${(y1 - (y2 - y1) * 0.06 + 4).toFixed(1)}" fill="#fff" font-size="13" font-family="monospace" text-anchor="middle">${a}</text>`;
-      s += `<text x="${(x2 + (x2 - x1) * 0.06).toFixed(1)}" y="${(y2 + (y2 - y1) * 0.06 + 4).toFixed(1)}" fill="#fff" font-size="13" font-family="monospace" text-anchor="middle">${b}</text>`;
+      // the numbers just beyond each end (09R and 27C sit by runway 18/36: moved so that line and the HS1 ring do not cross them)
+      const [a, b] = r.id.split('/'), len = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / len, uy = (y2 - y1) / len, off = 16;
+      const lab = (t, x, y, d) => { const o = LABEL_OFF[t]; return `<text x="${(o ? x + o[0] : x + d * ux * off).toFixed(1)}" y="${(o ? y + o[1] : y + d * uy * off + 4).toFixed(1)}" fill="#fff" font-size="13" font-family="monospace" text-anchor="middle">${t}</text>`; };
+      s += lab(a, x1, y1, -1) + lab(b, x2, y2, 1);
     }
-    // taxiway C near 27C and the hot spot HS1 (schematic)
-    const c1 = pt(330, -80), c2 = pt(330, 1300), hs = pt(250, 120);
-    s += `<line x1="${c1[0]}" y1="${c1[1]}" x2="${c2[0]}" y2="${c2[1]}" stroke="#e8c547" stroke-width="3" stroke-dasharray="8 5"/>`;
-    s += `<text x="${c1[0] - 6}" y="${c1[1] - 6}" fill="#e8c547" font-size="12" text-anchor="end">TWY C（模式）</text>`;
-    s += `<circle cx="${hs[0]}" cy="${hs[1]}" r="22" fill="none" stroke="#ff5a4f" stroke-width="3"/><text x="${hs[0] + 26}" y="${hs[1] + 4}" fill="#ff5a4f" font-size="13" font-weight="700">HS1</text>`;
+    // the hot spot HS1: runway 18 (its line) where it crosses 27C (its line)
+    const r18 = RUNWAYS.find(r => r.id === '18/36'), r27c = RUNWAYS.find(r => r.id === '09C/27C'), hs = pt(r27c.n, r18.e);
+    s += `<circle cx="${hs[0].toFixed(1)}" cy="${hs[1].toFixed(1)}" r="22" fill="none" stroke="#ff5a4f" stroke-width="3"/><text x="${(hs[0] + 24).toFixed(1)}" y="${(hs[1] + 30).toFixed(1)}" fill="#ff5a4f" font-size="13" font-weight="700">HS1</text>`;
     s += `<text x="16" y="24" fill="#ffd23a" font-size="15" font-weight="700">模式図 · NOT FOR NAVIGATION</text>`;
-    s += `<text x="16" y="44" fill="#9aa3ad" font-size="12">位置・角度・誘導路は概略です。実際の運航には FAA の最新空港図（Airport Diagram）を使ってください。</text>`;
+    s += `<text x="16" y="44" fill="#9aa3ad" font-size="12">滑走路は FAA の空港データの滑走路端の位置から（北が上）。誘導路は省略。</text>`;
+    s += `<text x="16" y="60" fill="#9aa3ad" font-size="12">実際の運航には FAA の最新空港図（Airport Diagram）を使ってください。</text>`;
+    s += `<text x="16" y="${H - 30}" fill="#ff5a4f" font-size="12">HS1：滑走路 18 から誘導路 C へ右に出るはずが、滑走路 27C へ曲がってしまう取り違え（FAA）</text>`;
     s += `<text x="16" y="${H - 14}" fill="#9aa3ad" font-size="12">滑走路長（公開データ）：09L/27R 11,002 ft · 09R/27L 5,839 ft · 18/36 6,002 ft · 09C/27C 3,578 ft</text>`;
     return s + '</svg>';
   }

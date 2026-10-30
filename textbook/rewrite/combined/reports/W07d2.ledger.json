@@ -1,0 +1,223 @@
+{
+ "unit": "W07d",
+ "about": "W07d の 2 回目（W07d2、DESIGN 7.2 R2・PROGRESS「次」の 4・判断 11）のパッチ。W07d が足した ERRATA の open の行（NOTES.md 1 の「アプリ側」）を一次資料で確かめ、syllabus.js・school.js（採点と課目の中身。W10b の記録の部分は触っていない）・sanford-course.js・CADET の checklists-archer.js で直した行は fixed（verified・where・note に一次資料）、誤りでない行は not-error、直せなかった行は note を足して open のまま。判断 11（a7・a8・c1 の高度は参考の行）は R2B の統合（c9bbc55）で入っていたことを確かめた（報告の 2）。確かめ役の署名（checkedBy）は W27（〔安全〕①に触れる SYNC.m2-bank は安全レビュー）",
+ "patches": [
+  {
+   "id": "SYNC.a7-entry",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js a7：brief の 1 行目（入り方）と段階「進入の降下を安定させる」（アイドル・フラップ 25°・進入の速度 AR.appr を安定）→「失速への進入」（進入の姿勢から機首をなめらかに上げて保つ）。c1 の「失速の準備」の g・say も同じ入り方。flight-lab/test/bot.mjs に滑空（how: glide）の操縦",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 5 章（06_afh_ch5.pdf、2026-10-30 に FAA から取得、sha256 4e8b1c1f…） p.5-17「When the approach attitude and airspeed have stabilized, the pilot should smoothly raise the airplane's nose to an attitude that induces a stall」、自家用 ACS FAA-S-ACS-6C（2023-11、private_airplane_acs_6.pdf、2026-10-30 取得） PA.VII.B.S3〜S5（Configure… / Establish a stabilized descent / Transition smoothly from the approach or landing attitude…）で確かめた。採点（判断 11 の参考の行・二次失速）は変えていない。FLIGHT LAB と CADET の自動操縦士（a7・c1）・days のテストが通る"
+  },
+  {
+   "id": "SYNC.a2-scan",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js a2 の why・brief（外 9 割・計器 1 割、AFH）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 3 章（04_afh_ch3.pdf、2026-10-30 取得） p.3-5「Approximately 90 percent of the pilot's attention should be devoted to outside visual references」「No more than about 10 percent of the pilot's attention should be inside the flight deck」で確かめた"
+  },
+  {
+   "id": "SYNC.a2-std",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js a2 の std（教材の値。ACS の直線水平飛行は計器だけで飛ぶ課目にあり ±200 ft・±20°・±10 kt）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：自家用 ACS FAA-S-ACS-6C（2023-11、private_airplane_acs_6.pdf、2026-10-30 取得） PA.VIII.A.S2「Maintain altitude ±200 feet, heading ±20°, and airspeed ±10 knots」で確かめた。許容幅（採点）は変えていない"
+  },
+  {
+   "id": "SYNC.x2-zone",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js x2 の brief（前後 60 m・教材の幅、実地試験では手前は不可）と std（目標点 ±60 m・教材の幅、ACS は指定点の上か先 200 ft 以内）、landingSteps の採点の頭の説明",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：自家用 ACS FAA-S-ACS-6C（2023-11、private_airplane_acs_6.pdf、2026-10-30 取得） PA.IV.F.S10「within 200 feet beyond or on the specified point」で確かめた。説明・基準・採点を ±60 m にそろえた（採点は変えない）。ACS の形（手前は不可）に採点を変えると、教科書 ops.flare・ops.short の表と本文（「目標点 ±60 m」「手前も含む広い幅」：book-3.js）も直す必要があるので、この回は説明を採点にそろえ、ACS との違いを書いた（報告の 5）"
+  },
+  {
+   "id": "SYNC.t4-flaps-key",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js t4 の brief（③フラップを 25° に上げる：Shift+V で 1 段ずつ、V は下げるキー）、KEYS.flaps に「Shift+V＝フラップを 1 段上げる」",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：flight-lab/src/app.js 100 行（KeyV: e.shiftKey ? 'flapsUp' : 'flaps'）とキーの地図 434 行で確かめた。ui: key chips のテストが通る。教科書 ops.goaround の bk.sim と同じ言い方"
+  },
+  {
+   "id": "SYNC.before-landing-checklist",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/school.js CHECKLISTS.before_landing（座席・シートベルト、電動燃料ポンプ ON、燃料セレクター、ミクスチャー、着陸灯 ON を公開チェックリストの順で足した）、syllabus.js t2 のダウンウインドの say（着陸前点検の項目）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：公開の Archer III w/ G1000 チェックリスト（R.archerCk、MGA 2025）の BEFORE LANDING（Seat / Belts / Electric Fuel Pump ON / Fuel Selector FULLEST TANK / Mixture FULL RICH / Landing Light ON）で確かめた。t2 にチェックリストの段階は足していない（段階を足すと days・自動操縦士に響き、ダウンウインドではフラップの項目が通らない）"
+  },
+  {
+   "id": "SYNC.t2-abeam-rpm",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js t2 の brief（rpm の目安は画面の目安、この教材のモデルでは約 1,650 rpm）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：physics.js の steadyState（Archer、80 kt・−500 fpm・フラップ 10°・1,055 ft）で 1,665 rpm を測った（画面の目安の文も約 1,650 rpm）。CADET の教官は「この教材」のかっこを言わない"
+  },
+  {
+   "id": "SYNC.flare-eyes",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js landingSteps の接地の g（前方の滑走路を下へ浅い角度 10〜15° で見る、近すぎ・遠すぎの理由）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 9 章（10_afh_ch9.pdf、2026-10-30 取得）「focus direct central vision at a shallow downward angle from 10° to 15° relative to the runway」と、近すぎ・遠すぎの段落で確かめた。フレアの出力（端を越えたらアイドル）は教科書 ops.flare が課目の簡略化として書いているので変えていない"
+  },
+  {
+   "id": "SYNC.e2-heading",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js e2 の brief（正面か少し横、AFH 第 18 章。この教材の目安は左右 30° 以内）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 18 章（19_afh_ch18.pdf、2026-10-30 取得）「a field directly ahead (or slightly to the side of the takeoff path)」「Continuing straight ahead or making a slight turn」で確かめた（行の一次資料「第 18 章」のとおり）。採点（±30°）は教材の目安として残した"
+  },
+  {
+   "id": "SYNC.mayday-order",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/school.js ATC_Q.mayday（正解の選択肢を 状況 → 意図 → 位置 → 高度 の順に、位置は機体の位置から作る posFromLab、理由の出典を AIM 6-3-2 に）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AIM 6-3-2 a.3（MAYDAY ×3 → 相手 → 識別と型式 → 遭難の内容 → 天気 → 意図と要求 → 位置と針路 → 高度 → 燃料 → 人数。preferably in the order listed）で確かめた。前の選択肢の位置は常に「5 miles north」だった"
+  },
+  {
+   "id": "SYNC.c1-content",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js c1 の brief（採点の言い方と実際の審査の見方、組み合わせは教材の選び方、61.87(d) には急旋回がなく低速飛行・場周経路・ゴーアラウンドなどが入る）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：14 CFR 61.87(d)(1)〜(15)（eCFR、2026-10-30 取得）と教科書 solo.check（ACS 付録：すぐに直さないことが不合格の例）で確かめた。段階は変えていない（自動操縦士・days のため）"
+  },
+  {
+   "id": "SYNC.x1-timing",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js x1 の why（14 CFR 61.87(d)(3) はソロの前に通常と横風の離着陸の訓練を求める。この段階に置いたのは教材の選び方）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：14 CFR 61.87(d)(3)「Takeoffs and landings, including normal and crosswind」（eCFR）で確かめた。課程表の順は変えない（CADET のセーブ）"
+  },
+  {
+   "id": "SYNC.n2-tower",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js n2 の brief（LAB-A は橙の塔）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：flight-lab/src/scene.js 185 行（LABEA：col [0.95, 0.55, 0.12]、label「LAB-A（橙の塔）」）と CADET の cadet/src/world/landmarks.js（0xf28c1f）で確かめた"
+  },
+  {
+   "id": "SYNC.n2-grading",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js estimateTruth（針路＝新しい区間の磁航路を風で直した針路、所要時間＝その区間の対地速度で。crs・gs も返す）と n2 の std（見積もりの幅は教材の値）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：自家用 ACS FAA-S-ACS-6C（2023-11、private_airplane_acs_6.pdf、2026-10-30 取得） PA.VI.C.S2「Make a reasonable estimate of heading, groundspeed, arrival time, and fuel required」で確かめた。風はフライトモデルの機体の位置の風（out.windKt）。自動操縦士は正解を入力するので n2 は通る"
+  },
+  {
+   "id": "SYNC.n3-numbers",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js VOR_RWY（avionics.js の LAB VOR と、課目が終わる点＝進入端の 600 m 北から計算）を n3 の brief と say に",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：データから約 257°・5.7 NM（進入端までは 254°・5.8 NM）。手で書かず計算するので、データを動かしても食い違わない"
+  },
+  {
+   "id": "SYNC.lost-5c",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/school.js ATC_Q.lost の理由（訓練で使われる語呂 5C。PHAK・AIM の言葉ではない）、syllabus.js n3 の why",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：教科書 nav.lost（book-4.js 208 行「米国の PHAK・AIM・ACS には出てこない、訓練で使われる語呂」）にそろえた。AIM 6-2 に 5C がないことは W07d が確かめた"
+  },
+  {
+   "id": "SYNC.i1-turn-rate",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js i1 の brief（バンクの目安と、方位が 10 秒で約 30° 変わるかで確かめる。この教材の PFD には旋回率の表示はない）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：flight-lab/src/avionics.js の drawPFD に旋回率の表示がないことを確かめた。教科書 inst の bk.sim（book-1.js 1287 行）と同じ言い方"
+  },
+  {
+   "id": "SYNC.i5-intercept",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js i5 の setup（km: 17）と school.js place の ils の既定（17 km）、HOW.ils と instructorHint（GS は機首で降下率、速度は出力）、pitchForSpeed から ils を外した",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：自動操縦士で会合点を測った：14 km からは LOC 会合が約 8.8 km 手前・GS の約 370 ft 上（上からの会合）、17 km からは約 11.9 km 手前・GS の約 150 ft 下（下から）。ヒントは教科書 ifr.ils（IFH：ピッチで降下率、出力で速度）にそろえた。i5 は自動操縦士で合格のまま"
+  },
+  {
+   "id": "SYNC.m1-gear",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js m1 の脚上げの採点（地上 500 ft まで：基準の文どおり）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：前は 600 ft まで合格にしていた。自動操縦士は約 150〜250 ft で上げるので通る"
+  },
+  {
+   "id": "SYNC.m2-bank",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js m2・m4 の brief と m2 の say（約 2° バンク、ボールは 1/3〜1/2、最初の一瞬は 5〜10°）、m2 の採点（バンク 2 ±2°：0〜4°）、m2 の Verify に「ゆっくり」、m4 の手順に「出力は全部前」「フラップ UP」と say、school.js HOW.oei と ms_engine_failure の Verify。自動操縦士（flight-lab/test/bot.mjs・cadet/test/helpers/bot.mjs）の片発のバンクを 2° に",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 13 章（14_afh_ch13.pdf、2026-10-30 取得） p.13-28〜13-31（約 2°、ボール 1/3〜1/2、最初は 5〜10° を一瞬、Climb performance suffers when bank angles exceed approximately 2 or 3°、Most direct the pilot to assume VYSE, set takeoff power, retract the flaps and landing gear, identify, verify, and feather）と教科書 me.oei の表で確かめた。safety-R1 の 5 の 4（m2・m4 の言い方）もこの直しで済んだ。〔安全〕①（故障したエンジンの特定）に触れる文なので、安全レビュー（W27・W36）の確かめを待つ"
+  },
+  {
+   "id": "SYNC.m3-speed",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js m3：準備の目標と say を Vsse の約 10 kt 上（SM.sse + 10）に、結果の名前を「回復を始めた速度（参考）」にして止まった理由（失速警報・方向・赤線より 4 kt 遅い）を出す、std に高度の基準は教材の値と書く、課目に autoRudOff。school.js update が autoRudOff の課目で自動ラダーを切ったままにする",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：自家用 ACS FAA-S-ACS-6C（2023-11、private_airplane_acs_6.pdf、2026-10-30 取得） PA.X.B.S2「airspeed at approximately 10 knots above VSSE」・S7「Recover within 20° of entry heading」（高度の損失の基準はない）で確かめた。m3 の「回復で失う高度 300 ft 以内」の採点は判断 11 の範囲（a7・a8・c1）の外なので変えていない（報告の 5）"
+  },
+  {
+   "id": "SYNC.m5-final",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js m5 の why・brief・std（Vyse より遅くせず、着陸が確実になってから 84 kt＝教材の値、最後のフラップも確実になってから、課目は最初の GUMPS で脚 DOWN、AFH と公開チェックリストの違い）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 13 章（14_afh_ch13.pdf、2026-10-30 取得） p.13-33〜13-34（Maintain VYSE until the landing is assured, then slow to 1.3 VSO or the AFM/POH recommended speed、gear DOWN no later than abeam）と公開 Seminole チェックリスト（MGA、ONE ENGINE INOPERATIVE LANDING：WHEN LANDING IS ASSURED Gear DOWN・Flaps 25°・90 KIAS）で確かめた。採点（地上 500 ft から下で 84 ±5 kt）は変えず、文を採点にそろえた。教科書 me.land の bk.sim と同じ"
+  },
+  {
+   "id": "SYNC.r1-gust",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/syllabus.js r1 の brief（進入速度は AR.appr + 4 kt：突風の分を足した教材の値）、1 つめの問の理由（突風の分の半分は AFH 第 9 章の目安、この課目の値）、2 つめの問の理由（管制の言い間違いは脅威、自分の聞き違いはエラー）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：AFH FAA-H-8083-3C 第 9 章（10_afh_ch9.pdf、2026-10-30 取得）「Pilots often use the normal approach speed plus one-half of the wind gust factors in turbulent conditions」と教科書 crm.tem（book-5.js 233 行：管制の言い間違いなら脅威、自分の聞き違いならエラー）で確かめた。風の gust 1.6 は乱気流の強さの目安で kt ではないので、管制の風に数字は足していない"
+  },
+  {
+   "id": "SYNC.cadet-checklist-mag",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "cadet/src/content/checklists-archer.js（頭の説明、始動のマグネトーとマスタースイッチの項目の教官の言葉：この機体はキー式、G1000 の Archer III は天井のパネルの左右のマグネトーのスイッチと始動のスイッチ、BATT MASTR と ALTR）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：Piper PA-28-181 Archer III POH VB-2266（Left and Right magneto switches、starter switch in the overhead switch panel、BATT MASTR・ALTR Switch）と公開チェックリスト（R.archerCk：Magneto Switches・Starter ENGAGE・BATT MASTR・Alternator Switch）で確かめた。ゲームの 3D の操縦席（キー式）は変えていない（cockpit.js は持ち物でない）"
+  },
+  {
+   "id": "SYNC.sanford-diagram",
+   "status": "fixed",
+   "verified": true,
+   "by": "W07d",
+   "where": "flight-lab/src/sanford-course.js：RUNWAYS の位置を FAA の空港データの滑走路端の座標（教科書の図 sfbLayout と同じ 8 点）から avionics の latLonToNe で作る（真方位 090°/180°、9R/27L は 18/36 の東、HS1 は 18 と 27C の交わり）、diagramSvg を描き直した（誘導路は省略）",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：8 点は factcheck-radio.md が AirNav（FAA INFORMATION EFFECTIVE 2026-10-29）と一致を確かめた値。計算した長さは 10,982・3,571・5,828・6,022 ft（公開の長さと 0.5% 以内）。390px 幅でなく 660px で目視した（ラベルの重なりなし）"
+  },
+  {
+   "id": "SYNC.pa44-desc",
+   "status": "not-error",
+   "by": "W07d",
+   "reason": "physics.js の機体の説明（desc）の実名は、FLIGHT LAB が公開情報の出どころを示す書き方（序部・課程表の PHASES と同じ）。教科書の本文（第 1〜6 部）ではなく決まり 10 の対象外。CADET は cadet/src/main.js 299 行で ANA・Acron・公開・教材を含む文を消して表示する",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：physics.js と cadet/src/main.js を読んで確かめた"
+  },
+  {
+   "id": "SYNC.pa44-vxse",
+   "by": "W07d",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：確かめたが直していない。公開の資料が食い違う：MGA の Seminole チェックリスト（ce.mga.edu、2026-10-30 取得）は VXSE 82 KTS、physics.js の頭の説明が出典とする PA-44 の maneuver guide と Southeastern Oklahoma State の guide は 88、EKU の study guide は 82。POH（一次資料）を読めないので、決まり（数字は一次資料が証明したときだけ直す）により physics.js は変えない。v.xse はフライトモデル・課目・採点のどれにも使われていない（grep：pages.js の速度表と CADET の sorajima.js の表示だけ）。POH で決める（所有者の判断 7・UNVERIFIED の候補）"
+  },
+  {
+   "id": "SYNC.atis-few035",
+   "by": "W07d",
+   "note": "W07d2（W07d の 2 回目、2026-10-30）：確かめたが直していない。cadet/src/content/dialog/atc.js の ATIS の FEW035 は、同じ日の METAR・TAF（cadet/src/career/career.js 126・136 行、cadet/src/content/dialog/people.js 18 行、cadet/src/content/academy-spec.js 224 行、テスト cadet/test/people.test.mjs 16 行）と合わせてある。atc.js だけ FEW050 にすると同じ日の METAR と ATIS が食い違うので、持ち物の外のファイルと同じ変更で直す（報告の 6 に変更の案）。CADET の訓練空域は 3,000 ft（day1.js）で、FEW（雲量 1〜2/8）の 500 ft 下は 14 CFR 91.155 の最低と同じだが、a3 の上昇（+1,000 ft）は 3,500 ft の雲の層を通るので、教科書と同じ FEW050 にそろえる方がよい。radio.js の分は W50"
+  }
+ ]
+}

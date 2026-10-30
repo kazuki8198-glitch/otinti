@@ -5,6 +5,8 @@
 //   node apply-patches.mjs ../reports/W07a.ledger.json --write
 // A patch row {id, status, where, by, note, …} sets those fields on the row with that id (op "set", the default);
 // {op: "add", …} appends a new row (CLAIMS, CONCEPTS, JCAB-CALIBRATION, or any ledger when a unit splits a row).
+// {op: "remove", id, by, note} takes a row out and leaves a tombstone in the ledger's head (`removed`); an add or a set
+// for a removed id is then left out (R2's integrator: the CLAIMS rows whose sentence is no longer in the book).
 // `note` is appended to the row's note; the other fields replace. A file is applied whole or not at all.
 // Applying is idempotent: a patch file stays in reports/ after it is applied, so a row the ledger already holds as the
 // patch writes it (an add already there, a set whose fields and note are already in the row) is left as it is.
@@ -12,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { FILES, REQUIRED, ledgerOfId, checkPatchFile, alreadyAdded, alreadySet } from './src/schema.mjs';
+import { FILES, REQUIRED, ledgerOfId, checkPatchFile, alreadyAdded, alreadySet, removedIds } from './src/schema.mjs';
 import { serialize } from './src/write.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -34,8 +36,14 @@ for (const file of files) {
     const name = p.ledger || ledgerOfId(p.id), ledger = L[name];
     const { ledger: _l, op = 'set', ...fields } = p;
     const have = ledger.rows.find(r => r.id === p.id);
-    if (op === 'add' ? alreadyAdded(have, p) : alreadySet(have, p)) { already++; continue; }
-    if (op === 'add') {
+    // a removed row stays removed: its tombstone stops an earlier unit's add or set from bringing it back
+    if (!have && removedIds(ledger).has(p.id)) { already++; continue; }
+    if (op === 'remove') {
+      ledger.rows = ledger.rows.filter(r => r !== have);
+      (ledger.removed = ledger.removed || []).push({ id: p.id, by: p.by, on: today, note: p.note, ...(have.text ? { text: have.text } : {}), ...(have.checkedBy ? { checkedBy: have.checkedBy } : {}) });
+      console.log(`  ${name} − ${p.id}`);
+    } else if (op === 'add' ? alreadyAdded(have, p) : alreadySet(have, p)) { already++; continue; }
+    else if (op === 'add') {
       const missing = REQUIRED[name].filter(k => !(k in fields));
       if (missing.length) { console.log(`  ${name} ${p.id}: add without ${missing.join('・')} — skipped`); continue; }
       ledger.rows.push(fields);

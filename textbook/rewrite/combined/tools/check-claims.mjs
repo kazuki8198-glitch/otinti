@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { Result, cli, outOf } from './lib/report.mjs';
 import { blocks, sentences, inCls, inTag, clip } from './lib/html.mjs';
-import { sectionsOf } from './lib/book.mjs';
+import { sectionsOf, allChapters, endStrings } from './lib/book.mjs';
 import { readLedger, pick } from './lib/ledgers.mjs';
 import { findRules } from './check-jurisdiction.mjs';
 
@@ -64,7 +64,26 @@ export async function run(env) {
   // 基準 6: where a teaching value (教材値) is given, the reference value (参考値) stands beside it
   for (const s of sectionsOf(env)) if (/教材値/.test(s.html) && !/参考値/.test(s.html)) r.info('teaching-value-alone', s.id, '「教材値」があるのに「参考値」がない（モデルの値と POH・AFH の値が違う所は両方を書く：基準 6）');
   for (const [sec, e] of perSec) r.warn('claim-untagged', sec, `札のない主張 ${e.n} 文（例：${clip(e.sample, 50)}）`);
-  if (L.exists) { const ids = new Set(claims.map(c => c.id)); for (const [id] of byId) if (!ids.has(id)) r.info('ledger-row-not-in-book', id, '台帳の行の文が本に見つからない（文が書き換えられた？）'); }
+  // a ledger row whose id is not among the claims picked out: "not in the book" only when its sentence is nowhere in the
+  // book's text (sections and end matter). Rows a writer added by hand (#hand-…), sentences without a number and unit,
+  // and table rows are in the book but not picked out by extract(); they are counted, not listed (R2's integrator: 379 of
+  // the 763 rows factcheck2-R2 counted were such rows). With check-chapter, only the rows of the chapters checked.
+  if (L.exists) {
+    const ids = new Set(claims.map(c => c.id));
+    const scope = env.only ? new Set(sectionsOf(env).map(s => s.id)) : null;
+    const norm = x => String(x || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/[\s｜]+/g, '');
+    let book = null, held = 0;
+    for (const [id, row] of byId) {
+      if (ids.has(id)) continue;
+      const sec = pick(row, ['sec', 'section', 'where']);
+      if (scope && sec && !scope.has(sec)) continue;
+      book = book || [...sectionsOf(env, { all: true }).map(s => norm(s.html)), ...allChapters(env).flatMap(ch => endStrings(ch).map(([, v]) => norm(v)))].join('\u0000');
+      const text = String(pick(row, ['text', 'sentence', 's']) || ''), t = norm(text), parts = text.split('｜').map(norm).filter(x => x.length > 4);
+      if (t && (book.includes(t) || (parts.length > 1 && parts.every(x => book.includes(x))))) { held++; continue; }
+      r.info('ledger-row-not-in-book', id, '台帳の行の文が本に見つからない（文が書き換えられた？）');
+    }
+    if (held) r.metric('ledger rows in the book but not picked out (hand rows, sentences without a number, tables)', held);
+  }
   r.metric('kinds', kinds);
   r.metric('tagged in CLAIMS.json / untagged', `${tagged} / ${claims.length - tagged}`);
   r.metric('labelled in the text itself (教材値・参考値・推測)', self);

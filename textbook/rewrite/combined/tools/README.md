@@ -28,7 +28,7 @@ node textbook/rewrite/combined/tools/selftest.mjs               # 道具その�
 | volume | check-volume.mjs | 本文の量（1.2 の数え方）：序部〜第 6 部の「まず読む節」は今の教科書 約 18.2 万字の 1.4 倍まで（22） |
 | jurisdiction | check-jurisdiction.mjs | 全節に scope、米国の規則の言葉は us の範囲・米国の囲み・「米国」と書いた文だけ、日本の規則の言葉は jp の範囲・日本の囲みだけ（8）。scope のない節は DESIGN 3.3 の「範囲」の列で調べる |
 | chapter-refs | check-chapter-refs.mjs | 出典の前置き（PHAK・AFH・AIM・基礎教材 など）のない直書きの「第 N 章」（6.2 の決まり 2・3） |
-| claims | check-claims.mjs | 数字と単位・条番号・法令名を含む文を抜き出し、主張の台帳 CLAIMS.json の札と照らす（3）。「教材値」だけで「参考値」のない節（6、info） |
+| claims | check-claims.mjs | 数字と単位・条番号・法令名を含む文を抜き出し、主張の台帳 CLAIMS.json の札と照らす（3）。「教材値」だけで「参考値」のない節（6、info）。台帳の行の文が本のどこにもないときだけ「本にない」（info）。抜き出さない文（手で足した `#hand-` の行・単位のない数・表）が本にある行は数だけ（R2 の統合） |
 | ledgers | check-ledgers.mjs | 台帳 ERRATA.json・RULINGS.json の全行が閉じて（直した場所か誤りでない理由）、直した人と別の確認役の署名。RULINGS の A は日米の項目、C は用語を持つ。UNVERIFIED.json の数（1・2） |
 | questions | check-questions.mjs | 正解は 1 つ・正解の位置（各 15〜35%）・理由と根拠・今の 14 分野に日本の法令なし・`{ch:}` は CADET にある章だけ・記述問題の構造（18〜20） |
 | photos | check-photos.mjs | クレジットの形（TEXTBOOK のテストと同じ）・大きさ・メタデータ・使用・PHOTO-CREDITS.md・加工の表示 mod・ハッシュ・基礎教材の写真はバイト一致・使わない写真（17・25） |

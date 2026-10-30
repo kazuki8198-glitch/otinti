@@ -1,0 +1,18 @@
+{
+ "unitName": "safety-R2",
+ "about": "安全レビュー safety-R2 の署名（2026-10-30）：R2 で閉じた〔安全〕の ERRATA 2 行。報告 reports/safety-R2.md の 4 の⑥⑦から統合役 integrate-R2 が書いた",
+ "patches": [
+  {
+   "id": "K.navigation.K1",
+   "checkedBy": "safety-R2",
+   "checkedOn": "2026-10-30",
+   "note": "safety-R2（2026-10-30）：〔安全〕の行。安全レビューの 4 の⑦（燃料の日本の欄：FL.jur fuel.vfr と同じ中身。航空法第 63 条は事業と IFR だけ、訓練の VFR は学校の規程の量） で合格。factcheck2-R2 の 6 でも where の今の文を確かめた（統合役 integrate-R2 が両方の報告からこのパッチに書いた）"
+  },
+  {
+   "id": "K.human.K5",
+   "checkedBy": "safety-R2",
+   "checkedOn": "2026-10-30",
+   "note": "safety-R2（2026-10-30）：〔安全〕の行。安全レビューの 4 の⑥（hf.self の囲み alcohol の日本の欄：第 70 条・通達 国空航第 2278 号の 0.2 g/L・0.09 mg/L を通達の 2・3(1) で取り直して確かめた） で合格。factcheck2-R2 の 6 でも where の今の文を確かめた（統合役 integrate-R2 が両方の報告からこのパッチに書いた）"
+  }
+ ]
+}

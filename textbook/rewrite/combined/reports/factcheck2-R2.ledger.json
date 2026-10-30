@@ -1,0 +1,426 @@
+{
+ "unitName": "factcheck2-R2",
+ "about": "事実確認の二人目 factcheck2-R2 の署名（2026-10-30）：R2 で閉じた ERRATA 47 行・RULINGS 23 行。報告 reports/factcheck2-R2.md の 6 と 10 の 1 から統合役 integrate-R2 が書いた（この単位は「直さない役」でパッチを書かなかった）。〔安全〕の 2 行は reports/safety-R2.ledger.json",
+ "patches": [
+  {
+   "id": "K.overview.K5",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.aero.K-2",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.systems.K1",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.systems.K2",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.instruments.gap-1",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.wb-perf.K1",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.wb-perf.K2",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.wb-perf.K3",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.wb-perf.K5",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.wb-perf.K7",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.weather.K1",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.weather.K3",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.weather.K4",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.weather.K6",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.navigation.K3",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.human.K1",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.human.K4",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.human.K6",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "K.human.K7",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "APP.lesson-k1k2",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "APP.bk-photo-mod",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.a7-entry",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）。〔安全〕⑤に触れる課目の文は safety-R2 の 4 でも合格"
+  },
+  {
+   "id": "SYNC.a2-scan",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.a2-std",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.x2-zone",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.t4-flaps-key",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.before-landing-checklist",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.t2-abeam-rpm",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.flare-eyes",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.e2-heading",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）。〔安全〕①（e2）に触れる課目の文は safety-R2 の 4 でも合格"
+  },
+  {
+   "id": "SYNC.mayday-order",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）。〔安全〕③に触れる課目の文は safety-R2 の 4 でも合格"
+  },
+  {
+   "id": "SYNC.c1-content",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.x1-timing",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.n2-tower",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.n2-grading",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.n3-numbers",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.lost-5c",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.i1-turn-rate",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.i5-intercept",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.pa44-desc",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.m1-gear",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.m2-bank",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）。〔安全〕①に触れる課目の文は safety-R2 の 4 でも合格"
+  },
+  {
+   "id": "SYNC.m3-speed",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）。N1：入りの速度は自家用 ACS（FAA-S-ACS-6C PA.X.B.S2「approximately 10 knots above VSSE」）どおり（SM.sse + 10）。AFH（FAA-H-8083-3C）第 13 章 p.13-26 は「approximately 10 knots above VSSE or VYSE (whichever is higher)」で、この機体（Vsse 82・Vyse 88）では約 98 kt になる。課目は ACS の言い方で、採点は変えない（統合役が AFH 第 13 章の PDF で確かめた、2026-10-30）"
+  },
+  {
+   "id": "SYNC.m5-final",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.r1-gust",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.cadet-checklist-mag",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "SYNC.sanford-diagram",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.weight-unit",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.aoa-term",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.critical-aoa",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.turbulence-va",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.left-turning",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.ground-effect-height",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.turn-rate-constant",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.carb-ice-temp",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.manifold-pressure",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.northerly-turn-error",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.pa-coefficient",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.pressure-altitude-term",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.fast-landing",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.fuel-cg-shift",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.planning-margin",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.cell-stage-names",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.windshear-term",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.ceiling-term",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.cloud-base-formula",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.high-pressure-weather",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.photo-mod",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.cold-sick",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  },
+  {
+   "id": "R.passenger-resource",
+   "checkedBy": "factcheck2-R2",
+   "checkedOn": "2026-10-30",
+   "note": "factcheck2-R2（2026-10-30）：報告の 6 で、where の場所の今の文・コードが correction のとおりであることを一次資料と照らして確かめた（統合役 integrate-R2 が報告の 10 の 1 からこのパッチに書いた）"
+  }
+ ]
+}

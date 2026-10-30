@@ -67,6 +67,12 @@ export const alreadySet = (row, p) => !!row && (hasNote(p)
   ? String(row.note || '').includes(p.note)
   : Object.entries(patchFields(p)).every(([k, v]) => k === 'id' || same(row[k], v)));
 
+// rows a patch took out of a ledger ({op: "remove", id, by, note}; added by the R2 integrator for the CLAIMS rows whose
+// sentence is no longer in the book). The ledger keeps a tombstone {id, by, on, note, text, checkedBy} for each in its
+// head's `removed`, so an earlier unit's patch that added or set that row, applied again, leaves it out instead of
+// bringing it back (before this, the rows stayed with a note「本にない文」: removing them made the writers' adds return).
+export const removedIds = ledger => new Set(((ledger && ledger.removed) || []).map(r => r.id));
+
 export function checkPatchFile(file, ledgers) {
   const out = [];
   let raw;
@@ -79,10 +85,18 @@ export function checkPatchFile(file, ledgers) {
     if (!p || typeof p.id !== 'string') { out.push(`${at}: id がない`); continue; }
     const name = p.ledger || ledgerOfId(p.id);
     if (!name || !ledgers[name]) { out.push(`${at}: どの台帳か分からない（ledger を書く）`); continue; }
-    const exists = ledgers[name].rows.some(r => r.id === p.id);
+    const exists = ledgers[name].rows.some(r => r.id === p.id), gone = removedIds(ledgers[name]).has(p.id);
+    const op = p.op || 'set';
+    if (!['set', 'add', 'remove'].includes(op)) { out.push(`${at}: op "${op}" は set・add・remove のどれでもない`); continue; }
     // an add whose row is already there as written was applied before (a patch file stays in reports/): not an error
-    if ((p.op || 'set') === 'add') { if (exists && !alreadyAdded(ledgers[name].rows.find(r => r.id === p.id), p)) out.push(`${at}: add なのに同じ id の行がある（中身も違う）`); }
-    else if (!exists) out.push(`${at}: ${name} にない id`);
+    if (op === 'add') { if (exists && !alreadyAdded(ledgers[name].rows.find(r => r.id === p.id), p)) out.push(`${at}: add なのに同じ id の行がある（中身も違う）`); }
+    else if (op === 'remove') {
+      if (!exists && !gone) out.push(`${at}: remove なのに ${name} にない id`);
+      if (!p.by) out.push(`${at}: remove には by（外す単位）が要る`);
+      if (!p.note) out.push(`${at}: remove には note（なぜ外すか）が要る`);
+    }
+    // a set on a row a later patch removed is left out when applied (the tombstone in the ledger's head)
+    else if (!exists && !gone) out.push(`${at}: ${name} にない id`);
     const st = STATUS[name];
     if (p.status !== undefined && st && !(p.status in st)) out.push(`${at}: status "${p.status}" は ${name} で使えない`);
     if (!p.by && !p.checkedBy) out.push(`${at}: by（直した・書いた単位）も checkedBy（確かめた単位）もない`);

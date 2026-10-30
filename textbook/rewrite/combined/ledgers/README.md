@@ -128,6 +128,7 @@ ACS-MAP：`{ id, acs, acsTitle, area, areaTitle, task, taskTitle, text, sub（K2
 - 1 行の基本は **`{ id, status, where, by, note }`**。ほかの項目（`reason`・`verified`・`checkedBy`・`sections`・`to`・`value`・`sourceUrl`・`checkedOn`・`built` など）も同じように書けます。`note` は前の `note` の後ろに足され、ほかの項目は置き換わります。
 - `ledger` は書かなくてよい（`id` の形で決まる）。分からない形の `id` のときだけ `"ledger": "ERRATA"` のように書く。
 - 新しい行は `"op": "add"`（その台帳の必須の項目を全部）。
+- 行を外すときは `{ "op": "remove", "id", "by", "note" }`（`note` に外す理由。R2 の統合で足した：CLAIMS の本にない文の行）。台帳は行を消し、頭の `removed` に記録 `{ id, by, on, note, text, checkedBy }` を残す。外した id への前の単位の `add`・`set` は、流し直しても戻さない（`removed` が止める）。`validate.mjs` は、外した id が `rows` にないことと、記録に `id`・`by`・`note` があることを確かめる。
 - **確かめ役の署名**は、確かめた単位が自分のパッチ（`reports/<確かめた単位>.ledger.json`）で `{ id, checkedBy, note }` を書きます（`by` は書かない。行の `by` と同じ値は不可）。直す単位のパッチは `by` を、確かめる単位のパッチは `checkedBy` を必ず持ちます。
 - パッチの検査：`node validate.mjs`（`reports/*.ledger.json` も調べる）。取り込み：統合役が `node apply-patches.mjs`（見るだけ）→ `node apply-patches.mjs --write`（書いてから `validate.mjs` を流す）。1 つのファイルは全部か何もしないかで取り込む。取り込んだあともパッチのファイルは `reports/` に残す（記録）。取り込みは何度流しても同じ結果になる：台帳がもうパッチのとおりの行（`add` の行がある：`note` のある `add` は行の `note` がその `note` で始まること、`note` のない `add` は行が全部の項目でパッチのとおりのこと・`set` の `note` がもう行の `note` にある・`note` のない `set` は項目がもう行のとおり）は、そのままにする。`note` のある `set` は `note` で見分けるので、あとの単位が同じ行の `by` や `status` を書き換えていても、前のパッチを流し直して戻すことはない（1 つの行に何単位も `note` を書くため）。`add` の行も同じで、あとの単位がその行を閉じても（例：W02 が足した `APP.cadet-comm-practice-ch-sim` を W07a が閉じた）、流し直して同じ id の 2 つめの行と見なすことはない（R1 の P3 の統合で直した）。だから `set` と `add` の行には `note` を書く。
 

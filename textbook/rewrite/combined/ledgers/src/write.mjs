@@ -6,7 +6,10 @@ import path from 'node:path';
 
 export function serialize(obj) {
   const { rows, ...head } = obj;
-  const lines = Object.entries(head).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v, null, 1).replace(/\n\s*/g, ' ')}`);
+  // the tombstones of removed rows (apply-patches.mjs, op "remove") are written one per line, like the rows
+  const lines = Object.entries(head).map(([k, v]) => k === 'removed' && Array.isArray(v)
+    ? `  "removed": [\n${v.map(r => '    ' + JSON.stringify(r)).join(',\n')}\n  ]`
+    : `  ${JSON.stringify(k)}: ${JSON.stringify(v, null, 1).replace(/\n\s*/g, ' ')}`);
   const body = (rows || []).map(r => '    ' + JSON.stringify(r));
   return `{\n${lines.join(',\n')}${lines.length ? ',\n' : ''}  "rows": [\n${body.join(',\n')}\n  ]\n}\n`;
 }

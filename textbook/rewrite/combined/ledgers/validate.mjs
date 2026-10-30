@@ -84,6 +84,12 @@ for (const [name, raw] of Object.entries(L)) {
       }
     }
   }
+  // tombstones of removed rows (apply-patches.mjs, op "remove"): each says who removed it and why, and the row is gone
+  for (const [i, t] of (raw.removed || []).entries()) {
+    const at = `${name} removed ${t && t.id ? t.id : '#' + i}`;
+    if (!t || typeof t.id !== 'string' || !t.by || !t.note) err(at, '外した行の記録に id・by・note がない');
+    else if (ids.has(t.id)) err(at, '外した行の id が rows にもある');
+  }
   notes.push(`${name}: ${raw.rows.length} 行${STATUS[name] ? '（' + Object.entries(raw.rows.reduce((a, r) => ((a[r.status] = (a[r.status] || 0) + 1), a), {})).map(([k, v]) => `${k} ${v}`).join('・') + '）' : ''}`);
 }
 

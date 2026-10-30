@@ -1,0 +1,2547 @@
+{
+ "unitName": "integrate-R2",
+ "about": "統合 R2（R2 の締め：factcheck2-R2・answerable-R2・safety-R2、2026-10-30）：CLAIMS の本にない文の 386 行を外した（op remove、記録は CLAIMS.json の removed）、W24 が用語だけをそろえた 8 行に R1V の署名を引き継ぐ確かめ、R2 の締めで直した文の CLAIMS 4 行、R.vfr-into-imc の安全レビューの note、COUNTS の R2 の作った本の数。報告は reports/integrate-R2.md",
+ "patches": [
+  {
+   "id": "intro.course#ffedae7d",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 intro.course#f24eab79 の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "intro.course#ecfd92b7",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 intro.course#727d6b8f の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "intro.cert#28719f3c",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 intro.cert#5caa3c62 の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "intro.cert#a6e4f1b2",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 intro.cert#5a5a711b の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "basics.units#1b2cea4a",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 basics.units#0d26757d の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "basics.time#badd8255",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 basics.time#a1934005 の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "en.class#917257cb",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 en.class#2cdf3c9d の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "id": "en.class#a599574a",
+   "checkedBy": "integrate-R2",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R2（2026-10-30）：R1V が一次資料で確かめて署名した前の行 en.class#c2fe31a9 の文と、数字・条番号・出典が同じで、W24 が用語の書き方だけをそろえた文（差分は用語と括弧の中の英語だけ）。統合役が差分を確かめて署名を引き継いだ。前の行は台帳から外した（removed）"
+  },
+  {
+   "op": "remove",
+   "id": "intro.course#f24eab79",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は intro.course#ffedae7d（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.course#727d6b8f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は intro.course#ecfd92b7（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.cert#5caa3c62",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は intro.cert#28719f3c（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.cert#5a5a711b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は intro.cert#a6e4f1b2（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.course#44ec578e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.course#c9e580ef",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.cert#8f7e9419",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.exams#9d450e7a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.exams#f5bceac7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "basics.units#0d26757d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は basics.units#1b2cea4a（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "basics.units#ede20799",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "basics.time#a1934005",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は basics.time#badd8255（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "en.terms#ec22f5bd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "en.class#2cdf3c9d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は en.class#917257cb（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "en.class#c2fe31a9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。同じ主張の新しい行は en.class#a599574a（用語だけの違い。署名を引き継いだ）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.stall#3c6bdaae",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "ops.stall#3c6bdaae",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.carb#8a993d2c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.taf#cbb14d49",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#7c45f4dd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#340a75af",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#b80278d7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.exams#05116d52",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.forces#69935930",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.forces#b6d7ce8c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.forces#22ba1844",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.wing#4cf529a3",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.lift#6b479ae9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.lift#a6f639cc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.aoa#baae66a5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.drag#fd7cb935",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.power#b48a9b79",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.power#2f11ba86",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.power#fb82af40",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.stall#6d0ad95e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.turn#fcfe4f98",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.turn#c7387efb",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.turn#49a9b9b1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.turn#3c809f96",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.ge#8959570a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#57ee5fd2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#a4c30156",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#2d80e19c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#ff3f7430",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#0804dc4e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#d6c706ee",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#ffd1bcb5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#d1efdcc9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#0d0e5e83",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#cf53f343",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#215ad02e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#37098d1f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#e29aa01c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#cf5d57ac",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#c7766dc4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#4c7bc734",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#5165ccf4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#33e116ca",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#58c849d5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.struct#5bca1888",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.wing#2d27350f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.left#142b49bd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.forces#7e52c640",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.flaps#cd3e0d59",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "aero.power#969d6220",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.lights#e2cd67f4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.piston#af1fcbbc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.engine#f7cce60e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.engine#cf899b6b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.engine#93191433",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.engine#d47e8ecc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.carb#7e2eacf5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.carb#7049d6da",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.carb#c543431a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.elec#f07d2c10",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.elec#44d12a8b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.g1000#f956f55f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#1e6b7bf8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#875135c5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#cb6ec5aa",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#366d3ef9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#85808be5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#a087fa9b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#f6da01f0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#52d82784",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#80e82269",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#1f60d6d2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#8685a94f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.speed#7992c2a3",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#9bb0f772",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#de4a28c5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#4e563e16",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#3a1d1213",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#5a3c903d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.alt#21d91f7c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#8de2e8a2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#5532998f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#272676b4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#31097599",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#573b0b21",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#1a42c6bd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.gyro#6cfc4d8b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.pfd#d847ca61",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.ap#3b666314",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "inst.ap#db8cbd7d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "sys.piston#372cd21e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.da#76d23c75",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.da#cda8c2fc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.da#0a2fa083",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.da#e11ab009",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.da#ee0daf99",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#c11ec4fc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#8f4f05fa",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#61e1e290",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#76ffff5f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#b014dbb1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#5160e267",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#bafad851",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#50ae209a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#08583091",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.chart#9297736e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.chart#10ee643b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.climb#de3fdd2e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.climb#819dada9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#43d2a015",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#2574d1d7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#6454ce90",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#c6b4c312",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#dcbe3f6b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#e8b4e84a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#d993b711",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#fbc9dc08",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#7cbc656f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#8a92930a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#b3e08402",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.fuel#b2d08f28",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.plan#52a5623a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.plan#8bcc9b6b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.plan#f0d9586b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wb#55765a73",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wb#ed300af6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#025b3c75",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#cee3db98",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#6db4570e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#935d9f14",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#0b9cba5d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#adf8b85b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#1a6478e1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#f00137c9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#c5ed80df",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#85faf97f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wbex#af3fe664",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.shift#90346c08",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.shift#9eff55af",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.shift#c0fc7942",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#071b2458",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#85a0dbe1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.tol#39d8b2ef",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.range#fa0f0dc0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "perf.wb#eff55f75",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.atm#0da6e758",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.wind#3fc9f779",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.cloud#3932b7ff",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.stab#b620554c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.stab#01617b96",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.stab#f12c3568",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ts#6f765629",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ts#42196d70",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ts#87ef0ffe",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.shear#4035d343",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.shear#d2240f3f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.turb#9f07ee7b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.turb#9530a006",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.turb#bce98e4d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.turb#18741c04",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#f86cc3f0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#9228d5a1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#fa12736f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#59b57534",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#42a386d0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#59b0a948",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#822e4d9f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#5214c012",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#a7608c84",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.ice#ff3af5fc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.fog#ea02b8ec",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.metar#e25b9132",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.metar#9e2b549b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.metar#4d2916b4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.taf#1868d4d1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.taf#0fdab3a5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.taf#a86ecc67",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#fdbfb564",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#3d881b87",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#2e14511b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#2c158eef",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#abadc1c0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.info#8a2fe02f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#05cf2d0a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#4cae0b0e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#a5bfb37a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#f51801d6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#1c5b7141",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#523fb428",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#27790419",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#3a34f870",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.shear#ad66e83b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。統合 R2 が safety-R2 の N5 で文を直した（新しい行 wx.shear#dc2f34b1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "wx.brief#03dd621c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#357728be",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#e82e7913",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#814ead10",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#16df4607",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#119d23f7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#50e41bcf",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#e12c8057",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#66a4e742",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#ab6e9ad3",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#8d703500",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#26051ea7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#2a3f79ea",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#175cca0c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#1274225d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#fc376d9d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#aad2bb6d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#df223b87",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#9515f692",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#de097742",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.wind#fc689475",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#b77c6c80",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#b5b5dbed",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#5ec82839",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#e0b24f35",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#8e7c6c8a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#1099c046",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#98294ca0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#74395b08",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.earth#hand-1f3de745",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.north#2936b57d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#c22a1672",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "navb.calc#hand-19259c48",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#a45458f2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#103d9483",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#3d3c3588",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#9bac0223",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#1fde9d0f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#6af055b5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#fc700671",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#3d938d0f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#e956bf44",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#a4bc0824",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#7876544e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#d8ce31fa",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.basis#260f0bfa",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pic#dfa99a73",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#144a4b63",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#f2ac96c6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#51906f46",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#069f385e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#32410d12",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#e74a3a4a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#0c5d0d4b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#a7ecc970",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#557ab20d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#4592509b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.pilot#76dcc557",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#39e2171c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#5aa4446c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#bf6fe7d4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#124fe1fd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#15b4ced1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#58c83520",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#d53b34ce",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#d624b882",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#3598764b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#19c05b5c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#1ecfd5c2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.aircraft#22e096b1",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#13b8111f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#f2fde70b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#60df8efb",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#0d2fbaca",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#e3f8c40e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#4df79da6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#35e34707",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#3e5cfcc5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.airspace#796f3f31",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#653efedb",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#d8e62a89",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#2ed17f47",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#2120903b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#231795a8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.vfr#03639157",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.special#f1fc1901",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.special#cec34b03",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.special#7c61fb29",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.rules#1e46567f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.rules#298e6c53",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.rules#cdc93909",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.special#efe08c7a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "law.special#c0954498",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "radio.why#16fa26b8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "radio.why#2e39d5b6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "radio.equip#606d444d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "radio.technique#493f8864",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.basic#e409893d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.basic#3b09055e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.callsign#e66c8c40",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.words#734198e2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.words#ba869d0a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.pattern#49914297",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.pattern#c7a5e5d0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#d3fe1390",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#0f4be7a8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#e911b4fc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#010eff9e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#16b8d184",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#8a7976bc",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#7e116b80",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#1e6ecd86",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#303ba843",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#ec2b6d62",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#cfd26119",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#b4321929",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.readback#c44f7ba0",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.clarify#eeceea8b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.mistakes#00e28236",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.mistakes#6d5483e7",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.runway#128eb22b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.runway#908c096e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.runway#97895f91",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#dd54321f",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#5c5b2d6b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#47cde4f8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#e43a8630",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#370cdbe6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#293f894c",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.flow#d63d0409",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.atis#21443c94",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.dep#da529f12",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.dep#84532edb",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.tower#ec2b6d62",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.tower#cfd26119",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.tower#4667deae",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.tower#4ff4f5ba",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.arrive#7882dfd6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.arrive#6ce5ea66",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.option#ae89a0c8",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.option#1d51ebe5",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.xpdr#ba45707e",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.xpdr#7e2a8b1d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.mayday#9b11008d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.sfb#7207e741",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.sfb#b9dc0965",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.sfb#fd8a52b6",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.sfb#81507321",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.icao#5b2ab0af",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.icao#f839c3cd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.practice#6fe5d9ca",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.basic#7539a6a2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.ack#f93e3528",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.dep#08e98859",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.xpdr#ad0cacd2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.mayday#52455fa4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "comm.mayday#2a7aa87b",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.self#71c26c13",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.self#394f60e3",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.self#9c069ee4",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#40e3a478",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#cbd0ab3a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.body#296f3797",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.motion#d3feb0fd",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#0c23eb53",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#de262eb9",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#2fe8d420",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#7755c182",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#a381e429",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#3562301d",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#044744d2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#3852ea30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#d9e8c364",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#21e3b6ea",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.vision#293a13f2",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "hf.vision#8f980825",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "adm.risk#4644973a",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "adm.review#79565a18",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "remove",
+   "id": "g1.review#hand-eb2574cb",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：本にない文（check-claims.mjs が本の節と章末のどこにも見つけない。factcheck2-R2 の S1）。統合 R2 が safety-R2 の N1 で文を直した（新しい行 g1.review#hand-89a65058）。行は台帳から外し、記録（文・前の署名）は CLAIMS.json の removed に残した"
+  },
+  {
+   "op": "add",
+   "id": "perf.wb#30fe1785",
+   "sec": "perf.wb",
+   "text": "ただし、長いスピンから回復できる機体でも、重心が 1〜2 in 後ろへ動くだけで、回復の操作に応えなくなる例があります（PHAK 第 5 章。）。",
+   "tag": "参考値",
+   "source": "PHAK（FAA-H-8083-25C）第 5 章 p.5-43「Effect of Load Distribution」：An aircraft that cleanly recovers from a prolonged spin with the CG at one position may fail completely to respond to normal recovery attempts when the CG is moved aft by one or two inches（FAA の 07_phak_ch5.pdf、2026-10-30 取得、sha256 672c1a05…）",
+   "kinds": [
+    "number"
+   ],
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：safety-R2 の N3 で perf.wb の「もっと深く」に足した文"
+  },
+  {
+   "op": "add",
+   "id": "wx.ts#3228f9f0",
+   "sec": "wx.ts",
+   "text": "雷雨が範囲の半分を超えておおうときは、その範囲全体を回ります（米国の AIM 7-1-27 は 6/10 とします）。",
+   "tag": "参考値",
+   "source": "AWH（FAA-H-8083-28B）22.8.2 の 15「Circumnavigate the entire area if more than half the area is covered by thunderstorms」・米国の AIM 7-1-27「6/10 thunderstorm coverage」（どちらも 2026-10-30 に読んだ）",
+   "kinds": [
+    "AIM"
+   ],
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：safety-R2 の N4 で、厳しいほうの AWH（半分を超える）に合わせ、AIM の 6/10 を括弧に書いた"
+  },
+  {
+   "op": "add",
+   "id": "wx.shear#dc2f34b1",
+   "sec": "wx.shear",
+   "text": "しるしはそれだけのこともあり、使える時間は短ければ 5 秒ほどです（AWH 22.7.3.2）",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx）22.7.3.2（the only indication may be a slower-than-normal airspeed increase … as little as five seconds）",
+   "kinds": [
+    "number"
+   ],
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：safety-R2 の N5 で「しるしはそれだけのこともあり」に直した（前の行 wx.shear#ad66e83b）"
+  },
+  {
+   "op": "add",
+   "id": "g1.review#hand-89a65058",
+   "sec": "g1.review",
+   "text": "そして操縦輪（ヨーク、control wheel）を前へ押して、失速警報が止まるまで迎え角を減らします。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 5 章 p.5-15〜5-16（迎え角を減らすのが最初の操作。until the impending stall indications are eliminated・Common Errors 11「Not maintaining a nose down control input until the stall warning is eliminated」）。節 aero.stall〔安全〕⑤",
+   "by": "integrate-R2",
+   "checkedBy": null,
+   "checkedOn": null,
+   "extracted": false,
+   "note": "integrate-R2（2026-10-30）：safety-R2 の N1 で文を直した（前の行 g1.review#hand-eb2574cb、W25 が手で足した行）"
+  },
+  {
+   "id": "R.vfr-into-imc",
+   "by": "W20",
+   "note": "safety-R2（2026-10-30）：hf.body の段落（AFH 第 18 章 p.18-17〜18-21 の順番と、この本の判断として書いた 180° 旋回の条件）を承認。AFH は雲から出る向きを書いていない。S2（少し回っては翼を水平に戻す：AFH p.18-19）は統合 R2 が hf.body に足した。emg.imc（W28）と kiso11.27 で閉じる（open のまま）"
+  },
+  {
+   "id": "toc.p1.chapters",
+   "built": 16,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。第 1 部の 16 章（g1 を含む）。DESIGN 3.3 と同じ"
+  },
+  {
+   "id": "toc.p1.sections",
+   "built": 118,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。DESIGN 3.3 と同じ"
+  },
+  {
+   "id": "toc.p1.existing",
+   "built": 77,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。今の教科書の節（DESIGN 3.3 の ★ のない節）"
+  },
+  {
+   "id": "toc.p1.new",
+   "built": 41,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。★ の節（DESIGN 3.3 と同じ）"
+  },
+  {
+   "id": "toc.parts",
+   "built": 7,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。序部と第 1〜6 部。第 7 部は R4"
+  },
+  {
+   "id": "toc.chapters",
+   "built": 34,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。序部 4・第 1 部 16・第 2〜6 部 14（R3 で 21 → 合計 41、R4 で第 7 部の 7）"
+  },
+  {
+   "id": "toc.sections",
+   "built": 208,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。序部 22・第 1 部 118・第 2〜6 部 68"
+  },
+  {
+   "id": "book.textbookModules",
+   "built": 19,
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。R2C で book-gates.js（textbook/test/build.test.mjs の FL_MODULES.length）"
+  },
+  {
+   "id": "book.aeroLiftNumber",
+   "built": "5.3",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。R2B で aero.wing が入った（DESIGN 6.1 のとおり）"
+  },
+  {
+   "id": "book.quiz",
+   "built": "14 分野 226 問（R2 の W23 が第 1 部の 81 問を後ろに足した：common 50・us 31・日本の法令 0）。JCAB 形式の 6 分野はまだ（R4）",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。DESIGN 8.1 の見込み 約 205 より多い（第 2〜6 部の W34 でさらに増える）"
+  },
+  {
+   "id": "book.terms",
+   "built": "用語の表 FL.terms 436 語（R2C の W24）",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。本の章末の用語の行は TEXTBOOK の COUNTS で 741"
+  },
+  {
+   "id": "book.chapterQuiz",
+   "built": "章末の 4 択 213 問（序部 20・第 1 部 123・第 2〜6 部 70）",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）"
+  },
+  {
+   "id": "book.written",
+   "built": "説明してみよう・口述の練習 233 問（序部 22・第 1 部 211。g1 の問い 15・口述 4 は節の中の考えてみよう）",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）"
+  },
+  {
+   "id": "book.figures",
+   "built": "図の関数 178（book-figs.js）、本に出る図 173（TEXTBOOK の COUNTS）",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。W21（第 1 部の図の目視と描き直しの残り）は R2 ではしていない（R3 の始め）"
+  },
+  {
+   "id": "book.lessons",
+   "built": "39 課目（課程表の全部）・book 57 本",
+   "builtBy": "integrate-R2",
+   "builtOn": "2026-10-30",
+   "by": "integrate-R2",
+   "note": "integrate-R2（2026-10-30）：R2 の終わりの本で数えた（W27 の数え直し）。R2 で k1・k2 に inst.pfd など（W07d2・APP.lesson-k1k2）"
+  }
+ ]
+}

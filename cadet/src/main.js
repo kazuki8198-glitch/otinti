@@ -13,13 +13,15 @@ import { createSky } from './render/sky.js';
 import { installIndoorShading, indoorAt, createLightPool, roomClusters } from './render/indoor.js';
 import { buildGround } from './world/ground.js';
 import { buildAirfield, airfieldColliders, STANDS } from './world/airfield.js';
+import { buildClouds } from './world/clouds.js';
 import { buildBuildings } from './world/buildings.js';
 import { buildAcademy, ACADEMY } from './world/academy.js';
 import { createPropKit } from './world/props.js';
 import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
 import { buildLandmarks } from './world/landmarks.js';
-import { parkedAircraft, colliderBoxes } from './aircraft/exterior.js';
+import { parkedAircraft, colliderBoxes, setPaintDetail, setGlowQuality } from './aircraft/exterior.js';
+import { setGlassRain, setGlassRainQuality } from './render/materials.js';
 import { TODAY, PARKED_ARCHERS, PARKED_SEMINOLES } from './aircraft/registrations.js';
 import { PRESETS, ORDER, gpuName, pickPreset, rememberPreset, makeDynRes } from './core/quality.js';
 import { createInput } from './core/input.js';
@@ -119,6 +121,9 @@ async function boot() {
   const chosen = params.get('q') && PRESETS[params.get('q')] ? params.get('q') : settings.get('quality') || pickPreset(gpu);
   preset = PRESETS[chosen] || PRESETS.high;
   pipe.setQuality(preset);
+  setPaintDetail(preset.paintDetail ?? 1);
+  setGlassRainQuality(preset.glassRain ?? 1);
+  setGlowQuality(preset.glowDetail ?? 1);
   const { scene, camera, renderer } = pipe;
   setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
   const world = createCollisionWorld();
@@ -130,6 +135,7 @@ async function boot() {
   bootMsg('飛行場を作っています…', 0.35); await frame();
   const ground = buildGround(L, FL, { quality: preset }); scene.add(ground.group);
   const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group); airfieldColliders(airfield, world);
+  const clouds = buildClouds(L, FL, { quality: preset }); scene.add(clouds.group);
   bootMsg('訓練所を作っています…', 0.45); await frame();
   const buildings = buildBuildings(L, { world }); scene.add(buildings.group);
   const spec = academySpec(FL);
@@ -902,7 +908,7 @@ async function boot() {
   const flightHud = createFlightHUD({ root: document.body, settings });
   const dayHud = createDayHUD({ settings });
   fly = createFlyMode({
-    FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
+    FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud, quality: preset,
     saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a2', dayHud,
     today: () => today,
     // the right seat today: the instructor, the chief instructor on the check ride, no one on the first solo
@@ -968,6 +974,10 @@ async function boot() {
     const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : low ? 0.55 : 0;
     const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' || (w.kind === 'pmWind' && (slot === 'pm' || slot === 'evening')) ? 0.35 : 0;
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
+    // (B2) the rain on the windshield, read from the same weather: a storm day rains all day (its METAR says
+    // TSRA throughout), a pmStorm afternoon brings its thunderstorms with it; every other kind is dry. A
+    // rendering derivation like the fog and grey above — the weather itself is not touched.
+    setGlassRain(w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.85 : 0);
     sky.setWeather({ overcast });
     const st = sky.setTime(hours);
     pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey, horizon: sky.horizon });
@@ -1406,7 +1416,7 @@ async function boot() {
   function setQuality(id) {
     if (!PRESETS[id]) return;
     preset = PRESETS[id]; rememberPreset(id); settings.set('quality', id);
-    pipe.setQuality(preset); sky.applyQuality(preset); veg.setNearRadius(preset.treeNear);
+    pipe.setQuality(preset); setPaintDetail(preset.paintDetail ?? 1); setGlassRainQuality(preset.glassRain ?? 1); setGlowQuality(preset.glowDetail ?? 1); sky.applyQuality(preset); veg.setNearRadius(preset.treeNear);
     setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
     renderChips(); toast(`画質：${preset.label}`);
   }
@@ -1558,6 +1568,7 @@ async function boot() {
     const w = mode === 'fly' && fly ? fly.wind() : null;
     airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : windNow().fromDeg, windKt: w ? w.kt : windNow().kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
+    clouds.update(t, camWorld, sky);
     crowd.update(camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;

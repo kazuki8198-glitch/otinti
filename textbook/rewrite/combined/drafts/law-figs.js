@@ -13,7 +13,8 @@
 //                         (14 CFR 91.3・91.103・91.9・91.123, AIM 4-4-1). No number is drawn.
 //   new     lawCurrency   law.pilot — the two ways a deadline is counted: by calendar months, to the end of the month
 //                         (the flight review, 14 CFR 61.56(c): a review on 2026-03-10 serves through 2028-03-31; the
-//                         third-class medical, 61.23(d)), and by days, back from the day of the flight (61.57(a): three
+//                         third-class medical is also counted to the end of a month, but its length depends on age: the
+//                         figure shows the flight review only — factcheck-law S3), and by days, back from the day of the flight (61.57(a): three
 //                         takeoffs and landings within the preceding 90 days). The month axis is drawn to scale
 //                         (13.6 px a month), the day axis too (3.4 px a day).
 //   new     vfrTwoViews   law.vfr — the figure DESIGN 3.3 asks for (「上方に雲がない」と「雲の下」が同じ考え): one VFR cloud
@@ -22,13 +23,15 @@
 //                         2,000 ft to the side). The words above and below swap. Only the US numbers are drawn: the
 //                         Japanese ones are FL.jur's (the bk.jur box of the section) and are not written by hand
 //                         (STYLE「囲みの数字は手で書きません」); the bk.jp box under it says that 施行規則第 5 条 uses the
-//                         aircraft's way. The vertical gaps are proportional (50 px for 500 ft, 100 px for 1,000 ft).
+//                         aircraft's way. The vertical gaps are proportional (50 px for 500 ft, 100 px for 1,000 ft); the
+//                         horizontal is not (the caption says so: factcheck-law N9).
 //   redrawn preflightInfo law.pic — the same drawing as book-figs.js; only the caption: 「離陸と着陸の距離」for「離着陸距離」
 //                         (the terms' first use is in the text) and the country of 14 CFR 91.103.
 //   redrawn rightOfWay    law.rules — the same drawing as book-figs.js; the words follow FL.terms: 進路権 (right-of-way;
 //                         the textbook's 優先 / 優先権 is its common name, the term's note says to fix it), and the caption
-//                         names the country of 14 CFR 91.113 (DESIGN 3.4). Its order is that of 91.113(d) as amended
-//                         by Amdt. 91-381 (90 FR 35220, 2025-07-24).
+//                         names the country of 14 CFR 91.113 (DESIGN 3.4). Its order is that of 91.113(d) (the wording was
+//                         amended by Amdt. 91-381, 90 FR 35034, published 2025-07-24 and effective 2025-10-22; the order is the same).
+//                         revise-law: 滑空機 (the Civil Aeronautics Act's word, DECISIONS 3) for グライダー.
 // Every number drawn here is one the text gives with its source (law.claims.json); text ≥ 12 (≥ 10 px at 390 px).
 (function (FL) {
   'use strict';
@@ -82,7 +85,7 @@
       const b0 = mx(10 / 31), b1 = mx(25);
       s += `<rect x="${b0}" y="42" width="${(b1 - b0).toFixed(1)}" height="18" rx="4" fill="${C.cy}" fill-opacity="0.25" stroke="${C.cy}"/>`;
       s += T(b0 + 4, 56, '3 月 10 日に受けた', { c: C.ink, fs: 12, a: 'start' }) + T(b1 - 4, 56, '2028 年 3 月 31 日まで', { c: C.ink, b: 1, fs: 12, a: 'end' });
-      s += T(12, 116, '例：フライトレビュー（24 暦月）・身体検査証明（第 3 種）', { c: C.ink, fs: 12, a: 'start' });
+      s += T(12, 116, '例：フライトレビュー（24 暦月）', { c: C.ink, fs: 12, a: 'start' });
       s += L(12, 132, 388, 132, C.grid, 1);
       s += T(12, 156, '② 日で数える：飛ぶ日からさかのぼる', { c: C.am, b: 1, a: 'start', fs: 13 });
       const d0 = 30, dd = 3.4, dx = d => +(d0 + d * dd).toFixed(1);           // day 0 = 90 days before the flight; day 90 = the day of the flight
@@ -93,7 +96,7 @@
       s += T(dx(57) + 12, 204, '離陸と着陸 3 回', { c: C.gr, b: 1, fs: 12, a: 'start' });
       s += T(12, 262, '例：人を乗せる前の最近の飛行経験（90 日に 3 回）', { c: C.ink, fs: 12, a: 'start' });
       s += T(12, 282, '暦月の決まりは月の終わりまで延びる。日の決まりは延びない', { c: C.mut, fs: 12, a: 'start' });
-      return svg(400, 292, s, '図：期限の 2 つの数え方。暦月で数える決まり（フライトレビューの 24 暦月など）は、その月の終わりまで有効です。日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます');
+      return svg(400, 292, s, '図：期限の 2 つの数え方。暦月で数える決まり（フライトレビューの 24 暦月など）は、その月の終わりまで有効です。日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます。身体検査証明も月の終わりまで数えますが、長さは年齢で違います（下の表）');
     },
     // law.vfr — one cloud clearance said two ways: from the cloud (91.155) and from the aircraft
     vfrTwoViews() {
@@ -115,7 +118,7 @@
       s += A(276, py + 30, bx0 + 2, py + 30, C.gr, 2) + A(324, py + 30, bx1 - 2, py + 30, C.gr, 2) + T(250, py + 22, '横 2,000 ft', { c: C.gr, b: 1, fs: 12, halo: 1 });
       s += T(300, bot + 18, 'この範囲に雲がない', { c: C.gr, b: 1, fs: 12 });
       s += T(200, 304, '「雲の下」の数字が、機体の「上」の数字になる', { c: C.ink, b: 1, fs: 13 });
-      return svg(400, 314, s, '図：同じ決まりの 2 つの言い方。左は雲を中心に「雲の下 500 ft・雲の上 1,000 ft」、右は機体を中心に「機体の上 500 ft・下 1,000 ft・横 2,000 ft の範囲に雲がない」と言います。上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E）');
+      return svg(400, 314, s, '図：同じ決まりの 2 つの言い方。左は雲を中心に「雲の下 500 ft・雲の上 1,000 ft」、右は機体を中心に「機体の上 500 ft・下 1,000 ft・横 2,000 ft の範囲に雲がない」と言います。上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E。縦は縮尺どおりで、横は縮めて描いています）');
     },
     // redrawn under the same name (W19): the caption says「離陸と着陸の距離」(the terms 離陸距離・着陸距離 have their first
     // use, with English, in the text: STYLE「用語」; check-style reads the figures too); otherwise as book-figs.js
@@ -129,7 +132,7 @@
     },
     // redrawn under the same name (W19): 進路権 (FL.terms) for 優先, and the country of 91.113 in the caption; otherwise as book-figs.js
     rightOfWay() {
-      // 91.113: converging (the one on the right has the right-of-way), head-on (both turn right), overtaking (pass on the right); the order of categories (amended 2025)
+      // 91.113: converging (the one on the right has the right-of-way), head-on (both turn right), overtaking (pass on the right); the order of categories (91.113(d); its wording amended by Amdt. 91-381, 90 FR 35034, published 2025-07-24, effective 2025-10-22 — the order itself did not change)
       let s = '';
       const box = (x, t1, t2) => `<rect x="${x}" y="8" width="124" height="150" rx="8" fill="none" stroke="${C.grid}"/>` + T(x + 62, 26, t1, { c: C.ink, b: 1, fs: 12 }) + T(x + 62, 150, t2, { c: C.mut, fs: 12 });
       s += box(4, '① 交わる', '右の機に進路権');
@@ -139,7 +142,7 @@
       s += box(272, '③ 追い越し', '右へ離れて抜く');
       s += planeTop(334, 64, 0.26, { rot: 0 }) + planeTop(334, 126, 0.26, { rot: 0 }) + `<path d="M334 110 Q 360 92 358 66" stroke="${C.gr}" stroke-width="2" fill="none"/>` + T(306, 66, '前', { c: C.am, fs: 12 });
       s += T(8, 184, '進路権の順（左ほど先・91.113(c)(d)）', { c: C.ink, b: 1, a: 'start', fs: 12 });
-      [['遭難機', '気球', 'グライダー'], ['曳航・給油中の機', '飛行船', 'ほかの動力機']].forEach((row, r) => {
+      [['遭難機', '気球', '滑空機'], ['曳航・給油中の機', '飛行船', 'ほかの動力機']].forEach((row, r) => {
         let x = 8; const y = 194 + r * 32;
         row.forEach((t, i) => { const w = t.length * 12 + 14, c = r === 0 && i === 0 ? C.rd : C.cy; s += `<rect x="${x}" y="${y}" width="${w}" height="24" rx="12" fill="${c}" fill-opacity="0.15" stroke="${c}"/>` + T(x + w / 2, y + 16, t, { c: C.ink, fs: 12 }); x += w; if (r === 0 || i < 2) { s += T(x + 9, y + 16, '＞', { c: C.mut, fs: 12 }); } x += 18; });
       });

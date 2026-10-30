@@ -4,8 +4,8 @@
  "unit": "W19",
  "chapter": "law",
  "updated": "2026-10-30",
- "by": "W19",
- "about": "第 1 部の章 law（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・表・図のキャプション・日米の囲み）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W19-law.ledger.json にも同じ行がある）。checkedBy は事実確認役（W19 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の文（札は 参考値。W19 が検算した）。日米の囲みの文は FL.jur が描く文で、W06 が確かめた値（W19 は書いていない）。AIM の文は「規則ではない」FAA の資料なので 参考値、14 CFR・49 CFR・47 CFR・航空法・施行規則の文は 条文。",
+ "by": "W19（書き手）・revise-law（直し役）",
+ "about": "第 1 部の章 law（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・表・図のキャプション・日米の囲み）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W19-law.ledger.json にも同じ行がある）。checkedBy は事実確認役（W19 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の文（札は 参考値。W19 が検算した）。日米の囲みの文は FL.jur が描く文で、W06 が確かめた値（W19 は書いていない）。AIM の文は「規則ではない」FAA の資料なので 参考値、14 CFR・49 CFR・47 CFR・航空法・施行規則の文は 条文。 revise-law（2026-10-30）が factcheck-law・reader-law・expert-law の直しのあとに抜き出し直した（by: revise-law の行は新しい文。note に前の行の ID）。前の行のうち本から消えたものは removed。",
  "format": {
   "id": "<節ID>#<8 桁>",
   "sec": "節 ID",
@@ -18,41 +18,57 @@
   "checkedOn": "確認日"
  },
  "counts": {
-  "rows": 219,
+  "rows": 256,
   "byTag": {
-   "参考値": 40,
-   "条文": 179
+   "条文": 199,
+   "参考値": 57
   },
-  "examples": 7
+  "examples": 9,
+  "kept": 162,
+  "new": 94,
+  "removed": 57
  },
  "rows": [
   {
    "id": "law.basis#5798e01d",
    "sec": "law.basis",
    "text": "米国の飛行の決まりの中心は、連邦規則集の第 14 編（14 CFR）です。",
-   "tag": "参考値",
+   "tag": "条文",
    "source": "FAA PHAK（FAA-H-8083-25C）第 1 章 The Code of Federal Regulations（FAA の規則は Title 14 \"Aeronautics and Space\"）。W19 が 2026-10-30 に PDF で読んだ",
    "by": "W19",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：札を 条文 に直した（factcheck-law N13：14 CFR を名指す文は条文、AIM の方針は参考値）"
   },
   {
-   "id": "law.basis#a45458f2",
+   "id": "law.basis#1f6892ba",
    "sec": "law.basis",
-   "text": "14 CFR は、連邦の法律（合衆国法典の第 49 編）にもとづいて FAA が定める規則です（14 CFR Part 91 の根拠の欄）。",
+   "text": "その第 I 章（Part 1〜199）は、連邦の法律（合衆国法典の第 49 編）にもとづいて FAA が定める規則です（PHAK 第 1 章・Part 91 の頭の根拠の法律の欄）。",
    "tag": "条文",
-   "source": "eCFR 14 CFR Part 91 の Authority の欄（49 U.S.C. 106(f), 40101, 40103, 40113, 44701 … と国際民間航空条約第 12 条・第 29 条）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "eCFR の Title 14 の構造（versioner API structure、2026-10-28 の版：Chapter I Federal Aviation Administration は Part 1〜199）と Part 91 の Authority（49 U.S.C.…）。PHAK 第 1 章「Title 14 CFR Chapter 1, Federal Aviation Administration」。revise-law が 2026-10-30 に読んだ",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#a45458f2（factcheck-law N6）"
   },
   {
    "id": "law.basis#a610691c",
    "sec": "law.basis",
    "text": "操縦士の資格は Part 61、飛び方は Part 91 にあります。",
-   "tag": "参考値",
+   "tag": "条文",
    "source": "FAA PHAK 第 1 章（14 CFR part 61 は操縦士・教官の資格、part 91 は一般の飛行規則・VFR・IFR）。W19 が 2026-10-30 に読んだ",
    "by": "W19",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：札を 条文 に直した（factcheck-law N13：14 CFR を名指す文は条文、AIM の方針は参考値）"
+  },
+  {
+   "id": "law.basis#847bb333",
+   "sec": "law.basis",
+   "text": "図にない AIM と AC は、表の「指針と情報」に入ります。",
+   "tag": "参考値",
+   "source": "AIM の前書き Flight Information Publication Policy（AIM は規則ではない）と Code of Federal Regulations and Advisory Circulars（AC は取り込まれなければ拘束しない）。AIM の PDF（Basic with Change 1, 2 and 3）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -117,44 +133,48 @@
    "checkedOn": null
   },
   {
-   "id": "law.basis#3d3c3588",
+   "id": "law.basis#59208f92",
    "sec": "law.basis",
-   "text": "そのうえで、ほかの規則で求められる手順の例を示す、と書いています（AIM の Flight Information Publication Policy）。",
+   "text": "そのうえで、ほかの規則で求められることがある手順の例を示す、と書いています（AIM の前書きの方針）。",
    "tag": "参考値",
-   "source": "AIM の Flight Information Publication Policy d（\"This publication, while not regulatory, provides information which reflects examples of operating techniques and procedures which may be requirements in other federal publications or regulations\"）。AIM の PDF（2026-07-09 有効の版）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "AIM の前書き Flight Information Publication Policy d（\"while not regulatory, provides information which reflects examples of operating techniques and procedures which may be requirements in other federal publications or regulations\"）。AIM の PDF（Basic with Change 1, 2 and 3）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#3d3c3588（factcheck-law N2）"
   },
   {
-   "id": "law.basis#9bac0223",
+   "id": "law.basis#d35f15db",
    "sec": "law.basis",
-   "text": "AC も、規則に取り込まれていなければ、守る義務はありません（AIM の Code of Federal Regulations and Advisory Circulars）。",
+   "text": "AC も、規則が名指しして取り込んでいなければ、守る義務はありません（AIM の前書き）。",
    "tag": "参考値",
-   "source": "AIM の Code of Federal Regulations and Advisory Circulars（\"Unless incorporated into a regulation by reference, the contents of an advisory circular are not binding on the public\"）。AIM の PDF（2026-07-09 有効の版）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "AIM の前書き Code of Federal Regulations and Advisory Circulars（\"Unless incorporated into a regulation by reference … not binding on the public\"）。AIM の PDF（Basic with Change 1, 2 and 3）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#9bac0223"
   },
   {
-   "id": "law.basis#1fde9d0f",
+   "id": "law.basis#74027a86",
    "sec": "law.basis",
-   "text": "だから、AIM の手順を軽く見てよいわけではありません。",
+   "text": "それでも、AIM の手順を軽く見てよいわけではありません。",
    "tag": "参考値",
-   "source": "AIM の Flight Information Publication Policy d（AIM の手順はほかの規則の求めの例）。W19 の言いかえ（数字なし）",
-   "by": "W19",
+   "source": "AIM の前書き（AIM は規則ではないが、ほかの規則で求められることがある手順の例）。続く文の 91.130・AIM 3-2-4・91.13(a) が根拠",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#1fde9d0f（reader-law BA2：だから → それでも）"
   },
   {
-   "id": "law.basis#6af055b5",
+   "id": "law.basis#49f69400",
    "sec": "law.basis",
-   "text": "たとえば、Class C 空域に入る前に交信を確立する決まりは、米国の 14 CFR 91.130 にあります。",
+   "text": "たとえば、Class C 空域（空域の種類の 1 つ。）に入る前に交信を確立する決まりは、米国の 14 CFR 91.130 にあります。",
    "tag": "条文",
-   "source": "14 CFR 91.130(c)(1)（Class C に入る前に双方向の無線交信を確立し、中にいる間は保つ）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.130(c)（Class C に入る前の双方向の無線交信の確立）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#6af055b5（reader-law C2：空域へのリンク）"
   },
   {
    "id": "law.basis#e6f0f6cf",
@@ -163,6 +183,16 @@
    "tag": "参考値",
    "source": "AIM 3-2-4（Class C の Arrival or Through Flight Entry Requirements と NOTE：コールサインつきの \"standby\" で確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
    "by": "W19",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.basis#e097be45",
+   "sec": "law.basis",
+   "text": "また、ほかの人の命や財産を危険にする、不注意な飛び方や無謀な飛び方は、規則で禁じられています（91.13(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.13(a)（\"No person may operate an aircraft in a careless or reckless manner so as to endanger the life or property of another\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -180,11 +210,12 @@
    "id": "law.basis#fc700671",
    "sec": "law.basis",
    "text": "管制承認は、管制が知っている交通を前提に、決めた条件で管制空域を進んでよいという許可です（14 CFR 1.1・AIM 4-4-1）。",
-   "tag": "参考値",
-   "source": "AIM 4-4-1（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
+   "tag": "条文",
+   "source": "14 CFR 1.1（Air traffic clearance）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）。AIM 4-4-1（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
    "by": "W19",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：札を 条文 に直した（factcheck-law N13：14 CFR を名指す文は条文、AIM の方針は参考値）"
   },
   {
    "id": "law.basis#92547b75",
@@ -227,34 +258,48 @@
    "checkedOn": null
   },
   {
-   "id": "law.basis#3d938d0f",
+   "id": "law.basis#547ee539",
    "sec": "law.basis",
-   "text": "たとえば米国の 91.113（進路権（優先権、right-of-way）の決まり）は、2025 年 7 月に改正されました（14 CFR 91.113 の改正の記録）。",
+   "text": "たとえば米国の進路権（優先権、right-of-way）の決まり（91.113）は、2025 年に改正されました。",
    "tag": "条文",
-   "source": "14 CFR 91.113 の改正の記録（最後は Docket FAA-2023-1377, Amdt. 91-381, 90 FR 35220, July 24, 2025）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "Federal Register API：90 FR 35034 \"Modernization of Special Airworthiness Certification\"（publication_date 2025-07-24、\"This final rule is effective October 22, 2025\"）。eCFR の 91.113 の版の履歴では (d) の文は 2025-10-22 の版で変わった（factcheck-law S1）。revise-law が 2026-10-30 に API で読んだ",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#3d938d0f（factcheck-law S1）"
   },
   {
-   "id": "law.basis#e956bf44",
+   "id": "law.basis#c46d18e4",
    "sec": "law.basis",
-   "text": "FAA の VFR のチャートと Chart Supplement（空港と施設の案内）は、56 日ごとに新しい版になります（FAA Aeronautical Information Services）。",
+   "text": "改正は 7 月 24 日に公布され、10 月 22 日から新しい文になりました（Federal Register 90 FR 35034）。",
    "tag": "参考値",
-   "source": "FAA Aeronautical Information Services の VFR Raster Charts のページ（Digital Visual Charts (56-Day Sets)、今の版 2026-10-29）と Chart Supplements のページ（\"issued by FAA every 56 days\"）。W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "Federal Register API：90 FR 35034 \"Modernization of Special Airworthiness Certification\"（publication_date 2025-07-24、\"This final rule is effective October 22, 2025\"）。eCFR の 91.113 の版の履歴では (d) の文は 2025-10-22 の版で変わった（factcheck-law S1）。revise-law が 2026-10-30 に API で読んだ",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#3d938d0f（factcheck-law S1）"
   },
   {
-   "id": "law.basis#a4bc0824",
+   "id": "law.basis#3e93905c",
    "sec": "law.basis",
-   "text": "AIM も、ほぼ半年ごとに改訂の版が出ます（AIM の Publication Schedule）。",
+   "text": "FAA の VFR のチャートと Chart Supplement は、56 日ごとに新しい版になります（FAA のチャートの案内）。",
    "tag": "参考値",
-   "source": "AIM の Publication Schedule（Basic 2025-02-20、Change 1 2025-08-07、Change 2 2026-01-22、Change 3 2026-07-09、次の Basic 2026-12-24：ほぼ 24 週ごと）。AIM の PDF を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA Aeronautical Information Services の VFR Raster Charts（Digital Visual Charts は 56-Day Sets）と Chart Supplements（\"issued by FAA every 56 days\"）のページ（factcheck-law が 2026-10-30 に読んだ。文の中身は W19 の行と同じ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#e956bf44"
+  },
+  {
+   "id": "law.basis#b476a95a",
+   "sec": "law.basis",
+   "text": "AIM も、ほぼ半年ごとに改訂の版が出ます（AIM の改訂の予定）。",
+   "tag": "参考値",
+   "source": "AIM の PDF の Publication Schedule（Basic 2/20/25・Change 1 8/7/25・Change 2 1/22/26・Change 3 7/9/26・次の Basic 12/24/26）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#a4bc0824"
   },
   {
    "id": "law.basis#415220cd",
@@ -267,24 +312,26 @@
    "checkedOn": null
   },
   {
-   "id": "law.basis#7876544e",
+   "id": "law.basis#3e2a9b0a",
    "sec": "law.basis",
-   "text": "米国で登録した機体でも、外国ではその国の決まりに従います（91.703(a)(2)）。",
+   "text": "そのうえで、その国の決まりと食い違わない限り、米国の Part 91 も守ります（91.703(a)）。",
    "tag": "条文",
-   "source": "14 CFR 91.703(a)(2)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.703(a)(2)(3)（外国ではその国の決まり。(3) その国の決まりと食い違わない限り Part 91 も守る）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#7876544e（expert-law N4）"
   },
   {
    "id": "law.basis#d0b758d0",
    "sec": "law.basis",
    "text": "規則（14 CFR）と指針（AIM・AC） ｜ 規則は守る義務がある。",
-   "tag": "条文",
+   "tag": "参考値",
    "source": "規則は 14 CFR（守る義務）、AIM・AC は規則ではない（AIM の Flight Information Publication Policy・Code of Federal Regulations and Advisory Circulars）",
    "by": "W19",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：札を 参考値 に直した（factcheck-law N13：14 CFR を名指す文は条文、AIM の方針は参考値）"
   },
   {
    "id": "law.basis#3c481690",
@@ -327,24 +374,37 @@
    "checkedOn": null
   },
   {
-   "id": "law.basis#d8ce31fa",
+   "id": "law.basis#69c6843f",
    "sec": "law.basis",
-   "text": "具体的な条件は、国土交通省令の航空法施行規則が決めます。",
+   "text": "法律 ｜ 航空法 ｜ 合衆国法典の第 49 編 ｜",
    "tag": "条文",
-   "source": "航空法施行規則は昭和二十七年運輸省令第五十六号（今は国土交通省令）。e-Gov の写し sources/egov/articles/kokuho-kisoku/*.json の lawNum と、施行規則の改正が「国土交通省令」（令和八年国土交通省令第八十二号）であること（sources/egov/README.md）",
-   "by": "W19",
+   "source": "e-Gov 法令 API v2：航空法（327AC0000000231、令和 7 年 12 月 1 日施行の版）第 1 条（W19・factcheck-law が確かめた）。米国：14 CFR Part 91 の Authority（49 U.S.C.）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#d8ce31fa ほか（factcheck-law N15・expert-law N8：日米の資料の格の表）"
   },
   {
-   "id": "law.basis#260f0bfa",
+   "id": "law.basis#ef5c6e74",
    "sec": "law.basis",
-   "text": "空域などは、国土交通大臣の告示で指定します。",
+   "text": "政令・省令・規則 ｜ 航空法施行令（政令）・航空法施行規則（国土交通省令） ｜ 14 CFR（FAA の規則） ｜",
    "tag": "条文",
-   "source": "航空法第 2 条第 12〜14 項（管制区・管制圏・情報圏は「国土交通大臣が告示で指定するもの」）。e-Gov の写し sources/egov/articles/kokuho/2.json（令和 7 年 12 月 1 日施行の版）",
-   "by": "W19",
+   "source": "e-Gov 法令 API v2 の法令一覧：航空法施行令（昭和二十七年政令第四百二十一号、327CO0000000421_20260401_508CO0000000039、現行）。航空法施行規則は国土交通省令（e-Gov の写し sources/egov/articles/kokuho/2.json（航空法 令和 7 年 12 月 1 日施行の版 327AC0000000231_20251201_507AC0000000055） と同じ写しの kokuho-kisoku）。14 CFR は FAA の規則（eCFR）。revise-law が 2026-10-30 に確かめた",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#d8ce31fa"
+  },
+  {
+   "id": "law.basis#b232fa9a",
+   "sec": "law.basis",
+   "text": "空域の指定 ｜ 国土交通大臣の告示 ｜ 14 CFR Part 71 が取り込む FAA の文書 ｜",
+   "tag": "条文",
+   "source": "航空法第 2 条第 12〜14 項（空域は国土交通大臣が告示で指定。e-Gov の写し sources/egov/articles/kokuho/2.json（航空法 令和 7 年 12 月 1 日施行の版 327AC0000000231_20251201_507AC0000000055））。14 CFR 71.1（FAA Order JO 7400.11M を規則に取り込む。eCFR の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.basis#260f0bfa"
   },
   {
    "id": "law.basis#d6570e5b",
@@ -457,14 +517,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pic#dfa99a73",
+   "id": "law.pic#c57790ea",
    "sec": "law.pic",
-   "text": "緊急で管制から優先して扱われたら、管制に求められたときは、48 時間以内に報告を出します（91.123(d)）。",
+   "text": "緊急で管制から優先して扱われたら、管制に求められたときは、48 時間以内に、その管制の施設の長へ報告を出します（91.123(d)）。",
    "tag": "条文",
-   "source": "14 CFR 91.123(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.123(d)（\"shall submit a detailed report of that emergency within 48 hours to the manager of that ATC facility, if requested by ATC\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pic#dfa99a73（reader-law PI1）"
   },
   {
    "id": "law.pic#ab485284",
@@ -537,14 +598,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#7266cf70",
+   "id": "law.pilot#c1e179b7",
    "sec": "law.pilot",
-   "text": "日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます",
+   "text": "日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます。",
    "tag": "条文",
-   "source": "14 CFR 61.57(a)(1)（\"within the preceding 90 days\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 61.57(a)(1)（\"within the preceding 90 days\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#7266cf70（図のキャプションの文末が変わっただけ）"
   },
   {
    "id": "law.pilot#2305cd35",
@@ -557,14 +619,26 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#144a4b63",
+   "id": "law.pilot#d1a7539c",
    "sec": "law.pilot",
-   "text": "FAA・国家運輸安全委員会（NTSB）・警察から求められたら、証明書とログブック（飛行の記録、logbook）を見せます（61.51(i)(1)）。",
+   "text": "FAA・国家運輸安全委員会（NTSB：事故を調べる米国の機関）・警察から求められたら、証明書とログブックを見せます（61.51(i)(1)）。",
    "tag": "条文",
-   "source": "14 CFR 61.51(i)(1)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.51(i)(1)（FAA・NTSB・法執行機関の求めに応じて見せる）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#144a4b63（reader-law C2）"
+  },
+  {
+   "id": "law.pilot#1a634fe7",
+   "sec": "law.pilot",
+   "text": "ログブック（飛行の記録、logbook）には、資格や審査に使う訓練と経験、最近の飛行経験を記録します（61.51(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.51(a)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#f2ac96c6"
   },
   {
    "id": "law.pilot#cd93fc10",
@@ -577,12 +651,12 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#f2ac96c6",
+   "id": "law.pilot#d3ae2886",
    "sec": "law.pilot",
-   "text": "資格や審査に使う訓練と経験、最近の飛行経験は、ログブックに記録します（61.51(a)）。",
+   "text": "お酒や薬物の影響で車を運転して有罪になったときや、それを理由に運転免許の停止などを受けたときは、60 日以内に FAA へ書面で報告します（61.15(e)）。",
    "tag": "条文",
-   "source": "14 CFR 61.51(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.15(c)(e)（motor vehicle action：飲酒・薬物による運転の有罪、それを理由の免許の取消・停止など。\"not later than 60 days after the motor vehicle action\" に書面で FAA へ）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -657,14 +731,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#51906f46",
+   "id": "law.pilot#a45ecb37",
    "sec": "law.pilot",
-   "text": "機長として飛ぶには、24 暦月の間にフライトレビューを受けている必要があります（61.56(c)）。",
+   "text": "機長として飛ぶには、24 暦月（月で数えて 24 か月。その月の終わりまで）の間にフライトレビューを受けている必要があります（61.56(c)）。",
    "tag": "条文",
-   "source": "14 CFR 61.56(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.56(c)（\"within the preceding 24 calendar months\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#51906f46（reader-law C2：暦月の説明）"
   },
   {
    "id": "law.pilot#5493867a",
@@ -707,14 +782,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#32410d12",
+   "id": "law.pilot#64e3466e",
    "sec": "law.pilot",
-   "text": "人を乗せて機長をする ｜ 90 日以内に、離陸と着陸を 3 回ずつ（同じカテゴリー・クラスの機体で、自分で操縦） ｜ 61.57(a) ｜",
+   "text": "人を乗せて機長をする ｜ 90 日以内に、離陸と着陸を 3 回ずつ（同じカテゴリー（飛行機など）・クラス（単発・多発、陸上・水上など）の機体で、自分で操縦） ｜ 61.57(a) ｜",
    "tag": "条文",
-   "source": "14 CFR 61.57(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.57(a)（same category and class）・1.1（Category：airplane など、Class：single engine・multiengine・land・water など）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#32410d12（reader-law PL4）"
   },
   {
    "id": "law.pilot#d0b6afb5",
@@ -727,14 +803,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#e74a3a4a",
+   "id": "law.pilot#a5dbf8f6",
    "sec": "law.pilot",
-   "text": "IFR で機長をする ｜ 6 暦月以内に、計器進入 6 回・待機（ホールディング、holding）・電子航法でのコースの会合と追跡 ｜ 61.57(c) ｜",
+   "text": "計器飛行方式（IFR：instrument flight rules）か、VFR の最低気象条件より悪い天気で機長をする ｜ 6 暦月以内に、計器進入 6 回・待機（ホールディング、holding）・航法の装置でコースに乗って沿って飛ぶこと（コースの会合と追跡） ｜ 61.57(c) ｜",
    "tag": "条文",
-   "source": "14 CFR 61.57(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.57(c)(1)（\"under IFR or weather conditions less than the minimums prescribed for VFR\"、6 calendar months、six instrument approaches・holding・intercepting and tracking）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#e74a3a4a（expert-law S14）"
   },
   {
    "id": "law.pilot#13207a2f",
@@ -820,14 +897,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#af020c27",
+   "id": "law.pilot#1102ce56",
    "sec": "law.pilot",
-   "text": "飛行視程（flight visibility）か地上視程（ground visibility）が、昼は 3 SM 未満、夜は 5 SM 未満のときに飛ぶ",
+   "text": "飛行視程（flight visibility）か地上視程（ground visibility）が、昼は 3 SM 未満、夜は 5 SM 未満のときに飛ぶ（2 つの視程の違いは ）",
    "tag": "条文",
-   "source": "14 CFR 61.89(a)(6)（\"flight or surface visibility of less than 3 statute miles during daylight hours or 5 statute miles at night\"）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 61.89(a)(6)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#af020c27（law.vfr へのリンクを足しただけ）"
   },
   {
    "id": "law.pilot#da035f4f",
@@ -860,14 +938,45 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#a7ecc970",
+   "id": "law.pilot#203f8ee4",
    "sec": "law.pilot",
-   "text": "夜間（night）の定義（14 CFR 1.1） ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで ｜ 夜の燃料の予備（91.151）・夜の VFR の装備（91.205(c)）など ｜",
-   "tag": "条文",
-   "source": "14 CFR 1.1 の Night（夕方の市民薄明の終わりから朝の市民薄明の始まり）、91.151(a)(2)（夜は 45 分）、91.205(c)（夜の VFR の装備）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "text": "太陽の中心が地平線の下 6° になると終わります（USNO）。",
+   "tag": "参考値",
+   "source": "USNO Rise, Set, and Twilight Definitions（\"Civil twilight is defined to begin in the morning, and to end in the evening when the center of the Sun is geometrically 6 degrees below the horizon\"）。revise-law が 2026-10-30 に読んだ",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
+  },
+  {
+   "id": "law.pilot#63193b2b",
+   "sec": "law.pilot",
+   "text": "フロリダ中部では、日没の約 25 分後です（USNO の 2026 年の計算で、月ごとに 23〜27 分）。",
+   "tag": "参考値",
+   "source": "USNO の API（aa.usno.navy.mil/api/rstt/oneday、28.78°N 81.24°W、2026 年の各月 15 日）で日没と市民薄明の終わりの差を出した：1 月 25・2 月 24・3 月 24・4 月 24・5 月 26・6 月 27・7 月 26・8 月 25・9 月 23・10 月 24・11 月 25・12 月 26 分（revise-law が 2026-10-30 に計算）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.pilot#5c11ed8e",
+   "sec": "law.pilot",
+   "text": "だから夕方は、日没 → 市民薄明の終わり → 日没の 1 時間後、の順に来ます。",
+   "tag": "参考値",
+   "source": "USNO の API（aa.usno.navy.mil/api/rstt/oneday、28.78°N 81.24°W、2026 年の各月 15 日）で日没と市民薄明の終わりの差を出した：1 月 25・2 月 24・3 月 24・4 月 24・5 月 26・6 月 27・7 月 26・8 月 25・9 月 23・10 月 24・11 月 25・12 月 26 分（revise-law が 2026-10-30 に計算）。日没の 1 時間後は 61.57(b)",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.pilot#d4f0804f",
+   "sec": "law.pilot",
+   "text": "夜間（night）の定義（14 CFR 1.1） ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで ｜ 夜の燃料の予備（91.151）・夜の VFR の装備（91.205(c)。）など ｜",
+   "tag": "条文",
+   "source": "14 CFR 1.1（Night）・91.151・91.205(c)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#a7ecc970（law.aircraft へのリンクを足しただけ）"
   },
   {
    "id": "law.pilot#2c309f85",
@@ -890,14 +999,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#557ab20d",
+   "id": "law.pilot#e3180b7b",
    "sec": "law.pilot",
-   "text": "機長として飛ぶには、24 暦月の間のフライトレビュー（学生は不要）",
+   "text": "機長として飛ぶには、24 暦月の間のフライトレビュー（学生は単独飛行の裏書きが有効なら不要）",
    "tag": "条文",
-   "source": "14 CFR 61.56(c)・(g)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 61.56(c)(g)（(g) 単独飛行の裏書きが有効な学生操縦士は不要）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#557ab20d（reader-law PL8）"
   },
   {
    "id": "law.pilot#9824f757",
@@ -910,14 +1020,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#4592509b",
+   "id": "law.pilot#ae911d18",
    "sec": "law.pilot",
-   "text": "第 3 種の身体検査証明は、40 歳未満 60 か月・40 歳以上 24 か月",
+   "text": "第 3 種の身体検査証明は、40 歳未満は 60 か月目、40 歳以上は 24 か月目の月の終わりまで",
    "tag": "条文",
-   "source": "14 CFR 61.23(d)(3)(i)(ii)（60th month・24th month）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 61.23(d)（第 3 種：40 歳未満は 60th month、40 歳以上は 24th month after the month of the date of examination）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#4592509b（reader-law PL2）"
   },
   {
    "id": "law.pilot#6aa39cc9",
@@ -982,14 +1093,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.pilot#76dcc557",
+   "id": "law.pilot#114b3015",
    "sec": "law.pilot",
-   "text": "日没の 1 時間後から日の出の 1 時間前までに人を乗せるには、その時間帯に、完全に止まるまでの着陸を 90 日以内に 3 回していることが要ります（61.57(b)）。",
+   "text": "日没の 1 時間後から日の出の 1 時間前までに人を乗せるには、90 日以内に、その時間帯の離陸と完全に止まるまでの着陸が 3 回ずつ要ります（61.57(b)）。",
    "tag": "条文",
-   "source": "14 CFR 61.57(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.57(b)(1)（three takeoffs and three landings to a full stop、1 hour after sunset to 1 hour before sunrise、within the preceding 90 days）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.pilot#76dcc557（factcheck-law N4）"
   },
   {
    "id": "law.pilot#789a04ee",
@@ -1002,32 +1114,105 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#0cf58532",
+   "id": "law.aircraft#50a5c2d3",
    "sec": "law.aircraft",
-   "text": "耐空証明（airworthiness certificate） ｜ 客室か操縦席の入口に、乗る人が読めるように掲示する（91.203） ｜",
+   "text": "耐空証明（airworthiness certificate）：その機体が型式の設計に合い、安全に飛べる状態にあると FAA が認めた証明 ｜ 客室か操縦席の入口に、乗る人が読めるように掲示する（91.203） ｜ 米国に登録され、整備と点検を Part 43・91 のとおりに続ける限り有効（21.181） ｜",
    "tag": "条文",
-   "source": "14 CFR 91.203（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.203(a)(1)(b)・21.181(a)(1)・21.183（耐空証明の掲示、登録と Part 43・91 どおりの整備が続く限り有効、型式の設計に合い安全に飛べる状態）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#0cf58532（expert-law S1）"
+  },
+  {
+   "id": "law.aircraft#77471588",
+   "sec": "law.aircraft",
+   "text": "登録証明（registration certificate）：国に登録した機体であることの証明 ｜ 機内（91.203） ｜ 出た月の最後の日から 7 年で切れる（47.40） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.203(a)(2)・47.40(a)（\"expires seven years after the last day of the month in which it is issued\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#39e2171c（expert-law S1）"
+  },
+  {
+   "id": "law.aircraft#f85b0622",
+   "sec": "law.aircraft",
+   "text": "飛行規程と運用限界（POH・標示・表示板） ｜ 機内（91.9） ｜ その限界を守る（91.9） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.9（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#5aa4446c"
+  },
+  {
+   "id": "law.aircraft#ca3df7f2",
+   "sec": "law.aircraft",
+   "text": "AD を守ることも含む（91.403(a)） ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.403(a)（\"The owner or operator of an aircraft is primarily responsible for maintaining that aircraft in an airworthy condition, including compliance with part 39\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#39e2171c",
+   "id": "law.aircraft#f4c76de5",
    "sec": "law.aircraft",
-   "text": "登録証明（registration certificate） ｜ 機内に置く（91.203） ｜",
+   "text": "機長 ｜ 飛ぶ前に、安全に飛べる状態かを決める（91.7） ｜",
    "tag": "条文",
-   "source": "14 CFR 91.203（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.7(b)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#5aa4446c",
+   "id": "law.aircraft#aa684e08",
    "sec": "law.aircraft",
-   "text": "飛行規程と運用限界（POH・標示・表示板） ｜ 機内に置き、その限界を守る（91.9） ｜",
+   "text": "操縦士の資格を持つ人（スポーツ操縦士を除く） ｜ 自分が持つか運航する機体の予防整備（preventive maintenance）ができる（43.3(g)）。",
    "tag": "条文",
-   "source": "14 CFR 91.9（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 43.3(g)（スポーツ操縦士を除く Part 61 の資格を持つ人は、自分が持つか運航する、Part 121・129・135 で使わない機体の予防整備ができる）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.aircraft#a8e79381",
+   "sec": "law.aircraft",
+   "text": "タイヤの交換や、分解の要らない注油など、Part 43 の付録 A の一覧のものだけ。",
+   "tag": "条文",
+   "source": "14 CFR Part 43 付録 A (c)（予防整備の一覧：(1) タイヤの取り外し・取り付け・修理、(6) 分解の要らない注油 など）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.aircraft#68876d80",
+   "sec": "law.aircraft",
+   "text": "したら、整備の記録に書く（43.9） ｜",
+   "tag": "条文",
+   "source": "14 CFR 43.9(a)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.aircraft#7afbaa38",
+   "sec": "law.aircraft",
+   "text": "整備士など、資格のある人 ｜ それ以外の整備と点検（Part 43） ｜",
+   "tag": "条文",
+   "source": "14 CFR Part 43（43.3 整備をしてよい人・43.7 返還の承認）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.aircraft#a9b3acc3",
+   "sec": "law.aircraft",
+   "text": "AD に従っているかは、機体の整備の記録で確かめます（91.417(a)(2)(v)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.417(a)(2)(v)（\"The current status of applicable airworthiness directives (AD)\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -1042,12 +1227,33 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#bf6fe7d4",
+   "id": "law.aircraft#574576bc",
    "sec": "law.aircraft",
-   "text": "Class A・B・C などでは、トランスポンダー（transponder）と ADS-B Out も必要です（91.215・91.225）。",
+   "text": "夜の VFR には、昼の装備に加えて、次のものが要ります（91.205(c)）。",
    "tag": "条文",
-   "source": "14 CFR 91.215・91.225（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.205(c)（(b) の装備・位置灯・衝突防止灯・有償なら電気の着陸灯 1 つ・十分な電源・予備のヒューズ 1 組か各種 3 本）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.aircraft#0ee26a17",
+   "sec": "law.aircraft",
+   "text": "Class A・B・C などでは、トランスポンダー（transponder）と ADS-B Out も必要です（91.215・91.225。）。",
+   "tag": "条文",
+   "source": "14 CFR 91.215(b)・91.225（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#bf6fe7d4（law.airspace へのリンクを足しただけ）"
+  },
+  {
+   "id": "law.aircraft#ae5fb0bd",
+   "sec": "law.aircraft",
+   "text": "IFR の装備（91.205(d)）は、 で学びます。",
+   "tag": "条文",
+   "source": "14 CFR 91.205(d)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -1062,24 +1268,37 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#124fe1fd",
+   "id": "law.aircraft#3b8a98fe",
    "sec": "law.aircraft",
-   "text": "型式証明の昼の VFR の装備・機体の装備の一覧・91.205 などで要るものなら、飛べません。",
+   "text": "どれかに当たれば、飛べません（91.213(d)(2)）。",
    "tag": "条文",
-   "source": "14 CFR 91.213(d)(2)（VFR-day type certification の装備・装備の一覧・91.205 など・AD で要るものは不可）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.213(d)(2)(i)〜(iv)（型式証明の昼の VFR の装備・装備の一覧か KOEL・91.205 などの規則・AD）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#124fe1fd（expert-law S2）"
   },
   {
-   "id": "law.aircraft#15b4ced1",
+   "id": "law.aircraft#7168cda6",
    "sec": "law.aircraft",
-   "text": "そのうえで、危険がないと操縦士か整備士が判断します（91.213(d)）。",
+   "text": "91.205 など、Part 91 の規則で要るもの",
    "tag": "条文",
-   "source": "14 CFR 91.213(d)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.213(d)(2)(iii)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#124fe1fd"
+  },
+  {
+   "id": "law.aircraft#49336a83",
+   "sec": "law.aircraft",
+   "text": "そのうえで、危険がないと操縦士か整備士が判断します（91.213(d)(3)(4)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.213(d)(3)(4)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#15b4ced1"
   },
   {
    "id": "law.aircraft#06f1e3a5",
@@ -1092,14 +1311,26 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#58c83520",
+   "id": "law.aircraft#51d01723",
    "sec": "law.aircraft",
-   "text": "100 時間点検 ｜ 有償で人を乗せる・自分が用意した機体で有償の飛行訓練をするときは 100 時間ごと（訓練機に多い） ｜ 91.409(b) ｜",
+   "text": "100 時間点検 ｜ 有償で人を乗せるときと、操縦教員や学校が用意した機体で有償の飛行訓練をするとき（訓練機に多い）：最後の年次点検か 100 時間点検から 100 時間以内。",
    "tag": "条文",
-   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.409(b)（\"carrying any person … for hire\" と \"flight instruction for hire in an aircraft which that person provides\"、\"within the preceding 100 hours of time in service … an annual or 100-hour inspection\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#58c83520（expert-law S3・reader-law AC1）"
+  },
+  {
+   "id": "law.aircraft#883bccf8",
+   "sec": "law.aircraft",
+   "text": "点検の場所へ行くためだけなら 10 時間まで超えてよい（超えた分は次の 100 時間に数える） ｜ 91.409(b) ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.409(b)（\"may be exceeded by not more than 10 hours while en route to reach a place where the inspection can be done. The excess time … must be included in computing the next 100 hours\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#58c83520（reader-law AC3）"
   },
   {
    "id": "law.aircraft#d53b34ce",
@@ -1132,34 +1363,37 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#ad45a152",
+   "id": "law.aircraft#50496fa7",
    "sec": "law.aircraft",
-   "text": "静圧系統・高度計・高度の自動報告装置 ｜ 管制空域を IFR で飛ぶなら 24 暦月ごと ｜ 91.411 ｜",
+   "text": "静圧系統・高度計・高度の自動報告装置（トランスポンダーに高度を伝える装置） ｜ 管制空域を IFR で飛ぶなら 24 暦月ごと ｜ 91.411 ｜",
    "tag": "条文",
-   "source": "14 CFR 91.411（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.411(a)（静圧系統・高度計・automatic pressure altitude reporting system、24 calendar months、IFR in controlled airspace）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#ad45a152（reader-law AC2）"
   },
   {
-   "id": "law.aircraft#d624b882",
+   "id": "law.aircraft#41ad6026",
    "sec": "law.aircraft",
-   "text": "年次点検は 12 暦月、訓練機は 100 時間点検も",
+   "text": "訓練機は、最後の年次点検か 100 時間点検から 100 時間以内",
    "tag": "条文",
-   "source": "14 CFR 91.409(a)(b)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.409(b)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#d624b882"
   },
   {
-   "id": "law.aircraft#164767bf",
+   "id": "law.aircraft#213b1040",
    "sec": "law.aircraft",
-   "text": "動かない装備は 91.213 で判断",
+   "text": "動かない装備は 91.213 で判断。",
    "tag": "条文",
-   "source": "14 CFR 91.213（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.213(d)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#164767bf"
   },
   {
    "id": "law.aircraft#265c1311",
@@ -1182,45 +1416,50 @@
    "checkedOn": null
   },
   {
-   "id": "law.aircraft#3598764b",
+   "id": "law.aircraft#af8e4583",
    "sec": "law.aircraft",
-   "text": "考えてみよう：訓練機の年次点検は 10 か月前に済んでいるが、100 時間点検から 104 時間飛んでいた。",
+   "text": "考えてみよう：訓練機は 10 か月前に年次点検を受け、そのあとの 100 時間点検から 104 時間飛んでいた。",
    "tag": "参考値",
-   "source": "考えてみようの仮定の場面（10 か月・104 時間は仮定）。答えの根拠は 14 CFR 91.409(a)(b)",
+   "source": "考えてみようの仮定の場面（10 か月・104 時間は仮定。年次点検のあとに 100 時間点検、と順を決めた）。答えの根拠は 14 CFR 91.409(a)(b)",
    "kind": "例題",
-   "by": "W19",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#3598764b（expert-law S3：点検の順をはっきりさせた）"
   },
   {
-   "id": "law.aircraft#19c05b5c",
+   "id": "law.aircraft#af0a0ff0",
    "sec": "law.aircraft",
-   "text": "有償の飛行訓練に使う機体（学校が用意した機体）は、100 時間ごとの点検が必要です（91.409(b)）。",
+   "text": "有償の飛行訓練に使う機体（操縦教員や学校が用意した機体）は、最後の年次点検か 100 時間点検から 100 時間以内でなければなりません（91.409(b)）。",
    "tag": "条文",
-   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.409(b)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#19c05b5c（expert-law S3）"
   },
   {
-   "id": "law.aircraft#1ecfd5c2",
+   "id": "law.aircraft#f66a97da",
    "sec": "law.aircraft",
-   "text": "年次点検の期限内でも、100 時間を超えていれば飛ばせません。",
-   "tag": "条文",
-   "source": "14 CFR 91.409(b)（100 時間の点検は年次点検と別に要る）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "text": "年次点検も 100 時間点検の代わりになりますが、この年次点検は 100 時間点検より前なので、どちらからも 100 時間を超えています。",
+   "tag": "参考値",
+   "source": "考えてみようの仮定（年次点検は 100 時間点検より前）で、14 CFR 91.409(b) の \"an annual or 100-hour inspection\" に当てはめた（revise-law が検算：どちらからも 104 時間以上）",
+   "kind": "例題",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#1ecfd5c2（expert-law S3）"
   },
   {
-   "id": "law.aircraft#22e096b1",
+   "id": "law.aircraft#15ba3fa1",
    "sec": "law.aircraft",
-   "text": "点検の場所へ移動するためだけに、10 時間まで超えてよい例外があります（91.409(b)）。",
+   "text": "点検の場所へ行くためだけなら、10 時間まで超えてよい例外があります（91.409(b)）。",
    "tag": "条文",
-   "source": "14 CFR 91.409(b)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.409(b)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.aircraft#22e096b1"
   },
   {
    "id": "law.airspace#819d17bc",
@@ -1253,16 +1492,6 @@
    "checkedOn": null
   },
   {
-   "id": "law.airspace#13b8111f",
-   "sec": "law.airspace",
-   "text": "ただし、Class C・D の「地表から 4,000 ft・2,500 ft」は、空港の標高からの高さです。",
-   "tag": "参考値",
-   "source": "AIM 3-2-4・3-2-5（\"from the surface to 4,000 feet above the airport elevation (charted in MSL)\"・\"2,500 feet above the airport elevation (charted in MSL)\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
-   "checkedBy": null,
-   "checkedOn": null
-  },
-  {
    "id": "law.airspace#ee9a5b34",
    "sec": "law.airspace",
    "text": "Class A ｜ 18,000 ft MSL〜FL600 ｜ IFR だけ（VFR では入れない） ｜",
@@ -1273,44 +1502,48 @@
    "checkedOn": null
   },
   {
-   "id": "law.airspace#f2fde70b",
+   "id": "law.airspace#3cb603a9",
    "sec": "law.airspace",
-   "text": "ふつう 10,000 ft MSL まで ｜ 管制承認（「cleared to enter Bravo airspace」など）が要る。",
+   "text": "ふつう 10,000 ft MSL まで ｜ 管制承認（「cleared to enter Bravo airspace」など。Bravo は B の読み方）が要る。",
    "tag": "参考値",
-   "source": "AIM 3-2-3（Class B は ふつう地表から 10,000 ft MSL、ATC clearance が要る）。言い方は FAA JO 7110.65 の 7-9-2 の PHRASEOLOGY（CLEARED THROUGH/TO ENTER/OUT OF BRAVO AIRSPACE）。W19 が 2026-10-30 に HTML で読んだ",
-   "by": "W19",
+   "source": "FAA AIM 3-2-3（Class B はふつう 10,000 ft MSL まで、入るには管制承認）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）。フォネティックアルファベットの B は Bravo（AIM 4-2-7）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#f2fde70b（reader-law C12）"
   },
   {
-   "id": "law.airspace#60df8efb",
+   "id": "law.airspace#579c9868",
    "sec": "law.airspace",
-   "text": "学生がひとりで入るには、操縦教員の訓練と裏書きが要る（61.95） ｜",
+   "text": "学生がひとりで入るには、その Class B の区域での訓練と、90 日以内の操縦教員の裏書きが要る（61.95） ｜",
    "tag": "条文",
-   "source": "14 CFR 61.95（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 61.95(a)（\"training … in the specific Class B airspace area\"、\"endorsement is dated within the 90-day period preceding the date of the flight\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#60df8efb（expert-law N2）"
   },
   {
-   "id": "law.airspace#0d2fbaca",
+   "id": "law.airspace#48189e35",
    "sec": "law.airspace",
-   "text": "半径 5 NM で地表から空港の標高の上 4,000 ft までの中心部と、半径 10 NM で 1,200〜4,000 ft の棚 ｜ 入る前に双方向の無線交信を確立する。",
+   "text": "半径 5 NM で地表から空港の標高の上 4,000 ft までの中心部と、半径 10 NM で、空港の標高の上 1,200〜4,000 ft の棚 ｜ 入る前に双方向の無線交信を確立する。",
    "tag": "参考値",
-   "source": "AIM 3-2-4（5 NM の地表から 4,000 ft の中心と、10 NM の 1,200〜4,000 ft の棚。入る前に双方向の無線交信の確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA AIM 3-2-4（\"a 10 NM radius shelf area that extends no lower than 1,200 feet up to 4,000 feet above the airport elevation\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#0d2fbaca（factcheck-law N16）"
   },
   {
-   "id": "law.airspace#ef1f6a32",
+   "id": "law.airspace#72e9ef11",
    "sec": "law.airspace",
-   "text": "ふつう地表から空港の標高の上 2,500 ft まで ｜ 入る前に双方向の無線交信を確立する ｜",
+   "text": "ふつう地表から空港の標高の上 2,500 ft まで。",
    "tag": "参考値",
-   "source": "AIM 3-2-5（Class D は地表から空港の標高の上 2,500 ft、入る前に交信の確立）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA AIM 3-2-5（地表から空港の標高の上 2,500 ft。part-time の Class D は other times Class E か G、Chart Supplement に書く）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#ef1f6a32（expert-law N3）"
   },
   {
    "id": "law.airspace#42d2a303",
@@ -1333,14 +1566,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.airspace#e3f8c40e",
+   "id": "law.airspace#bf418831",
    "sec": "law.airspace",
-   "text": "ただし、地上 1,500 ft 以下などは除く ｜ 管制承認も交信も要らない（気象条件は 91.155）。",
+   "text": "ただし、地上 1,500 ft 未満（高い山の上の、地面に近い所）などは除く ｜ 管制承認も交信も要らない（気象条件は 91.155）。",
    "tag": "参考値",
-   "source": "AIM 3-2-6 c（\"excluding … the airspace below 1,500 feet above the surface\"）、Class E は入る条件なし（AIM 3-2-6 b）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA AIM 3-2-6（\"the airspace below 1,500 feet above the surface of the earth\" を除く）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#e3f8c40e（factcheck-law N1）"
   },
   {
    "id": "law.airspace#a31c09d0",
@@ -1383,14 +1617,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.airspace#4df79da6",
+   "id": "law.airspace#07564bd3",
    "sec": "law.airspace",
-   "text": "「remain outside the Class Charlie airspace（外で待て）」と言われたら、入りません（AIM 3-2-4）。",
+   "text": "「remain outside the Class Charlie airspace（外で待て。Charlie は C の読み方）」と言われたら、入りません（AIM 3-2-4）。",
    "tag": "参考値",
-   "source": "AIM 3-2-4（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "FAA AIM 3-2-4（\"[Aircraft callsign] remain outside the Class Charlie airspace and standby.\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）。Charlie は C のフォネティックアルファベット（AIM 4-2-7）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#4df79da6（reader-law C12）"
   },
   {
    "id": "law.airspace#b0868dca",
@@ -1413,24 +1648,26 @@
    "checkedOn": null
   },
   {
-   "id": "law.airspace#35e34707",
+   "id": "law.airspace#f27a84d6",
    "sec": "law.airspace",
-   "text": "航空交通管制圏（管制圏、control zone）は、告示で指定した空港等（空港、airport）とその上空の空域です（同条第 13 項）。",
+   "text": "航空交通管制圏（管制圏、control zone）は、告示で指定した空港等とその付近の上空の空域です（同条第 13 項）。",
    "tag": "条文",
-   "source": "航空法第 2 条第 13 項。e-Gov の写し sources/egov/articles/kokuho/2.json（令和 7 年 12 月 1 日施行の版）",
-   "by": "W19",
+   "source": "e-Gov の写し sources/egov/articles/kokuho/2.json（航空法 令和 7 年 12 月 1 日施行の版 327AC0000000231_20251201_507AC0000000055） 第 2 条第 13 項（「空港等並びにその付近の上空の空域」）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#35e34707（factcheck-law N3）"
   },
   {
-   "id": "law.airspace#3e5cfcc5",
+   "id": "law.airspace#553a37d9",
    "sec": "law.airspace",
-   "text": "航空交通情報圏（情報圏、information zone）は、管制圏のほかの、告示で指定した空港等とその上空の空域です（同条第 14 項）。",
+   "text": "航空交通情報圏（情報圏、information zone）は、管制圏のほかの、告示で指定した空港等とその付近の上空の空域です（同条第 14 項）。",
    "tag": "条文",
-   "source": "航空法第 2 条第 14 項（前項に規定する空港等以外の告示で指定する空港等）。e-Gov の写し sources/egov/articles/kokuho/2.json",
-   "by": "W19",
+   "source": "e-Gov の写し sources/egov/articles/kokuho/2.json（航空法 令和 7 年 12 月 1 日施行の版 327AC0000000231_20251201_507AC0000000055） 第 2 条第 14 項（「空港等及びその付近の上空の空域」）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.airspace#3e5cfcc5（factcheck-law N3）"
   },
   {
    "id": "law.airspace#796f3f31",
@@ -1463,14 +1700,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.vfr#653efedb",
+   "id": "law.vfr#0641978c",
    "sec": "law.vfr",
-   "text": "Class C・D と、10,000 ft MSL 未満の Class E では、飛行視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft です。",
+   "text": "Class C・D と、10,000 ft MSL 未満の Class E では、飛行視程 3 SM、雲の上 1,000 ft・下 500 ft・横 2,000 ft です。",
    "tag": "条文",
-   "source": "14 CFR 91.155(a)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.155(a)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#653efedb（reader-law V1：3-1-5-2 の順）"
   },
   {
    "id": "law.vfr#d8e62a89",
@@ -1479,6 +1717,26 @@
    "tag": "参考値",
    "source": "NIST SP 811 Appendix B.9（1 statute mile = 1.609344 km。R.nist811）",
    "by": "W19",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.vfr#736d4a88",
+   "sec": "law.vfr",
+   "text": "地上視程は、空港の気象の観測が報告する、地面の近くの視程です（14 CFR 1.1）。",
+   "tag": "条文",
+   "source": "14 CFR 1.1（Ground visibility：prevailing horizontal visibility near the earth's surface as reported by the NWS or an accredited observer。Flight visibility：from the cockpit of an aircraft in flight）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.vfr#f3b5f686",
+   "sec": "law.vfr",
+   "text": "空港のまわりの離着陸は地上視程で決め、地上視程が報告されない空港では飛行視程を使います（91.155(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(d)(1)(2)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -1503,6 +1761,16 @@
    "checkedOn": null
   },
   {
+   "id": "law.vfr#85562973",
+   "sec": "law.vfr",
+   "text": "離着陸も場周経路（トラフィックパターン、traffic pattern）も雲の下を飛ぶので、できません（91.155(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)（地表まで設定された管制空域の中で、雲高 1,000 ft 未満なら雲の下を VFR で飛べない）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "law.vfr#56630c6c",
    "sec": "law.vfr",
    "text": "雲高は、BKN（ブロークン）か OVC（オーバーキャスト）と報告された、いちばん低い雲の層の高さです（14 CFR 1.1）。",
@@ -1523,6 +1791,27 @@
    "checkedOn": null
   },
   {
+   "id": "law.vfr#e853b375",
+   "sec": "law.vfr",
+   "text": "場周経路にも入れません（91.155(d)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(d)（\"enter the traffic pattern\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.vfr#aa4f4fe8",
+   "sec": "law.vfr",
+   "text": "飛べるのは、その地表区域の中の 10,000 ft MSL 未満です（91.157(a)。Part 91 の付録 D の Section 3 の空港を除く）。",
+   "tag": "条文",
+   "source": "14 CFR 91.157(a)・Part 91 付録 D の Section 3（\"below 10,000 feet MSL within the airspace contained by the upward extension of the lateral boundaries of the controlled airspace designated to the surface for an airport\"、付録 D の Section 3 を除く）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 factcheck-law N5"
+  },
+  {
    "id": "law.vfr#940f0d52",
    "sec": "law.vfr",
    "text": "雲に入らず、飛行視程 1 SM 以上で飛びます。",
@@ -1533,14 +1822,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.vfr#2ed17f47",
+   "id": "law.vfr#8cfcadbd",
    "sec": "law.vfr",
-   "text": "日の出から日没までのほかは、IFR で飛べる資格と、IFR の装備が要ります（91.157）。",
+   "text": "日の出から日没までのほかは、IFR で飛べる資格と、IFR の装備が要ります（91.157(b)）。",
    "tag": "条文",
-   "source": "14 CFR 91.157（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.157(b)(4)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#2ed17f47"
   },
   {
    "id": "law.vfr#475f9a35",
@@ -1683,24 +1973,26 @@
    "checkedOn": null
   },
   {
-   "id": "law.vfr#2120903b",
+   "id": "law.vfr#2fea4e29",
    "sec": "law.vfr",
-   "text": "上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E）",
+   "text": "上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E。縦は縮尺どおりで、横は縮めて描いています）",
    "tag": "条文",
-   "source": "14 CFR 91.155(a)（Class C・D・10,000 ft MSL 未満の Class E の行）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.155(a)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）。図の縦は 50 px＝500 ft で比例、横は比例でない（factcheck-law N9）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#2120903b"
   },
   {
-   "id": "law.vfr#231795a8",
+   "id": "law.vfr#d6b9fcc9",
    "sec": "law.vfr",
-   "text": "3-152：視程 3 SM、雲の下 500・上 1,000・横 2,000 ft（Class C・D・10,000 ft 未満の E）",
+   "text": "3-152：飛行視程 3 SM、雲の上 1,000・下 500・横 2,000 ft（Class C・D・10,000 ft 未満の E）",
    "tag": "条文",
-   "source": "14 CFR 91.155(a)。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.155(a)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#231795a8（reader-law V1・C3）"
   },
   {
    "id": "law.vfr#4c5beefd",
@@ -1784,14 +2076,27 @@
    "checkedOn": null
   },
   {
-   "id": "law.vfr#03639157",
+   "id": "law.vfr#ffdcd3aa",
    "sec": "law.vfr",
-   "text": "雲高が 800 ft で、1,000 ft 未満です（91.155(c)）。",
-   "tag": "条文",
-   "source": "14 CFR 91.155(c)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "text": "雲高が 800 ft で、1,000 ft 未満です。",
+   "tag": "参考値",
+   "source": "考えてみようの仮定の METAR（BKN008 → 雲高 800 ft）。1,000 ft は 14 CFR 91.155(c)",
+   "kind": "例題",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#03639157"
+  },
+  {
+   "id": "law.vfr#21888321",
+   "sec": "law.vfr",
+   "text": "空港の地表区域の中では、VFR で雲の下を飛べません（91.155(c)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.155(c)（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.vfr#03639157（reader-law V2）"
   },
   {
    "id": "law.vfr#db974b69",
@@ -1824,12 +2129,95 @@
    "checkedOn": null
   },
   {
-   "id": "law.special#f1fc1901",
+   "id": "law.special#efe08c7a",
    "sec": "law.special",
-   "text": "Warning Area（W：警告空域） ｜ 海岸から 3 NM より沖の、制限空域と同じような危険がある空域 ｜",
+   "text": "Prohibited Area（P：飛行禁止区域） ｜ 国の安全などのために、飛ぶことが禁止されている（AIM 3-4-2） ｜",
    "tag": "参考値",
-   "source": "AIM 3-4-4（\"extending from three nautical miles outward from the coast of the U.S.\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA AIM 3-4-2（\"the flight of aircraft is prohibited. Such areas are established for security or other reasons associated with the national welfare\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 reader-law SP1"
+  },
+  {
+   "id": "law.special#b23c28b9",
+   "sec": "law.special",
+   "text": "使っている時間は、使う機関か管理する機関の許可なしに入らない（AIM 3-4-3） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 3-4-3（\"while not wholly prohibited, is subject to restrictions\"、\"without authorization from the using or controlling agency\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 reader-law SP1"
+  },
+  {
+   "id": "law.special#9ec62f70",
+   "sec": "law.special",
+   "text": "Warning Area（W：警告空域） ｜ 米国の海岸から 3 NM より沖にある、参加しない機に危険な活動がある空域。",
+   "tag": "参考値",
+   "source": "FAA AIM 3-4-4（\"extending from three nautical miles outward from the coast of the U.S., that contains activity that may be hazardous to nonparticipating aircraft\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.special#f1fc1901"
+  },
+  {
+   "id": "law.special#e8e44530",
+   "sec": "law.special",
+   "text": "ノータムで一時的に飛行禁止になることもある（AIM 3-4-8、14 CFR 99.7） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 3-4-8（NSA は voluntarily avoid、\"flight in NSAs may be temporarily prohibited by regulation under the provisions of 14 CFR section 99.7\"、NOTAM で知らせる）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#ca4da8ba",
+   "sec": "law.special",
+   "text": "MTR（Military Training Route：軍の訓練経路） ｜ 軍機が 250 kt を超える速さで低く飛ぶ経路。",
+   "tag": "参考値",
+   "source": "FAA AIM 3-5-2（\"MTRs are established below 10,000 feet MSL for operations at speeds in excess of 250 knots\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#3552290a",
+   "sec": "law.special",
+   "text": "多くは 10,000 ft MSL 未満で、VFR のチャートに描かれる（AIM 3-5-2） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 3-5-2（Generally below 10,000 feet MSL、VFR Sectional Aeronautical Charts depict IR and VR）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#13c3ab5e",
+   "sec": "law.special",
+   "text": "SFRA（Special Flight Rules Area） ｜ 14 CFR Part 93 の特別な飛び方の決まりに従う空域（例：ワシントン DC のまわり）。",
+   "tag": "参考値",
+   "source": "FAA AIM 3-5-7・3-5-8（SFRA は 14 CFR Part 93 の決まりに従う空域。3-5-8 Washington, DC SFRA）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#b165353e",
+   "sec": "law.special",
+   "text": "チャートに描かれる（AIM 3-5-7） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 3-5-7（\"SFRAs are depicted on VFR sectional, terminal area, and helicopter route charts\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#173cabc8",
+   "sec": "law.special",
+   "text": "出入りには、飛行計画（flight plan）・管制か FSS（飛行サービス局、Flight Service Station）からもらう個別のトランスポンダーのコード（1200 は使えない）・双方向の無線交信が要る（14 CFR 99、AIM 5-6-4） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-4（14 CFR 99 の ADIZ：transponder は ATC か FSS からの discrete code、\"Use of beacon code 1200 is not authorized\"、two-way radio、flight plan）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）。14 CFR 99.9・99.11（eCFR）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -1844,22 +2232,76 @@
    "checkedOn": null
   },
   {
-   "id": "law.special#cec34b03",
+   "id": "law.special#a811168e",
    "sec": "law.special",
-   "text": "機体を確かめ、向きを変えさせ、交信するためです（AIM 5-6-13）。",
+   "text": "パラシュート降下の場所は、Chart Supplement に一覧があります（AIM 3-5-4）。",
    "tag": "参考値",
-   "source": "AIM 5-6-13（FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "FAA AIM 3-5-4（\"Tabulations of parachute jump areas in the U.S. are contained in the Chart Supplement\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
   {
-   "id": "law.special#7c61fb29",
+   "id": "law.special#e2bfd8a0",
    "sec": "law.special",
-   "text": "121.5 MHz（緊急の周波数）で呼び、自分の名前・位置・飛行の目的を伝えます。",
+   "text": "米国の税関の決まりにも従います（AIM 5-6-5）。",
    "tag": "参考値",
-   "source": "AIM 5-6-13（\"making a general call on guard frequencies (121.5 or 243.0 MHz), giving the identity, position, and nature of the flight\"）。FAA AIM（2026-07-09 有効の版。HTML）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "FAA AIM 5-6-5（米国の領空へ出入りする機：active flight plan・altitude reporting transponder と ATC assigned code・two-way radio・CBP の決まり）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "law.special#e7f00c5a",
+   "sec": "law.special",
+   "text": "機体を確かめる・追う・調べる・向きを変えさせる・交信する、などのためです（AIM 5-6-13）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-13（\"The reasons for aircraft intercept include, but are not limited to: Identify / Track / Inspect / Divert / Establish communications\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.special#cec34b03（factcheck-law S2）"
+  },
+  {
+   "id": "law.special#c0954498",
+   "sec": "law.special",
+   "text": "迎撃機か管制機関を 121.5 MHz（緊急の周波数）で呼び、機体の識別（コールサイン）・位置・飛行の内容を伝えます。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-13（\"Attempt to establish radio communications with the intercepting aircraft or with the appropriate air traffic control facility by making a general call on guard frequencies (121.5 or 243.0 MHz), giving the identity, position, and nature of the flight\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.special#7c61fb29（factcheck-law S2・expert-law S5）"
+  },
+  {
+   "id": "law.special#003966e8",
+   "sec": "law.special",
+   "text": "90° 以上の上昇旋回で、急に離れていく ｜ 行ってよい ｜ 翼を振る ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-14 TBL 5-6-1（Series 2：\"An abrupt break-away maneuver … climbing turn of 90 degrees or more\"＝You may proceed、応答は Rocking wings）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 expert-law S5"
+  },
+  {
+   "id": "law.special#4c87f0af",
+   "sec": "law.special",
+   "text": "米国の空を飛ぶ機は、121.5 MHz を聞いておくことを強く勧められています（AIM 5-6-13）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-13（\"All aircraft operating in US national airspace are highly encouraged to maintain a listening watch on VHF/UHF guard frequencies (121.5 or 243.0 MHz)\"）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 expert-law S5"
+  },
+  {
+   "id": "law.special#de5a485c",
+   "sec": "law.special",
+   "text": "迎撃されたら、迎撃機に従い、121.5 MHz で呼び、7700",
+   "tag": "参考値",
+   "source": "FAA AIM 5-6-13（Summary of Intercepted Aircraft Actions）（2026-07-09 有効の版の HTML を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -1944,14 +2386,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.rules#1e46567f",
+   "id": "law.rules#072055ea",
    "sec": "law.rules",
-   "text": "種類が違うときは、気球 ＞ グライダー ＞ ほかの機を引いている（曳航）機・給油している機 ＞ 飛行船 ＞ ほかの動力機 の順です（米国の 2025 年の改正の順）。",
+   "text": "種類が違うときは、気球 ＞ 滑空機（グライダー、glider） ＞ 曳航・空中給油をしている機 ＞ 飛行船 ＞ ほかの動力機 の順です（米国の 91.113(d)）。",
    "tag": "条文",
-   "source": "14 CFR 91.113(d)(1)〜(4)（2025 年 7 月 24 日の Amdt. 91-381 の後の文：気球・滑空機・曳航か給油の機・飛行船・ほかの動力機）。eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ",
-   "by": "W19",
+   "source": "14 CFR 91.113(d)(1)〜(4)（balloon > glider > aircraft towing or refueling other aircraft > airship > other powered aircraft。順は 2025 年の改正の前と同じ：factcheck-law S1）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.rules#1e46567f（factcheck-law S1・expert-law S11）"
   },
   {
    "id": "law.rules#14083e75",
@@ -2044,6 +2487,17 @@
    "checkedOn": null
   },
   {
+   "id": "law.rules#a11c4dcb",
+   "sec": "law.rules",
+   "text": "管制塔が運用中の空港では、地上滑走（タキシー、taxi）・離陸・着陸のたびに、管制塔の許可が要ります（91.129(i)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.129(i)（\"at any airport with an operating control tower … unless an appropriate clearance is received from ATC\"）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
+   "checkedBy": null,
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.rules#298e6c53（expert-law N3）"
+  },
+  {
    "id": "law.rules#25d5c12b",
    "sec": "law.rules",
    "text": "Class D の空港では、入る前に管制塔と交信を確立し、その空域にいる間は保ちます（91.129(c)）。",
@@ -2054,24 +2508,15 @@
    "checkedOn": null
   },
   {
-   "id": "law.rules#298e6c53",
+   "id": "law.rules#5e65e897",
    "sec": "law.rules",
-   "text": "地上滑走（タキシー、taxi）・離陸・着陸には、管制塔の許可が要ります（91.129(i)）。",
+   "text": "管制塔のない空港（Class G・E）に着陸するときは、場周経路の旋回はすべて左回りです（91.126(b)・91.127(a)）。",
    "tag": "条文",
-   "source": "14 CFR 91.129(i)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
+   "source": "14 CFR 91.126(b)(1)・91.127(a)（左回り。右回りを示す approved light signals or visual markings があれば右回り）（eCFR versioner API の 2026-10-28 の版を revise-law が 2026-10-30 に読んだ）",
+   "by": "revise-law",
    "checkedBy": null,
-   "checkedOn": null
-  },
-  {
-   "id": "law.rules#cdc93909",
-   "sec": "law.rules",
-   "text": "管制塔のない空港（Class G・E）に着陸するときは、標示がなければ、旋回はすべて左回りです（91.126(b)・91.127(a)）。",
-   "tag": "条文",
-   "source": "14 CFR 91.126(b)・91.127(a)（eCFR の 2026-10-28 の版（versioner API）を W19 が 2026-10-30 に読んだ）",
-   "by": "W19",
-   "checkedBy": null,
-   "checkedOn": null
+   "checkedOn": null,
+   "note": "revise-law（2026-10-30）：前の行 law.rules#cdc93909（reader-law R3）"
   },
   {
    "id": "law.rules#ffd3dbd1",
@@ -2223,6 +2668,236 @@
    "by": "W19",
    "checkedBy": null,
    "checkedOn": null
+  }
+ ],
+ "removed": [
+  {
+   "id": "law.basis#a45458f2",
+   "text": "14 CFR は、連邦の法律（合衆国法典の第 49 編）にもとづいて FAA が定める規則です（14 CFR Part 91 の根拠の欄）。"
+  },
+  {
+   "id": "law.basis#3d3c3588",
+   "text": "そのうえで、ほかの規則で求められる手順の例を示す、と書いています（AIM の Flight Information Publication Policy）。"
+  },
+  {
+   "id": "law.basis#9bac0223",
+   "text": "AC も、規則に取り込まれていなければ、守る義務はありません（AIM の Code of Federal Regulations and Advisory Circulars）。"
+  },
+  {
+   "id": "law.basis#1fde9d0f",
+   "text": "だから、AIM の手順を軽く見てよいわけではありません。"
+  },
+  {
+   "id": "law.basis#6af055b5",
+   "text": "たとえば、Class C 空域に入る前に交信を確立する決まりは、米国の 14 CFR 91.130 にあります。"
+  },
+  {
+   "id": "law.basis#3d938d0f",
+   "text": "たとえば米国の 91.113（進路権（優先権、right-of-way）の決まり）は、2025 年 7 月に改正されました（14 CFR 91.113 の改正の記録）。"
+  },
+  {
+   "id": "law.basis#e956bf44",
+   "text": "FAA の VFR のチャートと Chart Supplement（空港と施設の案内）は、56 日ごとに新しい版になります（FAA Aeronautical Information Services）。"
+  },
+  {
+   "id": "law.basis#a4bc0824",
+   "text": "AIM も、ほぼ半年ごとに改訂の版が出ます（AIM の Publication Schedule）。"
+  },
+  {
+   "id": "law.basis#7876544e",
+   "text": "米国で登録した機体でも、外国ではその国の決まりに従います（91.703(a)(2)）。"
+  },
+  {
+   "id": "law.basis#d8ce31fa",
+   "text": "具体的な条件は、国土交通省令の航空法施行規則が決めます。"
+  },
+  {
+   "id": "law.basis#260f0bfa",
+   "text": "空域などは、国土交通大臣の告示で指定します。"
+  },
+  {
+   "id": "law.pic#dfa99a73",
+   "text": "緊急で管制から優先して扱われたら、管制に求められたときは、48 時間以内に報告を出します（91.123(d)）。"
+  },
+  {
+   "id": "law.pilot#7266cf70",
+   "text": "日で数える決まり（人を乗せる前の 90 日に 3 回の離着陸）は、飛ぶ日からさかのぼって数えます"
+  },
+  {
+   "id": "law.pilot#144a4b63",
+   "text": "FAA・国家運輸安全委員会（NTSB）・警察から求められたら、証明書とログブック（飛行の記録、logbook）を見せます（61.51(i)(1)）。"
+  },
+  {
+   "id": "law.pilot#f2ac96c6",
+   "text": "資格や審査に使う訓練と経験、最近の飛行経験は、ログブックに記録します（61.51(a)）。"
+  },
+  {
+   "id": "law.pilot#51906f46",
+   "text": "機長として飛ぶには、24 暦月の間にフライトレビューを受けている必要があります（61.56(c)）。"
+  },
+  {
+   "id": "law.pilot#32410d12",
+   "text": "人を乗せて機長をする ｜ 90 日以内に、離陸と着陸を 3 回ずつ（同じカテゴリー・クラスの機体で、自分で操縦） ｜ 61.57(a) ｜"
+  },
+  {
+   "id": "law.pilot#e74a3a4a",
+   "text": "IFR で機長をする ｜ 6 暦月以内に、計器進入 6 回・待機（ホールディング、holding）・電子航法でのコースの会合と追跡 ｜ 61.57(c) ｜"
+  },
+  {
+   "id": "law.pilot#af020c27",
+   "text": "飛行視程（flight visibility）か地上視程（ground visibility）が、昼は 3 SM 未満、夜は 5 SM 未満のときに飛ぶ"
+  },
+  {
+   "id": "law.pilot#a7ecc970",
+   "text": "夜間（night）の定義（14 CFR 1.1） ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで ｜ 夜の燃料の予備（91.151）・夜の VFR の装備（91.205(c)）など ｜"
+  },
+  {
+   "id": "law.pilot#557ab20d",
+   "text": "機長として飛ぶには、24 暦月の間のフライトレビュー（学生は不要）"
+  },
+  {
+   "id": "law.pilot#4592509b",
+   "text": "第 3 種の身体検査証明は、40 歳未満 60 か月・40 歳以上 24 か月"
+  },
+  {
+   "id": "law.pilot#76dcc557",
+   "text": "日没の 1 時間後から日の出の 1 時間前までに人を乗せるには、その時間帯に、完全に止まるまでの着陸を 90 日以内に 3 回していることが要ります（61.57(b)）。"
+  },
+  {
+   "id": "law.aircraft#0cf58532",
+   "text": "耐空証明（airworthiness certificate） ｜ 客室か操縦席の入口に、乗る人が読めるように掲示する（91.203） ｜"
+  },
+  {
+   "id": "law.aircraft#39e2171c",
+   "text": "登録証明（registration certificate） ｜ 機内に置く（91.203） ｜"
+  },
+  {
+   "id": "law.aircraft#5aa4446c",
+   "text": "飛行規程と運用限界（POH・標示・表示板） ｜ 機内に置き、その限界を守る（91.9） ｜"
+  },
+  {
+   "id": "law.aircraft#bf6fe7d4",
+   "text": "Class A・B・C などでは、トランスポンダー（transponder）と ADS-B Out も必要です（91.215・91.225）。"
+  },
+  {
+   "id": "law.aircraft#124fe1fd",
+   "text": "型式証明の昼の VFR の装備・機体の装備の一覧・91.205 などで要るものなら、飛べません。"
+  },
+  {
+   "id": "law.aircraft#15b4ced1",
+   "text": "そのうえで、危険がないと操縦士か整備士が判断します（91.213(d)）。"
+  },
+  {
+   "id": "law.aircraft#58c83520",
+   "text": "100 時間点検 ｜ 有償で人を乗せる・自分が用意した機体で有償の飛行訓練をするときは 100 時間ごと（訓練機に多い） ｜ 91.409(b) ｜"
+  },
+  {
+   "id": "law.aircraft#ad45a152",
+   "text": "静圧系統・高度計・高度の自動報告装置 ｜ 管制空域を IFR で飛ぶなら 24 暦月ごと ｜ 91.411 ｜"
+  },
+  {
+   "id": "law.aircraft#d624b882",
+   "text": "年次点検は 12 暦月、訓練機は 100 時間点検も"
+  },
+  {
+   "id": "law.aircraft#164767bf",
+   "text": "動かない装備は 91.213 で判断"
+  },
+  {
+   "id": "law.aircraft#3598764b",
+   "text": "考えてみよう：訓練機の年次点検は 10 か月前に済んでいるが、100 時間点検から 104 時間飛んでいた。"
+  },
+  {
+   "id": "law.aircraft#19c05b5c",
+   "text": "有償の飛行訓練に使う機体（学校が用意した機体）は、100 時間ごとの点検が必要です（91.409(b)）。"
+  },
+  {
+   "id": "law.aircraft#1ecfd5c2",
+   "text": "年次点検の期限内でも、100 時間を超えていれば飛ばせません。"
+  },
+  {
+   "id": "law.aircraft#22e096b1",
+   "text": "点検の場所へ移動するためだけに、10 時間まで超えてよい例外があります（91.409(b)）。"
+  },
+  {
+   "id": "law.airspace#13b8111f",
+   "text": "ただし、Class C・D の「地表から 4,000 ft・2,500 ft」は、空港の標高からの高さです。"
+  },
+  {
+   "id": "law.airspace#f2fde70b",
+   "text": "ふつう 10,000 ft MSL まで ｜ 管制承認（「cleared to enter Bravo airspace」など）が要る。"
+  },
+  {
+   "id": "law.airspace#60df8efb",
+   "text": "学生がひとりで入るには、操縦教員の訓練と裏書きが要る（61.95） ｜"
+  },
+  {
+   "id": "law.airspace#0d2fbaca",
+   "text": "半径 5 NM で地表から空港の標高の上 4,000 ft までの中心部と、半径 10 NM で 1,200〜4,000 ft の棚 ｜ 入る前に双方向の無線交信を確立する。"
+  },
+  {
+   "id": "law.airspace#ef1f6a32",
+   "text": "ふつう地表から空港の標高の上 2,500 ft まで ｜ 入る前に双方向の無線交信を確立する ｜"
+  },
+  {
+   "id": "law.airspace#e3f8c40e",
+   "text": "ただし、地上 1,500 ft 以下などは除く ｜ 管制承認も交信も要らない（気象条件は 91.155）。"
+  },
+  {
+   "id": "law.airspace#4df79da6",
+   "text": "「remain outside the Class Charlie airspace（外で待て）」と言われたら、入りません（AIM 3-2-4）。"
+  },
+  {
+   "id": "law.airspace#35e34707",
+   "text": "航空交通管制圏（管制圏、control zone）は、告示で指定した空港等（空港、airport）とその上空の空域です（同条第 13 項）。"
+  },
+  {
+   "id": "law.airspace#3e5cfcc5",
+   "text": "航空交通情報圏（情報圏、information zone）は、管制圏のほかの、告示で指定した空港等とその上空の空域です（同条第 14 項）。"
+  },
+  {
+   "id": "law.vfr#653efedb",
+   "text": "Class C・D と、10,000 ft MSL 未満の Class E では、飛行視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft です。"
+  },
+  {
+   "id": "law.vfr#2ed17f47",
+   "text": "日の出から日没までのほかは、IFR で飛べる資格と、IFR の装備が要ります（91.157）。"
+  },
+  {
+   "id": "law.vfr#2120903b",
+   "text": "上と下の言葉が入れかわります（数字は米国の 14 CFR 91.155 の Class C・D と 10,000 ft MSL 未満の Class E）"
+  },
+  {
+   "id": "law.vfr#231795a8",
+   "text": "3-152：視程 3 SM、雲の下 500・上 1,000・横 2,000 ft（Class C・D・10,000 ft 未満の E）"
+  },
+  {
+   "id": "law.vfr#03639157",
+   "text": "雲高が 800 ft で、1,000 ft 未満です（91.155(c)）。"
+  },
+  {
+   "id": "law.special#f1fc1901",
+   "text": "Warning Area（W：警告空域） ｜ 海岸から 3 NM より沖の、制限空域と同じような危険がある空域 ｜"
+  },
+  {
+   "id": "law.special#cec34b03",
+   "text": "機体を確かめ、向きを変えさせ、交信するためです（AIM 5-6-13）。"
+  },
+  {
+   "id": "law.special#7c61fb29",
+   "text": "121.5 MHz（緊急の周波数）で呼び、自分の名前・位置・飛行の目的を伝えます。"
+  },
+  {
+   "id": "law.rules#1e46567f",
+   "text": "種類が違うときは、気球 ＞ グライダー ＞ ほかの機を引いている（曳航）機・給油している機 ＞ 飛行船 ＞ ほかの動力機 の順です（米国の 2025 年の改正の順）。"
+  },
+  {
+   "id": "law.rules#298e6c53",
+   "text": "地上滑走（タキシー、taxi）・離陸・着陸には、管制塔の許可が要ります（91.129(i)）。"
+  },
+  {
+   "id": "law.rules#cdc93909",
+   "text": "管制塔のない空港（Class G・E）に着陸するときは、標示がなければ、旋回はすべて左回りです（91.126(b)・91.127(a)）。"
   }
  ]
 }

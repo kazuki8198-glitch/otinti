@@ -1,0 +1,2566 @@
+{
+ "checked": "2026-10-29",
+ "tool": "textbook/rewrite/tools/photosrc.py verify",
+ "pages": "given (--pages): read another way because Commons answered HTTP 429 to this address",
+ "photos": [
+  {
+   "id": "vortex",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Airplane_vortex_edit.jpg",
+   "ours": {
+    "author": "NASA Langley Research Center（Fir0002 による編集）",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 1200,
+    "h": 976,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2976,
+    "height": 2420,
+    "licenseShortName": "Public domain",
+    "artist": "NASA Langley Research Center (NASA-LaRC), Edited by Fir0002"
+   },
+   "pageLicenses": [
+    "ayres-thrush",
+    "featured-pictures-on-wikipedia,-english",
+    "flow-visualization",
+    "logarithmic-spirals",
+    "pd",
+    "pd-usgov-nasa"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2976x2420",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "archer",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Piper_PA-28-181_Archer_III_(D-ETPA)_01.jpg",
+   "ours": {
+    "author": "Huhu Uet",
+    "license": "CC BY 3.0",
+    "w": 1200,
+    "h": 661,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3923,
+    "height": 2161,
+    "licenseShortName": "CC BY 3.0",
+    "artist": "Huhu Uet"
+   },
+   "pageLicenses": [
+    "cc-by-3.0",
+    "d-etpa-(aircraft)",
+    "gfdl",
+    "license-migration-redundant",
+    "piper-pa-28-at-flugplatz-uetersen",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3923x2161",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "archerStabilator",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Trimming_(e_move_o_estabilizador_todo)_(2946652623).jpg",
+   "ours": {
+    "author": "Ricardo Reis from Lisboa, Portugal",
+    "license": "CC BY-SA 2.0",
+    "w": 1200,
+    "h": 1125,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2304,
+    "height": 3072,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Ricardo Reis from Lisboa, Portugal"
+   },
+   "pageLicenses": [
+    "aircraft-tailplanes",
+    "cc-by-sa-2.0",
+    "flickr-images-reviewed-by-file-upload-bot-(magnus-manske)",
+    "taken-with-panasonic-lumix-dmc-fx30"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2304x3072",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "lycoming",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:LycomingO-360.JPG",
+   "ours": {
+    "author": "Nimbus227",
+    "license": "Public domain (PD-self)",
+    "w": 1200,
+    "h": 900,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3648,
+    "height": 2736,
+    "licenseShortName": "Public domain",
+    "artist": "Nimbus227"
+   },
+   "pageLicenses": [
+    "gfdl",
+    "license-migration-completed",
+    "lycoming-o-360",
+    "pd",
+    "pd-self",
+    "self-published-work",
+    "taken-with-olympus-e-410"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3648x2736",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "fuelSample",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:GATS_jar_03.JPG",
+   "ours": {
+    "author": "Ahunt",
+    "license": "Public domain (PD-self)",
+    "w": 1200,
+    "h": 900,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1600,
+    "height": 1200,
+    "licenseShortName": "Public domain",
+    "artist": "Ahunt"
+   },
+   "pageLicenses": [
+    "pd",
+    "pd-self",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1600x1200",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "pitot",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Cessna_172_Skyhawk_II_-_Pitot_tube.jpg",
+   "ours": {
+    "author": "Cjp24",
+    "license": "CC BY-SA 4.0",
+    "w": 1080,
+    "h": 490,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 4608,
+    "height": 3456,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Cjp24"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4608x3456",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "staticPort",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Static_port_C172_7786.JPG",
+   "ours": {
+    "author": "Bin im Garten",
+    "license": "CC BY-SA 3.0",
+    "w": 1200,
+    "h": 800,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4272,
+    "height": 2848,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Bin im Garten"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4272x2848",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "compass",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Flygplanskompass.JPG",
+   "ours": {
+    "author": "M9matr0902",
+    "license": "Public domain (PD-self)",
+    "w": 1200,
+    "h": 829,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 3363,
+    "height": 2736,
+    "licenseShortName": "Public domain",
+    "artist": "M9matr0902"
+   },
+   "pageLicenses": [
+    "pd",
+    "pd-self",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3363x2736",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "distanceSign",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Runway-Distance_Remaining_Sign_-2.jpg",
+   "ours": {
+    "author": "LezFraniak",
+    "license": "CC BY-SA 4.0",
+    "w": 1200,
+    "h": 674,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4000,
+    "height": 2248,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "LezFraniak"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4000x2248",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "grassRunway",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Grass_runways_-_geograph.org.uk_-_5465578.jpg",
+   "ours": {
+    "author": "Malcolm Neal",
+    "license": "CC BY-SA 2.0",
+    "w": 1200,
+    "h": 800,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2000,
+    "height": 1333,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Malcolm Neal"
+   },
+   "pageLicenses": [
+    "cc-by-sa-2.0"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2000x1333",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "cbFlorida",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Cumulonimbus_Incus_with_LC-39A.JPG",
+   "ours": {
+    "author": "TheAustinMan",
+    "license": "CC BY-SA 3.0",
+    "w": 1200,
+    "h": 900,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4000,
+    "height": 3000,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "TheAustinMan"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4000x3000",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "microburst",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Wea02273_-_Flickr_-_NOAA_Photo_Library.jpg",
+   "ours": {
+    "author": "NOAA Legacy Photo ERL/WPL",
+    "license": "Public domain (PD-USGov-NOAA)",
+    "w": 1200,
+    "h": 787,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4020,
+    "height": 2634,
+    "licenseShortName": "Public domain",
+    "artist": "NOAA Legacy Photo ERL/WPL."
+   },
+   "pageLicenses": [
+    "pd",
+    "pd-usgov-noaa"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4020x2634",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "groundFog",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Nebelostfriesland.jpg",
+   "ours": {
+    "author": "pixelfehler / Matthias Süßen",
+    "license": "CC BY-SA 2.5",
+    "w": 1200,
+    "h": 887,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2031,
+    "height": 1501,
+    "licenseShortName": "CC BY-SA 2.5",
+    "artist": "pixelfehler/Matthias Süßen"
+   },
+   "pageLicenses": [
+    "cc-by-sa-2.5",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2031x1501",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "holdShort",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Hold_Short.jpg",
+   "ours": {
+    "author": "Bmurphy380",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 747,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3024,
+    "height": 4032,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Bmurphy380"
+   },
+   "pageLicenses": [
+    "airport-surface-markings",
+    "cc-by-sa-4.0",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "rocky-mountain-metropolitan-airport",
+    "runway-markings",
+    "self-published-work",
+    "taxiways"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3024x4032",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "towerCab",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Bedford-Hanscom_Air_Traffic_Control_Tower.JPG",
+   "ours": {
+    "author": "N801SA",
+    "license": "CC0 1.0",
+    "w": 693,
+    "h": 900,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 966,
+    "height": 1825,
+    "licenseShortName": "CC0",
+    "artist": "N801SA"
+   },
+   "pageLicenses": [
+    "cc-zero"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "966x1825",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "asrRadar",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Capital_Region_International_Airport_Radar_Tower_ASR.jpg",
+   "ours": {
+    "author": "Dj1997",
+    "license": "CC BY-SA 3.0",
+    "w": 711,
+    "h": 900,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2048,
+    "height": 1581,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Dj1997"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x1581",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "nightFlorida",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Florida_from_ISS_night_2014.jpg",
+   "ours": {
+    "author": "NASA",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 1000,
+    "h": 666,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2128,
+    "height": 1416,
+    "licenseShortName": "Public domain",
+    "artist": "NASA"
+   },
+   "pageLicenses": [
+    "pd",
+    "pd-usgov-nasa"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2128x1416",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "grassStrip",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:2008-08-24_Lake_Ridge_Aero_Park_Airport_Rwy_14.jpg",
+   "ours": {
+    "author": "Ildar Sagdejev (Specious)",
+    "license": "CC BY-SA 4.0",
+    "w": 900,
+    "h": 600,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3888,
+    "height": 2592,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Ildar Sagdejev (Specious)"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "cc-by-sa-4.0,3.0,2.5,2.0,1.0",
+    "gfdl",
+    "license-migration-redundant",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3888x2592",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "windsock",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Jasper_Alberta_Airport_Windsock.jpg",
+   "ours": {
+    "author": "Royalbroil",
+    "license": "CC BY-SA 3.0",
+    "w": 480,
+    "h": 330,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2160,
+    "height": 1440,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Royalbroil"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2160x1440",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "elt",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Emergency_Locator_Transmitter.jpg",
+   "ours": {
+    "author": "Mdarcangelo",
+    "license": "CC BY-SA 4.0",
+    "w": 760,
+    "h": 390,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 4752,
+    "height": 3168,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Mdarcangelo"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4752x3168",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "vorStation",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:VOR-DME_in_Hibbing_Minnesota_(52688384252).jpg",
+   "ours": {
+    "author": "Tony Webster",
+    "license": "CC BY-SA 2.0",
+    "w": 1000,
+    "h": 549,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 7138,
+    "height": 4420,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Tony Webster from Laramie, Wyoming, United States"
+   },
+   "pageLicenses": [
+    "cc-by-sa-2.0"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "7138x4420",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "locAntenna",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:EDDV-ILS_27R_Localizer_(cropped).jpg",
+   "ours": {
+    "author": "Herr-K（de.wikipedia）",
+    "license": "CC BY-SA 3.0",
+    "w": 1200,
+    "h": 281,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2048,
+    "height": 645,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "User Herr-K on de.wikipedia"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "gfdl",
+    "license-migration-completed"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x645",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "gsAntenna",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:ILS_GS_EHAM_18R.jpg",
+   "ours": {
+    "author": "ElboV2",
+    "license": "CC BY-SA 4.0",
+    "w": 821,
+    "h": 900,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2984,
+    "height": 3335,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "ElboV2"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2984x3335",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "seminole",
+   "store": "book-photos.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Piper_PA-44_Seminole_F-GBPK.jpg",
+   "ours": {
+    "author": "Kakoula10",
+    "license": "CC BY-SA 4.0",
+    "w": 640,
+    "h": 390,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3056,
+    "height": 1872,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Kakoula10"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3056x1872",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "dc8",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/EC00-0050-001",
+   "ours": {
+    "author": "NASA / Jim Ross",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 1000,
+    "h": 484,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 4080,
+    "height": 3253,
+    "photographer": "NASA/Jim Ross",
+    "center": "NASA AFRC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4080x3253",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "turbofan",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/GRC-1974-C-03151",
+   "ours": {
+    "author": "NASA",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 780,
+    "h": 550,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2048,
+    "height": 1536,
+    "photographer": "",
+    "center": "NASA GRC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x1536",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "motionSim",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/ARC-1997-AC97-0311",
+   "ours": {
+    "author": "NASA / Dominic Hart",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 752,
+    "h": 760,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 3072,
+    "height": 2048,
+    "photographer": "Dominic Hart",
+    "center": "NASA ARC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3072x2048",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "twinPa30",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/ECN-2845",
+   "ours": {
+    "author": "NASA",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 950,
+    "h": 440,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 5100,
+    "height": 4000,
+    "photographer": "NASA",
+    "center": "NASA AFRC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5100x4000",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "crewCab",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/ARC-2006-ACD09-0031-007",
+   "ours": {
+    "author": "NASA / Dominic Hart",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 1000,
+    "h": 625,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 4256,
+    "height": 2832,
+    "photographer": "Dominic Hart",
+    "center": "NASA ARC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4256x2832",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "linkTrainer",
+   "store": "book-photos.js",
+   "source": "https://images.nasa.gov/details/ARC-1995-AC95-0151-18",
+   "ours": {
+    "author": "NASA / Cesar Acosta",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 833,
+    "h": 820,
+    "mod": "切り抜き・縮小"
+   },
+   "page": {
+    "width": 2048,
+    "height": 3072,
+    "photographer": "Cesar Acosta",
+    "center": "NASA ARC",
+    "licenseShortName": "Public domain (NASA media usage guidelines)"
+   },
+   "pageLicenses": [
+    "pd"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x3072",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch00-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:ATR_72_left_aileron_seen_from_rear.jpg",
+   "ours": {
+    "author": "Olivier Cleynen",
+    "license": "CC0 1.0",
+    "w": 560,
+    "h": 292,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 2990,
+    "height": 1559,
+    "licenseShortName": "CC0",
+    "artist": "Olivier Cleynen"
+   },
+   "pageLicenses": [
+    "aerodynamic-balances",
+    "ailerons",
+    "cc-zero",
+    "images-by-olivier-cleynen",
+    "parts-and-systems-of-atr-aircraft",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2990x1559",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch00-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:ASI01b.jpg",
+   "ours": {
+    "author": "Ahunt",
+    "license": "Public domain (PD-self)",
+    "w": 560,
+    "h": 430,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1466,
+    "height": 1125,
+    "licenseShortName": "Public domain",
+    "artist": "Ahunt"
+   },
+   "pageLicenses": [
+    "airspeed-indicators",
+    "pd",
+    "pd-self",
+    "self-published-work",
+    "speedometers"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1466x1125",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch00-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Mt.Fuji_-_Flickr_-_m-louis.jpg",
+   "ours": {
+    "author": "m-louis .® from Osaka, Japan",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 386,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1487,
+    "height": 1026,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "m-louis .® from Osaka, Japan"
+   },
+   "pageLicenses": [
+    "aerial-photographs-of-mount-fuji",
+    "cc-by-sa-2.0",
+    "flickr-files-uploaded-by-red-panda-bot",
+    "flickr-images-reviewed-by-flickreviewr-2",
+    "photographs-by-takato-marui",
+    "photographs-taken-on-2006-03-13",
+    "photos-in-flickr-explore"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1487x1026",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch00-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Aircraft_altimeter.JPG",
+   "ours": {
+    "author": "CambridgeBayWeather",
+    "license": "Public domain (PD-user)",
+    "w": 560,
+    "h": 423,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1632,
+    "height": 1232,
+    "licenseShortName": "Public domain",
+    "artist": "User:CambridgeBayWeather",
+    "templates": [
+     "PD-user|CambridgeBayWeather"
+    ]
+   },
+   "pageLicenses": [
+    "altimeters",
+    "cambridgebayweather",
+    "kollsman-instrument",
+    "pd",
+    "pd-user",
+    "taken-with-kodak-easyshare-cx4200"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1632x1232",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch01-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Boeing_737_with_flaps_and_spoilers_extended_after_touchdown.jpg",
+   "ours": {
+    "author": "Manic-nirvana",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1200,
+    "height": 800,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Manic-nirvana"
+   },
+   "pageLicenses": [
+    "boeing-737-(window-views)",
+    "boeing-737-classic",
+    "cabin-window-views-of-aircraft-wings",
+    "cc-by-sa-3.0",
+    "self-published-work",
+    "spoilers-(aircraft-wings)",
+    "trailing-edge-flaps"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1200x800",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch01-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Hohenems-airport-airplane_Tecnam_P2010_(D-ELMD)-Stall_Warning_System_(stick_shaker)-01ASD.jpg",
+   "ours": {
+    "author": "Asurnipal",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 747,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3000,
+    "height": 4000,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Asurnipal"
+   },
+   "pageLicenses": [
+    "2025-at-hohenems-dornbirn-airfield",
+    "aircraft-at-hohenems-dornbirn-airfield",
+    "aircraft-in-austria-photographed-in-august-2025",
+    "aviation-photographs-taken-on-2025-08-19",
+    "cc-by-sa-4.0",
+    "d-elmd-(aircraft)",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "hohenems-photographs-taken-on-2025-08-19",
+    "photographs-by-asurnipal-hohenems",
+    "photographs-by-asurnipal-vorarlbergflug-2025",
+    "self-published-work",
+    "stall-warning-system"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3000x4000",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch01-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Hercules.propeller.arp.jpg",
+   "ours": {
+    "author": "Adrian Pingstone",
+    "license": "Public domain (PD-user)",
+    "w": 560,
+    "h": 411,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1800,
+    "height": 1322,
+    "licenseShortName": "Public domain",
+    "artist": "Photographed by Adrian Pingstone",
+    "templates": [
+     "PD-user|Arpingstone"
+    ],
+    "authorField": "Photographed by Adrian Pingstone"
+   },
+   "pageLicenses": [
+    "aircraft-at-cotswold-airport",
+    "aircraft-propeller-blade-tip-markings",
+    "arpingstone",
+    "constant-speed-propellers",
+    "dowty-rotol",
+    "images-with-infobox-aircraft",
+    "lockheed-martin-c-130j-hercules-of-the-royal-air-force",
+    "parts-and-systems-of-lockheed-c-130-hercules",
+    "pd",
+    "pd-user",
+    "rolls-royce-ae-2100",
+    "six-blade-aircraft-propellers",
+    "taken-with-olympus-c-750uz"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1800x1322",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Overhead_panel_detail_Airbus_A320_(5669634612).jpg",
+   "ours": {
+    "author": "Curimedia",
+    "license": "CC BY 2.0",
+    "w": 560,
+    "h": 494,
+    "mod": "切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1024,
+    "height": 683,
+    "licenseShortName": "CC BY 2.0",
+    "artist": "Curimedia"
+   },
+   "pageLicenses": [
+    "cc-by-2.0",
+    "cockpits-of-airbus-a320",
+    "ec-jyx-(aircraft)",
+    "files-from-flickr-with-changed-licenses",
+    "flickr-images-reviewed-by-file-upload-bot-(magnus-manske)",
+    "overhead-panels-(aircraft-cockpits)",
+    "photographs-by-curimedia",
+    "taken-with-canon-eos-20d"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1024x683",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:757_ram_air_turbine.jpg",
+   "ours": {
+    "author": "Swampfoot at English Wikipedia",
+    "license": "Public domain (PD-user)",
+    "w": 560,
+    "h": 835,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 944,
+    "height": 1407,
+    "licenseShortName": "Public domain",
+    "artist": "Swampfoot at English Wikipedia",
+    "templates": [
+     "PD-user|Swampfoot"
+    ]
+   },
+   "pageLicenses": [
+    "parts-and-systems-of-boeing-757",
+    "pd",
+    "pd-user",
+    "ram-air-turbines",
+    "swampfoot"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "944x1407",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Boeing_TB-29_Superfortress_%E2%80%98469972%E2%80%99_%E2%80%9CDoc%E2%80%9D_landing_gear_MD1.jpg",
+   "ours": {
+    "author": "Acroterion",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 532,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4838,
+    "height": 4600,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Acroterion"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "doc-(b-29)",
+    "landing-gear",
+    "may-2025-in-maryland",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4838x4600",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Boeing_737_Next-Generation_Carbon_Brake_PAS_2013.jpg",
+   "ours": {
+    "author": "Julian Herzog",
+    "license": "CC BY 4.0",
+    "w": 560,
+    "h": 372,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2800,
+    "height": 1860,
+    "licenseShortName": "CC BY 4.0",
+    "artist": "Julian Herzog (Website)"
+   },
+   "pageLicenses": [
+    "aircraft-disk-brakes",
+    "cc-by-4.0",
+    "exposure-time-1/30-sec",
+    "f-number-f/7.1",
+    "gfdl",
+    "iso-speed-rating-200",
+    "lens-focal-length-26-mm",
+    "license-migration-redundant",
+    "messier-bugatti-dowty",
+    "paris-air-show-2013",
+    "parts-and-systems-of-boeing-737-next-generation",
+    "photographs-taken-on-2013-06-19",
+    "photos-by-user:julian-herzog",
+    "photos-of-paris-air-show-2013-by-julian-herzog",
+    "self-published-work",
+    "taken-with-af-s-dx-nikkor-18-105-mm-f/3.5-5.6g-ed-vr",
+    "taken-with-nikon-d5000"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2800x1860",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Boeing_737-900_NG_emergency_oxygen_masks_1.jpeg",
+   "ours": {
+    "author": "DemonDays64",
+    "license": "CC BY 4.0",
+    "w": 560,
+    "h": 607,
+    "mod": "切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3024,
+    "height": 4032,
+    "licenseShortName": "CC BY 4.0",
+    "artist": "DemonDays64"
+   },
+   "pageLicenses": [
+    "boeing-737-900",
+    "cc-by-4.0",
+    "gfdl",
+    "license-migration-redundant",
+    "oxygen-masks-in-aviation",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3024x4032",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch02-photo7",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:2009_airport_deicing_truck_01.jpg",
+   "ours": {
+    "author": "Nicholas Hartmann",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 420,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2731,
+    "height": 2049,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Nicholas Hartmann"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "de-icing-of-aircraft",
+    "de-icing-vehicles",
+    "fmc-technologies",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2731x2049",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch03-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Wright_R-3350-B_Double_Cyclone_(1939)_sectioned_engine_-_cylinder_closeup.jpg",
+   "ours": {
+    "author": "Jim1138",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 420,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3264,
+    "height": 2448,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Jim1138"
+   },
+   "pageLicenses": [
+    "aircraft-engines-at-the-san-diego-air-&-space-museum-gillespie-field-annex",
+    "cc-by-sa-4.0",
+    "cutaways-of-radial-aircraft-engines",
+    "images-by-jim1138",
+    "sectioned-piston-engines",
+    "self-published-work",
+    "wright-r-3350"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3264x2448",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch03-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Aircraft_carburetor_PD_2013_3.jpg",
+   "ours": {
+    "author": "Bin im Garten",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 402,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 5068,
+    "height": 3640,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Bin im Garten"
+   },
+   "pageLicenses": [
+    "carburetors",
+    "cc-by-sa-3.0",
+    "fotoflugkurs-cuxhaven-2013",
+    "self-published-work",
+    "supported-by-wikimedia-deutschland-2013",
+    "supported-by-wikimedia-österreich-in-2013",
+    "taken-with-canon-eos-5d-mark-ii"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5068x3640",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch03-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Cutaway_constant_speed_propeller_hub.JPG",
+   "ours": {
+    "author": "MKFI",
+    "license": "Public domain (PD-self)",
+    "w": 560,
+    "h": 420,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3648,
+    "height": 2736,
+    "licenseShortName": "Public domain",
+    "artist": "MKFI"
+   },
+   "pageLicenses": [
+    "2010-in-vantaa",
+    "beechcraft-bonanza",
+    "collections-of-the-finnish-aviation-museum",
+    "constant-speed-propellers",
+    "cutaways-of-aircraft-parts",
+    "files-by-user:mkfi",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "finland-photographs-taken-on-2010-11-13",
+    "mccauley-propeller-systems",
+    "november-2010-finland-photographs",
+    "pd",
+    "pd-self",
+    "self-published-work",
+    "taken-with-canon-powershot-sx10-is"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3648x2736",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch03-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Pratt_%26_Whitney_JT8D-9_turbofan_engine_front_view_at_JASDF_Iruma_Air_Base_November_3,_2014.jpg",
+   "ours": {
+    "author": "Hunini",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 989,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2400,
+    "height": 4240,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Hunini"
+   },
+   "pageLicenses": [
+    "aircraft-engines-at-iruma-air-base",
+    "cc-by-sa-4.0",
+    "iruma-air-base-festival-2014",
+    "photographs-by-hunini",
+    "pratt-&-whitney-jt8d",
+    "self-published-work",
+    "taken-with-sony-nex-7"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2400x4240",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch03-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:PT6_Turbine.jpg",
+   "ours": {
+    "author": "flightlog",
+    "license": "CC BY 2.0",
+    "w": 560,
+    "h": 373,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3648,
+    "height": 2432,
+    "licenseShortName": "CC BY 2.0",
+    "artist": "flightlog"
+   },
+   "pageLicenses": [
+    "aero-friedrichshafen-2012",
+    "cc-by-2.0",
+    "cutaways-of-aircraft-engines",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "flickr-images-uploaded-by-flickr-upload-bot",
+    "pratt-&-whitney-canada-pt6",
+    "taken-with-nikon-coolpix-p7000"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3648x2432",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch04-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Static_port.JPG",
+   "ours": {
+    "author": "Dtom",
+    "license": "Public domain (PD-self)",
+    "w": 560,
+    "h": 420,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 2048,
+    "height": 1536,
+    "licenseShortName": "Public domain",
+    "artist": "Dtom"
+   },
+   "pageLicenses": [
+    "pd",
+    "pd-self",
+    "self-published-work",
+    "static-ports"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x1536",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch04-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Polish_turn_and_slip_indicator_EUP-46M_produced_by_PZL.JPG",
+   "ours": {
+    "author": "Łukasz Karolewski (Dozymetr)",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 560,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1800,
+    "height": 1799,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Łukasz Karolewski (Dozymetr)"
+   },
+   "pageLicenses": [
+    "cc-by-sa-3.0",
+    "self-published-work",
+    "turn-indicators"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1800x1799",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch04-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:HSI-L159.jpg",
+   "ours": {
+    "author": "Yxen at Czech Wikipedia",
+    "license": "Public domain (PD-user-w)",
+    "w": 560,
+    "h": 560,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 894,
+    "height": 894,
+    "licenseShortName": "Public domain",
+    "artist": "Yxen at Czech Wikipedia",
+    "templates": [
+     "PD-user-w|cs|Czech Wikipedia|Yxen"
+    ]
+   },
+   "pageLicenses": [
+    "aero-l-159",
+    "cs",
+    "czech-wikipedia",
+    "horizontal-situation-indicators",
+    "pd",
+    "pd-user",
+    "pd-user-w",
+    "yxen"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "894x894",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch04-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:NAV_Ger%C3%A4te_im_Cockpit_einer_C172_1212_VOR_Transponder_ADF.JPG",
+   "ours": {
+    "author": "Bin im Garten",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 840,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2848,
+    "height": 4272,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Bin im Garten"
+   },
+   "pageLicenses": [
+    "adf-indicators",
+    "aircraft-transponders",
+    "avionics-computers",
+    "cc-by-sa-3.0",
+    "self-published-work",
+    "taken-with-canon-eos-450d"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2848x4272",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch05-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:ILA_Berlin_2012_PD_043.JPG",
+   "ours": {
+    "author": "Bin im Garten",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4695,
+    "height": 3130,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Bin im Garten"
+   },
+   "pageLicenses": [
+    "aircraft-weight-and-balance",
+    "cc-by-sa-3.0",
+    "ila-2012",
+    "self-published-work",
+    "taken-with-canon-eos-5d-mark-ii",
+    "weighing-scales-in-germany"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4695x3130",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch05-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:CARGO_HOLD_OF_BOEING_747-230_D-ABYM_ON_DISPLAY_AT_THE_TECHNIK_MUSEUM_SPEYER_GERMANY_APRIL_2013_(9377073884).jpg",
+   "ours": {
+    "author": "calflier001",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 5184,
+    "height": 3456,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "calflier001"
+   },
+   "pageLicenses": [
+    "aircraft-cargo-compartments",
+    "boeing-747-at-technik-museum-speyer",
+    "cc-by-sa-2.0",
+    "flickr-images-reviewed-by-file-upload-bot-(magnus-manske)",
+    "photographs-by-stephen-mason",
+    "taken-with-canon-eos-550d",
+    "user:mainframe/uploads/flickr/28984065@n04"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5184x3456",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch06-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Glider_at_Willamete_Valley_Soaring_Club_-_North_Plains,_Oregon.jpg",
+   "ours": {
+    "author": "TravelingOtter",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3888,
+    "height": 2592,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "TravelingOtter"
+   },
+   "pageLicenses": [
+    "august-2011-in-oregon",
+    "august-2011-united-states-photographs",
+    "cc-by-sa-2.0",
+    "flickr-images-reviewed-by-flickreviewr",
+    "let-l-23-super-blaník",
+    "north-plains,-oregon"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3888x2592",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch06-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Runway_Snow_Plowing_(12258436395)_(2).jpg",
+   "ours": {
+    "author": "John Murphy",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 374,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 4517,
+    "height": 3012,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "John Murphy"
+   },
+   "pageLicenses": [
+    "airport-snowplows",
+    "airport-vehicles-in-the-united-states",
+    "aviation-files-(check-needed)",
+    "cc-by-sa-2.0",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "flickr-images-reviewed-by-file-upload-bot-(magnus-manske)",
+    "hartsfield-jackson-atlanta-international-airport",
+    "international-7000-series",
+    "international-dump-trucks",
+    "photographs-by-john-murphy",
+    "runways-in-georgia-(u.s.-state)",
+    "snow-covered-runways",
+    "snowplow-trucks-in-the-united-states",
+    "yellow-international-trucks"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "4517x3012",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch07-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Shelf_Cloud_over_Bay.jpg",
+   "ours": {
+    "author": "David Vergel",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 252,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 5296,
+    "height": 2381,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "David Vergel"
+   },
+   "pageLicenses": [
+    "2023-in-miami-dade-county,-florida",
+    "aventura,-florida",
+    "cc-by-sa-4.0",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "self-published-work",
+    "shelf-clouds-in-the-united-states"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5296x2381",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch07-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Mont_Blanc_from_Les_Arcs_1950.jpg",
+   "ours": {
+    "author": "Dmitry A. Mottl",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 315,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 5259,
+    "height": 2958,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Dmitry A. Mottl"
+   },
+   "pageLicenses": [
+    "arc-1950",
+    "auvergne-rhône-alpes-photographs-taken-on-2017-01-06",
+    "cc-by-sa-4.0",
+    "clouds-and-blue-sky-in-france",
+    "exposure-time-10-sec",
+    "featured-pictures-of-savoie",
+    "files-with-coordinates-missing-sdc-location-of-creation",
+    "golden-hour-in-france",
+    "january-2017-in-bourg-saint-maurice",
+    "lenticular-clouds-in-haute-savoie",
+    "lenticular-clouds-in-italy",
+    "long-exposure-photographs-of-france",
+    "photos-by-mottl",
+    "self-published-work",
+    "snow-in-savoie-in-january-2017",
+    "views-of-mont-blanc-from-les-arcs-(savoie)",
+    "wooden-buildings-in-france"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5259x2958",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch07-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Ice_formation_on_the_propeller_in_icing_conditions.jpg",
+   "ours": {
+    "author": "M. Hohenthal",
+    "license": "CC BY 4.0",
+    "w": 560,
+    "h": 114,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3287,
+    "height": 671,
+    "licenseShortName": "CC BY 4.0",
+    "artist": "M. Hohenthal"
+   },
+   "pageLicenses": [
+    "cc-by-4.0",
+    "self-published-work",
+    "unmanned-aerial-vehicles",
+    "wooden-aircraft-propellers"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3287x671",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch07-photo7",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Typhoon_Matsa_(Landfall).PNG",
+   "ours": {
+    "author": "GOES-9 Satellite（米国海軍研究所の画像）",
+    "license": "Public domain (PD-USGov-Military-Navy)",
+    "w": 560,
+    "h": 472,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 799,
+    "height": 673,
+    "licenseShortName": "Public domain",
+    "artist": "GOES-9 Satellite",
+    "templates": [
+     "PD-USGov-Mil-Navy"
+    ]
+   },
+   "pageLicenses": [
+    "cc-pd-mark",
+    "pd",
+    "pd-usgov-military-navy",
+    "typhoon-matsa"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "799x673",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch08-photo1",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Arrowwood_National_Wildlife_Refuge_on_sectional_aeronautical_charts.png",
+   "ours": {
+    "author": "Federal Aviation Administration（Aeronautical Information Services, AJV-5）",
+    "license": "Public domain (PD-USGov-FAA)",
+    "w": 560,
+    "h": 394,
+    "mod": "切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 796,
+    "height": 1006,
+    "licenseShortName": "Public domain",
+    "artist": "Federal Aviation Administration, Mission Support Services, Aeronautical Information Services (AJV-5)",
+    "templates": [
+     "PD-USGov-FAA"
+    ]
+   },
+   "pageLicenses": [
+    "arrowwood-national-wildlife-refuge",
+    "extracted-images",
+    "faa-images",
+    "pd",
+    "pd-usgov-faa",
+    "sectional-aeronautical-charts"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "796x1006",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch08-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Aerial_View_of_Lostwithiel_and_the_River_Fowey_%E2%80%93_Photo_by_Ben_Hawkins.jpg",
+   "ours": {
+    "author": "BenHawkinsPhotography",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 420,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 5272,
+    "height": 3948,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "BenHawkinsPhotography"
+   },
+   "pageLicenses": [
+    "aerial-photographs-of-cornwall",
+    "cc-by-sa-4.0",
+    "files-with-coordinates-missing-sdc-location-of-creation-(50°-n,-5°-w)",
+    "lostwithiel",
+    "river-fowey",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "5272x3948",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch08-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Drehmeier_Slide_Rule_Flight_Computer_003.JPG",
+   "ours": {
+    "author": "Bin im Garten",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 840,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2848,
+    "height": 4272,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Bin im Garten"
+   },
+   "pageLicenses": [
+    "asa-e6b",
+    "cc-by-sa-3.0",
+    "self-published-work",
+    "taken-with-canon-eos-450d"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2848x4272",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch08-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:GPS_Satellite_NASA_art-iif.jpg",
+   "ours": {
+    "author": "NASA",
+    "license": "Public domain (PD-USGov-NASA)",
+    "w": 560,
+    "h": 449,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1006,
+    "height": 806,
+    "licenseShortName": "Public domain",
+    "artist": "NASA",
+    "templates": [
+     "PD-USGov-NASA"
+    ]
+   },
+   "pageLicenses": [
+    "art-from-nasa",
+    "block-iif-gps-satellites",
+    "illustrations-of-gps-spacecraft",
+    "images-with-extracted-images",
+    "pd",
+    "pd-usgov-nasa",
+    "unknown-date"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1006x806",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch09-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Taxiway_sign_cropped.jpg",
+   "ours": {
+    "author": "Kimblad（元の写真）、El Grafo（切り抜いた派生作品）",
+    "license": "Public domain (PD-user)",
+    "w": 560,
+    "h": 355,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1876,
+    "height": 1188,
+    "licenseShortName": "Public domain",
+    "artist": "Taxiway_sign.jpg: Kimblad derivative work: El Grafo (talk)",
+    "templates": [
+     "PD-User|Kimblad"
+    ]
+   },
+   "pageLicenses": [
+    "kimblad",
+    "pd",
+    "pd-user",
+    "retouched-pictures",
+    "taken-with-canon-powershot-s3-is",
+    "taxiway-signs",
+    "uploaded-with-derivativefx"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1876x1188",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch10-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Caisson-Hypobaric-Chamber-1.jpg",
+   "ours": {
+    "author": "Museum Pusat TNI AU Dirgantara Mandala, Yogyakarta, Indonesia",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 6000,
+    "height": 4000,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Museum Pusat TNI AU Dirgantara Mandala, Yogyakarta, Indonesia"
+   },
+   "pageLicenses": [
+    "cc-by-sa-4.0",
+    "hypobaric-chambers",
+    "museum-dirgantara-mandala",
+    "uploaded-with-pattypan"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "6000x4000",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch10-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Pulox_Pulse_Oximeter.JPG",
+   "ours": {
+    "author": "Stefan Bellini",
+    "license": "CC0 1.0",
+    "w": 560,
+    "h": 422,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3513,
+    "height": 2649,
+    "licenseShortName": "CC0",
+    "artist": "Stefan Bellini"
+   },
+   "pageLicenses": [
+    "2014-in-medicine",
+    "cc-zero",
+    "files-by-user-stefan-bellini---photos-of-medical-equipment",
+    "medical-electronics",
+    "pulse-oximeters",
+    "self-published-work",
+    "taken-with-canon-powershot-sx230-hs"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3513x2649",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch10-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Preflight_checklist_(14443492762).jpg",
+   "ours": {
+    "author": "US Air Force",
+    "license": "Public domain (PD-USAF)",
+    "w": 560,
+    "h": 373,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3936,
+    "height": 2624,
+    "licenseShortName": "Public domain",
+    "artist": "US Air Force from USA",
+    "templates": [
+     "PD-USAF"
+    ]
+   },
+   "pageLicenses": [
+    "33-baza-lotnicza",
+    "baltops-2014",
+    "cockpit-of-kc-135-stratotanker",
+    "flickr-images-reviewed-by-flickreviewr",
+    "pd",
+    "pd-usgov-military-air-force",
+    "photographs-by-the-united-states-air-force",
+    "pre-flight-checks-(usaf)"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3936x2624",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch11-photo1",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Cessna_172_Skyhawk_II_taxiing_at_Chofu_Airport.jpg",
+   "ours": {
+    "author": "Josephus37",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 421,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 2762,
+    "height": 2078,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Josephus37"
+   },
+   "pageLicenses": [
+    "2017-at-chofu-airport",
+    "cc-by-sa-4.0",
+    "cessna-172-at-chofu-airport",
+    "ja01ba-(aircraft)",
+    "ja4139-(aircraft)",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2762x2078",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch11-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:BN-2_Islander_Crosswind_landing_F369-10A-V.jpg",
+   "ours": {
+    "author": "Uli Elch",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 293,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1944,
+    "height": 1016,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "Uli Elch"
+   },
+   "pageLicenses": [
+    "britten-norman-islander-at-flugplatz-harle",
+    "britten-norman-islander-landings",
+    "cc-by-sa-4.0",
+    "crosswind-aircraft-landings",
+    "d-iors-(aircraft)",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1944x1016",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch11-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:File_Frederick_Municipal_Airport_(Maryland).jpg",
+   "ours": {
+    "author": "FIshstick at English Wikipedia",
+    "license": "Public domain (PD-user-w)",
+    "w": 560,
+    "h": 318,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 2326,
+    "height": 1322,
+    "licenseShortName": "Public domain",
+    "artist": "FIshstick at English Wikipedia",
+    "templates": [
+     "PD-user-w|en|Wikipedia|FIshstick"
+    ]
+   },
+   "pageLicenses": [
+    "2008-at-frederick-municipal-airport-(maryland)",
+    "aerial-photographs-of-airports-in-maryland",
+    "en",
+    "fishstick",
+    "pd",
+    "pd-user",
+    "pd-user-w",
+    "runways-in-maryland",
+    "united-states-photographs-taken-on-2008-08-03",
+    "wikipedia"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2326x1322",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch11-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:D-EEND_Cessna_182P_landing_at_Hilversum_Airport_(ICAO_EHHV),_photo2.JPG",
+   "ours": {
+    "author": "Alf van Beem",
+    "license": "CC0 1.0",
+    "w": 560,
+    "h": 420,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3537,
+    "height": 2656,
+    "licenseShortName": "CC0",
+    "artist": "Alf van Beem"
+   },
+   "pageLicenses": [
+    "2014-at-hilversum-airport",
+    "cc-zero",
+    "cessna-182-at-hilversum-airport",
+    "cessna-182-landings",
+    "d-eend-(aircraft)",
+    "taken-with-olympus-e-m5"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3537x2656",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch11-photo7",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Runway_16R,_Narita_Airport_(4055519259).jpg",
+   "ours": {
+    "author": "Kentaro Iemoto from Tokyo, Japan",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1200,
+    "height": 800,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Kentaro Iemoto from Tokyo, Japan"
+   },
+   "pageLicenses": [
+    "cc-by-sa-2.0",
+    "flickr-images-reviewed-by-file-upload-bot-(magnus-manske)",
+    "narita-international-airport-at-night",
+    "narita-international-airport-runway-a",
+    "photographs-by-kentaro-iemoto",
+    "runway-lights",
+    "taken-with-canon-eos-50d"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1200x800",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch12-photo1",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:CAT_IIIA_Landing.jpg",
+   "ours": {
+    "author": "golfcharlie232",
+    "license": "CC BY-SA 4.0",
+    "w": 560,
+    "h": 374,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 1000,
+    "height": 667,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "golfcharlie232"
+   },
+   "pageLicenses": [
+    "aeronautical-ground-lights",
+    "cc-by-sa-4.0",
+    "items-with-vrts-permission-confirmed",
+    "runway-lights"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1000x667",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch12-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Standard_Holding_Pattern.png",
+   "ours": {
+    "author": "Federal Aviation Administration",
+    "license": "Public domain (PD-USGov-FAA)",
+    "w": 560,
+    "h": 304,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1356,
+    "height": 736,
+    "licenseShortName": "Public domain",
+    "artist": "Federal Aviation Administration",
+    "templates": [
+     "PD-USGov-FAA"
+    ]
+   },
+   "pageLicenses": [
+    "faa-images",
+    "holding-pattern",
+    "instrument-flying-handbook",
+    "pd",
+    "pd-usgov-faa"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1356x736",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch12-photo5",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Approach_Lighting_System_Bremen_2.jpg",
+   "ours": {
+    "author": "Garitzko",
+    "license": "Public domain (PD-self)",
+    "w": 560,
+    "h": 252,
+    "mod": "切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 2048,
+    "height": 1536,
+    "licenseShortName": "Public domain",
+    "artist": "Garitzko"
+   },
+   "pageLicenses": [
+    "2009-at-bremen-airport",
+    "approach-lighting-systems",
+    "pd",
+    "pd-self",
+    "self-published-work"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "2048x1536",
+   "shape": "cropped",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch13-photo2",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Beechcraft_Baron_SM_ISR_-_RIAT_2015_(24557432556).jpg",
+   "ours": {
+    "author": "Airwolfhound from Hertfordshire, UK",
+    "license": "CC BY-SA 2.0",
+    "w": 560,
+    "h": 373,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 3500,
+    "height": 2333,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Airwolfhound from  Hertfordshire, UK"
+   },
+   "pageLicenses": [
+    "2015-royal-international-air-tattoo",
+    "beechcraft-baron",
+    "cc-by-sa-2.0",
+    "flickr-images-reviewed-by-flickreviewr",
+    "photographs-by-tim-felce"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3500x2333",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch13-photo3",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:ASI_ME.png",
+   "ours": {
+    "author": "U.S. Dept. of Transportation, Federal Aviation Administration",
+    "license": "Public domain (PD-USGov)",
+    "w": 560,
+    "h": 423,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 947,
+    "height": 716,
+    "licenseShortName": "Public domain",
+    "artist": "U.S. Dept. of Transportation, Federal Aviation Administration",
+    "templates": [
+     "PD-USGov"
+    ]
+   },
+   "pageLicenses": [
+    "autopilot-instruments",
+    "cc-pd-mark",
+    "pd",
+    "pd-usgov"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "947x716",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch13-photo4",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Feather-of-AV-140-propeller-on-Antonov-140-100-plane.jpg",
+   "ours": {
+    "author": "Vivan755",
+    "license": "CC BY-SA 3.0",
+    "w": 560,
+    "h": 233,
+    "mod": "無加工"
+   },
+   "page": {
+    "width": 720,
+    "height": 300,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Vivan755"
+   },
+   "pageLicenses": [
+    "antonov-an-140-parts-and-systems",
+    "cc-by-sa-3.0",
+    "gfdl",
+    "license-migration-redundant",
+    "self-published-work",
+    "six-blade-aircraft-propellers"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "720x300",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch13-photo6",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:USMC-090222-M-3360I-005.jpg",
+   "ours": {
+    "author": "Lance Cpl. Stephanie Ingersoll（米国海兵隊）",
+    "license": "Public domain (PD-USGov-Military)",
+    "w": 560,
+    "h": 373,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 3504,
+    "height": 2336,
+    "licenseShortName": "Public domain",
+    "artist": "Lance Cpl. Stephanie Ingersoll",
+    "templates": [
+     "PD-USGov-Military"
+    ]
+   },
+   "pageLicenses": [
+    "files-created-by-the-united-states-marine-corps-with-known-ids",
+    "pd",
+    "pd-usgov-military",
+    "taken-with-canon-eos-20d"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "3504x2336",
+   "shape": "same",
+   "verdict": "OK"
+  },
+  {
+   "id": "ch13-photo7",
+   "store": "book-photos-k.js",
+   "source": "https://commons.wikimedia.org/wiki/File:Piper.seneca.pa34.g-elis.bristol.arp.jpg",
+   "ours": {
+    "author": "Adrian Pingstone",
+    "license": "Public domain (PD-user)",
+    "w": 560,
+    "h": 402,
+    "mod": "注記はパイロット基礎教材（第 3 版）で追加"
+   },
+   "page": {
+    "width": 1000,
+    "height": 718,
+    "licenseShortName": "Public domain",
+    "artist": "",
+    "templates": [
+     "PD-user|Arpingstone"
+    ],
+    "authorField": "Adrian Pingstone (Arpingstone; PD-user)"
+   },
+   "pageLicenses": [
+    "arpingstone",
+    "files-with-no-machine-readable-author",
+    "files-with-no-machine-readable-source",
+    "media-missing-infobox-template",
+    "pd",
+    "pd-user"
+   ],
+   "licenseOk": true,
+   "authorOk": true,
+   "original": "1000x718",
+   "shape": "same",
+   "verdict": "OK"
+  }
+ ],
+ "how": "Commons は 2026-10-29 にこのアドレスへ HTTP 429 を返した。各ファイルのページの値は Commons の API（action=query&prop=imageinfo&iiprop=extmetadata|size、ライセンスの札は prop=revisions の wikitext）を別の経路（WebFetch）で読み、--pages で与えた。NASA の 6 枚は images-api.nasa.gov を直接読んだ。比べ方（ライセンス・作者・形）は photosrc.py verify のもの",
+ "notUsed": [
+  {
+   "id": "ch01-photo2",
+   "change": "条件つき → 使わない",
+   "source": "https://commons.wikimedia.org/wiki/File:Winglet_Airbus_A319-132.jpg",
+   "page": {
+    "width": 3888,
+    "height": 2592,
+    "licenseShortName": "CC BY-SA 3.0",
+    "artist": "Till Niermann",
+    "categories": "GFDL|Taken with Canon EOS 400D|CC-BY-SA-3.0,2.5,2.0,1.0|License migration redundant|Static dischargers|Self-published work|Airbus A319 of Germanwings|Wingtip fences|Cabin window views of aircraft wings|Wingtip devices of Airbus A320 family aircraft|Airbus A319 (window views)"
+   },
+   "reason": "ウイングレット全体が航空会社（Germanwings）の塗装の黄色で、写真の中で最も目立つ（Commons の分類「Airbus A319 of Germanwings」）。DESIGN 4.2 の条件「旅客機の塗装・ロゴが目立たない」を満たさない"
+  },
+  {
+   "id": "ch06-photo2",
+   "change": "条件つき → 使わない",
+   "source": "https://commons.wikimedia.org/wiki/File:00_1706_South_America._-_El_Alto_International_Airport_(La_Paz).jpg",
+   "page": {
+    "width": 3300,
+    "height": 2200,
+    "licenseShortName": "CC BY-SA 4.0",
+    "artist": "W. Bulach",
+    "categories": "Self-published work|Files with coordinates missing SDC location of creation|Bolivia photographs taken on 2015-02-27|Files by User:W. Bulach|McDonnell Douglas DC-10 of Lufthansa at El Alto International Airport"
+   },
+   "reason": "機体に Lufthansa の大きな文字と尾翼のロゴ（Commons の分類「McDonnell Douglas DC-10 of Lufthansa at El Alto International Airport」）"
+  },
+  {
+   "id": "ch09-photo2",
+   "change": "条件つき → 使わない",
+   "source": "https://commons.wikimedia.org/wiki/File:My_first_flight_as_a_'pilot'_(5050690166).jpg",
+   "reason": "操縦する人の顔が横からはっきり写っている（STYLE の写真の決まり）",
+   "page": {
+    "width": 3264,
+    "height": 2448,
+    "licenseShortName": "CC BY-SA 2.0",
+    "artist": "Fulvio Spada from Torino, Italy",
+    "categories": "Flickr images reviewed by FlickreviewR|Aviators in cockpits|Files uploaded by The Photographer from Flickr|Files with coordinates missing SDC location of creation|David Clark headsets|Flickr images missing SDC Flickr photo ID|Flickr images missing SDC published in"
+   }
+  },
+  {
+   "id": "ch09-photo6",
+   "change": "使う → 使わない（DESIGN 4.2 の表からの変更）",
+   "source": "https://commons.wikimedia.org/wiki/File:Signal_Light_Gun_Hulbert_Field.jpg",
+   "page": {
+    "width": 2812,
+    "height": 1824,
+    "licenseShortName": "Public domain",
+    "artist": "Senior Airman Kentavist P. Brackin",
+    "categories": "Signalling lamps|July 2014 in Florida|PD US Air Force|Files with coordinates missing SDC location of creation|People at Hurlburt Field"
+   },
+   "reason": "信号灯を構える管制員と後ろの人の顔がはっきり写っている（STYLE の写真の決まり「顔がはっきり写った人は使わない」・基準 17）"
+  }
+ ]
+}

@@ -130,15 +130,20 @@ test('the search: the body (with the figures\' words), case-insensitive, the end
   assert.equal(R.search('  ', idx).length, 0);
 });
 
-test('the photos: data URLs (WebP), each with its alt text, caption and credit (author, an allowed licence, links); every one used, sizes', () => {
-  const P = FL.bookPhotos;
-  assert.ok(P && typeof P === 'object', 'book-photos.js is loaded');
+// the textbook's photos (book-photos.js) and the basic course's photos the book uses (book-photos-k.js: placed by the
+// chapters as their sections come; textbook/test/photos.test.mjs checks the files themselves)
+test('the photos: data URLs (WebP), each with its alt text, caption and credit (author, an allowed licence, links); every textbook photo used, sizes', () => {
+  assert.ok(FL.bookPhotos && typeof FL.bookPhotos === 'object', 'book-photos.js is loaded');
+  assert.ok(FL.bookPhotosK && typeof FL.bookPhotosK === 'object', 'book-photos-k.js is loaded');
+  const P = { ...FL.bookPhotos, ...FL.bookPhotosK };
+  assert.equal(Object.keys(P).length, Object.keys(FL.bookPhotos).length + Object.keys(FL.bookPhotosK).length, 'no id in both files');
   const used = new Map();
   for (const s of SECS) for (const m of BK.html(s).matchAll(/<figure class="bk-photo" data-photo="([^"]+)">/g)) used.set(m[1], (used.get(m[1]) || 0) + 1);
   assert.equal([...used.values()].reduce((a, b) => a + b, 0), COUNTS.photos);
   let total = 0;
   for (const [id, p] of Object.entries(P)) {
-    assert.ok(used.has(id), `${id}: used in a section`);
+    // every textbook photo is used; a basic course photo is used once its chapter places it (DESIGN 4.2: W13〜W41)
+    if (FL.bookPhotos[id]) assert.ok(used.has(id), `${id}: used in a section`);
     assert.match(p.src, /^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/, id);
     const bytes = Buffer.from(p.src.split(',')[1], 'base64');
     assert.equal(bytes.subarray(0, 4).toString(), 'RIFF', id); assert.equal(bytes.subarray(8, 12).toString(), 'WEBP', id);
@@ -153,18 +158,20 @@ test('the photos: data URLs (WebP), each with its alt text, caption and credit (
     assert.match(c.license, /^(Public domain.*|CC0 1\.0|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?)$/, `${id}: licence ${c.license}`);
     assert.match(c.licenseUrl, /^https:\/\//, id); assert.match(c.source, /^https:\/\//, id);
   }
-  for (const id of used.keys()) assert.ok(P[id], `${id}: in book-photos.js`);
+  for (const id of used.keys()) assert.ok(P[id], `${id}: in book-photos.js or book-photos-k.js`);
   // every bk.photo('…') written in the chapters' source names a photo that is there (a missing one would show nothing)
   // (the chapters' files: the book-*.js of FL_MODULES — FLIGHT LAB's one list — less the frame and the photos)
   for (const f of FL_MODULES.filter(m => /^book-.*\.js$/.test(m) && !['book-figs.js', 'book-core.js'].includes(m) && !m.startsWith('book-photos')))
-    for (const m of fs.readFileSync(modulePath(f), 'utf8').matchAll(/bk\.photo\('([^']+)'\)/g)) assert.ok(P[m[1]], `${f}: bk.photo('${m[1]}') is not in book-photos.js`);
+    for (const m of fs.readFileSync(modulePath(f), 'utf8').matchAll(/bk\.photo\('([^']+)'\)/g)) assert.ok(P[m[1]], `${f}: bk.photo('${m[1]}') is in neither book-photos.js nor book-photos-k.js`);
   assert.ok(total <= 5 * 1024 * 1024, `${total} bytes in all`);
   // the credits page lists every photo
   const credits = fs.readFileSync(new URL('../../flight-lab/PHOTO-CREDITS.md', import.meta.url), 'utf8');
   for (const id of Object.keys(P)) assert.ok(credits.includes('`' + id + '`'), `${id}: in PHOTO-CREDITS.md`);
-  // without book-photos.js (CADET) a photo is nothing
-  const keep = FL.bookPhotos; FL.bookPhotos = undefined;
-  try { assert.equal(BK.bk.photo(Object.keys(keep)[0] || 'x'), ''); } finally { FL.bookPhotos = keep; }
+  // the caption line ends with the photo's own modification label (mod, DESIGN 4.2), not one line for all
+  for (const [id, n] of used) assert.ok(n >= 1 && BK.bk.photo(id).includes(`・${P[id].mod}</span></figcaption>`), `${id}: its mod under it`);
+  // without the photo files (CADET) a photo is nothing
+  const keep = FL.bookPhotos, keepK = FL.bookPhotosK; FL.bookPhotos = undefined; FL.bookPhotosK = undefined;
+  try { assert.equal(BK.bk.photo(Object.keys(keep)[0] || 'x'), ''); assert.equal(BK.bk.photo('ch00-photo5'), ''); } finally { FL.bookPhotos = keep; FL.bookPhotosK = keepK; }
   assert.equal(BK.bk.photo('no-such-photo'), '');
 });
 

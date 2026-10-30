@@ -1,8 +1,8 @@
 // TEXTBOOK — build tests (node --test): build() returns the page as a string (nothing is written here).
 //  - one file, nothing loaded from outside (FLIGHT LAB's source URLs are strings and <a href> links: not loads);
-//  - every inline script parses; FLIGHT LAB's 17 modules are inside, in FL_MODULES order, read from flight-lab/src;
+//  - every inline script parses; FLIGHT LAB's 18 modules are inside, in FL_MODULES order, read from flight-lab/src;
 //  - FL_MODULES is FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs) less what this page says it leaves out
-//    (FL_LEAVE_OUT, each with its reason), in the list's order (DESIGN 6.2 rule 7); 17 is changed on purpose with a file (TEST-CONSTANTS.md);
+//    (FL_LEAVE_OUT, each with its reason), in the list's order (DESIGN 6.2 rule 7); 18 is changed on purpose with a file (TEST-CONSTANTS.md);
 //  - the notes are there; no FLIGHT LAB source copied into textbook/; the same sources give the same string.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,11 +31,11 @@ test('build: one file, nothing from outside', () => {
   assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/i);
 });
 
-test('build: every script parses; the 17 FLIGHT LAB modules in order, then the page', () => {
+test('build: every script parses; the 18 FLIGHT LAB modules in order, then the page', () => {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert.equal(scripts.length, FL_MODULES.length + 2);
   for (const s of scripts) assert.doesNotThrow(() => new vm.Script(s), s.slice(0, 60));
-  assert.equal(FL_MODULES.length, 17);
+  assert.equal(FL_MODULES.length, 18);
   const at = FL_MODULES.map(m => html.indexOf(`/* ---- FLIGHT LAB: ${m} ---- */`));
   for (const [i, m] of FL_MODULES.entries()) assert.ok(at[i] > 0, m);
   for (let i = 1; i < at.length; i++) assert.ok(at[i] > at[i - 1], `${FL_MODULES[i]} after ${FL_MODULES[i - 1]}`);
@@ -52,7 +52,7 @@ test('build: FL_MODULES is FLIGHT LAB\'s one list less what this page leaves out
   assert.deepEqual([...FL_MODULES], MODULES.filter(m => !Object.hasOwn(FL_LEAVE_OUT, m)));
   for (const [m, why] of Object.entries(FL_LEAVE_OUT)) { assert.ok(MODULES.includes(m), `${m}: not in flight-lab/src/modules.mjs`); assert.ok(why.length >= 10, `${m}: the reason`); }
   // the photos are read (bk.photo); the basic course and FLIGHT LAB's own pages are not
-  assert.ok(FL_MODULES.includes('book-photos.js'));
+  assert.ok(FL_MODULES.includes('book-photos.js') && FL_MODULES.includes('book-photos-k.js'));
   for (const m of ['kiso/kiso-data.js', 'quiz.js', 'radio.js', 'ui.js', 'pages.js', 'app.js', 'scene.js', 'google3d.js']) assert.ok(!FL_MODULES.includes(m), m);
   for (const m of FL_MODULES) assert.ok(fs.existsSync(modulePath(m)) && modulePath(m).startsWith(FL_SRC + path.sep), m);
 });

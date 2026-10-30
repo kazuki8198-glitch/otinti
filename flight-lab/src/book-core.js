@@ -6,8 +6,8 @@
 // US–Japan boxes, the boxes of the section form: もっと深く・計算演習・判断の目・ここを混同しない・思い出そう), the
 // lookups the pages use, and what the pages draw from the data (the scope badge and the provenance line of a section:
 // secMarks; the chapter-end 説明してみよう: writtenHtml). The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
-// (FL.book.add); the figures in book-figs.js; the photos in book-photos.js (loaded after this file by FLIGHT LAB and
-// TEXTBOOK, not by CADET).
+// (FL.book.add); the figures in book-figs.js; the photos in book-photos.js and the basic course's photos in
+// book-photos-k.js (both loaded after this file by FLIGHT LAB and TEXTBOOK, not by CADET).
 (function (FL) {
   'use strict';
   const R = {
@@ -155,12 +155,14 @@
   const attr = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const site = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return '出典'; } };
   const link = (u, t) => `<a href="${attr(u)}" target="_blank" rel="noopener noreferrer">${t}</a>`;
-  // a photo from book-photos.js (FL.bookPhotos): nothing when that file is not loaded (CADET) or the id is not there
+  // a photo from book-photos.js (FL.bookPhotos) or, for the basic course's photos, book-photos-k.js (FL.bookPhotosK),
+  // with its own modification label (mod: 無加工・切り抜き・縮小・注記はパイロット基礎教材（第 3 版）で追加 …, DESIGN 4.2):
+  // nothing when neither file is loaded (CADET), the id is not there or its bytes are not (src '')
   const photo = id => {
-    const p = FL.bookPhotos && FL.bookPhotos[id]; if (!p) return '';
+    const p = (FL.bookPhotos && FL.bookPhotos[id]) || (FL.bookPhotosK && FL.bookPhotosK[id]); if (!p || !p.src) return '';
     const c = p.credit;
     return `<figure class="bk-photo" data-photo="${attr(id)}"><img src="${p.src}" alt="${attr(p.alt)}"${p.w ? ` width="${p.w}" height="${p.h}"` : ''} loading="lazy" decoding="async">`
-      + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}・縮小などの加工あり</span></figcaption></figure>`;
+      + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}${p.mod ? '・' + attr(p.mod) : ''}</span></figcaption></figure>`;
   };
   // ---- the US–Japan boxes (textbook/rewrite/combined/DESIGN.md 3.4; the data: FL.jur in book-jur.js) ----
   // bk.jur(...ids): the two countries side by side (stacked on a phone), one row per FL.jur item (data-jur="<id>");

@@ -31,8 +31,8 @@ t('DESIGN 3.3: 289 sections, 48 chapters, the parts as planned', () => {
   assert.deepEqual(by, { p0: 22, p1: 118, p2: 40, p3: 19, p4: 19, p5: 14, p6: 17, p7: 40 });
   assert.equal([...secs.values()].filter(v => v.isNew).length, 135);
 });
-t('DESIGN 3.4: 47 items; DESIGN 4.2: photos 52 / 4 / 29; DESIGN 3.2: 13 known pairs', () => {
-  assert.equal(jurItems().length, 47); const p = photoPlan(); assert.deepEqual([p.use.size, p.conditional.size, p.notUse.size], [52, 4, 29]); assert.equal(knownConcepts().length, 13);
+t('DESIGN 3.4: 47 items; DESIGN 4.2: photos 52 / 0 / 33 (W22 decided the 4 conditional ones); DESIGN 3.2: 13 known pairs', () => {
+  assert.equal(jurItems().length, 47); const p = photoPlan(); assert.deepEqual([p.use.size, p.conditional.size, p.notUse.size], [52, 0, 33]); assert.ok(p.use.has('ch01-photo4') && !p.use.has('ch09-photo6') && p.notUse.has('ch09-photo6')); assert.equal(knownConcepts().length, 13);
 });
 t('the basic course: 393 sections, 376 questions, 161 figures, 85 photos', () => { const K = kiso(); assert.deepEqual([K.sections.length, K.qa.length, K.figures.length, K.photos.length], [393, 376, 161, 85]); });
 t('kRefs', () => { assert.deepEqual(kRefs('K05.14〜05.16・05.21（図）＋T'), [{ ch: '05', n: 14 }, { ch: '05', n: 15 }, { ch: '05', n: 16 }, { ch: '05', n: 21 }]); });

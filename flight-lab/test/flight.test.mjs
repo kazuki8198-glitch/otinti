@@ -9,7 +9,7 @@ import vm from 'node:vm';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { build, MAX_BYTES } from '../build.mjs';
+import { build, MAX_BYTES, moduleText, KISO_PHOTOS_FROM_ORIGINAL } from '../build.mjs';
 const FL = load(...NODE_MODULES);   // src/modules.mjs less what Node leaves out (test/load.mjs)
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
 const DT = 1 / 120, clamp = P.clamp;
@@ -61,6 +61,30 @@ test('build: the basic course (kiso/kiso-data.js) inline as it is, after the tex
   const at = k => html.indexOf(k);
   assert.ok(at('/* ---- book-5.js ---- */') < at('/* ---- kiso/kiso-data.js ---- */') && at('/* ---- kiso/kiso-data.js ---- */') < at('/* ---- quiz.js ---- */'), 'script order');
   assert.ok(html.includes(fs.readFileSync(KISO_JS, 'utf8')), 'kiso-data.js unchanged in the page');
+});
+
+// the basic course's photos that the book uses (book-photos-k.js, W22): while the page carries the original
+// (kiso-data.js), the build leaves out the file's own copy of the photos and each one's src is read from FL.kiso.photos
+// — the same bytes, not twice in the page (textbook/rewrite/combined/DESIGN.md 8.2). TEXTBOOK carries the whole file.
+test('build: the basic course\'s photos the book uses (book-photos-k.js) are in the page once, read from FL.kiso.photos (DESIGN 8.2)', () => {
+  const PK_JS = path.join(FL_ROOT, 'src', 'book-photos-k.js');
+  const block = html.match(/\/\* ---- book-photos-k\.js ---- \*\/\n([\s\S]*?)\n<\/script>/)[1];
+  assert.ok(block.includes('/*SRC*/{}/*/SRC*/'), 'its SRC block is left out');
+  assert.equal((block.match(/data:image\/webp;base64,/g) || []).length, 0, 'no photo bytes of its own');
+  assert.ok(Buffer.byteLength(block) < 120 * 1024, `${Buffer.byteLength(block)} bytes`);
+  assert.equal(block, moduleText('book-photos-k.js'));
+  // as the page runs them (kiso-data.js after it, read when a photo is drawn), and the whole file on its own
+  const page = {}; page.window = page;
+  vm.runInNewContext(block, page, { filename: 'book-photos-k.js (page)' }); vm.runInNewContext(fs.readFileSync(KISO_JS, 'utf8'), page, { filename: 'kiso-data.js' });
+  const whole = {}; vm.runInNewContext(fs.readFileSync(PK_JS, 'utf8'), whole, { filename: 'book-photos-k.js' });
+  const K = page.FL.bookPhotosK, W = whole.FL.bookPhotosK;
+  assert.ok(Object.keys(K).length >= 51);
+  assert.deepEqual(Object.keys(K), Object.keys(W));
+  for (const [id, p] of Object.entries(K)) {
+    assert.ok(p.kiso && KZ.photos[p.kiso], `${id}: a photo of the original`);
+    assert.ok(p.src.startsWith('data:image/webp;base64,') && p.src === KZ.photos[p.kiso] && p.src === W[id].src, `${id}: the same bytes`);
+  }
+  assert.equal(KISO_PHOTOS_FROM_ORIGINAL, MODULES.includes('kiso/kiso-data.js'));
 });
 
 test('basic course: chapters 0–13, the counts its README gives, every figure and photo placed once with its caption and credit, apart from the textbook', () => {
@@ -746,12 +770,12 @@ test('modules: one list (src/modules.mjs) — the build reads all of it in order
   // the dev page (src/index.html, opened from src/): the same files in the same order (book-photos.js among them)
   const dev = fs.readFileSync(path.join(FL_ROOT, 'src', 'index.html'), 'utf8');
   assert.deepEqual([...dev.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]), MODULES.map(m => (m.includes('/') ? '../' + m : m)));
-  assert.ok(dev.includes('<script src="book-photos.js"></script>'));
+  assert.ok(dev.includes('<script src="book-photos.js"></script>') && dev.includes('<script src="book-photos-k.js"></script>'));
   // the Node tests: the list less NODE_LEAVE_OUT (each with its reason), in its order; CORE is the list's head
   assert.deepEqual([...NODE_MODULES], MODULES.filter(m => !Object.hasOwn(NODE_LEAVE_OUT, m)));
   for (const [m, why] of Object.entries(NODE_LEAVE_OUT)) { assert.ok(MODULES.includes(m), m); assert.ok(why.length >= 10, `${m}: the reason`); }
   assert.deepEqual(MODULES.slice(0, CORE.length), [...CORE]);
-  assert.equal(FL.google3d, undefined); assert.equal(FL.kiso, undefined); assert.equal(FL.bookPhotos, undefined);
+  assert.equal(FL.google3d, undefined); assert.equal(FL.kiso, undefined); assert.equal(FL.bookPhotos, undefined); assert.equal(FL.bookPhotosK, undefined);
   // a leave-out list that names a file not in the list (renamed, gone) is an error; so is one without a reason
   assert.throws(() => without({ 'no-such-file.js': 'a reason here' }, 'a test'), /no-such-file\.js: not in flight-lab\/src\/modules\.mjs/);
   assert.throws(() => without({ 'quiz.js': '' }, 'a test'), /without a reason/);
@@ -762,7 +786,7 @@ test('modules: TEXTBOOK\'s FL_MODULES are the same list less what it says it lea
   const TB = await import('../../textbook/build.mjs');
   assert.deepEqual([...TB.FL_MODULES], MODULES.filter(m => !Object.hasOwn(TB.FL_LEAVE_OUT, m)));
   for (const m of Object.keys(TB.FL_LEAVE_OUT)) assert.ok(MODULES.includes(m), m);
-  assert.ok(TB.FL_MODULES.includes('book-photos.js') && !TB.FL_MODULES.includes('kiso/kiso-data.js'));
+  assert.ok(TB.FL_MODULES.includes('book-photos.js') && TB.FL_MODULES.includes('book-photos-k.js') && !TB.FL_MODULES.includes('kiso/kiso-data.js'));
 });
 
 // What the reader sees (the textbook page, the chapters' end matter, the ground-school tests) has no （別の章） (a {ch:} to
@@ -875,12 +899,23 @@ test('book: 説明してみよう — FL.book.writtenHtml on the chapters with w
       assert.ok(w.includes(`<button type="button" class="bk-w-btn" aria-expanded="false" aria-controls="bkw-${c.id}-${i}">答えを見る</button><div class="bk-w-a" id="bkw-${c.id}-${i}" hidden><b>答えの例</b>`), `${c.id} ${i}: hidden behind its button`);
       assert.ok(it.q.trim() && it.a.trim(), `${c.id} ${i}`);
       assert.match(it.a, /data-sec="/, `${c.id} ${i}: the answer links its section (criterion 20)`);
+      // a question rewritten from the basic course names the original's questions (they are there: kiso/), and says so
+      if (it.from) {
+        for (const id of it.from) assert.ok(KISO_PLACES.has(id), `${c.id} ${i}: ${id} is a question of the original (kiso/)`);
+        assert.ok(w.includes(`<div class="bk-w-from" data-kiso="${it.from.join(' ')}">パイロット基礎教材（第 3 版）第 `), `${c.id} ${i}: its provenance line`);
+      }
     });
     for (const m of w.matchAll(/data-sec="([^"]*)"/g)) assert.ok(BK.findSection(m[1]), `${c.id} → ${m[1]}`);
     assert.doesNotMatch(w, /（別の章）|\{ch:/, c.id);
   }
   const front = ['intro', 'basics', 'english'].map(id => BK.writtenItems(BK.CHAPTERS.find(c => c.id === id)).length);
   assert.ok(front[0] >= 1 && front[1] >= 14 && front[2] >= 7, `the front part's written: ${front}`);
+  // the front part's questions rewritten from the basic course (PROVENANCE: kiso00.q1・q2・q6〜q16・q19・q20 → basics,
+  // kiso09.q3 → intro) carry their from; english's are new
+  const fromOf = id => BK.writtenItems(BK.CHAPTERS.find(c => c.id === id)).map(w => (w.from || []).join(' '));
+  assert.deepEqual(fromOf('intro'), ['kiso09.q3']);
+  assert.deepEqual([...new Set(fromOf('basics').join(' ').split(' '))].sort(), ['q1', 'q2', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q19', 'q20'].map(q => `kiso00.${q}`).sort());
+  assert.ok(fromOf('basics').every(Boolean) && fromOf('english').every(f => f === ''));
   assert.ok(n >= 22, `${n}`);
   // { q, a, from }: the original's question it was rewritten from, as the reader sees it; a malformed one is an error
   const ch = { id: 'zz', written: [['問い', '答え'], { q: '問い 2', a: '答え 2（{ch:aero}）', from: ['kiso09.q3'] }] };

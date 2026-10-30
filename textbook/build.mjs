@@ -13,7 +13,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs');
 export const FL_SRC = path.join(here, '..', 'flight-lab', 'src');
 // the textbook and what it needs: FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs), in its order (physics.js
-// first: book-1/3/4/5 use it while loading; book-photos.js after book-core.js: the photos, as data URLs, for bk.photo;
+// first: book-1/3/4/5 use it while loading; book-photos.js and book-photos-k.js after book-core.js: the photos, as data
+// URLs, for bk.photo (the basic course's photos whole: this page has no kiso/kiso-data.js to read them from);
 // school.js and syllabus.js for the lessons' names), less what this page does not read:
 export const FL_LEAVE_OUT = Object.freeze({
   'kiso/kiso-data.js': 'the basic course (the original, kept as it is): FLIGHT LAB\'s own page; the combined book takes from it by rewriting, not by loading it',

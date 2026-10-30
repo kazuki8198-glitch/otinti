@@ -7,7 +7,9 @@
 //  course, byte-identical to flight-lab/kiso/photo/<id>.webp; none of the photos DESIGN 4.2 says not to use (airline,
 //  instrument screens, ch00-photo7, the missing ch12-photo3/4); the decoded total ≤ 4.0 MiB (the design's budget) and
 //  ≤ 5 MiB (TEXTBOOK's test). For W22: which of the planned basic-course photos have a Commons file name in their
-//  chapter's photoCreditsHtml.   --out FILE writes the hash list.
+//  chapter's photoCreditsHtml. A basic-course photo not placed yet (book-photos-k.js holds the 51 the chapters place
+//  as they are written: R2〜R4) is pending while its section is not in the book, a warning once it is; a mod of two
+//  labels joined by ／ is read label by label (W22).   --out FILE writes the hash list.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -20,7 +22,9 @@ import { FL_SRC, KISO, PHOTO_CREDITS } from './lib/paths.mjs';
 export const meta = { id: 'photos', title: '写真（クレジットの形・大きさ・ハッシュ・使う写真）', criteria: [17, 25] };
 
 export const LICENSE = /^(Public domain.*|CC0 1\.0|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?)$/;
-export const MODS = ['無加工', '切り抜き・縮小', '縮小', '注記はパイロット基礎教材（第 3 版）で追加', '注記は本書で追加'];
+// the modification labels (DESIGN 4.2「加工の表示は写真ごと」, as W22 wrote them): one, or two or more joined by ／
+export const MODS = ['無加工', '切り抜き・縮小', '注記はパイロット基礎教材（第 3 版）で追加', '注記は本書で追加'];
+export const modOk = mod => typeof mod === 'string' && mod.split('／').every(x => MODS.includes(x));
 const LIMIT = { one: 120 * 1024, budget: 4 * 1024 * 1024, test: 5 * 1024 * 1024, side: 1200 };
 const NEVER = new Set(['ch00-photo7', 'ch12-photo3', 'ch12-photo4']);
 
@@ -64,14 +68,21 @@ export async function run(env) {
       if (!LICENSE.test(c.license)) r.error('license-shape', at, `license "${c.license}" は TEXTBOOK のテストが許す形でない`);
       if (!/^https:\/\//.test(c.licenseUrl) || !/^https:\/\//.test(c.source)) r.error('credit-https', at, 'licenseUrl・source が https でない');
     }
-    if (!used.has(id)) r.error('unused', at, 'どの節でも使っていない');
+    const kid0 = p.kiso || p.fromKiso || (/^ch\d\d-photo\d+$/.test(id) ? id : null);
+    if (!used.has(id)) {
+      // a basic-course photo waits for the chapter that places it (its section: to, or DESIGN 4.2's table)
+      const to = kid0 ? (p.to || plan.use.get(kid0) || plan.conditional.get(kid0) || null) : null;
+      if (kid0 && to && !sectionsOf(env, { all: true }).some(s => s.id === to)) r.pending('kiso-photo-section-not-in-book', at, `置く節 ${to} がまだ本にない（その章の単位が置く）`);
+      else if (kid0 && to) r.warn('kiso-photo-not-placed', at, `置く節 ${to} は本にあるが、まだ置いていない（その章の単位が置く：bk.photo('${id}')）`);
+      else r.error('unused', at, 'どの節でも使っていない');
+    }
     else if (used.get(id).length > 1) r.info('used-twice', at, `${used.get(id).length} 節で使っている：${used.get(id).join('・')}`);
     if (credits && !credits.includes('`' + id + '`')) r.error('not-in-credits', at, 'PHOTO-CREDITS.md にない');
     if (p.mod === undefined) r.warn('mod-missing', at, '加工の表示（mod：無加工／切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加／注記は本書で追加）がない');
-    else if (!MODS.includes(p.mod)) r.info('mod-unknown', at, `mod "${p.mod}"`);
+    else if (!modOk(p.mod)) r.info('mod-unknown', at, `mod "${p.mod}"`);
     const hex = crypto.createHash('sha256').update(bytes).digest('hex');
     if (hashes.has(hex)) r.warn('duplicate-photo', at, `${hashes.get(hex)} と同じバイト`); else hashes.set(hex, id);
-    const kid = p.kiso || p.fromKiso || (/^ch\d\d-photo\d+$/.test(id) ? id : null);
+    const kid = kid0;
     if (kid) {
       if (NEVER.has(kid) || plan.notUse.has(kid)) r.error('photo-not-to-use', at, `${kid} は DESIGN 4.2 で「使わない」`);
       const f = path.join(KISO, 'photo', `${kid}.webp`);

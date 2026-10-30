@@ -1,0 +1,478 @@
+{
+ "unit": "W22",
+ "patches": [
+  {
+   "id": "ch00-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ：全日空（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch00-photo2",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（計器の画面（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch00-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 f29a22c205a5…、credit Olivier Cleynen／CC0 1.0／https://commons.wikimedia.org/wiki/File:ATR_72_left_aileron_seen_from_rear.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 aero.axes。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch00-photo3') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch00-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 a9942c7507bd…、credit Ahunt／Public domain (PD-self)／https://commons.wikimedia.org/wiki/File:ASI01b.jpg、加工 無加工、置く節 inst.speed。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch00-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch00-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 d3edfaad6c46…、credit m-louis .® from Osaka, Japan／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:Mt.Fuji_-_Flickr_-_m-louis.jpg、加工 無加工、置く節 basics.alt。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch00-photo5') で置いたら、その単位が done にする。basics.alt に置くのは統合役（W10 の下書きのとおり）"
+  },
+  {
+   "id": "ch00-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 4541ab2525b1…、credit CambridgeBayWeather／Public domain (PD-user)／https://commons.wikimedia.org/wiki/File:Aircraft_altimeter.JPG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 inst.alt。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch00-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch00-photo7",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（ライセンスの形（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch01-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ：イベリア航空（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch01-photo2",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "reason": "条件つきを確かめて外した：ウイングレット全体が航空会社（Germanwings）の塗装の黄色で、写真の中で最も目立つ（Commons の分類「Airbus A319 of Germanwings」）。DESIGN 4.2 の条件「旅客機の塗装・ロゴが目立たない」を満たさない",
+   "by": "W22",
+   "note": "W22（2026-10-29）：book-photos-k.js に入れない"
+  },
+  {
+   "id": "ch01-photo3",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`vortex`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch01-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 f5b7283c235b…、credit Manic-nirvana／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:Boeing_737_with_flaps_and_spoilers_extended_after_touchdown.jpg、加工 無加工、置く節 aero.flaps。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch01-photo4') で置いたら、その単位が done にする。条件（旅客機の塗装・ロゴが目立たない）を元の画像で確かめた：主翼だけで、航空会社の文字・ロゴ・塗装は見えない（Commons の分類にも航空会社がない）",
+   "plan": "use-file"
+  },
+  {
+   "id": "ch01-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 1ef9eecea665…、credit Asurnipal／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Hohenems-airport-airplane_Tecnam_P2010_(D-ELMD)-Stall_Warning_System_(stick_shaker)-01ASD.jpg、加工 無加工、置く節 aero.stall。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch01-photo5') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch01-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 fded3e207ae2…、credit Adrian Pingstone／Public domain (PD-user)／https://commons.wikimedia.org/wiki/File:Hercules.propeller.arp.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 aero.left。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch01-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch02-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：工場（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch02-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 1a8a8c127b68…、credit Curimedia／CC BY 2.0／https://commons.wikimedia.org/wiki/File:Overhead_panel_detail_Airbus_A320_(5669634612).jpg、加工 切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加、置く節 tsys.arch。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo2') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch02-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 03d7a47f8be1…、credit Swampfoot at English Wikipedia／Public domain (PD-user)／https://commons.wikimedia.org/wiki/File:757_ram_air_turbine.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 tsys.power。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo3') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch02-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 ac14b875d1f6…、credit Acroterion／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Boeing_TB-29_Superfortress_%E2%80%98469972%E2%80%99_%E2%80%9CDoc%E2%80%9D_landing_gear_MD1.jpg、加工 無加工、置く節 me.sys。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch02-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 314678c2612a…、credit Julian Herzog／CC BY 4.0／https://commons.wikimedia.org/wiki/File:Boeing_737_Next-Generation_Carbon_Brake_PAS_2013.jpg、加工 無加工、置く節 tsys.power。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo5') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch02-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 be052870b336…、credit DemonDays64／CC BY 4.0／https://commons.wikimedia.org/wiki/File:Boeing_737-900_NG_emergency_oxygen_masks_1.jpeg、加工 切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加、置く節 tsys.env。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch02-photo7",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 2d471813919c…、credit Nicholas Hartmann／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:2009_airport_deicing_truck_01.jpg、加工 無加工、置く節 tsys.env。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch02-photo7') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch03-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`lycoming`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch03-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 ec18dfc3f361…、credit Jim1138／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Wright_R-3350-B_Double_Cyclone_(1939)_sectioned_engine_-_cylinder_closeup.jpg、加工 無加工、置く節 sys.piston。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch03-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch03-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 c5e251fe9212…、credit Bin im Garten／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:Aircraft_carburetor_PD_2013_3.jpg、加工 無加工、置く節 sys.carb。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch03-photo3') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch03-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 a6256c80e12a…、credit MKFI／Public domain (PD-self)／https://commons.wikimedia.org/wiki/File:Cutaway_constant_speed_propeller_hub.JPG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 me.prop。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch03-photo4') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch03-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 4914db851967…、credit Hunini／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Pratt_%26_Whitney_JT8D-9_turbofan_engine_front_view_at_JASDF_Iruma_Air_Base_November_3,_2014.jpg、加工 無加工、置く節 tsys.turbine。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch03-photo5') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch03-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 6adf322385ac…、credit flightlog／CC BY 2.0／https://commons.wikimedia.org/wiki/File:PT6_Turbine.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 tsys.turbine。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch03-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch04-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（計器の画面：G1000 の PFD（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch04-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 f6341f46e1de…、credit Dtom／Public domain (PD-self)／https://commons.wikimedia.org/wiki/File:Static_port.JPG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 ifr.instr。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch04-photo2') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch04-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 3a4ce69b89d7…、credit Łukasz Karolewski (Dozymetr)／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:Polish_turn_and_slip_indicator_EUP-46M_produced_by_PZL.JPG、加工 無加工、置く節 inst.gyro。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch04-photo3') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch04-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 39f3e8b27de0…、credit Yxen at Czech Wikipedia／Public domain (PD-user-w)／https://commons.wikimedia.org/wiki/File:HSI-L159.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 nav.vor。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch04-photo4') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch04-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 7ba751ad8f82…、credit Bin im Garten／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:NAV_Ger%C3%A4te_im_Cockpit_einer_C172_1212_VOR_Transponder_ADF.JPG、加工 無加工、置く節 comm.xpdr。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch04-photo5') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch05-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：手荷物の車両（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch05-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 86a9f1044186…、credit Bin im Garten／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:ILA_Berlin_2012_PD_043.JPG、加工 無加工、置く節 wb.limits。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch05-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch05-photo3",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ：大韓航空の ULD（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch05-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 3a14c2302a1c…、credit calflier001／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:CARGO_HOLD_OF_BOEING_747-230_D-ABYM_ON_DISPLAY_AT_THE_TECHNIK_MUSEUM_SPEYER_GERMANY_APRIL_2013_(9377073884).jpg、加工 無加工、置く節 tsys.wb。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch05-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch05-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：旧型機の客室（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch06-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch06-photo2",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "reason": "条件つきを確かめて外した：機体に Lufthansa の大きな文字と尾翼のロゴ（Commons の分類「McDonnell Douglas DC-10 of Lufthansa at El Alto International Airport」）",
+   "by": "W22",
+   "note": "W22（2026-10-29）：book-photos-k.js に入れない"
+  },
+  {
+   "id": "ch06-photo3",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：濡れた滑走路の旅客機（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch06-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 926646eb6e52…、credit TravelingOtter／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:Glider_at_Willamete_Valley_Soaring_Club_-_North_Plains,_Oregon.jpg、加工 無加工、置く節 emg.glide。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch06-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch06-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ：旅客機の塗装（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch06-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 02c4ef4c42cd…、credit John Murphy／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:Runway_Snow_Plowing_(12258436395)_(2).jpg、加工 無加工、置く節 tsys.wb。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch06-photo6') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch07-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`cbFlorida`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch07-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 48e55bb9d0f8…、credit David Vergel／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Shelf_Cloud_over_Bay.jpg、加工 無加工、置く節 wx.ts。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch07-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch07-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 ff14c23817d1…、credit Dmitry A. Mottl／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Mont_Blanc_from_Les_Arcs_1950.jpg、加工 無加工、置く節 wx.turb。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch07-photo3') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch07-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 bca322394050…、credit M. Hohenthal／CC BY 4.0／https://commons.wikimedia.org/wiki/File:Ice_formation_on_the_propeller_in_icing_conditions.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 wx.ice。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch07-photo4') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch07-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（計器の画面：737NG の ND（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch07-photo6",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`windsock`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch07-photo7",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 7f3a47b77b53…、credit GOES-9 Satellite（米国海軍研究所の画像）／Public domain (PD-USGov-Military-Navy)／https://commons.wikimedia.org/wiki/File:Typhoon_Matsa_(Landfall).PNG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 jwx.season。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch07-photo7') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch08-photo1",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 48ffbc29f4bb…、credit Federal Aviation Administration（Aeronautical Information Services, AJV-5）／Public domain (PD-USGov-FAA)／https://commons.wikimedia.org/wiki/File:Arrowwood_National_Wildlife_Refuge_on_sectional_aeronautical_charts.png、加工 切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加、置く節 nav.chart。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch08-photo1') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch08-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 feaee31ff281…、credit BenHawkinsPhotography／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Aerial_View_of_Lostwithiel_and_the_River_Fowey_%E2%80%93_Photo_by_Ben_Hawkins.jpg、加工 無加工、置く節 nav.dr。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch08-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch08-photo3",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：艦船（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch08-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 8bcc4bfb8921…、credit Bin im Garten／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:Drehmeier_Slide_Rule_Flight_Computer_003.JPG、加工 無加工、置く節 navb.calc。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch08-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch08-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`vorStation`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch08-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 73f7f7e8e459…、credit NASA／Public domain (PD-USGov-NASA)／https://commons.wikimedia.org/wiki/File:GPS_Satellite_NASA_art-iif.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 nav.gps。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch08-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch09-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：羽田の構内。旅客機が写る（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch09-photo2",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "reason": "条件つきを確かめて外した：操縦する人の顔が横からはっきり写っている（STYLE の写真の決まり）",
+   "by": "W22",
+   "note": "W22（2026-10-29）：book-photos-k.js に入れない"
+  },
+  {
+   "id": "ch09-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 703359b0ab30…、credit Kimblad（元の写真）、El Grafo（切り抜いた派生作品）／Public domain (PD-user)／https://commons.wikimedia.org/wiki/File:Taxiway_sign_cropped.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 comm.runway。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch09-photo3') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch09-photo4",
+   "status": "done",
+   "where": "flight-lab/src/book-photos.js holdShort（comm.mistakes で使っている）",
+   "by": "W22",
+   "note": "W22（2026-10-29）：教科書の holdShort は元の写真（Hold_Short.jpg、3024×4032 の縦長）の下の部分を切り抜いた 800×687 だったので、DESIGN 4.2 のとおり ID holdShort のまま ch09-photo4 のファイル（560×747、無加工）にバイトのまま差し替えた（photo.py add-file --store book --kiso ch09-photo4。sha256 を記録）。キャプションは同じ、alt を写真に合わせた"
+  },
+  {
+   "id": "ch09-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：空母（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch09-photo6",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "reason": "DESIGN 4.2 の表では「使う」だが外した：信号灯を構える管制員と後ろの人の顔がはっきり写っている（STYLE の写真の決まり「顔がはっきり写った人は使わない」・基準 17）。DESIGN 4.2 の表の直しは統合役",
+   "by": "W22",
+   "note": "W22（2026-10-29）：book-photos-k.js に入れない"
+  },
+  {
+   "id": "ch10-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch10-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 9e91fb60356e…、credit Museum Pusat TNI AU Dirgantara Mandala, Yogyakarta, Indonesia／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Caisson-Hypobaric-Chamber-1.jpg、加工 無加工、置く節 hf.altitude。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch10-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch10-photo3",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：顔が写る（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch10-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 d2e94643ac9a…、credit Stefan Bellini／CC0 1.0／https://commons.wikimedia.org/wiki/File:Pulox_Pulse_Oximeter.JPG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 hf.altitude。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch10-photo4') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch10-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 7a78e385c7c2…、credit US Air Force／Public domain (PD-USAF)／https://commons.wikimedia.org/wiki/File:Preflight_checklist_(14443492762).jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 adm.check。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch10-photo5') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch10-photo6",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（計器の画面：シミュレーターの画面（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch11-photo1",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 2649fec8cc68…、credit Josephus37／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:Cessna_172_Skyhawk_II_taxiing_at_Chofu_Airport.jpg、加工 無加工、置く節 jair.vfr。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch11-photo1') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch11-photo2",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`fuelSample`（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch11-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 aa9e64677da4…、credit Uli Elch／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:BN-2_Islander_Crosswind_landing_F369-10A-V.jpg、加工 無加工、置く節 ops.xwind。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch11-photo3') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch11-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 c89ae480a8e5…、credit FIshstick at English Wikipedia／Public domain (PD-user-w)／https://commons.wikimedia.org/wiki/File:File_Frederick_Municipal_Airport_(Maryland).jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 ops.pattern。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch11-photo4') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch11-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 7b547856c676…、credit Alf van Beem／CC0 1.0／https://commons.wikimedia.org/wiki/File:D-EEND_Cessna_182P_landing_at_Hilversum_Airport_(ICAO_EHHV),_photo2.JPG、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 ops.landing。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch11-photo5') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch11-photo6",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：PAPI と読めない（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch11-photo7",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 69c73bc98486…、credit Kentaro Iemoto from Tokyo, Japan／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:Runway_16R,_Narita_Airport_(4055519259).jpg、加工 無加工、置く節 ops.night。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch11-photo7') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch12-photo1",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 1335ff8c0874…、credit golfcharlie232／CC BY-SA 4.0／https://commons.wikimedia.org/wiki/File:CAT_IIIA_Landing.jpg、加工 無加工、置く節 jifr.minima。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch12-photo1') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch12-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 9260a0e5fbe3…、credit Federal Aviation Administration／Public domain (PD-USGov-FAA)／https://commons.wikimedia.org/wiki/File:Standard_Holding_Pattern.png、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 ifr.hold。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch12-photo2') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch12-photo5",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 62ff215df7c1…、credit Garitzko／Public domain (PD-self)／https://commons.wikimedia.org/wiki/File:Approach_Lighting_System_Bremen_2.jpg、加工 切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加、置く節 ifr.ils。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch12-photo5') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch12-photo6",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（航空会社・ロゴ：メーカーの試験機の塗装（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch13-photo1",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（教科書の写真と重複：`crewCab`・`seminole` と役割が重なる（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch13-photo2",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 8a2d1f2f5b3c…、credit Airwolfhound from Hertfordshire, UK／CC BY-SA 2.0／https://commons.wikimedia.org/wiki/File:Beechcraft_Baron_SM_ISR_-_RIAT_2015_(24557432556).jpg、加工 無加工、置く節 oei.what。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch13-photo2') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch13-photo3",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 6d7d320e005d…、credit U.S. Dept. of Transportation, Federal Aviation Administration／Public domain (PD-USGov)／https://commons.wikimedia.org/wiki/File:ASI_ME.png、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 me.speeds。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch13-photo3') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch13-photo4",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 2c2f7417e579…、credit Vivan755／CC BY-SA 3.0／https://commons.wikimedia.org/wiki/File:Feather-of-AV-140-propeller-on-Antonov-140-100-plane.jpg、加工 無加工、置く節 me.prop。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch13-photo4') で置いたら、その単位が done にする"
+  },
+  {
+   "id": "ch13-photo5",
+   "status": "dropped",
+   "by": "W22",
+   "note": "W22（2026-10-29）：DESIGN 4.2 の理由（関係が薄い：戦闘機（DESIGN 4.2））のとおり外したことを確かめた。book-photos.js・book-photos-k.js・PHOTO-CREDITS.md に入れていない（写真のテスト textbook/test/photos.test.mjs が確かめる）"
+  },
+  {
+   "id": "ch13-photo6",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 7e7da3eb494f…、credit Lance Cpl. Stephanie Ingersoll（米国海兵隊）／Public domain (PD-USGov-Military)／https://commons.wikimedia.org/wiki/File:USMC-090222-M-3360I-005.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 me.basics。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch13-photo6') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  },
+  {
+   "id": "ch13-photo7",
+   "by": "W22",
+   "note": "W22（2026-10-29）：flight-lab/src/book-photos-k.js に同じ id で入れた（基礎教材のファイルとバイト一致・sha256 0fa64cba4254…、credit Adrian Pingstone／Public domain (PD-user)／https://commons.wikimedia.org/wiki/File:Piper.seneca.pa34.g-elis.bristol.arp.jpg、加工 注記はパイロット基礎教材（第 3 版）で追加、置く節 me.oei。キャプションは書き直した）。元のページは reports/W22.photos.json。章の書き手が bk.photo('ch13-photo7') で置いたら、その単位が done にする。creditFix のとおり「注記はパイロット基礎教材（第 3 版）で追加」にした（mod）"
+  }
+ ]
+}

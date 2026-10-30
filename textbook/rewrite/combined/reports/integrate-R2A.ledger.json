@@ -1,0 +1,177 @@
+{
+ "unitName": "integrate-R2A",
+ "about": "統合 R2A（W10b・W22・R1V、2026-10-29）：説明してみようの from と PROVENANCE の where、ch00-photo5 を basics.alt に置いたこと、bk.photo の写真ごとの mod（ERRATA APP.bk-photo-mod・RULINGS R.photo-mod）、キャプションの主張の行、COUNTS の写真の数。報告は reports/integrate-R2A.md",
+ "patches": [
+  {
+   "id": "kiso00.q1",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w0：その問の from に kiso00.q1（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w0 に from: ['kiso00.q1'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q2",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w1：その問の from に kiso00.q2（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w1 に from: ['kiso00.q2'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q15",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w2：その問の from に kiso00.q15（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w2 に from: ['kiso00.q15'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q19",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w3：その問の from に kiso00.q19（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w3 に from: ['kiso00.q19'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q9",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w4：その問の from に kiso00.q9（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w4 に from: ['kiso00.q9'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q10",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w4・basics.w5：その問の from に kiso00.q10（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w4・basics.w5 に from: ['kiso00.q10'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q12",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w6：その問の from に kiso00.q12（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w6 に from: ['kiso00.q12'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q6",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w7：その問の from に kiso00.q6（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w7 に from: ['kiso00.q6'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q11",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w8：その問の from に kiso00.q11（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w8 に from: ['kiso00.q11'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q13",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w9：その問の from に kiso00.q13（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w9 に from: ['kiso00.q13'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q7",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w10：その問の from に kiso00.q7（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w10 に from: ['kiso00.q7'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q14",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w10：その問の from に kiso00.q14（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w10 に from: ['kiso00.q14'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q8",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w11：その問の from に kiso00.q8（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w11 に from: ['kiso00.q8'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q16",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w12：その問の from に kiso00.q16（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w12 に from: ['kiso00.q16'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso00.q20",
+   "by": "W10",
+   "where": "flight-lab/src/book-0.js basics の章末 written（説明してみよう 14 問。q9 と q10・q7 と q14 はまとめた）の basics.w13：その問の from に kiso00.q20（画面に「パイロット基礎教材（第 3 版）第 0 章 問 N をもとに改稿」、原本で開いていれば「原本で開いた問題」）",
+   "note": "統合 R2A（2026-10-29）：W10b の描く部品（FL.book.writtenHtml）で written が画面に出るようになったので、where の「製品はまだ written を描かない」を消し、統合役が basics.w13 に from: ['kiso00.q20'] を足した（W10b の報告 7 の 2。対応は R1V が照らした PROVENANCE の行と原本 kiso00.json の問の文で確かめた）"
+  },
+  {
+   "id": "kiso09.q3",
+   "by": "W10",
+   "where": "flight-lab/src/book-1.js intro の章末 written（説明してみよう 1 問 intro.w0。基礎教材 第 9 章 問 3 を書き直した。from: ['kiso09.q3']）",
+   "note": "統合 R2A（2026-10-29）：written が画面に出るようになったので where の「製品はまだ written を描かない」を消し、intro.w0 に from: ['kiso09.q3'] を足した（W10b の報告 7 の 2）"
+  },
+  {
+   "id": "ch00-photo5",
+   "status": "done",
+   "by": "W22",
+   "where": "flight-lab/src/book-0.js basics.alt（考えてみようの後、密度高度の予告の前。bk.photo('ch00-photo5')。写真は flight-lab/src/book-photos-k.js、基礎教材のファイルとバイト一致）",
+   "note": "統合 R2A（2026-10-29）：W22 の報告 6.3 のとおり統合役が置いた（下書き drafts/basics.js と同じ所）。キャプションの富士山の標高 3,776 m は国土地理院の発表（https://www.gsi.go.jp/WNEW/PRESS-RELEASE/keikaku61003.html、2024-12-24：三角点の新しい標高は 3775.56 m だが、山頂の標高は 3776 m のまま）を統合役も読んで確かめた。12,388 ft は 3,776 ÷ 0.3048 ＝ 12,388.45。TEXTBOOK の COUNTS.photos 30 → 31"
+  },
+  {
+   "id": "APP.bk-photo-mod",
+   "status": "fixed",
+   "verified": true,
+   "by": "W22",
+   "where": "flight-lab/src/book-core.js bk.photo（写真の下に写真ごとの mod を出す。FL.bookPhotos と FL.bookPhotosK の両方から引く）、flight-lab/src/book-photos.js の 30 枚と book-photos-k.js の 51 枚の mod",
+   "note": "統合 R2A（2026-10-29）：W22 が写真ごとの mod を書き（教科書の 30 枚は元の写真と形を比べた）、W22 の報告 6.1 の bk.photo の直しを統合役が入れた。TEXTBOOK の content.test.mjs が、置いた写真の下にその写真の mod が出ることを確かめる"
+  },
+  {
+   "id": "R.photo-mod",
+   "status": "fixed",
+   "by": "W22",
+   "where": "flight-lab/src/book-core.js bk.photo（写真ごとの mod）、book-photos.js・book-photos-k.js の mod（無加工／切り抜き・縮小／注記はパイロット基礎教材（第 3 版）で追加／注記は本書で追加、2 つ以上は「／」）、holdShort は ch09-photo4 のファイル（無加工）",
+   "note": "統合 R2A（2026-10-29）：教科書の「縮小などの加工あり」と基礎教材の「記載なし」を、写真ごとの加工の表示にそろえた（ERRATA APP.bk-photo-mod と同じ直し）"
+  },
+  {
+   "op": "add",
+   "id": "basics.alt#85995b6b",
+   "sec": "basics.alt",
+   "text": "富士山の標高は 3,776 m（約 12,388 ft）です。",
+   "tag": "参考値",
+   "source": "国土地理院「富士山の標高」の報道発表（2024-12-24、https://www.gsi.go.jp/WNEW/PRESS-RELEASE/keikaku61003.html：山頂の標高は 3776 m のまま）。ft は 3,776 ÷ 0.3048 ＝ 12,388.45",
+   "kinds": [
+    "number"
+   ],
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：写真 ch00-photo5 のキャプション（W22 が書いた。book-photos-k.js）を basics.alt に置いたので足した。統合役も国土地理院のページを読んだ（2026-10-29）。確かめ役の署名は W27"
+  },
+  {
+   "id": "prov.photos.use",
+   "built": 52,
+   "builtBy": "W22",
+   "builtOn": "2026-10-29",
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：使う 52 枚（book-photos-k.js の 51 枚と、holdShort に替えた ch09-photo4）。設計の 52 から ch09-photo6（顔）を外し、条件つきの ch01-photo4 を入れた"
+  },
+  {
+   "id": "prov.photos.conditional",
+   "built": 0,
+   "builtBy": "W22",
+   "builtOn": "2026-10-29",
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：条件つき 4 枚を W22 が元の画像で判定した（ch01-photo4 は使う、ch01-photo2・ch06-photo2・ch09-photo2 は使わない）"
+  },
+  {
+   "id": "prov.photos.drop",
+   "built": 33,
+   "builtBy": "W22",
+   "builtOn": "2026-10-29",
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：設計の 29 に、条件つきから外した 3 枚と ch09-photo6 を足した"
+  },
+  {
+   "id": "prov.photos.annotatedUsed",
+   "built": 24,
+   "builtBy": "W22",
+   "builtOn": "2026-10-29",
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：設計の 25 から ch09-photo6 を外した"
+  },
+  {
+   "id": "book.photos",
+   "built": "入れ物に 81 枚（教科書 30・基礎教材 51）、本に置いた写真 31 枚（R2 の始め：教科書 30＋ch00-photo5）",
+   "builtBy": "W22",
+   "builtOn": "2026-10-29",
+   "by": "W22",
+   "note": "統合 R2A（2026-10-29）：写真のデコード後の合計 3,364,306 バイト（W22 の photo.py check）"
+  }
+ ]
+}

@@ -57,5 +57,5 @@ test('modules: CADET reads FLIGHT LAB\'s one list less what it says it leaves ou
   assert.deepEqual([...GAME_REST], FL_MODULES.filter(m => !CORE.includes(m)));
   assert.deepEqual(MODULES.slice(0, CORE.length), [...CORE]);
   // what the game must not read (DESIGN 6.3): the textbook's photos and the basic course; FLIGHT LAB's DOM pages
-  for (const m of ['book-photos.js', 'kiso/kiso-data.js', 'pages.js', 'app.js', 'scene.js', 'ui.js', 'google3d.js']) assert.ok(!FL_MODULES.includes(m), m);
+  for (const m of ['book-photos.js', 'book-photos-k.js', 'kiso/kiso-data.js', 'pages.js', 'app.js', 'scene.js', 'ui.js', 'google3d.js']) assert.ok(!FL_MODULES.includes(m), m);
 });

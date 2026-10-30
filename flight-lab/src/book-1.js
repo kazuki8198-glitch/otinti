@@ -18,8 +18,8 @@
   //  - no hand-written link to a section that is not in the book (DESIGN 6.2 rules 6 and 13): what is in a later part
   //    (Part 7, the JCAB path) or in another front-part chapter (basics.rules, basics.crew, basics.docs) is drawn only when
   //    that section is there (seeIf), and the text names the parts the book has now (partIn, p0Others);
-  //  - intro.marks explains the scope badge and the provenance line only when the page draws them (FL.book.secMarks, not
-  //    written yet: textbook/rewrite/combined/PROGRESS.md), as the 発展 row appears only when bk.deep is there;
+  //  - intro.marks explains the scope badge and the provenance line only when the page draws them (drawn by
+  //    FL.book.secMarks: W10b), as the 発展 row appears only when bk.deep is there;
   //  - every claim (number, unit, article, rule) is in the ledger CLAIMS.json with its tag and source (from
   //    drafts/intro.claims.json).
   // the parts and chapters as the book has them now (the text follows the book: a part not in this version is not named
@@ -30,7 +30,7 @@
   const jcabPath = () => seeIf('jexam.map', '予告：JCAB 学科への道（第 7 部）');
   const deepRow = () => (bk.deep ? [['<b>発展</b>・折りたたみ', '深く学ぶ中身です。初めて読むときは飛ばしてかまいません。目次に「発展」の札が付きます。']] : []);
   const marksDrawn = () => typeof B.secMarks === 'function';
-  const scopeRow = () => (marksDrawn() ? [['<b>範囲の札</b>：共通・米国の決まり・日本の決まり', '節の題の横に付きます。その節の決まりが、国によらず同じ原理か、米国のものか、日本のものかを示します。']] : []);
+  const scopeRow = () => (marksDrawn() ? [['<b>範囲の札</b>：共通・米国の決まり・日本の決まり・米国と日本の決まり', '節の題の横に付きます。その節の決まりが、国によらず同じ原理か、米国のものか、日本のものか、米国と日本の両方を並べたものかを示します。']] : []);
   const fromRow = () => (marksDrawn() ? [['<b>由来の行</b>：パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿', '基礎教材の中身を書き直して入れた節に付きます（改稿は、書き直しのことです）。基礎教材は、FLIGHT LAB のメニューにある、この教科書とは別の入門の教材です。文はすべて書き直しています。']] : []);
 
   B.add({ id: 'intro', part: 'p0', t: 'はじめに：この教科書の使い方・資格と試験の地図', en: 'Introduction: how to use this textbook, the published course, pilot certificates and tests',
@@ -282,7 +282,7 @@ ${bk.sim('最初の飛行課目「姿勢・出力・トリム」で、機首の�
     // 説明してみよう（DESIGN 3.2「章末」）：基礎教材 第 9 章 問 3 を書き直した（PROVENANCE kiso09.q3 → written:intro）
     written: [
       ['友人が「自家用の技能証明があるから、来週は初めての双発機も自分で操縦できる」と言っています。この判断は正しいでしょうか。証明書のどこと、何を確かめますか。',
-        `正しいとは言えません。資格の名前に加えて、技能証明の限定（種類・等級・型式）がその飛行機に合っているかを確かめます。持っている等級が陸上単発だけなら、双発機を機長として操縦することはできません。航空身体検査証明が有効か、計器飛行証明などの追加の証明が要る飛行かも確かめます。限定の外の等級の飛行機で練習するときは、その飛行機の機長になれる人の監督の下で行います（${bk.see('intro.cert', '操縦士の資格：米国と日本')}・${bk.see('intro.japan', '日本の資格への道')}）。`],
+        `正しいとは言えません。資格の名前に加えて、技能証明の限定（種類・等級・型式）がその飛行機に合っているかを確かめます。持っている等級が陸上単発だけなら、双発機を機長として操縦することはできません。航空身体検査証明が有効か、計器飛行証明などの追加の証明が要る飛行かも確かめます。限定の外の等級の飛行機で練習するときは、その飛行機の機長になれる人の監督の下で行います（${bk.see('intro.cert', '操縦士の資格：米国と日本')}・${bk.see('intro.japan', '日本の資格への道')}）。`, ['kiso09.q3']],
     ],
     refs: [R.ana1, R.ana2, R.newsAscii, R.newsTraffic, R.acron, R.cfr61, R.cfr67, R.cfr121, R.acsP, R.acsC, R.aim, R.faaKtTable, R.faaAih, R.mlitSchool, R.mlitPilotBasics, R.jcabExamTable, R.mlitCbt, R.mlitExam, R.mlitSyllabus, R.mlitConvert, R.egovKoku, R.egovKokuKisoku, R.egovDenpa, R.egovDenpaRei], lessons: ['a1'] });
 

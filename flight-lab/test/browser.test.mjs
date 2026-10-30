@@ -461,15 +461,16 @@ test('browser: 教科書 — the scope badge and the provenance line beside the 
     assert.doesNotMatch(await page.locator('#bkArt .bk-w[data-w="basics.w1"]').getAttribute('class'), /\bseen\b/);
     assert.deepEqual((await page.evaluate(() => FL.school.loadProgress(localStorage))).bookWritten, ['basics.w0']);
     assert.deepEqual(JSON.parse(await page.evaluate(() => FL.school.exportJSON([], __lab.progress()))).progress.bookWritten, ['basics.w0']);
-    // a question rewritten from the basic course, whose original was opened there: said, not recorded as ours (one is
-    // added here for the test, then taken away)
-    await page.evaluate(() => { FL.book.CHAPTERS.find(c => c.id === 'intro').written.push({ q: '（テスト）', a: `（テスト）${FL.book.bk.see('intro.cert', '資格')}`, from: ['kiso09.q3'] }); __lab.progress().kisoQa.push('kiso09.q3'); });
+    // a question rewritten from the basic course says so (its from: basics.w0 ← kiso00.q1; two merged in one: basics.w4);
+    // when its original was opened there (kisoQa), that is said too, and it is not recorded as ours (intro.w0 ← kiso09.q3)
+    assert.equal(await page.textContent('#bkArt .bk-w[data-w="basics.w0"] .bk-w-from'), 'パイロット基礎教材（第 3 版）第 0 章 問 1 をもとに改稿');
+    assert.equal(await page.textContent('#bkArt .bk-w[data-w="basics.w4"] .bk-w-from'), 'パイロット基礎教材（第 3 版）第 0 章 問 9・10 をもとに改稿');
+    await page.evaluate(() => { __lab.progress().kisoQa.push('kiso09.q3'); });
     await open('intro.study');
-    const added = await page.evaluate(() => `intro.w${FL.book.CHAPTERS.find(c => c.id === 'intro').written.length - 1}`);
-    assert.equal(await page.textContent(`#bkArt .bk-w[data-w="${added}"] .bk-w-from`), 'パイロット基礎教材（第 3 版）第 9 章 問 3 をもとに改稿 原本で開いた問題');
-    assert.equal(await page.locator('#bkArt .bk-w[data-w="intro.w0"] .bk-w-from, #bkArt .bk-w[data-w="intro.w0"] .bk-w-kiso').count(), 0);
+    assert.equal(await page.textContent('#bkArt .bk-w[data-w="intro.w0"] .bk-w-from'), 'パイロット基礎教材（第 3 版）第 9 章 問 3 をもとに改稿 原本で開いた問題');
+    assert.equal(await page.locator('#bkArt .bk-w-kiso').count(), 1);
     assert.deepEqual((await page.evaluate(() => __lab.progress())).bookWritten, ['basics.w0']);
-    await page.evaluate(() => { FL.book.CHAPTERS.find(c => c.id === 'intro').written.pop(); __lab.progress().kisoQa.pop(); });
+    await page.evaluate(() => { __lab.progress().kisoQa.pop(); });
     assert.deepEqual(errors, []);
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }

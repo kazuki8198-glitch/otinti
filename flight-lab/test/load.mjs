@@ -18,6 +18,7 @@ export function load(...names) {
 export { CORE };
 export const NODE_LEAVE_OUT = Object.freeze({
   'book-photos.js': 'the textbook\'s photos (3 MB of base64): the built page has them; the book reads the same without them (bk.photo gives nothing), as CADET reads it',
+  'book-photos-k.js': 'the basic course\'s photos the book uses (1.4 MB of base64): the same as book-photos.js (the built page has them, read from FL.kiso.photos: flight.test.mjs)',
   'kiso/kiso-data.js': 'the basic course (the original): read in a context of its own, as the page reads it (window.FL.kiso: flight.test.mjs KZ)',
   'acmesh.js': 'the aircraft\'s 3D description, for scene.js: nothing here uses it',
   'scene.js': 'the 3D view: needs WebGL and the page',

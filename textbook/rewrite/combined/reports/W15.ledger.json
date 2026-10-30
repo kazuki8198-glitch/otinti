@@ -1,0 +1,1482 @@
+{
+ "unit": "W15",
+ "about": "W15（R2・第 1 部 第 7 章 inst の下書き）の台帳のパッチ。取り込むのは章 inst を登録するコミット（章 sys の W14 のパッチと同じコミット）。節・問・図・写真の行き先、閉じた ERRATA・RULINGS の行、対応表の missing、CLAIMS の行（drafts/inst.claims.json と同じ）",
+ "patches": [
+  {
+   "id": "kiso02.23",
+   "status": "done",
+   "where": "inst.flow（from。表示がセンサー・伝達・処理を通った結果であること、同じ源と独立した源の区別）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.1",
+   "status": "done",
+   "where": "inst.flow（from。測る量・計算する量・表示する量、入力 → 処理 → 表示 → 利用）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.15",
+   "status": "done",
+   "where": "inst.flow（from。AHRS と補助の入力・電源・つながりで独立を判断する）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.2",
+   "status": "done",
+   "where": "sys.g1000（from。全圧・静圧・動圧、計器ごとの圧力、ヒーターと配管は別）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.5",
+   "status": "done",
+   "where": "sys.g1000（from。詰まりの表の住所、代替静圧源）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.3",
+   "status": "done",
+   "where": "inst.speed（from。IAS → CAS → TAS → GS、動圧と TAS の計算演習。速度の種類の定義の住所は basics.speed）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.4",
+   "status": "done",
+   "where": "inst.speed（from。色の帯は条件つきの値、緑の帯でも失速する）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.6",
+   "status": "done",
+   "where": "inst.alt（from。高度計のしくみと規正値の窓、日米の囲み）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.7",
+   "status": "done",
+   "where": "inst.alt（from。気圧と気温の誤差の住所、規正値の差の計算演習）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.8",
+   "status": "done",
+   "where": "inst.alt（from。昇降計のしくみと遅れ、上昇率の計算演習）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso12.8",
+   "status": "done",
+   "where": "inst.alt（from。高度の数字に基準を添える：QNH と標準の気圧、単位、2 つの高度計）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.12",
+   "status": "done",
+   "where": "inst.gyro（from。旋回傾斜計・標準旋回・すべり計、旋回率と TAS の計算演習）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.13",
+   "status": "done",
+   "where": "sys.compass（from。針路と航跡、方向指示器と磁気コンパス）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.14",
+   "status": "done",
+   "where": "sys.compass（from。偏差・自差・伏角・北旋誤差・加速誤差、南半球）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.16",
+   "status": "done",
+   "where": "inst.pfd（from。単位・目盛り・情報源・警報・選んだ値、トレンド、AOA の表示、合成視界）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso10.25",
+   "status": "done",
+   "where": "inst.ap（from。意図・作動のモード・機体の動きを組にして確かめる）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.cover",
+   "status": "done",
+   "where": "summary:inst（章のねらいに「この章でできるようになること」を書き直した）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso04.10",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.gyro（from。剛性と歳差、真空と電気の動力、吸引計）。ifr.vacuum の分（真空系統の故障の見分け方）は W30（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.11",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.gyro（from。姿勢と飛行経路は別、θ ＝ α ＋ γ）。ifr.scan の分は W30（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.17",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.pfd（from。リバージョンで直るのは画面の故障だけ、POH 3.5e の手順）。ifr.instr の分は W30（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.18",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.pfd（from。多数決にしない・4 つの整理・走査）。ifr.instr の分は W30（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.21",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.ap（from。FD と AP と自動推力の違い。Archer に自動推力はない）。crm.auto の分は W32（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.22",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：inst.ap（from。作動と待ちのモード、ALTS → ALT、VS で出力不足なら減速）。crm.auto の分は W32（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.28",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の分を置いた：written:inst 問 22（Archer の POH と G1000 型の手引きで調べて書く課題）。g1.review の口述の練習の分は W25（行は開いたまま）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q1",
+   "status": "done",
+   "where": "written:inst 問 1",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q2",
+   "status": "done",
+   "where": "written:inst 問 2",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q3",
+   "status": "done",
+   "where": "written:inst 問 3",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q4",
+   "status": "done",
+   "where": "written:inst 問 4",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q5",
+   "status": "done",
+   "where": "written:inst 問 5",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q6",
+   "status": "done",
+   "where": "written:inst 問 6",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q7",
+   "status": "done",
+   "where": "written:inst 問 7",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q8",
+   "status": "done",
+   "where": "written:inst 問 8",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q10",
+   "status": "done",
+   "where": "written:inst 問 9",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q11",
+   "status": "done",
+   "where": "written:inst 問 10",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q12",
+   "status": "done",
+   "where": "written:inst 問 11",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q13",
+   "status": "done",
+   "where": "written:inst 問 12",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q14",
+   "status": "done",
+   "where": "written:inst 問 13",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q15",
+   "status": "done",
+   "where": "written:inst 問 14",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q16",
+   "status": "done",
+   "where": "written:inst 問 15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q17",
+   "status": "done",
+   "where": "written:inst 問 16",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q18",
+   "status": "done",
+   "where": "written:inst 問 17",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q21",
+   "status": "done",
+   "where": "written:inst 問 18",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q22",
+   "status": "done",
+   "where": "written:inst 問 19",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso10.q25",
+   "status": "done",
+   "where": "written:inst 問 20",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso12.q8",
+   "status": "done",
+   "where": "written:inst 問 21",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。合本の言葉と数字で書き直した（文は写していない）",
+   "by": "W15"
+  },
+  {
+   "id": "kiso04.q28",
+   "status": "done",
+   "where": "written:inst 問 22",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。章末の課題（kiso04.28）として書き直した",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-1",
+   "status": "done",
+   "where": "FIG.instChain（inst.flow。暗い板に描き直した：入力 → 処理 → 表示 → 利用と、各段の問い）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-8",
+   "status": "done",
+   "where": "FIG.instShared（inst.flow。G1000 型の Archer の版に描き直した：1 本の柱・ADC・AHRS の補助の入力・予備計器・電源）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-5",
+   "status": "done",
+   "where": "FIG.instVsi（inst.alt。昇降計のしくみと遅れのグラフ）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-6",
+   "status": "done",
+   "where": "FIG.instPitchPath（inst.gyro。機首上げでも降下する例。ifr.scan で使うかは W30）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-10",
+   "status": "done",
+   "where": "FIG.instApBand（inst.ap。FD と AP の区別をモードの表示の帯と並べて描いた）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-11",
+   "status": "done",
+   "where": "FIG.instApLoop（inst.ap。予想 → 操作 → 表示 → 動きの輪。ch10-fig10-12 と 1 枚にした）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch10-fig10-12",
+   "status": "done",
+   "where": "FIG.instApLoop（inst.ap。ch04-fig4-11 と 1 枚にした：意図・モード・結果の照合）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-3",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。描き直していない：速度の種類と補正の順の図は、序部の FIG.basicsSpeedChain（basics.speed）が同じ中身を持つ。inst.speed の最初の図は新しい FIG.instAsi（速度計のしくみ）にした。重複として外すか（drop）は W21 が決める",
+   "by": "W15"
+  },
+  {
+   "id": "ch04-fig4-4",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。描き直していない：真高度と対地高度の基準の図は、序部の FIG.basicsAlt（basics.alt）と中身が重なる。inst.alt の最初の図は新しい FIG.instAltErrors（気圧と気温の誤差）にした。重複として外すか（drop）は W21 が決める",
+   "by": "W15"
+  },
+  {
+   "id": "ch00-photo4",
+   "status": "done",
+   "where": "inst.speed（bk.photo('ch00-photo4')）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "ch00-photo6",
+   "status": "done",
+   "where": "inst.alt（bk.photo('ch00-photo6')）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "ch04-photo3",
+   "status": "done",
+   "where": "inst.gyro（bk.photo('ch04-photo3')）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む"
+  },
+  {
+   "id": "K.instruments.gap-1",
+   "status": "fixed",
+   "verified": true,
+   "where": "drafts/inst.js inst.alt（bk.jur('alt.transition', 'alt.unit')：日本の 14,000 ft と標準気圧値・METAR の Q 群と国内記事の A 群を FL.jur から描く。本文に転移高度は国で違うこと、1 inHg ≈ 1,000 ft と 1 hPa ≈ 28 ft の 2 つの目安）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。数字は手で書かず FL.jur（W05・W06 が施行規則第 178 条と気象庁の航空気象通報式で確かめた値）から描く",
+   "by": "W15"
+  },
+  {
+   "id": "APP.lesson-k1k2",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。inst.pfd を書いた（drafts/inst.js）。syllabus.js の k1・k2 の book に ['inst.pfd'] を足すのは、章を登録するコミットで統合役（製品のファイル。reports/W15.md の 7）。この行はそのコミットで fixed にする",
+   "by": "W15"
+  },
+  {
+   "id": "T.instruments.E-T1",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。CAS の文は、節の移動に合わせて sys.g1000 から inst.speed へ移した（同じ中身：取り付け位置の誤差と計器の誤差、低い速度で数 kt、巡航でほぼ同じ、POH の速度の較正の図。POH 2.3 の KIAS・KCAS の例を足した）。where の更新と二人目の確かめは W27",
+   "by": "W15"
+  },
+  {
+   "id": "T.instruments.E-T2",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。sys.g1000（詰まりは予備計器にも同じように出る：POH 7.21）と sys.compass（同じ情報源は多数決にならない）の文は、移した節にそのまま残した。比べ方の本体は新しい inst.pfd「計器の照合：多数決にしない」と inst.flow。〔安全〕の行なので W27・W36 の安全レビューで見てほしい",
+   "by": "W15"
+  },
+  {
+   "id": "T.instruments.E-T3",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。図 compassErrors は描き直していない（実物の見え方の帯はそのまま）。本文 sys.compass にも「目盛りは裏から見るので、N の右に 33」を書いた（PHAK 第 8 章）",
+   "by": "W15"
+  },
+  {
+   "id": "R.northerly-turn-error",
+   "status": "fixed",
+   "where": "drafts/inst.js sys.compass（太字の定義「北旋誤差（旋回誤差、northerly turning error）」、量は PHAK の「15° ＋ 緯度の半分」、北緯 30° の近くなら約 30°）",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。FL.terms の northerly-turning-error の正式名で書いた",
+   "by": "W15"
+  },
+  {
+   "id": "R.altimeter-rule-of-thumb",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。inst.alt に 2 つの目安を並べた：FAA の 1 inHg ≈ 1,000 ft（0.01 inHg ≈ 10 ft：PHAK 第 8 章・AIM 7-2-3）と、hPa で規正値を使う所の 1 hPa ≈ 28 ft（PHAK 第 4 章 図 4-3 の標準大気の表からの計算）。どちらの国かは日米の囲み alt.unit（FL.jur）。混合の行なので wx.atm（W17）がそろってから閉じる",
+   "by": "W15"
+  },
+  {
+   "id": "R.static-block-vsi",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。sys.g1000 を inst へ移した。詰まりの表の文「昇降計は少し動いたあと 0 のまま」はそのまま（drafts/inst.js）",
+   "by": "W15"
+  },
+  {
+   "id": "R.cross-check",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。sys.compass・sys.g1000 を inst へ移した。文はそのまま残し、比べ方の本体を inst.pfd「計器の照合」に書いた（drafts/inst.js）",
+   "by": "W15"
+  },
+  {
+   "id": "R.cas",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。CAS の定義の文は inst.speed へ移した（T.instruments.E-T1 の note と同じ）",
+   "by": "W15"
+  },
+  {
+   "id": "C.pitot-static-blockage",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。住所 sys.g1000 に詰まりの表を書いた（代替静圧源の行を足した）。呼び戻す ifr.instr を 2 行にするのは W30。両方がそろったら done",
+   "by": "W15"
+  },
+  {
+   "id": "C.compass-errors",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。住所 sys.compass に北旋誤差・加速誤差・揺れ・南半球を書いた。呼び戻す ifr.partial は W30",
+   "by": "W15"
+  },
+  {
+   "id": "C.altimeter-errors",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。住所 inst.alt に気圧と気温の誤差・規正値の範囲・昇降計の遅れを書いた。呼び戻す wx.atm を 3 行にするのは W17",
+   "by": "W15"
+  },
+  {
+   "id": "C.autopilot-modes",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。住所 inst.ap にモードの表示（作動は緑・待ちは白：GFC 700 型の例）・FD と AP・AAH の手順・切り方を書いた。呼び戻す ifr.auto（W30）・crm.auto（W32）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.1.1.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.1.1",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.1.2",
+   "missing": [
+    "sys.eis"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.2.1",
+   "missing": [
+    "sys.eis"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.2.3",
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。inst.flow は回転角（シンクロによる指示方式）を扱っていない。sys.eis も扱わない（W14 の note）。どの節で教えるかは W21・W42（inst.flow のもっと深くに足す案）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.2.4",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.3.1",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.3.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.3.3",
+   "missing": [
+    "ifr.vacuum"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.4.1",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.4.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.4.3",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.1.6.4.4",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.2.1.1.3",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.3.1.1.4",
+   "missing": [
+    "jair.rules"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "cpl.3.3.3.6",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ir.2.1",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ir.2.2",
+   "sections": [
+    "inst.gyro"
+   ],
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。見出しの中身（ジャイロの概要・働き・駆動）は inst.gyro が教える。sections を inst.gyro に直した（sys.eis・inst.flow は扱わない）",
+   "by": "W15"
+  },
+  {
+   "id": "ir.2.3",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ir.2.4",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ir.3.1.1.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.1.1.1.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.1.2.5.1",
+   "missing": [
+    "sys.eis"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.1.2.5.2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.1.2.5.3",
+   "missing": [
+    "ifr.vacuum"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.1.2.5.4",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.2.1.1.3",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "ppl.3.1.1.4",
+   "missing": [
+    "jair.rules"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "PA.I.G.K1",
+   "missing": [
+    "wx.ice"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "PA.VIII.E.K4",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "IR.II.A.K2",
+   "missing": [],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した",
+   "by": "W15"
+  },
+  {
+   "id": "IR.II.B.K1",
+   "missing": [
+    "ifr.vacuum"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "id": "IR.IV.B.K4",
+   "missing": [
+    "ifr.auto"
+   ],
+   "note": "W15（2026-10-30）：章 inst の下書き drafts/inst.js（sys.g1000・sys.compass は sys から移した節）。このパッチは、章を登録するコミット（sys と同じコミット）で取り込む。この章の節に jcab／faa を書いた（drafts/inst.js）。missing からこの章の節を外した（残りはほかの単位）",
+   "by": "W15"
+  },
+  {
+   "op": "add",
+   "id": "inst.flow#33277098",
+   "sec": "inst.flow",
+   "text": "電気は 28 V のバスからブレーカーを通って各装置へ届きます。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.17（28 V の電気系統。W14 が sys.elec で確かめた値と同じ）・3.5d（非常用のバスの装置に予備計器）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.g1000#f956f55f",
+   "sec": "sys.g1000",
+   "text": "そのときの高度の誤差は、表示の札がなければ 50 ft より小さいとしています（POH 7.21）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 7.21「The altimeter error is less than 50 feet unless otherwise placarded」",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#fa037a45",
+   "sec": "inst.speed",
+   "text": "速さが 2 倍になると、動圧は 4 倍になります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（q = ½ρV²：動圧は速さの 2 乗に比例）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#1e6b7bf8",
+   "sec": "inst.speed",
+   "text": "超過禁止速度（VNE、never-exceed speed）：154 KIAS ＝ 148 KCAS",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3 Airspeed Limitations（VNE 154 KIAS／148 KCAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#875135c5",
+   "sec": "inst.speed",
+   "text": "VNO（穏やかな空気のときだけ超えてよい速度）：125 KIAS ＝ 121 KCAS",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VNO 125 KIAS／121 KCAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#cb6ec5aa",
+   "sec": "inst.speed",
+   "text": "VFE（フラップを下げてよい最大の速度）：102 KIAS ＝ 100 KCAS",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3（VFE 102 KIAS／100 KCAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#366d3ef9",
+   "sec": "inst.speed",
+   "text": "① 空気の密度を仮に 1.2 kg/m³ とします。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#cd8098cd",
+   "sec": "inst.speed",
+   "text": "速さ 50 m/s の動圧はいくらですか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#85808be5",
+   "sec": "inst.speed",
+   "text": "速さが 2 倍なら、どうなりますか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#a087fa9b",
+   "sec": "inst.speed",
+   "text": "② 空気の密度が海面の 0.64 倍の高さで、海面の 120 kt と同じ動圧で飛んでいます。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#00331970",
+   "sec": "inst.speed",
+   "text": "真正面から 20 kt の向かい風なら、GS はいくらですか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#e4add740",
+   "sec": "inst.speed",
+   "text": "100 m/s なら 6,000 Pa で、4 倍です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）：½ × 1.2 × 100² ＝ 6,000 Pa",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#f6da01f0",
+   "sec": "inst.speed",
+   "text": "② 動圧 ½ρV² を同じにするには、V² を 1 ÷ 0.64 倍、V を 1 ÷ 0.8 ＝ 1.25 倍にします。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）：√(1/0.64) ＝ 1.25",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#52d82784",
+   "sec": "inst.speed",
+   "text": "120 × 1.25 ＝ 150 kt です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#80e82269",
+   "sec": "inst.speed",
+   "text": "真正面の風だけなら、GS は 150 − 20 ＝ 130 kt です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#1f60d6d2",
+   "sec": "inst.speed",
+   "text": "Archer III の POH の速度計の帯は、白が 45〜102 KIAS、緑が 50〜125 KIAS、黄色が 125〜154 KIAS です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.5 Airspeed Indicator Markings（PFD と予備の速度計：白 45〜102、緑 50〜125、黄 125〜154 KIAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#8685a94f",
+   "sec": "inst.speed",
+   "text": "赤い線は 154 KIAS です（参考値：POH 2.5）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.5（赤い線 154 KIAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#7992c2a3",
+   "sec": "inst.speed",
+   "text": "この教材の Archer の値（教材値）も、白 45〜102・緑 50〜125・黄色 125〜154・赤い線 154 KIAS で、参考値と同じです。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28.v（s0 45・fe 102・s1 50・no 125・ne 154）。POH 2.5 の参考値と同じ",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.speed#d77ca182",
+   "sec": "inst.speed",
+   "text": "Archer の VNE は 154 KIAS ＝ 148 KCAS",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#fb9af44a",
+   "sec": "inst.alt",
+   "text": "図：高度計が 3,000 ft を示していても、気圧の低い所で規正値を直さないときと、標準より寒い日には、本当の高さは低くなります（模式図。差は大きく描いた）",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（High to low / cold：実際の高さは表示より低い）。図の 3,000 ft は説明用の例",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#9bb0f772",
+   "sec": "inst.alt",
+   "text": "差が ±75 ft 以上なら、高度計の正しさが疑わしいので、整備で調べてもらいます（米国の AIM 7-2-3・PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2-3（±75 ft 以上なら高度計の正しさが疑わしい）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Instrument Check：75 feet）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#5763f629",
+   "sec": "inst.alt",
+   "text": "FAA の目安は、1 inHg で約 1,000 ft です（PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（1 inch ≈ 1,000 feet）・FAA AIM 7-2-3（An inch Hg. error … equals 1,000 feet）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#5892c817",
+   "sec": "inst.alt",
+   "text": "0.01 inHg なら約 10 ft です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） の目安 1 inHg ≈ 1,000 ft からの計算（0.01 inHg ≈ 10 ft）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#253028aa",
+   "sec": "inst.alt",
+   "text": "標準大気の表では、海面から 1,000 ft 上がると、気圧は 29.92 inHg から 28.86 inHg に下がります（PHAK 第 4 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 4 章 図 4-3 Properties of standard atmosphere（0 ft 29.92・1,000 ft 28.86 inHg）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#de4a28c5",
+   "sec": "inst.alt",
+   "text": "hPa で数えると約 36 hPa なので、海面の近くでは 1 hPa が約 28 ft にあたります。",
+   "tag": "参考値",
+   "source": "PHAK 第 4 章 図 4-3 からの計算：1.06 inHg × 33.864 hPa/inHg ≈ 35.9 hPa、1,000 ÷ 35.9 ≈ 27.9 ft/hPa（PHAK 第 4 章：29.92 inHg ＝ 1,013.2 mb）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#4e563e16",
+   "sec": "inst.alt",
+   "text": "① 規正値 29.94 inHg のまま、規正値が 29.69 inHg の空港の場周を、高度計 2,600 ft で飛びました。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） の Dallas Love → Mineral Wells 29.94 → Abilene 29.69 inHg・2,600 ft の例",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#299974dc",
+   "sec": "inst.alt",
+   "text": "② 同じ場所で、規正値を 1003 hPa から 1013 hPa に上げました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#4b5eb444",
+   "sec": "inst.alt",
+   "text": "① 差は 29.94 − 29.69 ＝ 0.25 inHg です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） の例（29.94 − 29.69 ＝ 0.25）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#df46d654",
+   "sec": "inst.alt",
+   "text": "1 inHg ≈ 1,000 ft なので、約 250 ft 低い、約 2,350 ft を飛んでいます（PHAK 第 8 章の例）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） の例（約 250 ft 低い、2,600 − 250 ＝ 2,350）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#3a1d1213",
+   "sec": "inst.alt",
+   "text": "② 10 hPa × 約 28 ft ＝ 約 280 ft、表示が高くなります。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）（約 28 ft/hPa は上の行の計算）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#8ddc879a",
+   "sec": "inst.alt",
+   "text": "PHAK の表の例では、気温 −10 ℃ の日に空港から 1,000 ft 上を飛ぶと、実際は表示より最大で約 100 ft 低くなります（PHAK 第 8 章 図 8-4）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） 図 8-4（−10 ℃、空港から 1,000 ft で最大 100 ft 低い）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#a7ba1fa2",
+   "sec": "inst.alt",
+   "text": "高い山の上では、気象の条件によって、表示が実際より 1,000 ft 以上高くなる例もあります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（mountainous terrain：1,000 feet or more higher than the actual altitude）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#eb093d5d",
+   "sec": "inst.alt",
+   "text": "多くの高度計は、31.00 inHg より高い規正値を合わせられません。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2-2・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（31.00 \"Hg を超えて合わせられない高度計が多い）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#5a3c903d",
+   "sec": "inst.alt",
+   "text": "28.00 inHg より低い規正値を合わせられない高度計で飛ぶことは、勧められていません（米国の AIM 7-2-2・PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2-2（28.00 \"Hg 未満に合わせられないときの飛行は勧めない）・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#94ec3e50",
+   "sec": "inst.alt",
+   "text": "従来型の昇降計は、正しい率を示すまでに 6〜9 秒ほど遅れます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（VSI の lag：6–9 seconds）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#19e3a2c9",
+   "sec": "inst.alt",
+   "text": "毎分 600 ft の上昇を 20 秒続けると、何 ft 上がりますか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#9846296f",
+   "sec": "inst.alt",
+   "text": "600 × 20 ÷ 60 ＝ 200 ft です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#21d91f7c",
+   "sec": "inst.alt",
+   "text": "地上で空港の標高と ±75 ft 以上違えば、高度計を疑う",
+   "tag": "参考値",
+   "source": "FAA AIM 7-2-3・FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（±75 ft）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#ee1cd051",
+   "sec": "inst.alt",
+   "text": "気圧の目安の計算（1 inHg ≈ 1,000 ft）では、気温の誤差は直せません。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（1 inch ≈ 1,000 feet。気温の補正は別：Adjustments … do not compensate for nonstandard temperature）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#fa8b7769",
+   "sec": "inst.alt",
+   "text": "転移高度・規正 ｜ 18,000 ft MSL 未満は、経路上で 100 NM 以内の局の現在の高度計規正値。",
+   "tag": "条文",
+   "source": "FL.jur alt.transition の米国の欄（14 CFR 91.121。W06 が eCFR で確かめた）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#1915f67c",
+   "sec": "inst.alt",
+   "text": "18,000 ft MSL 以上は 29.92 inHg（14 CFR 91.121） ｜ 平均海面から 14,000 ft 未満は、経路上の地点の QNH（出発地の QNH が得られないときは出発点の標高）。",
+   "tag": "条文",
+   "source": "FL.jur alt.transition（14 CFR 91.121・航空法施行規則第 178 条。W05・W06 が確かめた）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#6d21a4c0",
+   "sec": "inst.alt",
+   "text": "それ以外は標準気圧値 1013.2 hPa（航空法施行規則第 178 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur alt.transition の日本の欄（航空法施行規則第 178 条。e-Gov の写し）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#cd3d878f",
+   "sec": "inst.alt",
+   "text": "METAR の規正値は A と 4 けた（A2992 は 29.92 inHg）（AIM 7-1-28・7-1-29） ｜ METAR の規正値は Q 群（hPa）。",
+   "tag": "参考値",
+   "source": "FL.jur alt.unit（AIM 7-1-28・7-1-29、気象庁「航空気象通報式」第 3 版 改正第 17 号の国内記事。W06・統合 P5 が確かめた）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.alt#681debc0",
+   "sec": "inst.alt",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur の囲みが描く e-Gov の版（textbook/rewrite/sources/egov/ の写し）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#11fbd9fc",
+   "sec": "inst.gyro",
+   "text": "こまに力を加えると、その反応は押した所ではなく、回る向きに 90° 進んだ所に出ます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Precession：90° later in the direction of rotation）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#d06923d7",
+   "sec": "inst.gyro",
+   "text": "要る強さは機体で違い、多くは 4.5〜5.5 inHg です（PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（usually between 4.5 \"Hg and 5.5 \"Hg）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#263cf16e",
+   "sec": "inst.gyro",
+   "text": "上のバンクの目盛りは、10°・20°・30°・45°・60° などを示します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ） 図 8-24（バンクの目盛り 10°・20°・30°・45°・60°・90°）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#d183c73c",
+   "sec": "inst.gyro",
+   "text": "限界は型で違い、例はバンク 100〜110°・ピッチ 60〜70° です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（banking 100° to 110°、pitch 60° to 70°）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#8de2e8a2",
+   "sec": "inst.gyro",
+   "text": "図：機首が水平線より 5° 上でも、翼に当たる角度が 8° なら、飛行経路は 3° 下向きです（翼の取り付け角を 0 とした模式図。角度は大きくして描いた）",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）（θ ＝ α ＋ γ：基礎教材 kiso04.11 の単純な関係。翼の取り付け角を 0 とした模式）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#5532998f",
+   "sec": "inst.gyro",
+   "text": "θ が 5°、α が 8° なら、γ は −3° で、降下しています。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#c32812f4",
+   "sec": "inst.gyro",
+   "text": "地球の自転のためにも、1 時間に最大 15° ずれます（PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Earth rotates 15° in 1 hour：as much as 15° error per every hour）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#43bf2a30",
+   "sec": "inst.gyro",
+   "text": "だから、まっすぐ・水平・一定の速度のときに、約 15 分ごとに磁気コンパスと合わせ直します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（approximately every 15 minutes）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#272676b4",
+   "sec": "inst.gyro",
+   "text": "1 秒に 3° 回る旋回で、180° に 60 秒、360° に 2 分かかります。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（standard-rate turn 3° per second・2 MIN.）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#31097599",
+   "sec": "inst.gyro",
+   "text": "TAS 100 kt で標準旋回をするときのバンク角は、およそ何度ですか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#573b0b21",
+   "sec": "inst.gyro",
+   "text": "標準旋回で 90° 向きを変えるのに、何秒かかりますか。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#1a42c6bd",
+   "sec": "inst.gyro",
+   "text": "3 ＝ 1,091 × tan φ ÷ 100 より、tan φ ＝ 0.275 で、φ は約 15° です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章（ROT ＝ 1,091 × tan(bank) ÷ TAS）からの計算：tan φ ＝ 0.275、φ ≈ 15.4°",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#6cfc4d8b",
+   "sec": "inst.gyro",
+   "text": "90 ÷ 3 ＝ 30 秒です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#36d544ee",
+   "sec": "inst.gyro",
+   "text": "約 15 分ごとに磁気コンパスと合わせる",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（approximately every 15 minutes）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#f7482e14",
+   "sec": "inst.gyro",
+   "text": "標準旋回は 1 秒に 3°、2 分で 360°。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（3° per second）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.gyro#5c267f79",
+   "sec": "inst.gyro",
+   "text": "この教材の PFD には旋回率の線がないので、方位が 10 秒で約 30° 変わることで確かめます。",
+   "tag": "教材値",
+   "source": "FLIGHT LAB の PFD（flight-lab/src/avionics.js に旋回率のトレンドがない。ifr.scan の bk.sim と同じ）・3°/秒 × 10 秒 ＝ 30°",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.compass#fae76ff4",
+   "sec": "sys.compass",
+   "text": "目盛りは裏から見るので、北へ飛んでいるとき、N の右に 33（330°）が見えます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（“33,” which represents 330° (west of north), is to the right of north）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.compass#ebe7b677",
+   "sec": "sys.compass",
+   "text": "どれだけ手前で止めるかの目安は「15° ＋ 緯度の半分」で、北緯 30° の近くなら約 30° です（PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（15 degrees plus half of the latitude：near 30 degrees latitude … 15+15=30）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.compass#997d72e4",
+   "sec": "sys.compass",
+   "text": "また、バンクがおよそ 18° より深いと、コンパスの表示は当てになりません（PHAK 第 8 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（tilt up to approximately 18° angle of bank. At steeper bank angles, the compass indications are erratic）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.compass#bcfb9fc8",
+   "sec": "sys.compass",
+   "text": "Sanford の磁気偏差は約 7°W（2026 年）（AIM 1-1-18・NOAA WMM-2025） ｜ SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。",
+   "tag": "参考値",
+   "source": "FL.jur sbas の米国の欄（NOAA WMM-2025・AIM 1-1-18。W06 が確かめた）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.compass#b3b95b7c",
+   "sec": "sys.compass",
+   "text": "磁気偏差は約 6°W（那覇）〜約 10.5°W（稚内）（2026 年）（国土交通省 航空局「MSAS（衛星航法補強システム）」（資料 3-10）・NOAA WMM-2025） ｜",
+   "tag": "参考値",
+   "source": "FL.jur sbas の日本の欄（国土交通省 航空局 資料 3-10・NOAA WMM-2025。W06・W12 が確かめた）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.pfd#c7120cd1",
+   "sec": "inst.pfd",
+   "text": "マゼンタのトレンドの線は、いまの変わり方が続いたら 6 秒後にどうなるかの予想です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）（Trend vectors … 6-second projection）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（six seconds）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.pfd#a0317f35",
+   "sec": "inst.pfd",
+   "text": "方位の目盛りの上の旋回率の線も、6 秒後の針路の予想です。",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（Turn Rate Trend Vector：heading predicted in 6 seconds）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.pfd#d847ca61",
+   "sec": "inst.pfd",
+   "text": "標準旋回のときは、2 つめの目盛り（18° 先）まで伸びます（G1000 型の手引き）。",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（standard-rate … predicted heading of 18° from the current heading）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.pfd#1e541e5a",
+   "sec": "inst.pfd",
+   "text": "トレンドの線は 6 秒先の予想。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 8 章 Flight Instruments（2026-10-30 に本文を読んだ）・Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#43d17686",
+   "sec": "inst.ap",
+   "text": "例では、針路を保ちながら GPS のコースを待ち、毎分 500 ft で上昇しながら選んだ高度を待っています",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値の計算（W15 が検算した）（図の表示の例。GFC 700 型の帯の並びは Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS））",
+   "kind": "例題",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#5ae65977",
+   "sec": "inst.ap",
+   "text": "待っていたモードの条件がそろうと、白い表示が緑の欄へ移り、10 秒点滅します。",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（armed mode annunciation moving to the green active mode field and flashing for 10 seconds）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#3b666314",
+   "sec": "inst.ap",
+   "text": "たとえば、選んだ高度へ近づくと、高度をとらえるモード（ALTS）が作動し、50 ft 手前で高度を保つモード（ALT）に移ります（G1000 型の手引き）。",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide for Cessna Nav III 190-00498-07 Rev. A（GFC 700 型の AFCS）（At 50 feet from the Selected Altitude … Altitude Hold Mode）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#db8cbd7d",
+   "sec": "inst.ap",
+   "text": "同じ補足は、上昇・巡航・降下中の故障で、回復を始めるのが 3 秒遅れると、バンクが 55° まで深くなり、高度を 320 ft 失いうるとしています（POH 補足 2）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2（three second delay … 55° bank and 320 ft. altitude loss）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#d72f3984",
+   "sec": "inst.ap",
+   "text": "速度 ｜ 140 KIAS を超えたら使わない ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Limitations（Autopilot operation prohibited above 140 KIAS）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#f8a5a72f",
+   "sec": "inst.ap",
+   "text": "フラップ ｜ 10°（1 段）まで ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Limitations（Maximum flap deflection is limited to 10 degrees (one notch)）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#82e8fece",
+   "sec": "inst.ap",
+   "text": "結合した進入 ｜ 地上 200 ft より下では使わない ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 補足 2 Limitations（prohibited below 200 feet AGL during coupled approach operations）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  },
+  {
+   "op": "add",
+   "id": "inst.ap#989a7eae",
+   "sec": "inst.ap",
+   "text": "自動操縦は、1 人で飛ぶときの仕事の量を大きく減らします。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 2 章（In a single-pilot environment, an autopilot system can greatly reduce workload）",
+   "by": "W15",
+   "note": "W15（2026-10-30）：drafts/inst.claims.json から。章 inst を登録するコミットで取り込む。確かめ役の署名は事実確認役（W15 と別）"
+  }
+ ]
+}

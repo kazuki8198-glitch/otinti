@@ -1,0 +1,1576 @@
+{
+ "ledger": "CLAIMS",
+ "draft": "textbook/rewrite/combined/drafts/wx.js",
+ "unit": "W17",
+ "chapter": "wx",
+ "updated": "2026-10-30",
+ "by": "W17",
+ "about": "第 1 部 第 10 章 wx（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・表・図のキャプション。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W17.ledger.json にも同じ行がある）。checkedBy は事実確認役（W17 と別）が付ける。kind: 例題 は、この本で決めた仮の値の計算・読み方の文（札は 参考値。仮の値に出典はなく、W17 が検算した）。囲みの行（FL.jur が描く文）は W05・W06 が確かめ、W12 が署名した値。一次資料は 2026-10-30 に読んだ：FAA Aviation Weather Handbook FAA-H-8083-28B（2026、PDF の本文）、PHAK FAA-H-8083-25C 第 12 章、AIM 第 7 章 1 節と 4-3-7（2026-10-27 の HTML の写し）、Archer III POH VB-2266、NWS Glossary、NHC、NOAA JetStream、気象庁の 3 ページ。",
+ "format": {
+  "id": "<節ID>#<8 桁>",
+  "sec": "節 ID",
+  "text": "文",
+  "tag": "教材値／参考値／条文／推測・要確認",
+  "source": "出典と確かめた所",
+  "kind": "例題（仮の値の計算・読み方）のときだけ",
+  "by": "書いた単位",
+  "checkedBy": "確かめ役（書いた人と別）",
+  "checkedOn": "確認日"
+ },
+ "counts": {
+  "rows": 186,
+  "byTag": {
+   "参考値": 169,
+   "条文": 14,
+   "教材値": 3
+  },
+  "examples": 57
+ },
+ "rows": [
+  {
+   "id": "wx.atm#5b8742c1",
+   "sec": "wx.atm",
+   "text": "海面で 15℃・29.92 inHg（1013.25 hPa）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 4.4 表 4-2（sea level 1013.25 hPa / 29.92 inHg, 15 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#0da6e758",
+   "sec": "wx.atm",
+   "text": "対流圏の厚さは緯度と季節で変わり、赤道の近くで約 18〜20 km、北緯 50 度のあたりで約 9 km、極で約 6 km です（AWH 4.3.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 4.3.1（Equator 18–20 km、50° 9 km、poles 6 km）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#3ba145fd",
+   "sec": "wx.atm",
+   "text": "海面で 15℃・29.92 inHg（1013.25 hPa）です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 4.4 表 4-2（sea level 1013.25 hPa / 29.92 inHg, 15 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#88913734",
+   "sec": "wx.atm",
+   "text": "対流圏では、気温が 1,000 m ごとに 6.5℃、1,000 ft ごとに約 2℃ 下がるとします（AWH 表 4-2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 表 4-2（6.5 °C/1,000 m）・5.8（6.5 °C/km）。1,000 ft で約 2℃ は 6.5 × 0.3048 ≒ 1.98 の丸め（FIG.atm と同じ）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#de649e43",
+   "sec": "wx.atm",
+   "text": "気圧は、低い所では 1,000 ft ごとに約 1 inHg 下がります（AWH 8.2.5）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 8.2.5（pressure increases about 1 inHg for each 1,000 ft）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#37b35fb2",
+   "sec": "wx.atm",
+   "text": "標準の減り方 ｜ 比べるための約束の値（国際標準大気） ｜ 1,000 ft ごとに約 2℃ ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 表 4-2",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#4057098e",
+   "sec": "wx.atm",
+   "text": "持ち上げた空気の冷え方 ｜ 動かした空気そのものの値 ｜ 雲の外で 1,000 ft ごとに約 3℃ ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2（3 °C per 1,000 ft）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#f08b645f",
+   "sec": "wx.atm",
+   "text": "標準大気は海面で 15℃・29.92 inHg（1013.25 hPa）",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 4.4 表 4-2",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#fa8b7769",
+   "sec": "wx.atm",
+   "text": "転移高度・規正 ｜ 18,000 ft MSL 未満は、経路上で 100 NM 以内の局の現在の高度計規正値。",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（alt.transition：14 CFR 91.121）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#1915f67c",
+   "sec": "wx.atm",
+   "text": "18,000 ft MSL 以上は 29.92 inHg（14 CFR 91.121） ｜ 平均海面から 14,000 ft 未満は、経路上の地点の QNH（出発地の QNH が得られないときは出発点の標高）。",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（alt.transition：14 CFR 91.121・航空法施行規則第 178 条）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#6d21a4c0",
+   "sec": "wx.atm",
+   "text": "それ以外は標準気圧値 1013.2 hPa（航空法施行規則第 178 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（alt.transition：航空法施行規則第 178 条）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#681debc0",
+   "sec": "wx.atm",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（e-Gov の版：textbook/rewrite/sources/egov/）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#4753922d",
+   "sec": "wx.atm",
+   "text": "高度計は 3,000 ft を示しています。",
+   "tag": "参考値",
+   "source": "この本の例題の仮の値。0.01 inHg ≒ 10 ft は PHAK 第 8 章・AIM 7-2（1 inHg ≈ 1,000 ft）。W07a までの本文と同じ（calc-check の seed wx.atm.q）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#1633da35",
+   "sec": "wx.atm",
+   "text": "差は 0.30 inHg で、約 300 ft です。",
+   "tag": "参考値",
+   "source": "この本の例題の仮の値。0.01 inHg ≒ 10 ft は PHAK 第 8 章・AIM 7-2（1 inHg ≈ 1,000 ft）。W07a までの本文と同じ（calc-check の seed wx.atm.q）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#1ac00585",
+   "sec": "wx.atm",
+   "text": "高度計は高く出ているので、本当の高さは約 2,700 ft です。",
+   "tag": "参考値",
+   "source": "この本の例題の仮の値。0.01 inHg ≒ 10 ft は PHAK 第 8 章・AIM 7-2（1 inHg ≈ 1,000 ft）。W07a までの本文と同じ（calc-check の seed wx.atm.q）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.atm#8ba9cc9f",
+   "sec": "wx.atm",
+   "text": "考えてみよう：ある朝、地上は 10℃ で、その上 1,500 ft までは上へ行くほど気温が上がっていました。",
+   "tag": "参考値",
+   "source": "この本の例題の仮の値（逆転層の考えてみよう）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.wind#3fc9f779",
+   "sec": "wx.wind",
+   "text": "METAR の風向は、真北を基準にした真方位（true direction）です（米国の AIM 7-1-29）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-29（direction the wind is blowing from, in tens of degrees referenced to true north）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.wind#8dbed9ba",
+   "sec": "wx.wind",
+   "text": "その角度は、海の上で約 10°、でこぼこな地形では 45° にもなります（AWH 10.5）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 10.5（about 10° over water, as high as 45° over rugged terrain）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#3932b7ff",
+   "sec": "wx.cloud",
+   "text": "差が 0 になると相対湿度は 100% で、空気は飽和し、雲や霧ができます（AWH 6.6）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 6.6（spread zero, relative humidity 100 percent, saturated）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#11eaeb34",
+   "sec": "wx.cloud",
+   "text": "空気が持ち上げられると、1,000 ft ごとに気温は約 3℃、露点温度は約 0.5℃ 下がります（AWH 12.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2（3 °C per 1,000 ft; dewpoint 0.5 °C per 1,000 ft）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#8b762524",
+   "sec": "wx.cloud",
+   "text": "差は 1,000 ft ごとに約 2.5℃ ずつ縮むので、積雲の底 ≒ 差 ÷ 2.5 × 1,000 ft と見積もれます（PHAK 第 12 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 12 章 Weather Theory（NEW_R.phak12）（convergence 4.4 °F per 1,000 ft ＝ 3.0 − 0.5 ＝ 2.5 °C、moist, unstable air）・FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#f1f63828",
+   "sec": "wx.cloud",
+   "text": "たとえば METAR の気温と露点温度が 32/23 なら、差は 9℃ で、底は地上から約 3,600 ft です。",
+   "tag": "参考値",
+   "source": "この本の例題（9 ÷ 2.5 × 1,000 ＝ 3,600 ft。FIG.cloudBase と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#4c1d1a87",
+   "sec": "wx.cloud",
+   "text": "積雲の底 ≒（気温 − 露点温度）÷ 2.5 × 1,000 ft（地上から）",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 12 章 Weather Theory（NEW_R.phak12）・FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#1881819e",
+   "sec": "wx.cloud",
+   "text": "差は 4℃ です。",
+   "tag": "参考値",
+   "source": "この本の例題（28/24 → 4 ÷ 2.5 × 1,000 ≒ 1,600 ft。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.cloud#e73f5161",
+   "sec": "wx.cloud",
+   "text": "4 ÷ 2.5 × 1,000 ≒ 約 1,600 ft（地上から）です。",
+   "tag": "参考値",
+   "source": "この本の例題（28/24 → 4 ÷ 2.5 × 1,000 ≒ 1,600 ft。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#6781a509",
+   "sec": "wx.stab",
+   "text": "雲の底は 3,600 ft です。",
+   "tag": "参考値",
+   "source": "FIG.wxParcel のキャプション。計算演習と同じ仮の日（30/21、乾燥 3℃・露点 0.5℃・湿潤 2℃・周り 2.5℃ per 1,000 ft：AWH 12.2・12.3 の率）。LCL ＝ 9 ÷ 2.5 ＝ 3.6、LFC ＝ 3.6 ＋ 1.8 ÷ 0.5 ＝ 7.2（千 ft）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#b620554c",
+   "sec": "wx.stab",
+   "text": "約 7,200 ft までは空気塊のほうが冷たいので戻ろうとし（安定）、それより上では暖かいので自分で上がります（不安定）。",
+   "tag": "参考値",
+   "source": "FIG.wxParcel のキャプション。計算演習と同じ仮の日（30/21、乾燥 3℃・露点 0.5℃・湿潤 2℃・周り 2.5℃ per 1,000 ft：AWH 12.2・12.3 の率）。LCL ＝ 9 ÷ 2.5 ＝ 3.6、LFC ＝ 3.6 ＋ 1.8 ÷ 0.5 ＝ 7.2（千 ft）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#face0721",
+   "sec": "wx.stab",
+   "text": "飽和していない（雲の外） ｜ 1,000 ft で約 3℃（1 km で約 9.8℃） ｜ 1,000 ft で約 0.5℃（1 km で約 1.8℃） ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2・表 12-1（3 °C/1,000 ft = 9.8 °C/km、dewpoint 0.5 °C/1,000 ft = 1.8 °C/km）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#dcf29e2e",
+   "sec": "wx.stab",
+   "text": "飽和している（雲の中） ｜ 1,000 ft で約 1.2〜3℃（暖かいほど小さい） ｜ 気温と同じだけ ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.3・表 12-1（1.2–3 °C per 1,000 ft、dewpoint identical）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#0e9bb76f",
+   "sec": "wx.stab",
+   "text": "例の計算では 1,000 ft で 2℃ を使います（AWH 12.3）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.3（examples use a moist adiabatic lapse rate of 2 °C per 1,000 ft）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#01617b96",
+   "sec": "wx.stab",
+   "text": "リフテッド指数（LI）：地上の空気塊を 500 hPa まで持ち上げ、そこでの周りの気温との差を見ます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 13.5.1（parcel lifted to 500 mb; positive stable, negative unstable）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#f12c3568",
+   "sec": "wx.stab",
+   "text": "ショワルター指数（Showalter index）：850 hPa の空気塊を 500 hPa まで持ち上げ、そこでの周りの気温との差を見ます。",
+   "tag": "参考値",
+   "source": "NOAA NWS Glossary「Showalter Index」（lifting an air parcel adiabatically from 850 mb to 500 mb）・NEW_R.nwsGlossary",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#21c73d02",
+   "sec": "wx.stab",
+   "text": "温位（potential temperature）は、乾いた空気塊を 1,000 hPa まで断熱的に動かしたときの温度です。",
+   "tag": "参考値",
+   "source": "NOAA NWS Glossary「potential temperature」（brought adiabatically to 1000 mb）・NEW_R.nwsGlossary",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#3b534b58",
+   "sec": "wx.stab",
+   "text": "地上で気温 30℃・露点温度 21℃ の空気塊を持ち上げます。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#41c842b2",
+   "sec": "wx.stab",
+   "text": "③ その上は湿潤断熱減率を 1,000 ft で 2℃ とします。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#766e07d4",
+   "sec": "wx.stab",
+   "text": "地上から 6,000 ft での空気塊の気温は何 ℃ ですか。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#186386c7",
+   "sec": "wx.stab",
+   "text": "その高さの周りの気温が 15℃ なら、安定ですか。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#f2214d45",
+   "sec": "wx.stab",
+   "text": "① 差 9℃ ÷ 2.5 × 1,000 ＝ 3,600 ft です。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#250010f7",
+   "sec": "wx.stab",
+   "text": "② 30 − 3 × 3.6 ＝ 19.2℃ です（露点温度も 21 − 0.5 × 3.6 ＝ 19.2℃ で、同じになります）。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#fe15f24d",
+   "sec": "wx.stab",
+   "text": "③ 3,600 ft から 6,000 ft までの 2,400 ft で 2 × 2.4 ＝ 4.8℃ 下がり、19.2 − 4.8 ＝ 14.4℃ です。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#313ac8db",
+   "sec": "wx.stab",
+   "text": "周りの 15℃ より冷たいので、この高さでは戻ろうとします（安定）。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#f0b1dd5b",
+   "sec": "wx.stab",
+   "text": "上の図の日は、周りが 1,000 ft で 2.5℃ 下がるので、約 7,200 ft より上で空気塊のほうが暖かくなります（計算用の仮の値）。",
+   "tag": "参考値",
+   "source": "この本の計算演習の仮の値（率は AWH 12.2・12.3）。W17 が検算した",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#5cfb8f6e",
+   "sec": "wx.stab",
+   "text": "持ち上げた空気は雲の外で 1,000 ft に約 3℃、露点温度は約 0.5℃ 下がる",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.2",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#38280e5d",
+   "sec": "wx.stab",
+   "text": "雲の中では冷え方がゆるい（湿潤断熱減率は約 1.2〜3℃）",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 12.3",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#2f1f7f0f",
+   "sec": "wx.stab",
+   "text": "昼の地面の加熱や、850 hPa より下の湿り気は、ショワルター指数に入りません（NWS Glossary）。",
+   "tag": "参考値",
+   "source": "NOAA NWS Glossary「Showalter Index」（does not take in account diurnal heating or moisture below 850 mb）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#1ea0f08f",
+   "sec": "wx.stab",
+   "text": "考えてみよう：その日の周りの気温の減り方が、1,000 ft に 2.5℃ でした。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値（率は AWH 12.2・12.3、安定度の型は AWH 13.3.4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#6933c2d0",
+   "sec": "wx.stab",
+   "text": "雲の中ならどうですか（湿潤断熱減率は 2℃ とします）。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値（率は AWH 12.2・12.3、安定度の型は AWH 13.3.4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#ee5619fd",
+   "sec": "wx.stab",
+   "text": "雲のない空気塊は 1,000 ft に約 3℃ 冷え、周りより速く冷えるので、持ち上げると周りより冷たくなり安定です。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値（率は AWH 12.2・12.3、安定度の型は AWH 13.3.4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.stab#4cbdf7a6",
+   "sec": "wx.stab",
+   "text": "雲の中の空気塊は 2℃ しか冷えず、周りより暖かくなるので不安定です。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値（率は AWH 12.2・12.3、安定度の型は AWH 13.3.4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.front#a2f2d429",
+   "sec": "wx.front",
+   "text": "動く速さ（目安） ｜ 25〜30 mph（約 22〜26 kt） ｜ 10〜25 mph（約 9〜22 kt） ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 11.3.1・11.3.2（warm fronts 10 to 25 mph、cold fronts 25 to 30 mph）。kt は 1 mph ＝ 0.869 kt で換算（W07a）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#91296bb4",
+   "sec": "wx.ts",
+   "text": "全体で約 30 分です（AWH 22.3）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.3（total life cycle is typically about 30 minutes）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#08173bac",
+   "sec": "wx.ts",
+   "text": "積雲期の上昇気流は、時に 3,000 fpm を超えます（AWH 22.3）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.3（updraft speeds can exceed 3,000 fpm）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#9feaed96",
+   "sec": "wx.ts",
+   "text": "上昇気流は 9,000 fpm に達する ｜ 大きなひょうや強い風。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.4（supercell updraft speeds may reach 9,000 fpm）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#2a2bd096",
+   "sec": "wx.ts",
+   "text": "約 25% が竜巻を伴う ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.4（about 25 percent produce a tornado）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#6f765629",
+   "sec": "wx.ts",
+   "text": "雲の外でも、横へ 20 マイル離れた所で揺れることがある（AWH 19.2.1.1） ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 19.2.1.1（up to 20 mi laterally from a severe storm）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#79831d6f",
+   "sec": "wx.ts",
+   "text": "強い上昇気流の中では −40℃ まで ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.9（supercooled water as cold as −40 °C in thunderstorm updrafts）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#7f140180",
+   "sec": "wx.ts",
+   "text": "気圧の急な変化 ｜ 15 分ほどで上がり下がりする。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.7.7（this cycle of pressure change may occur in 15 minutes）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#8ca05fca",
+   "sec": "wx.ts",
+   "text": "規正値を直さないと、高度計が 100 ft 以上ずれる（AWH 22.7.7） ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.7.7（the altimeter may be more than 100 ft in error）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#464e1fcd",
+   "sec": "wx.ts",
+   "text": "激しい雷雨（強いレーダーのエコー）からは、少なくとも 20 マイル離れます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.8.2（at least 20 mi; 40 mi between cells）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#e0fbff81",
+   "sec": "wx.ts",
+   "text": "激しいエコーの間は、40 マイル以上離れていなければ通りません。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.8.2（at least 20 mi; 40 mi between cells）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#42196d70",
+   "sec": "wx.ts",
+   "text": "機内に表示されるデータ放送のレーダー画像（NEXRAD）は、表示されている時刻より、さらに 15〜20 分古い天気のことがあります。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.8.2・24.6.1.6（15 to 20 minutes older）・FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-27",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#d11e7674",
+   "sec": "wx.ts",
+   "text": "大西洋のハリケーンの季節は、6 月 1 日から 11 月 30 日までです（NHC）。",
+   "tag": "参考値",
+   "source": "NOAA National Hurricane Center「Tropical Cyclone Climatology」（The Atlantic hurricane season runs from June 1 to November 30）・NEW_R.nhcClimo",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#554a625e",
+   "sec": "wx.ts",
+   "text": "激しいものからは 20 マイル以上",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.8.2（at least 20 mi; 40 mi between cells）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ts#87ef0ffe",
+   "sec": "wx.ts",
+   "text": "機内のレーダー画像は、表示の時刻よりさらに 15〜20 分古いことがある",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.8.2・24.6.1.6（15 to 20 minutes older）・FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-27",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#4035d343",
+   "sec": "wx.shear",
+   "text": "直径は 2.5 mi 未満で、続くのは 5〜15 分ほどです。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.7.3（diameter less than 2.5 mi; 5–15 minutes; downdrafts up to 6,000 fpm; 30–90 kt）。W07a・W12 の安全レビューを通った文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#e0580fd9",
+   "sec": "wx.shear",
+   "text": "それでも下降気流は最大 6,000 fpm、向かい風から追い風への変化は 30〜90 kt にもなります（AWH 22.7.3）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 22.7.3（diameter less than 2.5 mi; 5–15 minutes; downdrafts up to 6,000 fpm; 30–90 kt）。W07a・W12 の安全レビューを通った文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#c3f4e751",
+   "sec": "wx.shear",
+   "text": "METAR が 09012G20KT なら、突風分は 20 − 12 ＝ 8 kt で、その半分の 4 kt を足します。",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH 第 8 章。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#af76850c",
+   "sec": "wx.shear",
+   "text": "Archer の進入速度は 70 KIAS です（教材値。参考値のチェックリスト（checklist）の値も同じ）。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28.v.appr（70）。参考値：Archer III w/ G1000 Pilot's Checklist（R.archerCk）の進入速度 70 KIAS",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#c50f0cfc",
+   "sec": "wx.shear",
+   "text": "突風分の半分を足すと、約 74 KIAS です。",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH 第 8 章。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#c8455903",
+   "sec": "wx.shear",
+   "text": "ガストフロントは、雷雨の本体より先に、15 マイルほど離れた所まで届くことがあります（AWH 19.2.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 19.2.1.1（gust fronts often move far ahead (up to 15 mi) of associated precipitation）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#d2240f3f",
+   "sec": "wx.shear",
+   "text": "米国の LLWAS は空港のまわりだけを見て、マイクロバーストの警報は出しません（AIM 4-3-7）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 4-3-7（LLWAS … around the periphery of an airport … does not provide microburst alerts）・R.aim43",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#73a33460",
+   "sec": "wx.shear",
+   "text": "ウィンドシャーの警報 ｜ LLWAS（ウィンドシャーとガストフロント）や TDWR（マイクロバーストも）などの警報を、管制官が伝える（AIM 4-3-7） ｜ 空港気象ドップラーレーダーとドップラーライダーで、低層ウィンドシャーとマイクロバーストを探知し、パイロットに伝える。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 4-3-7（LLWAS … around the periphery of an airport … does not provide microburst alerts）・R.aim43",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#bd85aeab",
+   "sec": "wx.shear",
+   "text": "考えてみよう：METAR が 18015G25KT。",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH）。70 KIAS は教材値（pa28.v.appr）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#4c18e869",
+   "sec": "wx.shear",
+   "text": "Archer の通常の進入速度を 70 KIAS とすると、進入速度はおよそ？",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH）。70 KIAS は教材値（pa28.v.appr）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#0e8ed602",
+   "sec": "wx.shear",
+   "text": "突風分は 25 − 15 ＝ 10 kt で、その半分は 5 kt です。",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH）。70 KIAS は教材値（pa28.v.appr）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#cf11561e",
+   "sec": "wx.shear",
+   "text": "約 75 KIAS で進入します。",
+   "tag": "参考値",
+   "source": "この本の例題（突風分の半分：AFH）。70 KIAS は教材値（pa28.v.appr）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.shear#791910c4",
+   "sec": "wx.shear",
+   "text": "横風成分（crosswind component）も計算し、Archer の実証横風速度（17 kt。教材値で、参考値の POH の値も同じ）と比べます。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28.v.xwind（17）。参考値：Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 4.3（Maximum Demonstrated Crosswind Velocity 17 KTS）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.turb#9f07ee7b",
+   "sec": "wx.turb",
+   "text": "尾根の高さで 20 kt 以上の風の日に、山の上を低く飛ぶと、並以上の揺れと強い上昇気流・下降気流に会います（AWH 19.2.5.3）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 19.2.5.3（strong winds (20 kt or greater at ridge level) … moderate or greater turbulence）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.turb#d1a7020e",
+   "sec": "wx.turb",
+   "text": "ふつう 15,000 ft より上の、ジェット気流のまわりで起きます（AWH 19.2.3.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 19.2.3.2（CAT is a higher altitude turbulence (normally above 15,000 ft)）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.turb#9530a006",
+   "sec": "wx.turb",
+   "text": "最大の重量では 113 KIAS です（教材値。参考値の POH の値も 113 KIAS）。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28.v.va（113）。参考値：Piper PA-28-181 Archer III POH VB-2266（R.archerPoh の公開の写し） 2.3・4.3（Maximum Operating Maneuvering Speed VO 113 KIAS at 2550 lbs）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.turb#bce98e4d",
+   "sec": "wx.turb",
+   "text": "米国の AIM は、場所・時刻（UTC）・高度・機種と、揺れの強さを入れ、雲の中か近くかも伝えるとしています（AIM 7-1-21）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-21（location, time UTC, intensity, in or near clouds, altitude, type of aircraft）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.turb#18741c04",
+   "sec": "wx.turb",
+   "text": "強い揺れ・強い着氷・ひょう・地面から 2,000 ft 以内のウィンドシャーなどは、急ぎの PIREP（UUA）になります（AWH 24.5.1.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.5.1.1.1（urgent PIREPs: severe or extreme turbulence, severe icing, hail, LLWS within 2,000 ft of the surface）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#f86cc3f0",
+   "sec": "wx.ice",
+   "text": "目に見える水分・0℃ 以下の空気・冷たい機体がそろうと、過冷却水滴が当たって凍ります。",
+   "tag": "参考値",
+   "source": "FIG.wxIcing のキャプション：FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3・20.3.4",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#90da9e8c",
+   "sec": "wx.ice",
+   "text": "雲や雨の中には、0℃ より冷たくても凍らない水滴があります。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.2（supercooled water）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#9228d5a1",
+   "sec": "wx.ice",
+   "text": "着氷には、目に見える水分（雲や雨）と、0℃ 以下の気温が要ります。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4（OAT must be below 0 °C）・20.3.10（visible moisture）・FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#37a2ee5d",
+   "sec": "wx.ice",
+   "text": "ほとんどの着氷は 0℃ から −20℃ の間で起き、報告の約半分は −8℃ から −12℃ です（AWH 20.3.4）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4（almost all icing between 0 °C and −20 °C, about half between −8 °C and −12 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#071ff73d",
+   "sec": "wx.ice",
+   "text": "米国の AIM は、雨や雲の中で +2℃ から −10℃ のときに、着氷を予想するよう勧めています（AIM 7-1-19）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19（visible precipitation … temperature is between +02 and −10 degrees Celsius）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#75772905",
+   "sec": "wx.ice",
+   "text": "雲の中の水滴は、0℃ から −10℃ ではほとんどが過冷却の水滴で、−20℃ より冷たいとふつう氷の粒だけになります（AWH 20.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.2（between 0 and −10 °C mainly supercooled droplets; below −20 °C generally ice crystals）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#fa12736f",
+   "sec": "wx.ice",
+   "text": "冷えた機体には、気温が 0℃ より少し高くても氷が付きます（AWH 20.3.4）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4（cold-soaked airframe; air temperature slightly above 0 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#b7a43bd4",
+   "sec": "wx.ice",
+   "text": "過冷却大水滴（SLD：supercooled large drops）は、直径が 0.05 mm より大きい過冷却の水滴です。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-20（SLD: diameters greater than 0.05 mm at temperatures less than 0 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#34beff3f",
+   "sec": "wx.ice",
+   "text": "米国の AIM は、凍る雨や凍る霧雨の水滴をこう呼びます（AIM 7-1-20）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-20（i.e., freezing rain or freezing drizzle）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#80c7dc0e",
+   "sec": "wx.ice",
+   "text": "米国の AIM は、氷で推力（thrust）が減り、抗力（drag）が増え、揚力が減り、重量が増えると書いています（AIM 7-1-19）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19（thrust is reduced, drag increases, lift lessens, and weight increases）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#59b57534",
+   "sec": "wx.ice",
+   "text": "粗いサンドペーパーくらいの霜・雪・氷でも、揚力は 30% 減り、抗力は 40% まで増えます（AWH 20.3.10）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.10（reduce lift by 30 percent and increase drag up to 40 percent）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#2f167929",
+   "sec": "wx.ice",
+   "text": "できなければ、気温が 0℃ より高い高さへ移ります（AWH 20.3.10）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.10（leave the area of visible moisture … move to an altitude where the temperature is above freezing）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#42a386d0",
+   "sec": "wx.ice",
+   "text": "米国の AIM は、暖かい高さが上にあることもあると注意しています。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19（This “warmer” altitude may not always be a lower altitude）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#59b0a948",
+   "sec": "wx.ice",
+   "text": "米国の AIM は、着氷に会ったら管制機関に知らせるよう求めています（AIM 7-1-19）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19（Report icing to ATC）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#822e4d9f",
+   "sec": "wx.ice",
+   "text": "米国の AIM の severe は装置が氷を取りきれない強さで、すぐに出ることが求められます（AIM 7-1-19）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-19（Severe … ice protection systems fail to remove … immediate exit is required）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#5214c012",
+   "sec": "wx.ice",
+   "text": "米国では、並の着氷と凍る高さ（0℃ の高さ）を AIRMET Zulu が知らせます（AWH 26.3.1.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.3.1.2（AIRMET Zulu describes moderate icing and provides freezing level heights）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#a7608c84",
+   "sec": "wx.ice",
+   "text": "気温計が 0℃ より高くても、冷えた翼の表面には霜が付きます（kiso07.16）。",
+   "tag": "参考値",
+   "source": "パイロット基礎教材（第 3 版）kiso07.16（基礎教材の文を書き直した）・FAA PHAK FAA-H-8083-25C 第 12 章 Weather Theory（NEW_R.phak12）（frost when the temperature of objects drops below the dew point / freezing）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#ff3af5fc",
+   "sec": "wx.ice",
+   "text": "着氷には、目に見える水分と 0℃ 以下の気温が要る。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#2e3fe70a",
+   "sec": "wx.ice",
+   "text": "多くは 0〜−20℃",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#7f17a559",
+   "sec": "wx.ice",
+   "text": "逆に、気温が 0℃ より少し高くても、冷えた機体には氷が付きます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.3.4",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#e15cec16",
+   "sec": "wx.ice",
+   "text": "この気化器着氷（キャブレターアイス、carburetor icing）は、外の気温が 0℃ より高くても、雲の外でも起きます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 20.4.1（icing can occur even in outside air temperatures as high as 100 °F (38 °C)）・sys.carb（住所）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#eb737e63",
+   "sec": "wx.ice",
+   "text": "考えてみよう：気温 −5℃ の層雲の中を飛んでいて、翼の前縁に氷が付き始めました。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値。手順は AWH 20.3.10・AIM 7-1-19",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.ice#4f69cc92",
+   "sec": "wx.ice",
+   "text": "できなければ 0℃ より高い高さへ移り、管制機関に知らせます。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値。手順は AWH 20.3.10・AIM 7-1-19",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#0f435b5c",
+   "sec": "wx.fog",
+   "text": "気温と露点温度の差が 2℃ より大きいと、霧はめったにできません（AWH 18.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 18.1.1（fog seldom forms when the spread is greater than 2 °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#c09c0232",
+   "sec": "wx.fog",
+   "text": "風が 5 kt くらいまでだと厚くなる。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 18.1.1.1.1（winds up to about 5 kt … deepen the fog）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#dce47593",
+   "sec": "wx.fog",
+   "text": "風 15 kt くらいまでは厚くなり、それより強いと低い雲になる。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 18.1.1.1.1（winds up to about 5 kt … deepen the fog）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#55018cfc",
+   "sec": "wx.fog",
+   "text": "滑昇霧（upslope fog） ｜ 湿った安定な空気が、斜面を上って冷える ｜ 風が要る（5〜15 kt がいちばん）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 18.1.1.1.3（winds speeds of 5–15 kt are most favorable; can form under cloudy skies）・FAA PHAK FAA-H-8083-25C 第 12 章 Weather Theory（NEW_R.phak12）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#ea02b8ec",
+   "sec": "wx.fog",
+   "text": "米国では、卓越視程が 1 SM 以下か、滑走路視距離が 6,000 ft 以下のときに METAR に入ります（AWH 24.4.3.7）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4.3.7（RVR is reported whenever … prevailing visibility is 1 SM or less, and/or the RVR … is 6,000 ft or less）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#68fd9b8e",
+   "sec": "wx.fog",
+   "text": "気温と露点温度の差が 2℃ 以下に縮んできたら、霧や低い雲を疑う",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 18.1.1",
+   "by": "W17"
+  },
+  {
+   "id": "wx.fog#73f67ac2",
+   "sec": "wx.fog",
+   "text": "気温と露点温度の差が 1℃ しかなく、放射霧が出やすい条件です。",
+   "tag": "参考値",
+   "source": "この本の考えてみようの仮の値（18/17。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#e25b9132",
+   "sec": "wx.metar",
+   "text": "METAR は、空港で 1 時間ごとに出る定時の観測です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4.1（METAR … hourly）。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#08795d6f",
+   "sec": "wx.metar",
+   "text": "米国は、視程を SM、滑走路視距離を ft、規正値を inHg で書きます（AIM 7-1-29）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-29（the U.S. will continue to use statute miles for visibility, feet for RVR values … inches of mercury for altimetry）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#1396aeeb",
+   "sec": "wx.metar",
+   "text": "P6SM は 6 SM を超えるという意味で、TAF で使います。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.4.2.6（P6SM in the TAF）。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#9e2b549b",
+   "sec": "wx.metar",
+   "text": "VC は、空港の 5〜10 SM の付近です。",
+   "tag": "参考値",
+   "source": "NWSI 10-813（VC 5–10 SM）・FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4.3.8.2。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#75ded49a",
+   "sec": "wx.metar",
+   "text": "雲：雲の量と、地上からの高さ（100 ft 単位）です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4.3.9（height of the layer in hundreds of feet AGL）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#539cc0e3",
+   "sec": "wx.metar",
+   "text": "SKC / CLR ｜ 雲なし（CLR は自動観測で 12,000 ft 以下に雲なし） ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4.3.9（CLR: no layers at or below 12,000 ft AGL）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#a690d2ac",
+   "sec": "wx.metar",
+   "text": "たとえば 1,200 ft に 2/8、3,000 ft にさらに 1/8、5,000 ft にさらに 2/8 なら、FEW012 SCT030 BKN050 です（AWH 24.4）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.4（summation of sky cover）。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#0f84b628",
+   "sec": "wx.metar",
+   "text": "G は最大瞬間風速（山と谷の差が 10 kt 以上のとき）。",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（metar.taf：AIM 7-1-28・7-1-29・FMH-1・NWSI 10-813。日本の欄の一部は〔要確認〕）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#7c6ba733",
+   "sec": "wx.metar",
+   "text": "NWS の TAF は FM・TEMPO（1 回 1 時間未満）・PROB30（PROB40 は使わない）で、BECMG を使わない（AIM 7-1-28・7-1-29、FMH-1 5.4.4、NWSI 10-813（2024-10-30）付録 B 2.9.4） ｜ 例（RJTT・RJAA・RJCC）：METAR は毎正時と 30 分に出て、視程は m（9999）か CAVOK、NOSIG・TEMPO の予報が付く。",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（metar.taf：AIM 7-1-28・7-1-29・FMH-1・NWSI 10-813。日本の欄の一部は〔要確認〕）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#cd3d878f",
+   "sec": "wx.metar",
+   "text": "METAR の規正値は A と 4 けた（A2992 は 29.92 inHg）（AIM 7-1-28・7-1-29） ｜ METAR の規正値は Q 群（hPa）。",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（alt.unit：AIM 7-1-28・7-1-29・気象庁 航空気象通報式。管制・ATIS の単位は〔要確認〕）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#4d2916b4",
+   "sec": "wx.metar",
+   "text": "フロリダ中部の夏時間（EDT）は UTC から 4 時間を引き、日本時間（JST）は 9 時間を足します。",
+   "tag": "参考値",
+   "source": "basics.time と FL.jur の time（EDT ＝ UTC − 4：15 U.S.C. 260a・49 CFR 71、JST ＝ UTC ＋ 9：明治十九年勅令第五十一号）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#97786c42",
+   "sec": "wx.metar",
+   "text": "17:53 UTC から 4 時間を引いて、13:53（午後 1 時 53 分）です。",
+   "tag": "参考値",
+   "source": "この本の例題（141753Z → EDT 13:53。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.metar#abebdc40",
+   "sec": "wx.metar",
+   "text": "14 日の観測です。",
+   "tag": "参考値",
+   "source": "この本の例題（141753Z → EDT 13:53。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#b8ca7328",
+   "sec": "wx.taf",
+   "text": "14 日 12Z から 15 日 12Z までの予報で、14 日 18〜22Z（フロリダの夏時間で 14〜18 時、日本時間で 15 日 3〜7 時）に一時的な雷雨、15 日 02Z から晴れ",
+   "tag": "参考値",
+   "source": "FIG.tafTimeline のキャプション（架空の TAF。EDT ＝ UTC − 4、JST ＝ UTC ＋ 9）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#f76d68e3",
+   "sec": "wx.taf",
+   "text": "米国の TAF は、空港の滑走路のまわり 5 SM 以内の予報です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.4（TAF … within 5 SM of the center of the runway complex）。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#1a2db3fa",
+   "sec": "wx.taf",
+   "text": "ふつうは 24 時間、大きな空港では 30 時間の予報です（AWH 27.4）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.4（24 hours; 30 hours for some airports）。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#3ea1d282",
+   "sec": "wx.taf",
+   "text": "米国の定時の TAF は 1 日 4 回、00・06・12・18Z の分が出ます。",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）4.10・R.nwsi10813。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#1868d4d1",
+   "sec": "wx.taf",
+   "text": "発表は、その 20〜40 分前です（例：00Z の TAF は 23:20〜23:40Z。NWS の指示書 NWSI 10-813 の 4.10）。",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）4.10。W07a の本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#4e0a022b",
+   "sec": "wx.taf",
+   "text": "1412/1512 ｜ 有効な時間：14 日 12Z から 15 日 12Z まで ｜",
+   "tag": "参考値",
+   "source": "この本の架空の TAF の読み方（記号の意味は AWH 27.4.2・NWSI 10-813 付録 B）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#a2a03073",
+   "sec": "wx.taf",
+   "text": "FM150200 ｜ FM（from）：15 日 02:00Z から、天気がすっかり変わる。",
+   "tag": "参考値",
+   "source": "この本の架空の TAF の読み方（記号の意味は AWH 27.4.2・NWSI 10-813 付録 B）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#f5fb50f7",
+   "sec": "wx.taf",
+   "text": "TEMPO 1418/1422 ｜ TEMPO（temporary）：14 日 18Z〜22Z の間に、一時的に変わる。",
+   "tag": "参考値",
+   "source": "この本の架空の TAF の読み方（記号の意味は AWH 27.4.2・NWSI 10-813 付録 B）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#e4b71415",
+   "sec": "wx.taf",
+   "text": "起きる見込みは 50% を超え、1 回 1 時間未満、合わせて期間の半分未満 ｜",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）付録 B（TEMPO: greater than 50 percent, less than one hour, less than half the period）・AIM 7-1-28。W08a・W12 で確かめた文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#4e61e257",
+   "sec": "wx.taf",
+   "text": "PROB30 1420/1424 ｜ PROB30：その時間に、雷雨や雨が起きる確率が 30%（米国の国立気象局（NWS：National Weather Service）が使うのは PROB30 だけ） ｜",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）付録 B 2.9.4（PROB30 is the only PROB group used in NWS TAFs）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#737df5ba",
+   "sec": "wx.taf",
+   "text": "P6SM・SKC ｜ 視程 6 SM を超える・雲なし ｜",
+   "tag": "参考値",
+   "source": "この本の架空の TAF の読み方（記号の意味は AWH 27.4.2・NWSI 10-813 付録 B）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#a5a6aa9a",
+   "sec": "wx.taf",
+   "text": "BECMG は、ふつう 2 時間ほどの間に変わり、変わったあとの状態が続くという意味です。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-29（BECMG … over a longer time period, usually two hours）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#0fdab3a5",
+   "sec": "wx.taf",
+   "text": "米国の AIM によると、書かれていない要素は、前の状態が続きます（AIM 7-1-29）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-29（The omitted conditions are carried over from the previous time group）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#90ffdda9",
+   "sec": "wx.taf",
+   "text": "TEMPO＝一時的に（1 回 1 時間未満、合わせて半分未満）。",
+   "tag": "参考値",
+   "source": "NWSI 10-813 付録 B・AIM 7-1-28",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#0f84b628",
+   "sec": "wx.taf",
+   "text": "G は最大瞬間風速（山と谷の差が 10 kt 以上のとき）。",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（metar.taf）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#7c6ba733",
+   "sec": "wx.taf",
+   "text": "NWS の TAF は FM・TEMPO（1 回 1 時間未満）・PROB30（PROB40 は使わない）で、BECMG を使わない（AIM 7-1-28・7-1-29、FMH-1 5.4.4、NWSI 10-813（2024-10-30）付録 B 2.9.4） ｜ 例（RJTT・RJAA・RJCC）：METAR は毎正時と 30 分に出て、視程は m（9999）か CAVOK、NOSIG・TEMPO の予報が付く。",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（metar.taf）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#a86ecc67",
+   "sec": "wx.taf",
+   "text": "日本の気象庁の TAF は、6 時間ごと（00・06・12・18 UTC）に、30 時間後までの予報を出します（気象庁 関西航空地方気象台）。",
+   "tag": "参考値",
+   "source": "気象庁 関西航空地方気象台「運航用飛行場予報（TAF）」（6時間毎（00・06・12・18UTC）に30時間後までの予報）・NEW_R.jmaTaf。2026-10-30 に読んだ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#60e2eaee",
+   "sec": "wx.taf",
+   "text": "考えてみよう：TAF に「TEMPO 1418/1422 3SM TSRA BKN030CB」。",
+   "tag": "参考値",
+   "source": "この本の例題（架空の TAF。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#c25131fc",
+   "sec": "wx.taf",
+   "text": "14 日の 18〜22Z、つまり14〜18 時に、一時的に雷雨と雨で視程 3 SM になる予報です。",
+   "tag": "参考値",
+   "source": "この本の例題（架空の TAF。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.taf#fdfbfd20",
+   "sec": "wx.taf",
+   "text": "3,000 ft には、積乱雲を含む雲（BKN）があります。",
+   "tag": "参考値",
+   "source": "この本の例題（架空の TAF。W07a までの本文と同じ）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#8a073b67",
+   "sec": "wx.info",
+   "text": "14 時間前から 15 時間先まで、地図で見る（AIM 7-1-4） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-4（14 hours in the past to 15 hours in the future）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#fdbfb564",
+   "sec": "wx.info",
+   "text": "AIRMET（地図で表示する G-AIRMET） ｜ Sierra：IFR（雲高 1,000 ft 未満・視程 3 mi 未満）、山が雲に隠れる／Tango：並の乱気流、強い地上の風、低い所のウィンドシャー／Zulu：並の着氷、凍る高さ ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.3.1.1・26.3.1.2（IFR: ceiling <1,000 ft and/or visibility <3 mi; Sierra / Tango / Zulu）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#3d881b87",
+   "sec": "wx.info",
+   "text": "米国本土の SIGMET は、4 時間まで有効です（AWH 26.2.4.1.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.2.4.1.2（valid period up to, but not exceeding, four hours）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#aa632697",
+   "sec": "wx.info",
+   "text": "Convective SIGMET の範囲の図は、毎時 55 分の「写真」で、そのあとも雷雨は動きます（AWH 26.2.4.2）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.2.4.2（a “snapshot” … at the issuance time of 55 minutes past each hour）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#ca373d00",
+   "sec": "wx.info",
+   "text": "G-AIRMET は、3 時間ごとの「写真」です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.3.1.1（valid at discrete times no more than three hours apart）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#2b3239fe",
+   "sec": "wx.info",
+   "text": "0 時間の図に何もなく、3 時間の図に危険があれば、そのすぐあとから危険があると考えます（AWH 26.3.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.3.1.1（assume a change is occurring during the period between the two forecasts）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#74df88b3",
+   "sec": "wx.info",
+   "text": "DD は風向（真方位、10° 単位）、ff は風速（kt）、TT は気温（℃）です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.2.1.1.1（DDff+TT; direction in tens of degrees true, speed in knots, temperature in °C）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#2a5d3500",
+   "sec": "wx.info",
+   "text": "24,000 ft より上の気温は、いつも負なので符号を省きます（AWH 27.2.1.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.2.1.1.1（above 24,000 ft the sign is omitted）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#2e14511b",
+   "sec": "wx.info",
+   "text": "地点の標高から 1,500 ft 以内の風は、予報されません（AWH 27.2.1.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 27.2.1.1（wind forecasts are not issued for altitudes within 1,500 ft of a location’s elevation）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#838df1ee",
+   "sec": "wx.info",
+   "text": "6,000 ft と 9,000 ft の風と気温はいくらですか。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#2c158eef",
+   "sec": "wx.info",
+   "text": "9,000 ft で真航路（true course）020° を飛ぶと、風はおよそどちらから当たりますか。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#13badb5f",
+   "sec": "wx.info",
+   "text": "6,000 ft は 170° から 9 kt、気温 +6℃ です。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#d9ff17ec",
+   "sec": "wx.info",
+   "text": "9,000 ft は 200° から 18 kt、気温 0℃ です。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#abadc1c0",
+   "sec": "wx.info",
+   "text": "3,000 ft の 9900 は、弱く向きの定まらない風です（AWH 表 27-1）。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#cb9b0323",
+   "sec": "wx.info",
+   "text": "9,000 ft で 020° へ飛ぶと、風は真後ろの 200° から吹くので、ほぼ追い風です。",
+   "tag": "参考値",
+   "source": "この本の計算演習（AWH 表 27-1 の MKC の例の値）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#8a2fe02f",
+   "sec": "wx.info",
+   "text": "米国の天気予報センター（WPC）は、北米の地上天気図を 1 日 8 回、3 時間ごとに作ります（AWH 25.2.3.1）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 25.2.3.1（eight times daily, valid at 00, 03, … 21 UTC）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#2fef2dd2",
+   "sec": "wx.info",
+   "text": "データ放送の画像は、表示の時刻より 15〜20 分古いことがある ｜",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.6.1.6（15 to 20 minutes older than the age indicated）・FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-27",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#0bc3b6f3",
+   "sec": "wx.info",
+   "text": "機内のレーダー画像は、表示より 15〜20 分古いことがある",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 24.6.1.6（15 to 20 minutes older than the age indicated）・FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-27",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#27cabb4d",
+   "sec": "wx.info",
+   "text": "ここに注意：レーダーに何も映っていなくても、雲・霧・晴天乱気流・着氷がないとは言えません（AIM 7-1-11）。",
+   "tag": "参考値",
+   "source": "FAA AIM（2026-10-27 の版の写し・R.aim71） 7-1-11（A clear radar display (no echoes) does not mean that there is no significant weather … Clouds and fog are not detected by the radar）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#80e4520d",
+   "sec": "wx.info",
+   "text": "考えてみよう：G-AIRMET の 0 時間の図には何もなく、3 時間の図に並の乱気流の範囲があります。",
+   "tag": "参考値",
+   "source": "この本の考えてみよう（考え方は AWH 26.3.1.1）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#e94fe873",
+   "sec": "wx.info",
+   "text": "出発は 1 時間後で、その範囲を通ります。",
+   "tag": "参考値",
+   "source": "この本の考えてみよう（考え方は AWH 26.3.1.1）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#1ecbc4a8",
+   "sec": "wx.info",
+   "text": "図は 3 時間ごとの「写真」です。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 26.3.1.1（valid at discrete times no more than three hours apart）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.info#050dad06",
+   "sec": "wx.info",
+   "text": "0 時間と 3 時間の間に変化が起きていると考え、出発の時刻には乱気流があるものとして計画します（AWH 26.3.1.1）。",
+   "tag": "参考値",
+   "source": "この本の考えてみよう（考え方は AWH 26.3.1.1）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#4ebbf914",
+   "sec": "wx.brief",
+   "text": "米国の規則（14 CFR 91.103）は、出発前の確認（preflight action）を求めています。",
+   "tag": "条文",
+   "source": "14 CFR 91.103（eCFR・R.cfr91）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#fa665a55",
+   "sec": "wx.brief",
+   "text": "この区分は、米国の 14 CFR 91.155 の VFR の最低気象条件とは別のものです",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR・R.cfr91）。区分の色は FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 第 3 章",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#05cf2d0a",
+   "sec": "wx.brief",
+   "text": "この区分は、米国の VFR の最低気象条件（14 CFR 91.155。）とは別のものです。",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR・R.cfr91）。区分の色は FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 第 3 章",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#4cae0b0e",
+   "sec": "wx.brief",
+   "text": "米国の規則（14 CFR 61.89）では、訓練生がひとりで飛ぶとき（ソロ）は、昼は視程 3 SM 以上、夜は 5 SM 以上でなければなりません。",
+   "tag": "条文",
+   "source": "14 CFR 61.89(a)(6)(i)(ii)（eCFR・R.cfr61：3 SM by day, 5 SM at night）。W07a までの本文と同じ",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#3381b54e",
+   "sec": "wx.brief",
+   "text": "TAF の節の架空の TAF で、Sanford を 14 日 16Z（夏時間で 12 時）に出て、内陸の空港を回り、19Z（15 時）に戻る計画を考えます。",
+   "tag": "参考値",
+   "source": "この本の練習（wx.taf の架空の TAF。EDT ＝ UTC − 4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#e4ccd1b4",
+   "sec": "wx.brief",
+   "text": "出発（16Z） ｜ 基本の予報は東の風 10 kt・6 SM 超・SCT040。",
+   "tag": "参考値",
+   "source": "この本の練習（wx.taf の架空の TAF。EDT ＝ UTC − 4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#856293ea",
+   "sec": "wx.brief",
+   "text": "一時的に雷雨・視程 3 SM・積乱雲を含む BKN030 ｜",
+   "tag": "参考値",
+   "source": "この本の練習（wx.taf の架空の TAF。EDT ＝ UTC − 4）",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#a5bfb37a",
+   "sec": "wx.brief",
+   "text": "出発前に、公式の情報源で天気を確かめる（米国は 91.103）",
+   "tag": "条文",
+   "source": "14 CFR 91.103",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#4bf26f6b",
+   "sec": "wx.brief",
+   "text": "米国の 91.155 の最低条件とは別",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR・R.cfr91）。区分の色は FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 第 3 章",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#58319105",
+   "sec": "wx.brief",
+   "text": "IFR か空港の近くでない飛行は、気象の報告と予報・燃料・代わりの案・管制の遅れも確かめる（14 CFR 91.103） ｜ 機長は、整備状況、離着陸の重量・重心位置・重量分布、航空情報、気象情報、燃料と滑油の量と品質、積載物の安全を確かめてから出発させる（航空法第 73 条の 2・航空法施行規則第 164 条の 15） ｜",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（preflight：14 CFR 91.103・航空法第 73 条の 2・施行規則第 164 条の 15）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#cf941504",
+   "sec": "wx.brief",
+   "text": "航空図と情報の入手 ｜ セクショナルチャート・Chart Supplement（空港の情報）・1800wxbrief.com（気象・ノータム・飛行計画）（AIM 9-1・7-1-2） ｜ 区分航空図・AIP・SWIM・飛行援助センター〔要確認〕 ｜",
+   "tag": "参考値",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（charts：AIM 9-1・7-1-2。日本の欄は〔要確認〕）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#70635bb8",
+   "sec": "wx.brief",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur（flight-lab/src/book-jur.js）が描く囲みの文。値は W05・W06 が一次資料で確かめ、W12 の事実の二人目が署名した（数字は FL.jur と同じ：check-jur）（e-Gov の版）",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#9ec8e541",
+   "sec": "wx.brief",
+   "text": "考えてみよう：目的地の METAR が「BKN012 4SM」。",
+   "tag": "参考値",
+   "source": "この本の例題。91.155(c)(d)・(a) は 14 CFR（eCFR）、場周経路の 1,000 ft AGL は AIM 4-3-3。W07a までの本文と同じ",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#f51801d6",
+   "sec": "wx.brief",
+   "text": "米国の 14 CFR 91.155 の VFR の条件と比べると？",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR・R.cfr91）。区分の色は FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 第 3 章",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#1c5b7141",
+   "sec": "wx.brief",
+   "text": "雲高 1,200 ft・視程 4 SM なので MVFR です。",
+   "tag": "参考値",
+   "source": "この本の例題。91.155(c)(d)・(a) は 14 CFR（eCFR）、場周経路の 1,000 ft AGL は AIM 4-3-3。W07a までの本文と同じ",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#523fb428",
+   "sec": "wx.brief",
+   "text": "米国の地表区域の条件（91.155(c)(d)：雲高 1,000 ft・地上視程（ground visibility）3 SM）は満たします。",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR・R.cfr91）。区分の色は FAA Aviation Weather Handbook FAA-H-8083-28B（2026・R.wx） 第 3 章",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#27790419",
+   "sec": "wx.brief",
+   "text": "しかし雲の下 500 ft を空けると、地上約 700 ft までしか上がれません。",
+   "tag": "参考値",
+   "source": "この本の例題。91.155(c)(d)・(a) は 14 CFR（eCFR）、場周経路の 1,000 ft AGL は AIM 4-3-3。W07a までの本文と同じ",
+   "kind": "例題",
+   "by": "W17"
+  },
+  {
+   "id": "wx.brief#3a34f870",
+   "sec": "wx.brief",
+   "text": "ふつうの場周経路（トラフィックパターン、traffic pattern）の高さ（地上 1,000 ft）より低く、余裕のない天気です。",
+   "tag": "参考値",
+   "source": "この本の例題。91.155(c)(d)・(a) は 14 CFR（eCFR）、場周経路の 1,000 ft AGL は AIM 4-3-3。W07a までの本文と同じ",
+   "kind": "例題",
+   "by": "W17"
+  }
+ ]
+}

@@ -52,7 +52,11 @@
 import math
 
 GROUPS = ('yokes',)
-MAX_TRIS = 2800                       # (it replaces cockpit.js's 2,656 moving triangles of the yokes and 192 of the boots)
+MAX_TRIS = 3500                       # (it replaces cockpit.js's 2,656 moving triangles of the yokes and 192 of the boots;
+                                      # raised from 2800 for the close-up geometry pass (graphics plan A5): the horns'
+                                      # sections, the hub's and cap's rings, the boss and the pods' outlines carry more
+                                      # points on the same outlines — the module's share grows, the cockpit's total stays
+                                      # inside its budget: the Seminole at 37,500 of the test's 40,000)
 DEG = math.pi / 180
 
 # the views of the preview: yaw, pitch [, eye] (build_cockpit.py: yaw 0 looks forward, + to the left)
@@ -69,7 +73,8 @@ PREVIEW = {
 }
 
 # ---------------------------------------------------------------- the shape (in the yoke's frame: the pivot at the origin)
-N = 12                                # points round the horns' section (every edge round it turns ≤ 32°: smooth)
+N = 16                                # points round the horns' section (every edge round it turns ≤ 23°: smooth at
+                                      # the close-up views' distance; A5 — the same superellipse, more points on it)
 SUPER = 2.2                           # the section's squareness (a superellipse: 2 an ellipse)
 SHAFT_R, SHAFT_SEG = 0.013, 16        # the shaft: 26 mm, its sides only (its ends are hidden)
 SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how far behind the panel at full aft travel
@@ -109,7 +114,7 @@ CAP_TOP = 0.1000
 # shaft fills it), the boss widening from its back edge into the hub
 BOSS = [(0.0168, -0.0446), (0.0172, -0.0350), (0.0196, -0.0200)]
 COLLAR_FRONT, COLLAR_BACK = 0, 1                      # (BOSS's rings)
-BOSS_SEG = 12
+BOSS_SEG = 16
 # the horn (the right one; the left mirrored): its sections along one sweep — (the centre (x, y, z), the sweep's
 # direction there: in the x–y plane at an angle (degrees from +x), or for the hooked top tilted aft and inboard
 # (degrees), the half-thickness across, the half-depth forward / aft) — from inside the hub out along the arm, round the
@@ -145,7 +150,7 @@ PAD = (0.0125, 0.0105, 0.006, -0.0015, 0.0028, 0, 0.0028)
 # across, out, fore and aft, the gap between them; its foot sunk 0.4 mm), the disconnect (across, fore and aft, radius,
 # height out of the top, sides)
 TRIM = (-0.0030, 0.0020, 0.0027, 0.0013, 0.0055, 0.0008)
-APD = (0.0078, -0.0025, 0.0032, 0.0022, 8)
+APD = (0.0078, -0.0025, 0.0032, 0.0022, 12)
 # the push-to-talk trigger: a block out of the grip's forward face under the hooked top (centre, half sizes)
 PTT = ((0.1508, 0.1040, -0.0108), (0.0060, 0.0045, 0.0035))
 # the boots (in the cabin's frame, round each shaft): (r, z off the panel face) from inside the panel out to the lip; the
@@ -325,7 +330,7 @@ def section(ctx, st):
     return ring
 
 
-def rr_ring(ctx, y, hx, zf, za, rc, seg=3):
+def rr_ring(ctx, y, hx, zf, za, rc, seg=4):
     # a horizontal rounded rectangle (x ±hx, z zf…za, corners rc) at height y: its corners' arcs in turn — aft right, front
     # right, front left, aft left — so that a strip of such rings going up faces outwards
     V = ctx.Vector; out = []
@@ -360,7 +365,7 @@ def slab(ctx, o, eu, ew, en, prof, col, back=False):
     # its top a fan; back: closed under its foot too (for check()'s seating tests)
     hu, hw, r, foot, side, bev, top = prof
     P = ctx.Piece()
-    o1, o2 = rounded_outline(2 * hu, 2 * hw, r, 3), rounded_outline(2 * (hu - bev), 2 * (hw - bev), r - bev, 3)
+    o1, o2 = rounded_outline(2 * hu, 2 * hw, r, 4), rounded_outline(2 * (hu - bev), 2 * (hw - bev), r - bev, 4)
     rows = [[o + eu * x + ew * y + en * h for x, y in ol] for ol, h in ((o1, foot), (o1, side), (o2, top))][:3 if bev else 2]
     base = P.grid(rows, col, closed=True); n = len(o1); last = base + (len(rows) - 1) * n
     P.fan(list(range(last, last + n)), o + en * top, col, flip=True)
@@ -420,7 +425,7 @@ def plate(ctx):
     face, rim = tuple(c * PLATE_K for c in base), tuple(c * PLATE_RIM_K for c in base)
     def outline(inset):
         # (a rounded rectangle as wide as the plate's foot, each point's x then scaled to the plate's width at its height)
-        w0 = plate_half(0.0); pts, right, left = plate_outline(2 * (w0 - inset), PLATE_S - 2 * inset, PLATE_R - inset, 3, PLATE_EXTRA)
+        w0 = plate_half(0.0); pts, right, left = plate_outline(2 * (w0 - inset), PLATE_S - 2 * inset, PLATE_R - inset, 4, PLATE_EXTRA)
         return [(x * (plate_half(y + PLATE_S / 2) - inset) / (w0 - inset), y + PLATE_S / 2) for x, y in pts], right, left
     (o1, _, _), (o2, right, left) = outline(0), outline(PLATE_IN)
     rows = [[plate_point(L, x, s, -PLATE_SINK) for x, s in o1], [plate_point(L, x, s, PLATE_H) for x, s in o2]]
@@ -736,13 +741,13 @@ def check(ctx, objs):
     def bvh(pc): return BVHTree.FromPolygons(pc.v, [tuple(f) for f in pc.f])
     hb, pl, hn = hub_body(ctx), plate(ctx), horn(ctx)
     c, U, W, Tn = top_frame(ctx)
-    def slab_foot(prof): hu, hw, r, foot = prof[:4]; return [c + U * x + W * y + Tn * foot for x, y in rounded_outline(2 * hu, 2 * hw, r, 3)]
+    def slab_foot(prof): hu, hw, r, foot = prof[:4]; return [c + U * x + W * y + Tn * foot for x, y in rounded_outline(2 * hu, 2 * hw, r, 4)]
     tu, tw, hu, ht, hw, gap = TRIM; au, aw, ar, ah, aseg = APD
     t1 = Tn.cross(V((0, 1, 0))).normalized() if abs(Tn.y) < 0.9 else Tn.cross(V((1, 0, 0))).normalized(); t2 = Tn.cross(t1)
     (px, py, pz), (hx, hy, hzz) = PTT
     seats = {
         ('hub', 'horn roots'): (hb, section(ctx, L.STATIONS[0])),
-        ('hub', 'plate foot'): (hb, pl.v[:len(plate_outline(1, 1, 0.1, 3, PLATE_EXTRA)[0])]),
+        ('hub', 'plate foot'): (hb, pl.v[:len(plate_outline(1, 1, 0.1, 4, PLATE_EXTRA)[0])]),
         ('hub', 'cap foot'): (hb, rr_ring(ctx, *cap_ring(0))),
         ('hub', 'boss end'): (hb, [V((BOSS[-1][0] * math.cos(2 * math.pi * k / BOSS_SEG), BOSS[-1][0] * math.sin(2 * math.pi * k / BOSS_SEG), BOSS[-1][1])) for k in range(BOSS_SEG)]),
         ('plate', 'chevron feet'): (pl, [plate_point(L, (u - 0.5) * LOGO_W, LOGO_S + v * LOGO_W, PLATE_H - LOGO_SINK) for poly in CHEVRON for u, v in poly]),

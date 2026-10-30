@@ -73,16 +73,52 @@ function addTwilight(mat) {
       gl_FragColor = vec4( texColor, 1.0 );`);
 }
 
+// (graphics plan C3) the flat clouds' structure and light. The stock field is one fbm stamp lit by a single
+// beer-powder term, which reads flat: no warp, no fine edge, no shadow inside the cloud, and the low sun's
+// colour is dimmed away by the day factor. This patch warps the field with a larger, slower noise and
+// roughens it with a finer octave, takes a second sample of the same field offset towards the sun (the
+// cloud's own shadow on itself; where that path is thin but the point is deep, a lit rim), darkens thick
+// cores towards their base (a second, lower shadow under the beer-powder top light), strengthens the silver
+// lining, and adds a warm term for the low sun. Everything is scaled by the cdCloudDetail uniform (the
+// cloudDetail preset): at 0 the field and the light are the old ones, bit for bit. The coverage and density
+// uniforms keep their meaning and their weather mapping (setWeather) — nothing here moves them.
+function addCloudDetail(mat) {
+  mat.uniforms.cdCloudDetail = { value: 1 };
+  mat.fragmentShader = mat.fragmentShader
+    .replace('uniform float cloudElevation;', 'uniform float cloudElevation;\n\t\tuniform float cdCloudDetail;')
+    .replace('float cloudNoise = clamp( fbm( cloudUV * 1000.0, evolve ) * 0.7 + 0.5, 0.0, 1.0 );', /* glsl */`
+				vec2 cdWarp = vec2( noise( cloudUV * 230.0 + evolve * 0.6 ), noise( cloudUV * 230.0 + 37.3 - evolve * 0.45 ) );
+				vec2 cdSunOff = normalize( vSunDirection.xz + vec2( 1e-4 ) ) * 0.30;
+				float cdRim = 0.0;
+				float cloudNoise = clamp( fbm( cloudUV * 1000.0 + cdWarp * ( cdCloudDetail * 0.55 ), evolve ) * 0.7 + 0.5, 0.0, 1.0 );
+				cloudNoise = clamp( cloudNoise + fbm( cloudUV * 3900.0 - cdWarp * 0.7, evolve * 1.6 ) * 0.13 * cdCloudDetail, 0.0, 1.0 );`)
+    .replace('float shade = mix( 0.45, 1.0, clamp( beer * powder * 2.6, 0.0, 1.0 ) ); // 2.6 = 1/0.385, normalizes beer*powder peak to 1', /* glsl */`
+				float shade = mix( 0.45, 1.0, clamp( beer * powder * 2.6, 0.0, 1.0 ) ); // 2.6 = 1/0.385, normalizes beer*powder peak to 1
+				if ( cdCloudDetail > 0.001 ) {
+					float cdSunNoise = clamp( fbm( cloudUV * 1000.0 + cdSunOff + cdWarp * ( cdCloudDetail * 0.55 ), evolve ) * 0.7 + 0.5, 0.0, 1.0 );
+					float cdSunDepth = max( 0.0, cdSunNoise - threshold );
+					shade *= mix( 1.0, 0.30 + 0.70 * exp( -cdSunDepth * 6.0 * cloudDensity ), cdCloudDetail );
+					shade *= 1.0 - 0.34 * cdCloudDetail * smoothstep( 0.10, 0.62, depth );
+					cdRim = clamp( depth - cdSunDepth, 0.0, 1.0 );
+				}`)
+    .replace('cloudColor += sunColor * silver * edge * 0.6;', 'cloudColor += sunColor * silver * ( edge * ( 0.6 + 0.4 * cdCloudDetail ) + cdRim * cloudMask * 0.9 * cdCloudDetail );')
+    .replace('cloudColor *= max( dayFactor, 0.03 );', /* glsl */`
+				cloudColor *= max( dayFactor, 0.03 );
+				float cdDusk = ( 1.0 - smoothstep( 0.02, 0.30, vSunDirection.y ) ) * smoothstep( -0.10, -0.005, vSunDirection.y );
+				cloudColor += vec3( 0.90, 0.30, 0.09 ) * cdDusk * ( 0.15 + 0.85 * pow( max( cosTheta, 0.0 ), 3.0 ) ) * ( 0.25 + 0.75 * shade ) * ( 0.6 * cdCloudDetail );`);
+}
+
 export function createSky(renderer, scene, quality) {
-  const sky = new Sky(); addTwilight(sky.material); sky.scale.setScalar(120000); sky.name = 'sky';      // beyond the far plane: the ambient-occlusion pass does not see it
+  const sky = new Sky(); addTwilight(sky.material); addCloudDetail(sky.material); sky.scale.setScalar(120000); sky.name = 'sky';      // beyond the far plane: the ambient-occlusion pass does not see it
   const U = sky.material.uniforms;
   U.cdSkyCap.value = SKY_CAP;
+  U.cdCloudDetail.value = quality.cloudDetail ?? 1;
   U.turbidity.value = 3.8; U.rayleigh.value = 1.35; U.mieCoefficient.value = 0.0035; U.mieDirectionalG.value = 0.84;
   U.cloudCoverage.value = 0.34; U.cloudDensity.value = 0.55; U.cloudElevation.value = 0.55; U.cloudScale.value = 0.00018;
   scene.add(sky);
 
   // the sky for the image-based light (no sun disc: the sun is the directional light)
-  const envScene = new THREE.Scene(), envSky = new Sky(); envSky.scale.setScalar(900); addTwilight(envSky.material);
+  const envScene = new THREE.Scene(), envSky = new Sky(); envSky.scale.setScalar(900); addTwilight(envSky.material); addCloudDetail(envSky.material); envSky.material.uniforms.cdCloudDetail.value = quality.cloudDetail ?? 1;
   envScene.add(envSky);
   // the ground under it: Preetham's sky fills the lower half with the horizon's colour, several times brighter than
   // sunlit land, so surfaces facing down (a wing's underside, the headliner, a windshield reflecting the panel's way)

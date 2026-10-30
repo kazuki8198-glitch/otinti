@@ -105,18 +105,22 @@ export function corrugatedNormal() {
 }
 
 // window band: glass panes with mullions (colour; alpha unused). One texture tile = one bay.
+// drawn at 512 (graphics plan C1): at 256 the panes went soft at walking distance — the frame and the
+// transom keep their share of the tile, so the layout is unchanged, only finer
 export function windowTexture() {
-  return canvasTexture(256, 256, (g, w, h) => {
+  return canvasTexture(512, 512, (g, w, h) => {
+    const m = w * 0.04;                                                          // the frame's share of the tile
     g.fillStyle = '#2b3138'; g.fillRect(0, 0, w, h);                              // frame
     const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#5d7387'); gr.addColorStop(1, '#2a3a48');
-    g.fillStyle = gr; g.fillRect(10, 10, w - 20, h * 0.62 - 10); g.fillRect(10, h * 0.62 + 6, w - 20, h - h * 0.62 - 16);
-    g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(10, 10, (w - 20) * 0.45, h * 0.62 - 10);
+    g.fillStyle = gr; g.fillRect(m, m, w - 2 * m, h * 0.62 - m); g.fillRect(m, h * 0.62 + h * 0.024, w - 2 * m, h - h * 0.62 - h * 0.0625);
+    g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(m, m, (w - 2 * m) * 0.45, h * 0.62 - m);
   }, { repeat: true });
 }
 // the same layout as data for the glass mask (white = glass): used as a roughness/metal-free map
 export function windowMask() {
-  return canvasTexture(256, 256, (g, w, h) => {
+  return canvasTexture(512, 512, (g, w, h) => {
+    const m = w * 0.04;
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#fff'; g.fillRect(10, 10, w - 20, h * 0.62 - 10); g.fillRect(10, h * 0.62 + 6, w - 20, h - h * 0.62 - 16);
+    g.fillStyle = '#fff'; g.fillRect(m, m, w - 2 * m, h * 0.62 - m); g.fillRect(m, h * 0.62 + h * 0.024, w - 2 * m, h - h * 0.62 - h * 0.0625);
   }, { srgb: false, repeat: true });
 }

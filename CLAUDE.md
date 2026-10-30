@@ -117,15 +117,15 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 ### 3. 決定事項（STEP 1 で決めた既定値。変えるときはここを書き換えてから）
 
 1. **見た目は頂点カラーと焼き込み AO で持つ。テクスチャは使わない。**
-   理由は 3 つ。今の読み込み部分は UV を読まない。操縦席のテクスチャの上限（6e6 B）は、残り約 14 KB で満杯に近い。`cadet/assets/tex` の画像は FLIGHT LAB と CADET の両方の HTML に自動で入る（1 枚足すだけで `flight-lab/test/flight.test.mjs` の 12 枚の一覧の検査が落ちる）。
+   理由は 3 つ。今の読み込み部分は UV を読まない。操縦席のテクスチャの上限（29e6 B）は、残り約 863 KB（上限は 2026-10-30 に G1000 の画面を 2048 × 1280 へ上げる仕様変更で 6e6 B から 23e6 B へ、ラベル・刻印のアトラスを 4096 × 1024 へ上げる仕様変更で 29e6 B へ上げた）。`cadet/assets/tex` の画像は FLIGHT LAB と CADET の両方の HTML に自動で入る（1 枚足すだけで `flight-lab/test/flight.test.mjs` の 12 枚の一覧の検査が落ちる）。
    UV やテクスチャが必要になったら、先に読み込み部分とテストを直す作業を、別の段階として行う。
 2. **容量の割り当て。**
-   - FLIGHT LAB の HTML の空きは 4,607,884 B（10 進で約 4.61 MB。グレアシールドを本物の弓なりにしたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
+   - FLIGHT LAB の HTML の空きは 4,417,595 B（10 進で約 4.42 MB。G1000 の画面を 2048 × 1280 に、ラベルアトラスを 4096 × 1024 に上げ、A5 で操縦輪などの幾何を細かくし、B1 で塗装のディテールを、B2 でガラスの反射と雨滴を、B3 でプロペラの残像・タイヤのトレッド・灯火のグローを、いずれもシェーダだけで足し、B4 で点検部品の模型を細かくし、C1 で舗装・草地の近接ディテールと窓の質感をシェーダとキャンバス解像度で、C2 で畑の大スケールの質感をシェーダで、C3 で雲の質感をシェーダで足し、積雲をキャンバスのビルボードで足したあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.4 MB。
    - 1 三角形あたりのバイト数は形で違う。なめらかで頂点を共有する形（機体）は約 28 B。角の立った箱（建物・キット）は 45〜70 B で見積もる（頂点 1 つ 32 B、インデックスは 1 三角形 6 B）。
 
    | 使い道 | 元の glb の合計（上限） |
    |---|---|
-   | 操縦席 | 1.2 MB（`cockpit.glb` で 610,908 B 使用：天井まわり・座席とベルト（Archer と Seminole の後席）・グレアシールド・操縦輪・壁とドア） |
+   | 操縦席 | 1.2 MB（`cockpit.glb` で 628,172 B 使用：天井まわり・座席とベルト（Archer と Seminole の後席）・グレアシールド・操縦輪・壁とドア） |
    | 田舎の建物・防風林のキット | 0.4 MB |
    | 飛行場の小物（T ハンガー・地上機材・灯火の器具） | 0.4 MB |
    | 積雲 | 0.3 MB |
@@ -145,12 +145,12 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 | 対象 | 上限 | いま |
 |---|---|---|
-| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,975,028 B |
-| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,496,509 B |
+| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 8,165,317 B |
+| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,687,043 B |
 | 1 フレーム | 描画 400 回未満・90 万三角形未満（`cadet/test/browser.test.mjs`。CADET でだけ確かめている） | 画質「高」で駐機場 約 53 万三角形（`cadet/PLAN.md`） |
-| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 32,495 三角形・24 回、Seminole 35,877 三角形・33 回（`cp.trianglesTwin`。残りは 4,123）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 17,103 三角形・610,908 B（天井まわり 2,248・座席とベルト 6,856（そのうち Archer の後席の分と Seminole の後席の分は、それぞれの型でだけ描く）・グレアシールド 1,100・操縦輪 2,702・壁とドア 4,197） |
-| Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 20,940 / 2,468 |
-| Seminole の外観 | 近距離版 27,000 未満・遠距離版 3,300 未満 | 25,946 / 3,101 |
+| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 29e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 33,507 三角形・25 回、Seminole 36,985 三角形・34 回（`cp.trianglesTwin`。残りは 3,015）、テクスチャ 28,136,789 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 17,811 三角形・628,172 B（天井まわり 2,248・座席とベルト 6,856（そのうち Archer の後席の分と Seminole の後席の分は、それぞれの型でだけ描く）・グレアシールド 1,100・操縦輪 3,410・壁とドア 4,197） |
+| Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 22,696 / 2,548 |
+| Seminole の外観 | 近距離版 27,000 未満・遠距離版 3,300 未満 | 26,942 / 3,181 |
 
 `exterior.test.mjs` には下限もあり、減らしすぎても落ちる。
 
@@ -208,5 +208,5 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 残っていること：
 
-- **映り込み：** `envMap` を指定していないので、three.js が `envMapIntensity` を `scene.environmentIntensity`（0.5。`sky.js` の `ENV_INTENSITY`）で上書きしている（`WebGLRenderer.js` 2736〜2740 行）。材質ごとの `envMapIntensity`（`exterior.js` の 1.1、`materials.js` の 1.4、`cockpit.js` の 1.1 など）は、今もどれも効いていない。いじっても見た目は変わらない。
+- **映り込み：** `envMap` を指定していないので、three.js が `envMapIntensity` を `scene.environmentIntensity`（0.5。`sky.js` の `ENV_INTENSITY`）で上書きしている（`WebGLRenderer.js` 2736〜2740 行）。材質ごとの `envMapIntensity`（`exterior.js` の 1.1、`materials.js` の 1.4、`cockpit.js` の 1.1 など）は、今もどれも効いていない。いじっても見た目は変わらない。例外は B2 でシェーダ内に補償を入れたガラスだけ：クリアガラス（`materials.js` の `clearGlassMaterial`）は `env` 引数が鏡面成分への倍率として実際に効き、外装の塗装シェーダはガラス分類の空の反射を ×1.7 する。
 - 霞・環境光・空の明るさの関係を変えると、どの場面の見え方も変わる。変えたら、FLIGHT LAB の 8 場面と、CADET の昼・朝（7.7）・夕方（18.6）・夜（21）・室内（視点 8・9）を、変更前と並べて見る。

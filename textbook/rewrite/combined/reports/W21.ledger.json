@@ -1,0 +1,675 @@
+{
+ "unit": "W21",
+ "about": "W21 第 1 部の図（R3 の始め）：K.weather.K5・K.human.K8 を閉じる、T.human.T9 の where、W21 の図の PROVENANCE（描き直した図の目視の署名・外す図の確かめ）、キャプションを直した 5 文の CLAIMS",
+ "patches": [
+  {
+   "id": "K.weather.K5",
+   "status": "fixed",
+   "verified": true,
+   "by": "W21",
+   "where": "flight-lab/src/book-figs.js の wx の章の図 18 枚（atm・wxWind・wxLocalWind・cloudBase・clouds・wxParcel・frontsXsec・seaBreeze・thunderstormLife・microburst・wxMountainWave・wxIcing・fogTypes・metarDecode・tafTimeline・wxInfoMap・wxBriefChain・flightCategory）。図 7-1〜7-12 は描き直すか教科書の図で置き換えた（PROVENANCE ch07-fig7-*）",
+   "note": "W21（2026-10-30）：check-figures（Chromium 390 px）で wx の章の図は全部、最小の文字 10.3 px 以上・はみ出しと重なりなし（error 0）。390 px と 760 px の PNG を 1 枚ずつ見た（reports/W21.md の 3）。原本の図は変えない（Word 原本は ERRATA-FOR-WORD.md の 24）。図 7-11（日本の METAR）の分は jwx.report（W40）が描くときに同じ検査を受ける"
+  },
+  {
+   "id": "K.human.K8",
+   "status": "fixed",
+   "verified": true,
+   "by": "W21",
+   "where": "flight-lab/src/book-2.js hf.self（IMSAFE の表）・hf.adm（3P の段階の表と FIG.threePLoop）、hf・adm の章の図（W20 が描き直した fatigueFactors・o2Partial・nightEye・checklistFlow・saLevels・residualRisk ほか）。図 10-1・10-6・10-9 は使わない（PROVENANCE）",
+   "note": "W21（2026-10-30）：W20 が描き直した 6 枚と hf・adm の章の図 16 枚を 390 px と 760 px で見た。数値・向き・流れを持つ図で、箱に言葉を並べただけの図は残っていない（reports/W21.md の 3）。saLevels のキャプションに状況認識の英語を足し、swissCheese の層の名前を「ほかの人（管制など）」にした"
+  },
+  {
+   "id": "T.human.T9",
+   "by": "W07a",
+   "where": "flight-lab/src/book-2.js hf.body（回り方の変わり方（角加速度）がとても小さいと、感じられる境目（しきい値）に届かず、三半規管は気づきません（PHAK 第 17 章）。数字は出さない）",
+   "note": "W21（2026-10-30）：where を今の文に直しただけ（R2 の revise-hfadm B1 が「毎秒 2°」を出さない形に言い換えた。DESIGN 10.1 human T9 の「言い換える程度」の範囲）。行の by・checkedBy はそのまま"
+  },
+  {
+   "id": "ch00-fig2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch00-fig3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch00-fig4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig1",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wingTerms）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch01-fig2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig4",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.boundaryLayer）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch01-fig5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig7",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig8",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.glideTriangle）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch01-fig9",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig10",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch01-fig11",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.bankLoad）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch01-fig12",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.climbForces）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch01-fig13",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.dynStability）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch02-fig1",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.sysAirframe）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch02-fig2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch02-fig4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch02-fig11",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch03-fig3-1",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch03-fig3-2",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.sysFourStroke）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch03-fig3-3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch03-fig3-4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch03-fig3-5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch04-fig4-1",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instChain）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch04-fig4-5",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instVsi）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-6",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instPitchPath）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-7",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch04-fig4-8",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instShared）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-10",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instApBand）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-11",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instApLoop）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-12",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-1",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wbChecks）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch05-fig5-2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-8",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wbShift）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch05-fig5-9",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-10",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch05-fig5-11",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-1",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-2",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-7",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch06-fig6-8",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.climbGradient）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch06-fig6-9",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.rangeWind）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch06-fig6-12",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch07-fig7-1",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxBriefChain）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-2",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxWind）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-3",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxLocalWind）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-4",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxParcel）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch07-fig7-6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch07-fig7-7",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch07-fig7-8",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch07-fig7-9",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxMountainWave）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-10",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.wxIcing）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch07-fig7-12",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch08-fig8-1",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch08-fig8-2",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.navbLatLon）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch08-fig8-3",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.navbNorths）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch08-fig8-4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch08-fig8-5",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.navbWindFix の A）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch08-fig8-6",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.navbWindFix の B）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch08-fig8-8",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch08-fig8-10",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch08-fig8-12",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-1",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-2",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.lawSources）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch09-fig9-3",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-5",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-7",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-8",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-9",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-10",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-11",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch09-fig9-12",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-1",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-2",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.o2Partial）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-3",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.nightEye）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-4",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-5",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.fatigueFactors）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-6",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-7",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.checklistFlow）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-8",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.saLevels）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-9",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-10",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.residualRisk）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch10-fig10-11",
+   "status": "dropped",
+   "by": "W21",
+   "note": "W21（2026-10-30）：外す理由のとおりであることを確かめた。理由が名指す節と図は今の本にある（図は check-figures で検査済み・目視の記録は reports/W21.md の 3）。原本の図は原本のページに残る"
+  },
+  {
+   "id": "ch10-fig10-12",
+   "checkedBy": "W21",
+   "note": "W21（2026-10-30）：描き直した図（FIG.instApLoop）を Chromium の 390 px と 760 px で描いて 1 枚ずつ見た。文字は図の中・重なりなし・最小 10 px 以上（check-figures error 0）、中身は行き先の節の本文と合う（reports/W21.md の 3）"
+  },
+  {
+   "id": "ch04-fig4-3",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "near": "inst.speed",
+   "by": "W21",
+   "reason": "重複する図（速度の種類と補正の順は序部の FIG.basicsSpeedChain（basics.speed）が同じ中身を持つ。inst.speed の最初の図は FIG.instAsi）",
+   "note": "W21（2026-10-30）：W15 の頼み（重複として外すかは W21）。basicsSpeedChain は IAS → CAS → EAS → TAS → GS と各段で直すものを描き、図 4-3 と同じ中身。inst.speed は速度計のしくみの図 instAsi を使う"
+  },
+  {
+   "id": "ch04-fig4-4",
+   "status": "dropped",
+   "plan": "drop",
+   "to": [],
+   "near": "inst.alt",
+   "by": "W21",
+   "reason": "重複する図（真高度と対地高度の基準は序部の FIG.basicsAlt（basics.alt）が同じ中身を持つ。inst.alt の最初の図は FIG.instAltErrors）",
+   "note": "W21（2026-10-30）：W15 の頼み（重複として外すかは W21）。basicsAlt は MSL・AGL・標高の関係を描き、図 4-4 と同じ中身。inst.alt は気圧と気温の誤差の図 instAltErrors を使う"
+  },
+  {
+   "op": "add",
+   "id": "aero.vn#9b4da2ab",
+   "sec": "aero.vn",
+   "text": "針は進入速度（approach speed）70 kt",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University・2025、R.archerCk）：70 KIAS ON FINAL。図 asi のキャプション。FL.physics の appr 70 も同じ（旧 aero.vn#f18f1d30 の文に英語を足しただけ）",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 asi のキャプションの文。旧 aero.vn#f18f1d30（W13）と数字・出典は同じ。確かめ役の署名は W21 と別の単位"
+  },
+  {
+   "op": "add",
+   "id": "wb.limits#7810c98f",
+   "sec": "wb.limits",
+   "text": "空虚重量（この本の例 1,640 lb）から最大ランプ重量（ramp weight）2,558 lb までが、人・荷物・燃料に使える重さです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し）：1.19（Useful Load ＝ takeoff or ramp weight − basic empty weight）・図 6-5。1,640 lb は book-figs.js ARCHER_WB の例（旧 wb.limits#50996fb6 の文に英語を足しただけ）",
+   "kind": "例題",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 wbLimits のキャプションの文。旧 wb.limits#50996fb6（W16）と数字・出典は同じ"
+  },
+  {
+   "op": "add",
+   "id": "comm.basic#3bdf7638",
+   "sec": "comm.basic",
+   "text": "AIM の例文には Alpha とつづるものもあり、この本の無線呼出符号（call sign）も Alpha と書きます",
+   "tag": "参考値",
+   "source": "FAA AIM 4-2-4・4-2-7（例文の Alpha と表の Alfa）（Change 3、2026-07-09 発効）（旧 comm.basic#cd2eaf80 の文の「コールサイン」を FL.terms の正式名にしただけ）",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 phoneticBoard のキャプションの文。旧 comm.basic#cd2eaf80（W19）と中身・出典は同じ"
+  },
+  {
+   "op": "add",
+   "id": "comm.nordo#189f199a",
+   "sec": "comm.nordo",
+   "text": "図：管制塔の信号灯（light gun）と灯火信号の意味（14 CFR 91.125・AIM 4-3-13）、応え方（AIM 4-2-13・4-3-13）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.125（ATC light signals の表。W21 が 2026-10-30 に読んだ）／FAA AIM 4-3-13（directive traffic control signal：赤・白・緑の強く細い光、表 TBL 4-3-1、地上の応え方）・AIM 4-2-13（飛行中の応え方）（FAA の HTML 版を W21 が 2026-10-30 に読んだ）",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 lightGunSignals のキャプションの文（旧 comm.nordo#fe29a5d6（W19）に信号灯の語を足した）。図の上に信号灯の場面を描き足した：AIM 4-3-13「an intense narrow light beam of a selected color (either red, white, or green)」「Pilots may not be looking at the control tower」"
+  },
+  {
+   "op": "add",
+   "id": "hf.altitude#f97a6410",
+   "sec": "hf.altitude",
+   "text": "米国の規則では、12,500 ft を超えると、必要な最少の運航乗務員が酸素を使います（14,000 ft までは 30 分を超える分。15,000 ft を超えると全員に酸素を用意。14 CFR 91.211）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.211(a)(1)〜(3)（the required minimum flight crew・each occupant of the aircraft。W21 が 2026-10-30 に読んだ）",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 hypoxiaAltitudes のキャプションの文（expert-hfadm N3・reader-hfadm A5・revise-hfadm の頼み：乗員 → 必要な最少の運航乗務員、15,000 ft の全員を足した）。旧 hf.altitude#474036bb（W20）"
+  },
+  {
+   "op": "remove",
+   "id": "aero.vn#f18f1d30",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 asi のキャプションの文を「進入速度（approach speed）70 kt」にした（新しい行 aero.vn#9b4da2ab）"
+  },
+  {
+   "op": "remove",
+   "id": "wb.limits#50996fb6",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 wbLimits のキャプションに ramp weight を足した（新しい行 wb.limits#7810c98f）"
+  },
+  {
+   "op": "remove",
+   "id": "comm.basic#cd2eaf80",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 phoneticBoard のキャプションの「コールサイン」を無線呼出符号（call sign）にした（新しい行 comm.basic#3bdf7638）"
+  },
+  {
+   "op": "remove",
+   "id": "comm.nordo#fe29a5d6",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 lightGunSignals のキャプションを書き直した（新しい行 comm.nordo#189f199a）"
+  },
+  {
+   "op": "remove",
+   "id": "hf.altitude#474036bb",
+   "by": "W21",
+   "note": "W21（2026-10-30）：図 hypoxiaAltitudes のキャプションを 91.211 の言葉（必要な最少の運航乗務員）にした（新しい行 hf.altitude#f97a6410）"
+  }
+ ]
+}

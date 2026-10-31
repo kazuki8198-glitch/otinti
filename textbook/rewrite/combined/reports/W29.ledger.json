@@ -1,0 +1,2449 @@
+{
+ "unit": "W29",
+ "about": "W29（R3）：第 3 部の章 navp・navr・navd（書き直し、新 3 節：nav.pnr・nav.adf・nav.efb）と night（新しい章、2 節：ops.night・ops.nightld）の下書き drafts/p3.js・drafts/p3-figs.js・drafts/p3.claims.json の台帳のパッチ。章を登録するコミットで統合役が取り込む（apply-patches.mjs）。CLAIMS の op: add は drafts/p3.claims.json と同じ行（既存の行はない）。",
+ "patches": [
+  {
+   "id": "kiso08.12",
+   "status": "done",
+   "where": "drafts/p3.js nav.dr（from。地文航法：地図の目印と外の景色を比べる。目印の選び方と、迷ったら針路を保って次の目印を探す）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.13",
+   "status": "done",
+   "where": "drafts/p3.js nav.dr（from。推測航法：時間・対気速度・距離・方向の計算で位置を予測する。距離 ＝ 対地速度 × 時間）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.14",
+   "status": "done",
+   "where": "drafts/p3.js nav.dr（from。チェックポイントの予定の時刻に確かめ、早い・遅いと左右のずれで直す。60 の法則と考えてみよう。写真 ch08-photo2 と ACS の基準は折りたたみ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.15",
+   "status": "done",
+   "where": "drafts/p3.js nav.chart（from。区分航空図の記号・高さと空域・MEF・空港の情報。記号の表と高さ・空域は折りたたみ、写真 ch08-photo1。FL.jur charts の囲み）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.17",
+   "status": "done",
+   "where": "drafts/p3.js nav.vor（from。ラジアル・識別（モールスか録音の声）・受信の範囲。VOR MON と 91.171 は折りたたみ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.18",
+   "status": "done",
+   "where": "drafts/p3.js nav.vor（from。TO / FROM とコース指示、追跡と修正。TO / FROM の例の表と写真 ch04-photo4・vorStation は折りたたみ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.19",
+   "status": "done",
+   "where": "drafts/p3.js nav.dme（from。斜めの距離と局の真上の誤差、図 FIG.dmeSlant（ch08-fig8-9 を描き直した））",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.20",
+   "status": "done",
+   "where": "drafts/p3.js nav.adf（from。発展の節：NDB の周波数・相対方位・ホーミング・旗がないので識別を聞き続ける）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.21",
+   "status": "done",
+   "where": "drafts/p3.js nav.gps（from。衛星からの距離で位置を求める・RAIM と FDE の衛星の数（4・5・6 と気圧の情報））",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.22",
+   "status": "done",
+   "where": "drafts/p3.js nav.fpl（from。CDI の目盛りとモード（ENR・TERM・APR）、DTK と TRK）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.23",
+   "status": "done",
+   "where": "drafts/p3.js nav.fpl（from。複数の情報で位置を確かめる：読む順番は折りたたみ、判断の囲み「多数決で決めず」）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.24",
+   "status": "done",
+   "where": "drafts/p3.js nav.log（from。ナビゲーションログの欄・10 NM 前後のチェックポイント・予定と実際の時刻。課目 n2 の 2 区間の表（教材値））",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.25",
+   "status": "done",
+   "where": "drafts/p3.js nav.dr（from。到着見込みと燃料を更新する計算演習：04:01 UTC・18 L）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.26",
+   "status": "done",
+   "where": "drafts/p3.js nav.divert（from。目的地変更：緊急なら、まず向きを変える。計算はそのあと（CADET の決まった文は変えていない）。目安の表と比べ方・ACS は折りたたみ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso08.27",
+   "status": "done",
+   "where": "drafts/p3.js nav.lost（from。位置が不確かなとき：手順の表（R.lost-climb の ②「必要なら上がる」）・4C／5C は短く、不確かさの範囲と ATC の助けは折りたたみ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso04.19",
+   "status": "done",
+   "where": "drafts/p3.js nav.fpl（from。CDI と HSI の読み方：針・目盛り・TO / FROM と GPS の CDI の違い）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso04.20",
+   "status": "done",
+   "where": "drafts/p3.js nav.gps（from。GNSS の精度と信頼性：VFR は RAIM の予測がなくても飛べるが、ほかの航法と比べ続ける。妨害となりすましは折りたたみ（米国の AIM 1-2-4）。FL.jur sbas の囲みで MSAS）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso04.24",
+   "status": "done",
+   "where": "drafts/p3.js nav.efb（from。トランスポンダーと ADS-B In／Out・TIS-B・FIS-B の限界。Mode A/C/S は折りたたみ。FL.jur adsb の囲み）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso06.20",
+   "status": "done",
+   "where": "drafts/p3.js nav.log（from。上昇と降下の時間・距離・燃料：POH 5.5 の例の表と、降下を始める点の計算演習（折りたたみ））",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.26",
+   "status": "done",
+   "where": "drafts/p3.js ops.night（from。夜の VFR に備える：灯火の色・空港の灯台・PCL・出発前と操縦席の準備・夜の目と錯覚。図 FIG.nightLights）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso10.5",
+   "status": "done",
+   "where": "hf.vision（W20。本にある：from に kiso10.5）・drafts/p3.js ops.night（from に kiso10.5。思い出そう：暗順応 約 30 分・5〜10° 横を見る、hf.vision へのリンク）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。行き先の残り ops.night を置いたので、2 つの行き先がそろう"
+  },
+  {
+   "id": "kiso04.23",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.efb の分を書いた（from に kiso04.23。航法データと EFB の確かめ）。jet.fms（W32）の分が残るので開いたまま"
+  },
+  {
+   "id": "kiso04.25",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.efb の分を書いた（from に kiso04.25。地形警報（TAWS）と衝突防止（TCAS I／II）は発展の折りたたみ）。jet.fms（W32）の分が残るので開いたまま"
+  },
+  {
+   "id": "kiso04.26",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.efb の from に入れていない（行き先は wx.info・jet.fms。気象の画像の時間差は nav.efb の折りたたみで米国の AIM 7-1-9 から書いた）"
+  },
+  {
+   "id": "kiso08.28",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navd の分は、章 navd の written の 3 問目（kiso08.q28 を書き直した「章末の課題」）に置いた。g3.review（W35）の分が残るので開いたまま"
+  },
+  {
+   "id": "kiso08.q12",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 1（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso08.q13",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 2（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso08.q14",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 3（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso08.q15",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 4（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso06.q20",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 5（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso08.q24",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 6（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した"
+  },
+  {
+   "id": "kiso08.q25",
+   "status": "done",
+   "where": "drafts/p3.js 章 navp の written 問 7（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navp に書き直した。答えの予備燃料を直した：「法定予備燃料」でなく米国の 14 CFR 91.151 の量（日本の法令の量は事業と IFR だけ。nav.log の bk.jur fuel.vfr）。ERRATA K.wb-perf.K4・RULINGS R.fuel-reserve の kiso08.q25 の分"
+  },
+  {
+   "id": "kiso08.q17",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 1（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q18",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 2（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso04.q19",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 3（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q19",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 4（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q20",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 5（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q21",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 6（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso04.q20",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 7（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q22",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 8（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q23",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 9（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso04.q23",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 10（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso04.q25",
+   "status": "done",
+   "where": "drafts/p3.js 章 navr の written 問 11（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navr に書き直した"
+  },
+  {
+   "id": "kiso08.q26",
+   "status": "done",
+   "where": "drafts/p3.js 章 navd の written 問 1（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navd に書き直した"
+  },
+  {
+   "id": "kiso08.q27",
+   "status": "done",
+   "where": "drafts/p3.js 章 navd の written 問 2（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navd に書き直した"
+  },
+  {
+   "id": "kiso08.q28",
+   "status": "done",
+   "where": "drafts/p3.js 章 navd の written 問 3（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:navd に書き直した。章末の課題（航法計画を自分の言葉で説明する）"
+  },
+  {
+   "id": "kiso11.q26",
+   "status": "done",
+   "where": "drafts/p3.js 章 night の written 問 1（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。written:night に書き直した"
+  },
+  {
+   "id": "kiso04.q24",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。navr の written に入れていない（QNH を変えても Mode C の送信高度は変わらない、の問）。本文は nav.efb の折りたたみで Mode A/C/S を短く書いただけで、Mode C が標準気圧の高さを送ることは書いていない。navr の written に足すか、inst.alt か ifr の章に回すかは W34 が決める"
+  },
+  {
+   "id": "ch08-fig8-9",
+   "status": "done",
+   "where": "FIG.dmeSlant（drafts/p3-figs.js。nav.dme。局の真上 6,000 ft で約 1.0 NM、5 NM 先で約 5.1 NM の斜めの距離を縮尺どおりに）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。W33 の持ち物の図を章の単位が描いた（暗い板・390 px で 10 px 以上を check-figures で確かめた）。W33 の目視で確かめてほしい"
+  },
+  {
+   "id": "ch08-photo1",
+   "status": "done",
+   "where": "drafts/p3.js nav.chart（bk.photo('ch08-photo1')：高さと空域の折りたたみの中、区分航空図の読み方のあと）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。写真の題と出典は W22 が確かめた bk.photo の値（W29 は変えていない）"
+  },
+  {
+   "id": "ch08-photo2",
+   "status": "done",
+   "where": "drafts/p3.js nav.dr（bk.photo('ch08-photo2')：チェックポイントで位置を確かめる折りたたみの中）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。写真の題と出典は W22 が確かめた bk.photo の値（W29 は変えていない）"
+  },
+  {
+   "id": "ch04-photo4",
+   "status": "done",
+   "where": "drafts/p3.js nav.vor（bk.photo('ch04-photo4')：TO / FROM の例の折りたたみの中、表のあと。vorStation と並べる）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。写真の題と出典は W22 が確かめた bk.photo の値（W29 は変えていない）"
+  },
+  {
+   "id": "ch08-photo6",
+   "status": "done",
+   "where": "drafts/p3.js nav.gps（bk.photo('ch08-photo6')：GPS の発展の折りたたみの中）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。写真の題と出典は W22 が確かめた bk.photo の値（W29 は変えていない）"
+  },
+  {
+   "id": "ch11-photo7",
+   "status": "done",
+   "where": "drafts/p3.js ops.night（bk.photo('ch11-photo7')：節の最後、考えてみようのあと）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。写真の題と出典は W22 が確かめた bk.photo の値（W29 は変えていない）"
+  },
+  {
+   "id": "K.instruments.gap-2",
+   "status": "fixed",
+   "where": "drafts/p3.js nav.gps（bk.jur('sbas') の囲み：日本の SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。本文の WAAS は「米国の」と書いた例）",
+   "by": "W29",
+   "verified": true,
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。囲みの文は FL.jur sbas（W06 が国土交通省 航空局「MSAS（衛星航法補強システム）」で確かめた値。W29 は数を手で書いていない）。〔要確認〕の扱いは UNVERIFIED U.msas（W37）のまま"
+  },
+  {
+   "id": "K.wb-perf.K4",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。kiso08.q25（章 navp の written 問 7）の答えを直した：米国の 14 CFR 91.151 の量で、日本の法令の量は事業と IFR だけ（nav.log の bk.jur fuel.vfr）。kiso06.18・kiso12 の分はほかの単位なので開いたまま"
+  },
+  {
+   "id": "R.fuel-reserve",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.log は FL.jur fuel.vfr の囲みと「米国の規則では…（14 CFR 91.151(a)）」の文をそのまま持つ。kiso08.q25 の答えも 91.151 に直した（章 navp の written 問 7）"
+  },
+  {
+   "id": "C.night-vision",
+   "status": "done",
+   "where": "hf.vision（住所：暗順応・夜の盲点・5〜10° 横を見る）・drafts/p3.js ops.night（思い出そう：2 文、hf.vision へのリンク。太字の定義は置いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。呼び戻す側 ops.night の思い出そうを置いた"
+  },
+  {
+   "id": "C.wind-triangle",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.plan は偏流修正角・風力三角形の太字の定義を外し、計算の 4 段の手順のあとに思い出そう（bk.recall、navb.wind へのリンク）を置いた。basics.speed（W10）の分が残るので開いたまま"
+  },
+  {
+   "id": "C.variation-deviation",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。nav.plan は偏差・自差の太字の定義を外し、思い出そう（bk.recall、navb.north へのリンク）を置いた。sys.compass（W15）の分が残るので開いたまま"
+  },
+  {
+   "op": "add",
+   "id": "C.vfr-cruise-altitude",
+   "kind": "address",
+   "name": "VFR の巡航高度（米国の 14 CFR 91.159：磁航路で奇数・偶数千 ft ＋500）",
+   "address": "nav.log",
+   "recalls": [
+    "comm.arrive",
+    "nav.xc"
+   ],
+   "maxLines": 3,
+   "basis": "answerable-R2 の 5（住所を comm.arrive か第 3 部のどちらか 1 つに）・DESIGN 3.4 の表 cruise（囲みの節は nav.log）",
+   "unit": "W29",
+   "recallUnits": [
+    "W19",
+    "W29"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W29",
+   "checkedBy": null,
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む。住所は nav.log：太字の定義「巡航高度（cruising altitude）」・91.159 の決まり・FL.jur cruise の囲み・考えてみよう。nav.xc は手順の表の 1 行（米国の 91.159）だけ。comm.arrive（scope us、第 1 部の章 radio4）は 91.159 の 1 文の例を持つので、nav.log へのリンク（bk.see）を足すのは radio の持ち主か統合役（報告 W29.md の「ほかの単位への頼み」）。足したら done"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#4301fc2e",
+   "sec": "nav.chart",
+   "text": "本物の図は 56 日ごとに改訂されるので、いつも最新の版を使います",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#1049f484",
+   "sec": "nav.chart",
+   "text": "縮尺は 1：500,000（1 インチ ≒ 6.86 NM ≒ 8 SM）です。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）。6.86 NM・8 SM は 500,000 インチの換算",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#dc89c9af",
+   "sec": "nav.chart",
+   "text": "VFR の航空図は 56 日ごとに改訂されるので、古い版は使いません（FAA Chart Users' Guide）。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#45ffd732",
+   "sec": "nav.chart",
+   "text": "③ 55 L 39 122.95 ｜ 標高（ft）・L は夜の滑走路灯（日没から日の出まで）・最長の滑走路の長さ（百 ft 単位。3,940 ft → 39）・UNICOM の周波数 ｜",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）（空港の情報の読み方の例）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#1f7492c0",
+   "sec": "nav.chart",
+   "text": "⑥ MEF（Maximum Elevation Figure） ｜ その区画でいちばん高い地形・障害物に、誤差の分（いちばん高いものが地形や木なら、さらに図にない障害物の分 200 ft）を足して、百 ft に切り上げた高さ。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#7fa622f2",
+   "sec": "nav.chart",
+   "text": "2⁵ ＝ 2,500 ft MSL ｜",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）（MEF の読み方の例）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#7058d1f0",
+   "sec": "nav.chart",
+   "text": "⑦ VOR のコンパスローズ ｜ 0° が磁北を向いた目盛り（真北から偏差の分だけ傾いている）。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#7b438fdc",
+   "sec": "nav.chart",
+   "text": "VFR のチャートは 56 日ごとに改訂。",
+   "tag": "参考値",
+   "source": "FAA Aeronautical Chart Users' Guide（VFR の図の記号・空港の情報・MEF・56 日の改訂。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#cf941504",
+   "sec": "nav.chart",
+   "text": "航空図と情報の入手 ｜ セクショナルチャート・Chart Supplement（空港の情報）・1800wxbrief.com（気象・ノータム・飛行計画）（AIM 9-1・7-1-2） ｜ 区分航空図・AIP・SWIM・飛行援助センター〔要確認〕 ｜",
+   "tag": "条文",
+   "source": "FL.jur charts の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.chart#3b465a06",
+   "sec": "nav.chart",
+   "text": "閉まっている時間は、管制塔のない空港と同じように CTAF で交信します（米国の AIM 4-1-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-9（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#b723abc3",
+   "sec": "nav.plan",
+   "text": "図：風力三角形（真航路 090°・真対気速度 105 kt・風 030°/15 kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた値：真航路 090°・真対気速度 105 kt・風 030°/15 kt）。風力三角形の作図は PHAK 第 16 章",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#06428852",
+   "sec": "nav.plan",
+   "text": "この教材の Archer の巡航は、110 kt の指示対気速度（indicated airspeed）です。",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#4c76f107",
+   "sec": "nav.plan",
+   "text": "計算機の真対気速度（TAS）は、3,000 ft で約 115 kt です。",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#d430a175",
+   "sec": "nav.plan",
+   "text": "課目 n2 は 105 kt の指示対気速度（3,000 ft で真対気速度 約 110 kt）で飛びます。",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#3b079dd8",
+   "sec": "nav.plan",
+   "text": "偏差の足し引きを逆にすると、偏差の 2 倍ずれる（7°W なら 14°）",
+   "tag": "参考値",
+   "source": "算数（逆にすると偏差の 2 倍の差）。7°W は Sanford の偏差（NOAA WMM-2025、navb の値）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#13c213d5",
+   "sec": "nav.plan",
+   "text": "考えてみよう：真針路 095°、偏差 7°W、自差 1°E。",
+   "tag": "参考値",
+   "source": "例題の場面（kiso08 の問題を書き直したもの）。足し引きは PHAK 第 16 章",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#7697ebdf",
+   "sec": "nav.plan",
+   "text": "磁針路は 095 ＋ 7 ＝ 102° です（西偏は足す：West is best）。",
+   "tag": "参考値",
+   "source": "例題の計算（PHAK 第 16 章の真 → 磁 → コンパス）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.plan#76fd98de",
+   "sec": "nav.plan",
+   "text": "自差の 1°E は引くので、コンパス針路は 101° です。",
+   "tag": "参考値",
+   "source": "例題の計算（PHAK 第 16 章の真 → 磁 → コンパス）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#c8f428cf",
+   "sec": "nav.log",
+   "text": "区間は、10 NM 前後ごとのはっきりした目印（チェックポイント）で区切ります。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 16 章 Navigation（航法ログの例は区間 10 NM 前後。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#0c829ab3",
+   "sec": "nav.log",
+   "text": "LAB RWY → LAB-A ｜ 036° ｜ 6.4 NM ｜ 110 kt ｜ 3.5 分 ｜ 0.6 gal ｜",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#b824d87a",
+   "sec": "nav.log",
+   "text": "LAB-A → LAB-B ｜ 071° ｜ 7.7 NM ｜ 110 kt ｜ 4.2 分 ｜ 0.8 gal ｜",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#b5c413ef",
+   "sec": "nav.log",
+   "text": "この表は、無風（対地速度＝真対気速度 約 110 kt）・燃料 10.8 gal/h（教材値）で計算したものです。",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#f3d11cae",
+   "sec": "nav.log",
+   "text": "米国の VFR の巡航高度（14 CFR 91.159）",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#a115687d",
+   "sec": "nav.log",
+   "text": "地上 3,000 ft より上・18,000 ft MSL 未満のときです。",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#f00ab184",
+   "sec": "nav.log",
+   "text": "0〜179° は奇数千 ft ＋500（3,500・5,500 ft MSL など）です。",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#d16001b5",
+   "sec": "nav.log",
+   "text": "180〜359° は偶数千 ft ＋500（4,500・6,500 ft MSL など）です。",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#dae55fd6",
+   "sec": "nav.log",
+   "text": "高度は、空域・雲からの距離（米国の 91.155）・地形と障害物（MEF）も考えて選びます。",
+   "tag": "条文",
+   "source": "14 CFR 91.155（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）。MEF は Chart Users' Guide",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#1178705e",
+   "sec": "nav.log",
+   "text": "米国の規則では、VFR の燃料は、最初の着陸予定地まで飛べる量に、昼は 30 分、夜は 45 分の分を足した量です（14 CFR 91.151(a)）。",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#30b39445",
+   "sec": "nav.log",
+   "text": "出発前に知っておくことは、米国の 14 CFR 91.103 にあります。",
+   "tag": "条文",
+   "source": "14 CFR 91.103(a)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#369a25fa",
+   "sec": "nav.log",
+   "text": "教材値（フライトモデル） ｜ 3,000 ft・105 kt の指示対気速度（課目 n2・上のログ） ｜ 10.8 gal/h ｜",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#769d0ba5",
+   "sec": "nav.log",
+   "text": "教材値（フライトモデル） ｜ 3,000 ft・巡航 110 kt の指示対気速度 ｜ 約 11.5 gal/h ｜",
+   "tag": "教材値",
+   "source": "教材値：この教材のフライトモデル（flight-lab の physics.js の atmos・fuelFlow、aircraft の AR.cruise、avionics の WAYPOINTS・MAGVAR_W）と課目（syllabus.js の n1・n2）から p3.js が計算して差し込む値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#8e280ad1",
+   "sec": "nav.log",
+   "text": "参考値（Archer III の POH 第 5 章） ｜ 出力 55%・経済の混合比（best economy） ｜ 8.2 gal/h ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#8485e373",
+   "sec": "nav.log",
+   "text": "参考値（Archer III の POH 第 5 章） ｜ 出力 65%・経済の混合比（best economy） ｜ 9.5 gal/h ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#893fe908",
+   "sec": "nav.log",
+   "text": "参考値（Archer III の POH 第 5 章） ｜ 出力 75%・最大出力の混合比（best power） ｜ 11.0 gal/h ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#527b5e91",
+   "sec": "nav.log",
+   "text": "上昇（6,000 ft まで） ｜ 9 分 ｜ 12 NM ｜ 2 gal ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#3ab660bc",
+   "sec": "nav.log",
+   "text": "降下 ｜ 10 分 ｜ 20 NM ｜ 1.9 gal ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#aa546400",
+   "sec": "nav.log",
+   "text": "巡航（出力 65%・117 kt・9.5 gal/h） ｜ 2.4 時間 ｜ 282 NM ｜ 22.8 gal ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#518e5263",
+   "sec": "nav.log",
+   "text": "合計 ｜ 2.7 時間 ｜ 314 NM ｜ 26.7 gal ｜",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#e97d8d94",
+   "sec": "nav.log",
+   "text": "全体の 314 NM から上昇の 12 NM と降下の 20 NM を引いた 282 NM が、巡航の距離です（POH 5.5）。",
+   "tag": "参考値",
+   "source": "Piper Archer III（PA-28-181）POH 第 5 章（5.5 の飛行計画の例と、出力設定の表）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#45d3956b",
+   "sec": "nav.log",
+   "text": "3,000 ft を毎分 500 ft で降ります。",
+   "tag": "参考値",
+   "source": "計算演習の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#90b26764",
+   "sec": "nav.log",
+   "text": "対地速度が 120 kt のときと 90 kt のときの、降下の時間と、地面の上を進む距離を求めてください。",
+   "tag": "参考値",
+   "source": "計算演習の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#4ddc3917",
+   "sec": "nav.log",
+   "text": "時間はどちらも 3,000 ÷ 500 ＝ 6 分です。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#11cd01f9",
+   "sec": "nav.log",
+   "text": "120 kt は毎分 2 NM なので 12 NM、90 kt は毎分 1.5 NM なので 9 NM 手前から降り始めます。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#71dd13f6",
+   "sec": "nav.log",
+   "text": "米国の VFR の燃料：最初の着陸予定地＋昼 30 分・夜 45 分。",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#71710def",
+   "sec": "nav.log",
+   "text": "VFR の巡航高度 ｜ 地表から 3,000 ft を超え 18,000 ft MSL 未満：磁航路 0〜179° は奇数千 ft＋500 ft、180〜359° は偶数千 ft＋500 ft（14 CFR 91.159） ｜ 地表か水面から 900 m 以上で巡航するとき（29,000 ft 未満）。",
+   "tag": "条文",
+   "source": "FL.jur cruise の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#7105981b",
+   "sec": "nav.log",
+   "text": "磁方位 0° 以上 180° 未満は 1,000 ft の奇数倍＋500 ft、180° 以上 360° 未満は偶数倍＋500 ft（航空法第 82 条・航空法施行規則第 177 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur cruise の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#783ff6ee",
+   "sec": "nav.log",
+   "text": "VFR の燃料 ｜ 最初の着陸予定地まで飛び、さらに巡航速度で昼は 30 分・夜は 45 分飛べる燃料（風と予報を考える）（14 CFR 91.151） ｜ 燃料の量を法令で決めるのは、航空運送事業の機と計器飛行方式の飛行だけ。",
+   "tag": "条文",
+   "source": "FL.jur fuel.vfr の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#6e3d1a1d",
+   "sec": "nav.log",
+   "text": "訓練では、学校の規程の量に従う（航空法第 63 条・航空法施行規則第 153 条・航空法第 73 条の 2・航空法施行規則第 164 条の 15） ｜",
+   "tag": "条文",
+   "source": "FL.jur fuel.vfr の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#70635bb8",
+   "sec": "nav.log",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.book.bk.jur が FL.jur の LAWS から描く版と確認日の行（W06）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#fb9e5e7b",
+   "sec": "nav.log",
+   "text": "考えてみよう：米国で、磁航路 210°・地上 3,000 ft より上を VFR で巡航する。",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.log#0256a555",
+   "sec": "nav.log",
+   "text": "偶数千 ft ＋500 の 4,500 ft や 6,500 ft です（米国の 14 CFR 91.159）。",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#20c6ccb6",
+   "sec": "nav.pnr",
+   "text": "図：等時点と最大進出距離（例題の数。風の向きで、等時点は真ん中の 100 NM からずれます）。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた値：200 NM・往き 80 kt・帰り 120 kt・3.0 時間）。式は 国土交通省 航空局 事業用操縦士 学科試験 空中航法 例題 10（等時点と最大進出距離の計算）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#f1b52de0",
+   "sec": "nav.pnr",
+   "text": "等時点（equal-time point、ETP）は、経路の上で、2 つの空港までの飛行時間（風を考えた時間）が等しくなる点です（FAA AC 120-42B 付録 1）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-42B 付録 1（Equal Time Point の定義）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#47a16265",
+   "sec": "nav.pnr",
+   "text": "図の例は 200 NM・往き 80 kt・帰り 120 kt で、120 NM です。",
+   "tag": "参考値",
+   "source": "例題の計算（ETP ＝ D × 帰り ÷（往き＋帰り））。国土交通省 航空局 事業用操縦士 学科試験 空中航法 例題 10（等時点と最大進出距離の計算）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#937f3376",
+   "sec": "nav.pnr",
+   "text": "図の例（飛べる時間 3.0 時間）では、t ＝ 1.8 時間、距離は 144 NM です。",
+   "tag": "参考値",
+   "source": "例題の計算（t ＝ E × 帰り ÷（往き＋帰り））。国土交通省 航空局 事業用操縦士 学科試験 空中航法 例題 10（等時点と最大進出距離の計算）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#fa1e4400",
+   "sec": "nav.pnr",
+   "text": "150 NM の区間を、真対気速度 100 kt で飛びます。",
+   "tag": "参考値",
+   "source": "計算演習の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#5cf6cd24",
+   "sec": "nav.pnr",
+   "text": "往きは向かい風 25 kt（往き 75 kt・帰り 125 kt）です。",
+   "tag": "参考値",
+   "source": "計算演習の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#5791c4ca",
+   "sec": "nav.pnr",
+   "text": "予備を除いて飛べる時間は 2.4 時間です。",
+   "tag": "参考値",
+   "source": "計算演習の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#414b52ae",
+   "sec": "nav.pnr",
+   "text": "等時点は 150 × 125 ÷（75 ＋ 125）＝ 93.75 NM（A から）です。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#e1dc81cd",
+   "sec": "nav.pnr",
+   "text": "最大進出距離までの時間は 2.4 × 125 ÷ 200 ＝ 1.5 時間、距離は 1.5 × 75 ＝ 112.5 NM です。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#90fc1d4d",
+   "sec": "nav.pnr",
+   "text": "帰りは 112.5 ÷ 125 ＝ 0.9 時間で、合わせて 2.4 時間になります。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#0a30668b",
+   "sec": "nav.pnr",
+   "text": "考えてみよう：無風で、200 NM の区間の等時点はどこ？",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.pnr#12664f89",
+   "sec": "nav.pnr",
+   "text": "真ん中の 100 NM です。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（無風なら真ん中）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#8be170b3",
+   "sec": "nav.dr",
+   "text": "距離 ＝ 対地速度 × 経過時間（分）÷ 60 で、90 kt で 20 分なら 30 NM です。",
+   "tag": "参考値",
+   "source": "算数（距離 ＝ 速さ × 時間）。PHAK 第 16 章",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#de34a905",
+   "sec": "nav.dr",
+   "text": "自家用 ACS の Pilotage and Dead Reckoning では、計画した航路から 3 NM 以内で位置を確かめます。",
+   "tag": "参考値",
+   "source": "FAA-S-ACS-6C 自家用 ACS の Area VI Task A（Pilotage and Dead Reckoning）の技能の基準（3 NM・±5 分・±200 ft・±15°）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#c6e02dd7",
+   "sec": "nav.dr",
+   "text": "チェックポイントには予定の時刻の ±5 分で着き、高度 ±200 ft・針路 ±15° を保ちます。",
+   "tag": "参考値",
+   "source": "FAA-S-ACS-6C 自家用 ACS の Area VI Task A（Pilotage and Dead Reckoning）の技能の基準（3 NM・±5 分・±200 ft・±15°）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#19c94ce6",
+   "sec": "nav.dr",
+   "text": "A → B → C の計画で、B を予定より 5 分遅い 03:25 UTC に通りました。",
+   "tag": "参考値",
+   "source": "計算演習の場面（kiso08 の問題を書き直したもの）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#64f6b9be",
+   "sec": "nav.dr",
+   "text": "B から C までは 45 NM で、新しく見積もった対地速度は 75 kt、燃料流量は 30 L/h です。",
+   "tag": "参考値",
+   "source": "計算演習の場面（kiso08 の問題を書き直したもの）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#f6c1fb19",
+   "sec": "nav.dr",
+   "text": "45 ÷ 75 × 60 ＝ 36 分なので、到着は 03:25 ＋ 36 分 ＝ 04:01 UTC です。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#b92e9f88",
+   "sec": "nav.dr",
+   "text": "燃料は 30 × 36 ÷ 60 ＝ 18 L です。",
+   "tag": "参考値",
+   "source": "計算演習の答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#985e00e7",
+   "sec": "nav.dr",
+   "text": "前の予定に 5 分を足すだけでは、次の区間の遅れが入りません。",
+   "tag": "参考値",
+   "source": "計算演習の解説",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#462da2df",
+   "sec": "nav.dr",
+   "text": "60 NM 進んで 1 NM ずれると、角度はおよそ 1° です（三角関数の近似の目安）。",
+   "tag": "参考値",
+   "source": "数ではなく算数（1 in 60 の近似：tan 1° ≒ 1/60）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#426393a3",
+   "sec": "nav.dr",
+   "text": "考えてみよう：20 NM 飛んで、航路から右へ 2 NM ずれていた。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#89410606",
+   "sec": "nav.dr",
+   "text": "残りは 40 NM。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#2c88e1fb",
+   "sec": "nav.dr",
+   "text": "外れた角度は 60 × 2 ÷ 20 ＝ 6° です。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（60 の法則）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dr#c09d5da6",
+   "sec": "nav.dr",
+   "text": "目的地へ向けるには、さらに 60 × 2 ÷ 40 ＝ 3° を足して、合計 9° 左へ直します。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（60 の法則）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#cb8a1fc1",
+   "sec": "nav.vor",
+   "text": "108.0〜117.95 MHz の電波で、局から外へ出る 360 本のラジアル（radial）を作っています。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#ba107208",
+   "sec": "nav.vor",
+   "text": "受信機は、いまどのラジアルの上にいるかがわかります（米国の AIM 1-1-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#45d8cb98",
+   "sec": "nav.vor",
+   "text": "確かな識別は、モールスか、局名のあとに “VOR” と言う録音の声だけです（米国の AIM 1-1-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#f7106576",
+   "sec": "nav.vor",
+   "text": "G1000 の HSI は片側 2 ドットで、VOR はいっぱいで約 10°・1 ドット約 5°（機械式の CDI と同じ角度の目盛り。昔ながらの VOR 計器は片側 5 ドットで、1 ドット約 2°） ｜",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide（CDI の目盛り：ENR 2.0 NM・TERM 1.0 NM・APR 0.3 NM 前後。機種で違う）と IFH 第 9 章（片側 5 ドットの VOR 計器は 1 ドット 2°）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#a35fedf8",
+   "sec": "nav.vor",
+   "text": "局の東・ラジアル 090 の上 ｜ 090° ｜ FROM（針は中央） ｜",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）（TO/FROM の例）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#38d03daf",
+   "sec": "nav.vor",
+   "text": "局の東・ラジアル 090 の上 ｜ 270° ｜ TO（針は中央） ｜",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）（TO/FROM の例）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#e0c2f503",
+   "sec": "nav.vor",
+   "text": "写真：VOR/DME の地上局（米国ミネソタ州 Hibbing・110.8 MHz）。",
+   "tag": "参考値",
+   "source": "bk.photo の vorStation（Wikimedia Commons の説明：Hibbing の VOR/DME・110.8 MHz。W22 が確かめた）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#6ea40075",
+   "sec": "nav.vor",
+   "text": "針の方へ、コースとのずれの約 2 倍の角度（20°〜90° の間）で会合（intercept）します（IFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#af37b65c",
+   "sec": "nav.vor",
+   "text": "例：局へ向かうコース 040° を、真対気速度（true airspeed）100 kt で飛びます。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#150196f9",
+   "sec": "nav.vor",
+   "text": "風は 080°（磁方位）/12 kt です。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた値）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#f2e72bf2",
+   "sec": "nav.vor",
+   "text": "針が止まる針路は約 044° です（右からの風なので右へ約 4°）。",
+   "tag": "参考値",
+   "source": "例題の計算（p3.js が風の三角形で計算）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#6953367a",
+   "sec": "nav.vor",
+   "text": "課目 n1 では、3,000 ft の風が地上より強い（約 16 kt）ので、約 046° になります。",
+   "tag": "教材値",
+   "source": "教材値：課目 n1（syllabus.js）の風とフライトモデルの 3,000 ft の風から p3.js が計算する値",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#52270394",
+   "sec": "nav.vor",
+   "text": "受信機が識別符号を読み取って表示する機種では、音を聞かなくてもかまいません（米国の AIM 1-1-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#d3b07f69",
+   "sec": "nav.vor",
+   "text": "西部の山岳地帯を除く米国では、地上 5,000 ft でほぼ途切れずに VOR を受信できます。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（VOR MON）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#c8b8c406",
+   "sec": "nav.vor",
+   "text": "米国の本土では、どこにいても、GPS に頼らない計器進入（ILS か VOR）のある空港まで 100 NM 以内になるように考えられています（AIM 1-1-3）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3（VOR MON）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#59e53f3c",
+   "sec": "nav.vor",
+   "text": "米国の規則では、IFR で VOR を使うには、30 日以内の受信機の点検が要ります（14 CFR 91.171。試験信号 VOT・点検点・2 台の比較など）。",
+   "tag": "条文",
+   "source": "14 CFR 91.171（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#002b5725",
+   "sec": "nav.vor",
+   "text": "局へ向かうコースはラジアル ± 180°",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）（局へ向かうコースはラジアルの逆）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.vor#2ecd262e",
+   "sec": "nav.vor",
+   "text": "整備中の局は、識別符号を止めるか TEST（－・・・・－）を出すので、使いません（米国の AIM 1-1-3・1-1-11）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-3・1-1-11（T-E-S-T の符号）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#0f45aa1a",
+   "sec": "nav.dme",
+   "text": "局の真上でも、局からの高さの分（6,000 ft で約 1.0 NM）が出ます。",
+   "tag": "参考値",
+   "source": "算数（6,000 ÷ 6,076 ≒ 1.0 NM）。斜めの距離は FAA AIM 1-1-7（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#3332739d",
+   "sec": "nav.dme",
+   "text": "局から離れるほど、水平の距離との差は小さくなります（米国の AIM 1-1-7）",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-7（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#72c5ed42",
+   "sec": "nav.dme",
+   "text": "機体と地上の局のあいだで電波をやりとりします（米国の AIM 1-1-7）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-7（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#6b7883b5",
+   "sec": "nav.dme",
+   "text": "たとえば局から 6,000 ft 上なら約 1.0 NM です。",
+   "tag": "参考値",
+   "source": "算数（6,000 ÷ 6,076 ≒ 1.0 NM）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#247d99f8",
+   "sec": "nav.dme",
+   "text": "局から高さ 1,000 ft ごとに 1 NM 以上離れていれば、斜めの距離の誤差は小さいといえます（IFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#58a7a146",
+   "sec": "nav.dme",
+   "text": "ラジアル＋DME ＝ 位置：たとえば「LAB VOR の 030 ラジアル・11 NM」は、地図の上の 1 点です。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた点）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#96f32388",
+   "sec": "nav.dme",
+   "text": "考えてみよう：局の真上を 6,000 ft（局からの高さ）で通った。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#2727a938",
+   "sec": "nav.dme",
+   "text": "約 1.0 NM です。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.dme#83c1f8bb",
+   "sec": "nav.dme",
+   "text": "真上では局からの高さ（6,000 ÷ 6,076 ≒ 0.99 NM）が出ます（IFH 第 9 章）。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（算数）。FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#5dc5ed77",
+   "sec": "nav.adf",
+   "text": "米国では、ふつう 190〜535 kHz の電波を使い、3 文字の識別符号をモールスで出します（米国の AIM 1-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-2（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#6955fb82",
+   "sec": "nav.adf",
+   "text": "目盛りが動かない ADF の針は、機首を 0° として時計回りに測った角度（相対方位）で、局の方向を指します。",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#5fd42a13",
+   "sec": "nav.adf",
+   "text": "たとえば磁針路 060°・相対方位 030° なら、局への磁方位は 090° です。",
+   "tag": "参考値",
+   "source": "例題の計算（磁針路 ＋ 相対方位）。IFH 第 9 章",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#6894ad47",
+   "sec": "nav.adf",
+   "text": "針を 0° に保つように機首を向け続けることを、ホーミング（homing）といいます。",
+   "tag": "参考値",
+   "source": "FAA IFH（FAA-H-8083-15B）第 9 章 Navigation Systems（会合角は差の 2 倍で 20°〜90°、相対方位・ホーミング、DME の斜めの距離。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#27134f59",
+   "sec": "nav.adf",
+   "text": "だから、使っている間は識別符号を聞き続けます（米国の AIM 1-1-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-2（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#e4f4c5ff",
+   "sec": "nav.adf",
+   "text": "考えてみよう：磁針路 060° で、ADF の相対方位は 030°。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.adf#abc202d4",
+   "sec": "nav.adf",
+   "text": "060 ＋ 030 ＝ 090° です。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#1fe0195b",
+   "sec": "nav.gps",
+   "text": "異常な衛星を除いて使い続ける FDE には 6 機（または 5 機と気圧の情報）が要ります（米国の AIM 1-1-17）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-17（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#78deef9c",
+   "sec": "nav.gps",
+   "text": "ほかの航法と比べ続けます（米国の AIM 1-1-17）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-17（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#af0c832f",
+   "sec": "nav.gps",
+   "text": "航空路（ENR） ｜ 2.0 NM（Garmin の WAAS の GPS の例。機種で違う） ｜",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide（CDI の目盛り：ENR 2.0 NM・TERM 1.0 NM・APR 0.3 NM 前後。機種で違う）と IFH 第 9 章（片側 5 ドットの VOR 計器は 1 ドット 2°）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#c28db388",
+   "sec": "nav.gps",
+   "text": "空港のまわり（TERM。出発・到着の空港から 30 NM 以内） ｜ 1.0 NM（米国の AIM 1-1-17 の terminal ±1 NM） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-17（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）。30 NM は Garmin G1000 Pilot's Guide（CDI の目盛り：ENR 2.0 NM・TERM 1.0 NM・APR 0.3 NM 前後。機種で違う）と IFH 第 9 章（片側 5 ドットの VOR 計器は 1 ドット 2°）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#56b368f0",
+   "sec": "nav.gps",
+   "text": "進入（APR） ｜ 0.3 NM 前後（Garmin の GPS の例。滑走路に近づくほど狭い） ｜",
+   "tag": "参考値",
+   "source": "Garmin G1000 Pilot's Guide（CDI の目盛り：ENR 2.0 NM・TERM 1.0 NM・APR 0.3 NM 前後。機種で違う）と IFH 第 9 章（片側 5 ドットの VOR 計器は 1 ドット 2°）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#8d3c1905",
+   "sec": "nav.gps",
+   "text": "IFR で GPS を使う前は、到着の時刻に RAIM が使えるかを予測で確かめます（米国の AIM 1-1-17）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-17（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#c4e669f2",
+   "sec": "nav.gps",
+   "text": "GPS の位置を使う地図・地形の警報・ADS-B・時計にも、影響が広がります（米国の AIM 1-2-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-2-4（GPS の妨害となりすましの影響の一覧）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#da450a77",
+   "sec": "nav.gps",
+   "text": "LPV のような進入もできます（米国の AIM 1-1-18）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-18（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#bcfb9fc8",
+   "sec": "nav.gps",
+   "text": "Sanford の磁気偏差は約 7°W（2026 年）（AIM 1-1-18・NOAA WMM-2025） ｜ SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。",
+   "tag": "条文",
+   "source": "FL.jur sbas の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#b3b95b7c",
+   "sec": "nav.gps",
+   "text": "磁気偏差は約 6°W（那覇）〜約 10.5°W（稚内）（2026 年）（国土交通省 航空局「MSAS（衛星航法補強システム）」（資料 3-10）・NOAA WMM-2025） ｜",
+   "tag": "条文",
+   "source": "FL.jur sbas の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#ec365dde",
+   "sec": "nav.gps",
+   "text": "FDE には 6 機（または 5 機と気圧の情報）が要ります（米国の AIM 1-1-17）。",
+   "tag": "参考値",
+   "source": "FAA AIM 1-1-17（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.gps#3b078ac7",
+   "sec": "nav.gps",
+   "text": "✈ シミュレータで体験：途中で GPS が使えなくなります（CDI はいつも 1.0 NM の簡略版）。",
+   "tag": "教材値",
+   "source": "教材値：この教材のシミュレータの動き（課目 n3 の GPS の故障、CDI は 1.0 NM の簡略版。avionics.js）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.fpl#4948c618",
+   "sec": "nav.fpl",
+   "text": "考えてみよう：区間の DTK は 071°。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.fpl#ca31c62b",
+   "sec": "nav.fpl",
+   "text": "いまの TRK は 066°。",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.fpl#646c5272",
+   "sec": "nav.fpl",
+   "text": "左へ 5° 流されています。",
+   "tag": "参考値",
+   "source": "考えてみようの答え",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.fpl#828e44ea",
+   "sec": "nav.fpl",
+   "text": "機首を右へ 5° より多く（たとえば 10°）向けて、ずれを戻します。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（修正の目安）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.fpl#a86ebbee",
+   "sec": "nav.fpl",
+   "text": "CDI の針が中央に戻ったら、TRK が 071° になる針路（もとの針路より右へ約 5°）に合わせます。",
+   "tag": "参考値",
+   "source": "考えてみようの答え",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#16a9a939",
+   "sec": "nav.efb",
+   "text": "重量（weight）や性能も計算します（FAA AC 91-78A）。",
+   "tag": "参考値",
+   "source": "FAA AC 91-78A（2024-02-23、EFB の使い方。Part 91 では紙の代わりに使える・規則の装置の代わりではない）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#c5ac039f",
+   "sec": "nav.efb",
+   "text": "米国の Part 91 の運航では、紙と同じ中身で、データが最新なら、紙の代わりに使えます。",
+   "tag": "参考値",
+   "source": "FAA AC 91-78A（2024-02-23、EFB の使い方。Part 91 では紙の代わりに使える・規則の装置の代わりではない）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#8c89c0bb",
+   "sec": "nav.efb",
+   "text": "規則が求める航法・通信・監視の装置の代わりにはなりません（米国の AC 91-78A）。",
+   "tag": "参考値",
+   "source": "FAA AC 91-78A（2024-02-23、EFB の使い方。Part 91 では紙の代わりに使える・規則の装置の代わりではない）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#87cfc45b",
+   "sec": "nav.efb",
+   "text": "FIS-B で送られる天気やノータム（NOTAM）も出ます（米国の AIM 4-5-7〜4-5-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-7〜4-5-9（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#829cdfb6",
+   "sec": "nav.efb",
+   "text": "衝突を避ける装置ではありません（米国の AIM 4-5-7）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-7（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#55ff9e64",
+   "sec": "nav.efb",
+   "text": "トランスポンダーのない機は、地上のレーダーから送る交通の情報（TIS-B）に出ません（米国の AIM 4-5-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-8（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#784154ad",
+   "sec": "nav.efb",
+   "text": "雷雨（thunderstorm）のすき間を抜ける判断には使いません（米国の AIM 7-1-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-1-9（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#ae67ab1c",
+   "sec": "nav.efb",
+   "text": "TCAS II は、交通の知らせ（TA）に加えて、上昇か降下で避ける指示（RA）を出します（米国の AIM 4-4-16）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#f14547ca",
+   "sec": "nav.efb",
+   "text": "天気の画像は、広い範囲を避ける計画（20 分以上先の判断）には使えます。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-1-9（strategic は 20 分以上・tactical は 3 分未満）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#cf3718d0",
+   "sec": "nav.efb",
+   "text": "3 分より短い間に雷雨をすり抜ける判断には、向いていません（米国の AIM 7-1-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-1-9（strategic は 20 分以上・tactical は 3 分未満）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#109b94d6",
+   "sec": "nav.efb",
+   "text": "ADS-B Out ｜ Class A・B・C と、決められた空港の 30 NM 内（10,000 ft MSL まで）で要る。",
+   "tag": "条文",
+   "source": "FL.jur adsb の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#41a7e822",
+   "sec": "nav.efb",
+   "text": "48 州の 10,000 ft MSL 以上の Class E（地表から 2,500 ft 以下を除く）なども同じ（14 CFR 91.225） ｜ 航空法と航空法施行規則に ADS-B Out の定めは見当たらない。",
+   "tag": "条文",
+   "source": "FL.jur adsb の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#553923e8",
+   "sec": "nav.efb",
+   "text": "告示・AIP Japan の扱いは〔要確認〕 ｜",
+   "tag": "推測・要確認",
+   "source": "FL.jur adsb の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）。日本の告示・AIP Japan の扱いは FL.jur でも〔要確認〕",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#70635bb8",
+   "sec": "nav.efb",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.book.bk.jur が FL.jur の LAWS から描く版と確認日の行（W06）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.efb#60720ac5",
+   "sec": "nav.efb",
+   "text": "トランスポンダーのない機や、受信の範囲の外の機は出ません（米国の AIM 4-5-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-8（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.ff#2e0b105a",
+   "sec": "nav.ff",
+   "text": "これを一般に flight following と呼びます（米国の AIM 4-1-15・4-1-18）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-15・4-1-18（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.ff#e1f1eed3",
+   "sec": "nav.ff",
+   "text": "交通情報は「見張りの助け」で、代わりではありません（米国の AIM 4-1-15）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-15（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.ff#5ee4bcd4",
+   "sec": "nav.ff",
+   "text": "Class B 空域に入るには、別に許可が要ります（米国の 14 CFR 91.131）。",
+   "tag": "条文",
+   "source": "14 CFR 91.131（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.ff#cf941504",
+   "sec": "nav.ff",
+   "text": "航空図と情報の入手 ｜ セクショナルチャート・Chart Supplement（空港の情報）・1800wxbrief.com（気象・ノータム・飛行計画）（AIM 9-1・7-1-2） ｜ 区分航空図・AIP・SWIM・飛行援助センター〔要確認〕 ｜",
+   "tag": "条文",
+   "source": "FL.jur charts の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.ff#fb0f02e3",
+   "sec": "nav.ff",
+   "text": "flight following を受けていることは、許可ではありません（米国の 14 CFR 91.131）。",
+   "tag": "条文",
+   "source": "14 CFR 91.131（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#c1e4dda3",
+   "sec": "nav.xc",
+   "text": "4 ｜ 航路（コース、course）・チェックポイント・高度（米国の 91.159）・針路（ヘディング、heading）の計算・ログ ｜ 第 26 章 ｜",
+   "tag": "条文",
+   "source": "14 CFR 91.159（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）（手順の表の 4 行目）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#9006d7d5",
+   "sec": "nav.xc",
+   "text": "米国の VFR の飛行計画（AIM 5-1-5・5-1-14）",
+   "tag": "参考値",
+   "source": "FAA AIM 5-1-5・5-1-14（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#464d54b6",
+   "sec": "nav.xc",
+   "text": "到達予定時刻（到着予定時刻、estimated time of arrival）から 30 分以内に閉じないと、捜索救難が始まります。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-1-14（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#1806969b",
+   "sec": "nav.xc",
+   "text": "直さないと、捜索救難はその時刻を元に始まります（米国の AIM 5-1-5）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-1-5（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#8f1406f1",
+   "sec": "nav.xc",
+   "text": "出すことを強く勧める（AIM 5-1-5） ｜ VFR でも通報が原則（出発地から半径 9 km 内を飛んでその中に着陸するときを除く）。",
+   "tag": "条文",
+   "source": "FL.jur fpl の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#ad3d5723",
+   "sec": "nav.xc",
+   "text": "飛行を終えたら到着を通知する（航空法第 97 条・航空法施行規則第 205 条・航空法第 98 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur fpl の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#70635bb8",
+   "sec": "nav.xc",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.book.bk.jur が FL.jur の LAWS から描く版と確認日の行（W06）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.xc#bf05b1a2",
+   "sec": "nav.xc",
+   "text": "30 分後です（米国の AIM 5-1-14）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-1-14（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#7beeb8b6",
+   "sec": "nav.divert",
+   "text": "数字は課目の風・105 kt・この教材のフライトモデルの燃料消費で計算した値",
+   "tag": "教材値",
+   "source": "教材値：課目の風・105 kt・この教材のフライトモデルの燃料流量から計算した値（diversionGeometry の図と表）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#a623788d",
+   "sec": "nav.divert",
+   "text": "時速 → 分速 ｜ 105 kt ＝ 約 1.75 NM/分。",
+   "tag": "参考値",
+   "source": "算数（105 ÷ 60 ≒ 1.75）。目安の表は PHAK 第 16 章の目的地変更",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#8a9e68b2",
+   "sec": "nav.divert",
+   "text": "12 NM なら約 7 分 ｜",
+   "tag": "参考値",
+   "source": "算数（12 ÷ 1.75 ≒ 7）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#c49999bf",
+   "sec": "nav.divert",
+   "text": "自家用 ACS の Diversion では、すぐに変更先へ向かい、針路・対地速度・到着の時刻・燃料を妥当に見積もり、高度 ±200 ft・針路 ±15° を保ちます。",
+   "tag": "参考値",
+   "source": "FAA-S-ACS-6C 自家用 ACS の Area VI Task C（Diversion）の技能の基準（±200 ft・±15°）。W29 が 2026-10-31 に読んだ",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#59b71d8e",
+   "sec": "nav.divert",
+   "text": "考えてみよう：対地速度 105 kt で、14 NM 先の空港までのおよその時間は？",
+   "tag": "参考値",
+   "source": "考えてみようの場面",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#7a5edb8b",
+   "sec": "nav.divert",
+   "text": "約 8 分です。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.divert#420c2876",
+   "sec": "nav.divert",
+   "text": "105 kt は約 1.75 NM/分なので、14 ÷ 1.75 ＝ 8 分。",
+   "tag": "参考値",
+   "source": "考えてみようの答え（算数）",
+   "kind": "例題",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.lost#576c71f3",
+   "sec": "nav.lost",
+   "text": "危なくなったら 121.5 MHz で伝え、7700 にする（管制と交信中で番号をもらっているなら、指示がない限りそのまま。米国の AIM 6-3-2） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 6-3-2（交信中なら割り当ての番号のまま、交信できないとき 7700）・6-3-1（121.5 MHz）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.lost#350d7db8",
+   "sec": "nav.lost",
+   "text": "米国の PHAK・AIM・ACS には出てこない、訓練の語呂です。",
+   "tag": "参考値",
+   "source": "数ではない（4C／5C は訓練の語呂）。aim・PHAK・自家用 ACS の本文に「Confess」などの語がないことを W29 が 2026-10-31 に検索で確かめた",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "nav.lost#8e4268b4",
+   "sec": "nav.lost",
+   "text": "誘導は助言で、安全に飛ぶ責任はパイロットに残ります（米国の AIM 6-2-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-2-1（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#861f6c64",
+   "sec": "ops.night",
+   "text": "滑走路の縁は白で、計器進入の滑走路では終わりの 2,000 ft が黄です。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-1-4（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）・FAA AFH（FAA-H-8083-3C）第 11 章 Night Operations（暗順応は最大 30 分・灯火・夜の離着陸。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#33e92218",
+   "sec": "ops.night",
+   "text": "空港の灯台は白と緑が交互に光ります（AFH 第 11 章・米国の AIM 2-1）",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 11 章 Night Operations（暗順応は最大 30 分・灯火・夜の離着陸。W29 が 2026-10-31 に読んだ）・FAA AIM 2-1-9（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#fc8c9960",
+   "sec": "ops.night",
+   "text": "灯火 ｜ 色と意味（AFH 第 11 章・米国の AIM 2-1） ｜",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 11 章 Night Operations（暗順応は最大 30 分・灯火・夜の離着陸。W29 が 2026-10-31 に読んだ）・FAA AIM 2-1（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#12289fd8",
+   "sec": "ops.night",
+   "text": "計器進入の滑走路では、終わりの 2,000 ft（または長さの半分の短い方）が黄 ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-1-4（last 2,000 feet or half the runway length, whichever is less）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#c295514d",
+   "sec": "ops.night",
+   "text": "軍の空港の灯台は、緑の間に白が 2 回続けて光ります。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-1-9（dual-peaked white flashes）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#7452dcc5",
+   "sec": "ops.night",
+   "text": "5 秒以内に 7 回押すといちばん明るくなり、最後に押してから 15 分つきます（米国の AIM 2-1-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-1-8（7 times within 5 seconds・15 minutes）（faa.gov の現行版の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#a07646f7",
+   "sec": "ops.night",
+   "text": "夜の VFR の装備（米国の 14 CFR 91.205(c)）と規則の 3 つの「夜」は、 と  で学びました。",
+   "tag": "条文",
+   "source": "14 CFR 91.205(c)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#75391953",
+   "sec": "ops.night",
+   "text": "米国の 14 CFR 61.109(a)(2) は、自家用の資格に、夜の訓練 3 時間を求めます。",
+   "tag": "条文",
+   "source": "14 CFR 61.109(a)(2)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#1f12eef0",
+   "sec": "ops.night",
+   "text": "その中に、合計 100 NM を超える野外飛行（クロスカントリー、cross-country）1 回と、完全に止まるまでの離着陸 10 回が入ります。",
+   "tag": "条文",
+   "source": "14 CFR 61.109(a)(2)(i)(ii)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#ced0d7de",
+   "sec": "ops.night",
+   "text": "90 日以内の教官の裏書き（endorsement）も要ります（米国の 14 CFR 61.87(o)）。",
+   "tag": "条文",
+   "source": "14 CFR 61.87(o)(3)（eCFR の現行の本文。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#0092754b",
+   "sec": "ops.night",
+   "text": "夜の定義 ｜ 夕方の市民薄明の終わりから、朝の市民薄明の始まりまで（14 CFR 1.1） ｜ 日没から日出まで（航空法第 64 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur night の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめ、FC2・R1V が見た文。W29 は書いていない）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#0e7a5db9",
+   "sec": "ops.night",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.book.bk.jur が FL.jur の LAWS から描く版と確認日の行（W06）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#2e82d964",
+   "sec": "ops.night",
+   "text": "夜の目は、暗さに慣れるのに約 30 分かかり、明るい光で失います。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 11 章 Night Operations（暗順応は最大 30 分・灯火・夜の離着陸。W29 が 2026-10-31 に読んだ）・FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors（Figure 17-17「look 5°–10° off center」・暗順応 約 30 分。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.night#1f6ad039",
+   "sec": "ops.night",
+   "text": "暗い所では、見たい物の 5〜10° 横を見ます。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 17 章 Aeromedical Factors（Figure 17-17「look 5°–10° off center」・暗順応 約 30 分。W29 が 2026-10-31 に読んだ）",
+   "by": "W29",
+   "note": "W29（2026-10-31）：第 3 部の章 navp・navr・navd・night の下書き drafts/p3.js（図は drafts/p3-figs.js、主張は drafts/p3.claims.json）。このパッチは、章 navp・navr・navd・night を登録するコミットで取り込む"
+  }
+ ]
+}

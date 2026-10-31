@@ -1,0 +1,2091 @@
+{
+ "unit": "W32",
+ "about": "W32（R3）：第 6 部の章 crm（書き直し、新 1 節）・jet（書き直し、新 3 節）・tsys（新しい章、発展の 5 節）の下書き drafts/p6.js・drafts/p6-figs.js・drafts/p6.claims.json の台帳のパッチ。章を登録するコミットで統合役が取り込む（apply-patches.mjs）。CLAIMS の op: add は drafts/p6.claims.json と同じ 128 行（CLAIMS.json に crm・jet・tsys の行はまだない）。",
+ "patches": [
+  {
+   "id": "kiso10.23",
+   "status": "done",
+   "where": "drafts/p6.js crm.tem（from。TEM の 3 つの言葉と対策・例：課目 r1 の流れ・図 FIG.tem（管理できた枝のある図）・望ましくない機体の状態の定義（表））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso10.28",
+   "status": "done",
+   "where": "drafts/p6.js crm.case（新しい節。from。1 つの飛行で人の要因を通して考える：出発前・飛行中・着陸後の表、折りたたみに振り返りの書き方、判断の箱、課目 r1 のボタン）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso12.26",
+   "status": "done",
+   "where": "drafts/p6.js crm.auto（from。自動操縦を監視する：モードを読む・わからない・驚いたとき・手で飛ぶ技量が土台）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso04.9",
+   "status": "done",
+   "where": "drafts/p6.js jet.speed（新しい節。from。マッハ数・音速は温度で決まる・計算 a = √(1.4 × 287 × T)、VMO/MMO）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso13.27",
+   "status": "done",
+   "where": "drafts/p6.js jet.next（新しい節。from。小型双発機と輸送機の考え方を分ける・MCC・型式の限定・路線の訓練（米国・英国の例）、図 FIG.careerPath）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.04",
+   "status": "done",
+   "where": "drafts/p6.js tsys.arch（発展の節。from。系統図の読み方：2 つあることと独立していること・共通の原因）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.24",
+   "status": "done",
+   "where": "drafts/p6.js tsys.arch（発展の節。from。系統のつながりを図で考える：図 FIG.sysDepend）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.25",
+   "status": "done",
+   "where": "drafts/p6.js tsys.arch（発展の節。from。対象機の資料で仕上げる・MEL は米国の 14 CFR 91.213 の例を折りたたみ）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.17",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。空気と空調（抽気とパック。航空会社の説明に頼る文は使わない：K.systems.K3））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.18",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。与圧（客室高度・差圧・約 8,000 ft、図 FIG.cabinPress））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.19",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。差圧の上限と安全弁・負圧の逃がし）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.20",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。減圧と酸素（連続流・希釈要求式・加圧要求式・化学式の酸素発生器、有効意識時間は AC 61-107B））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.21",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。防氷と除氷（装備と承認の範囲・地上の除氷液と飛行中の防氷は別））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.22",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。火災の防護（見つける・広がりを止める・消す））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.19",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。ガスタービンの空気と仕事（吸入・圧縮・燃焼・膨張、図 FIG.turbofanFlow））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.20",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。ターボジェットとターボファン・バイパス比（表））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.21",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。ターボプロップ・ターボシャフト（表の行。フリータービンの図 ch03-fig3-9 は描いていない））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.22",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。タービンの計器（EPR・N1・N2・EGT など、名前と軸は機種で違う））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.23",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。FADEC と電源・センサーへの依存）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.24",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。始動と始動の異常（ホットスタート・ハングスタート））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.25",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。飛行中の異常（圧縮機失速・サージ・フレームアウト））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.26",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。定格と制限と応答（折りたたみ））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.27",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（発展の節。from。複数の表示から考える（折りたたみ・計算演習））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso05.13",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（発展の節。from。重心を %MAC で表す・計算演習 19.52%・図 FIG.macPercent）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso01.26",
+   "status": "done",
+   "where": "drafts/p6.js jet.speed（from。高速飛行の入口：臨界マッハ数・マッハタック・コフィンコーナー・後退翼）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 aero.vn・aero.struct は W13 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.05",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。指令の道と力の道：電気の指令・油圧の動力）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 sys.ctl は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.07",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。電気：交流・APU・RAT・母線の切り離し）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 sys.elec は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.09",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。油圧で力と動き：計算演習 4,000 N）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 me.sys は W31 の drafts/p5.js"
+  },
+  {
+   "id": "kiso02.10",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。油圧の回路と表示：図 FIG.hydCircuit）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 me.sys は W31 の drafts/p5.js"
+  },
+  {
+   "id": "kiso02.12",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。燃料：移送とクロスフィード）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 me.basics は W31 の drafts/p5.js（今の本にもある）"
+  },
+  {
+   "id": "kiso02.13",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。燃料の量と収支を kg で照合・左右の差 200 kg の計算演習）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 sys.fuel は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.15",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（発展の節。from。ブレーキ：アンチスキッド・オートブレーキ・運動エネルギーは速度の 2 乗（折りたたみの計算 540 kJ・777.6 kJ））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 sys.gear は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.16",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（発展の節。from。空気：抽気とその配り先）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 sys.elec は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso04.21",
+   "status": "done",
+   "where": "drafts/p6.js crm.auto（from。3 つの装置の役割の文と、FD・AP・自動推力の表（折りたたみ））",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 inst.ap は W15 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso04.22",
+   "status": "done",
+   "where": "drafts/p6.js crm.auto（from。モードを読む：表示を読んで声に出す・VS モードと推力）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 inst.ap は W15 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso04.23",
+   "status": "done",
+   "where": "drafts/p6.js jet.fms（新しい節。from。FMS と航法データ：入れた経路を表示と照らす）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 nav.efb は W29 の drafts/p3.js"
+  },
+  {
+   "id": "kiso04.25",
+   "status": "done",
+   "where": "drafts/p6.js jet.fms（新しい節。from。TCAS（米国の AIM 4-4-16・91.123）・TAWS（米国の 91.223）・電波高度計）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 nav.efb は W29 の drafts/p3.js"
+  },
+  {
+   "id": "kiso04.26",
+   "status": "done",
+   "where": "drafts/p6.js jet.fms（新しい節。from。機上気象レーダーの減衰と影・NEXRAD の画像の遅れ、図 FIG.radarShadow）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 wx.info は W17 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso05.7",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（発展の節。from。段階ごとの重量の限界：零燃料重量・離陸・着陸）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 wb.limits は W16 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso05.22",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（発展の節。from。床の荷重と固定：計算演習 150 kg/m²）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 wb.shift は W16 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso06.27",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（発展の節。from。滑走路の状態の伝え方：英国 CAA の GRF の例）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 perf.plan は W16 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso02.cover",
+   "status": "done",
+   "where": "drafts/p6.js tsys の summary（学習目標：訓練機にない装置を、原理と「何が残るか」で考えられるようにする）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 summary:sys は W14 の分で R2B に登録した"
+  },
+  {
+   "id": "kiso03.cover",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。summary:tsys の分を置いた（tsys の summary：ガスタービンエンジンとその計器）。summary:me（W31）が残るので開いたまま"
+  },
+  {
+   "id": "kiso02.q4",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q19",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q20",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q21",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q22",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q23",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso02.q24",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q19",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q20",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q21",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q22",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q23",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q24",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q25",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q26",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso03.q27",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso05.q13",
+   "status": "done",
+   "where": "drafts/p6.js tsys の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso04.q9",
+   "status": "done",
+   "where": "drafts/p6.js jet の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso12.q26",
+   "status": "done",
+   "where": "drafts/p6.js jet の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso13.q27",
+   "status": "done",
+   "where": "drafts/p6.js jet の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso10.q23",
+   "status": "done",
+   "where": "drafts/p6.js crm の written（記述問題。答えは本文の節へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso10.q28",
+   "status": "done",
+   "where": "drafts/p6.js crm の written（記述問題。答えは crm.case へのリンクつき）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。もう 1 つの行き先 g1.review は W25 の分で R2C に登録した。見出しの開きタグのない </b>（K.aero.K-1）は書き直しで持ち込んでいない"
+  },
+  {
+   "id": "ch02-fig5",
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.hydCircuit（tsys.power：油圧の回路。ポンプ・アキュムレーター・作動筒・戻り）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch02-fig12",
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.sysDepend（tsys.arch：系統のつながり。電源・油圧・空気・計算機の依存）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch03-fig3-7",
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.turbofanFlow（tsys.turbine：吸入・圧縮・燃焼・膨張とバイパス。図 3-8 と 1 枚にした）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch03-fig3-8",
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.turbofanFlow（tsys.turbine：ターボファンのバイパスの流れ。図 3-7 と 1 枚にした）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch02-fig10",
+   "to": [
+    "tsys.env"
+   ],
+   "plan": "redraw",
+   "reason": null,
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.cabinPress（tsys.env：空気を入れ続けアウトフロー弁で調整・客室高度と差圧。数値は書かない模式図）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。W03 の分類は drop（本文の計算で足りる）だったが、与圧の本文（入れる・出す・差圧の上限・安全弁）を図なしで読むのは初めての人に難しいので、仮想の絶対圧を使わない模式図で描き直した。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch05-fig5-7",
+   "to": [
+    "tsys.wb"
+   ],
+   "plan": "redraw",
+   "reason": null,
+   "status": "done",
+   "where": "drafts/p6-figs.js FIG.macPercent（tsys.wb：LEMAC からの距離を MAC の長さで割る。翼の形は模式図）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。W03 の分類は drop（tsys.wb で新しく描くかは W32・W33 が決める）。計算演習の %MAC を図と同じ記号で追えるよう、W32 が描いた。描き直し（暗い板・390 px で文字 10 px 以上は check-chapter.mjs で確かめた。見た目の確かめは W33）"
+  },
+  {
+   "id": "ch03-fig3-9",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。この単位では描いていない（tsys.turbine はターボプロップを表の 1 行と FADEC の段落で書き、図 3-9 のフリータービン・図 3-10 の電子制御の依存は文で足りると判断した。発展の節の分量も予算の外で増やさない）。描くかどうかは W33 が決める（描かないなら to を空にして理由を書く）"
+  },
+  {
+   "id": "ch03-fig3-10",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。この単位では描いていない（tsys.turbine はターボプロップを表の 1 行と FADEC の段落で書き、図 3-9 のフリータービン・図 3-10 の電子制御の依存は文で足りると判断した。発展の節の分量も予算の外で増やさない）。描くかどうかは W33 が決める（描かないなら to を空にして理由を書く）"
+  },
+  {
+   "id": "ch02-photo2",
+   "status": "done",
+   "where": "drafts/p6.js tsys.arch（bk.photo：A320 の頭上パネル）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch02-photo3",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch02-photo5",
+   "status": "done",
+   "where": "drafts/p6.js tsys.power（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch02-photo6",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch02-photo7",
+   "status": "done",
+   "where": "drafts/p6.js tsys.env（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch03-photo5",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch03-photo6",
+   "status": "done",
+   "where": "drafts/p6.js tsys.turbine（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch05-photo4",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "ch06-photo6",
+   "status": "done",
+   "where": "drafts/p6.js tsys.wb（bk.photo）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。写真の本体・キャプション・クレジットは W22 の flight-lab/src/book-photos-k.js のまま（節に置いただけ）"
+  },
+  {
+   "id": "K.systems.K3",
+   "status": "fixed",
+   "verified": true,
+   "where": "drafts/p6.js tsys.env（空気と空調：抽気とパックを AMT ハンドブックで書いた。B787 の取り入れ口の位置と航空会社の説明に頼る文は書かない）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。correction のとおり、航空会社の出典を使わない形に書き直した（FAA AMT ハンドブック（機体）の与圧と空調の章を 2026-10-31 に読んだ）"
+  },
+  {
+   "id": "K.human.K2",
+   "status": "fixed",
+   "verified": true,
+   "where": "drafts/p6.js crm.tem（教科書の図 FIG.tem：脅威・エラーが管理できた枝と、管理しそこねて UAS に進む枝のある図。一直線の矢印の図 ch10-fig10-11 は使わない）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。FAA AC 120-90（LOSA）付録 1 の 2（脅威・エラー・UAS は、うまく管理されれば影響のない結果（inconsequential）に終わり、管理しそこねると次のエラーや UAS につながる）を 2026-10-31 に読み、図の 2 つの枝がこれに合うことを確かめた"
+  },
+  {
+   "id": "K.human.K3",
+   "status": "fixed",
+   "verified": true,
+   "where": "drafts/p6.js crm.tem（本文の 3 つの言葉と用語の表の 3 行目：望ましくない機体の状態：UAS（undesired aircraft state）＝乗員が引き起こした位置や速度のずれ・操縦の誤り・誤った形態で、安全の余裕が減った状態）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。FAA AC 120-90（LOSA）付録 1 の 2.c の定義（乗員の行動の結果で、安全の余裕を明らかに減らす機体の位置・状態・姿勢。効果のなかったエラー管理の結果。例：安定しない進入・横のずれ・強い接地・違う誘導路や滑走路へ向かう）を 2026-10-31 に読んで確かめた。本文の文（乗員が引き起こした、位置や速度のずれ・操縦の誤り・誤った形態で、安全の余裕が減った状態）は、この定義と同じ趣旨"
+  },
+  {
+   "id": "R.tem-words",
+   "status": "fixed",
+   "where": "drafts/p6.js crm.tem（kiso10.23 から書いた節：ねらい「脅威は予測して防ぎ、エラーは見つけて直し、望ましくない状態は立て直す」・見出し・3 項目・ここが大切の 1 項目め。図 FIG.tem と学科テスト q_crm は W07f が直したまま）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。残っていた kiso10.23 から書く節をそろえた。用語の名前（脅威とスレット）は FL.terms のまま本文は「脅威」（判断 3 の用語は W50）"
+  },
+  {
+   "id": "R.pf-term",
+   "status": "fixed",
+   "where": "drafts/p6.js crm.pm（PF（飛行経路を管理する操縦士、pilot flying）・PM（監視する操縦士、pilot monitoring）：FL.terms の pf・pm の名前。basics.crew は統合 P5 で同じ名前）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。crm.pm の側をそろえた"
+  },
+  {
+   "id": "C.tem-words",
+   "status": "done",
+   "where": "crm.tem（住所・太字の定義：TEM と 3 つの言葉、drafts/p6.js）・adm.risk（bk.recall：W20）・ifr.case（bk.recall：W30 の drafts/p4.js）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。住所 crm.tem を書いた（太字の定義は 1 回）。check-chapter.mjs の concepts は 0 件"
+  },
+  {
+   "id": "C.control-handover",
+   "status": "done",
+   "where": "ground.crew（住所：W28 の drafts/p2a.js）・crm.pm（bk.recall：1 文・リンク ground.crew、drafts/p6.js）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。crm.pm の太字の定義を外し、2 行以内の思い出そうにした（W28 の「そろったら done」）"
+  },
+  {
+   "id": "C.autopilot-modes",
+   "status": "done",
+   "where": "inst.ap（住所：W15）・ifr.auto（bk.recall：W30 の drafts/p4.js）・crm.auto（bk.recall：2 文・リンク inst.ap、drafts/p6.js）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。crm.auto の思い出そう（題「自動操縦の入口：モードの表示を読む」）を置いた"
+  },
+  {
+   "id": "C.surprise-startle",
+   "status": "done",
+   "where": "adm.review（住所：W20）・crm.upset（bk.recall：2 文・リンク adm.review、drafts/p6.js）・ifr.upset（bk.recall：W30 の drafts/p4.js）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。crm.upset の思い出そうを置いた"
+  },
+  {
+   "id": "C.wake-turbulence",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む。crm.jet の後方乱気流の区分の段落に、住所 ops.wake（W28 の drafts/p2a.js）への思い出そう（2 文）を置いた（呼び戻す節の表 recalls にない分。行の状態は変えない）"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#e6581fc6",
+   "sec": "crm.tem",
+   "text": "テキサス大学の研究者が、1990 年代に作った枠組みです。",
+   "tag": "参考値",
+   "source": "SKYbrary: Threat and Error Management (TEM)（テキサス大学の研究者が LOSA から作った枠組み）。R1 の本文のまま、W32 が 2026-10-31 に SKYbrary を読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#1071dbf6",
+   "sec": "crm.tem",
+   "text": "そして、エラーの管理を CRM（crew resource management）の訓練に入れています（AC 120-51E）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E 第 12 項（error management：error prevention, detection, and recovery を CRM 訓練に）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#e984c397",
+   "sec": "crm.tem",
+   "text": "例：地上 500 ft（VMC）で安定していなければ着陸復行（ゴーアラウンド、go-around）します（）。",
+   "tag": "参考値",
+   "source": "安定した進入のゲート（地上 500 ft・VMC）：本文 ops.landing の住所（AFH 第 9 章・FSF の安定進入の基準）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#0ea10296",
+   "sec": "crm.tem",
+   "text": "FAA の AC 120-51E も、エラーの管理を 3 つに分けます。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E（error management (error prevention, detection, and recovery)）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#222863ae",
+   "sec": "crm.tem",
+   "text": "突風を伴う横風（crosswind）は、滑走路から 70°・10 kt です。",
+   "tag": "教材値",
+   "source": "課目 r1 の風（flight-lab/src/syllabus.js r1 setup：rel 70°・10 kt）。横風成分 10 × sin 70° ≒ 9.4 kt",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#b39fa23e",
+   "sec": "crm.tem",
+   "text": "横風成分（crosswind component）は約 9 kt です。",
+   "tag": "教材値",
+   "source": "課目 r1 の風から計算：10 × sin 70° ≒ 9.4 kt（約 9 kt）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#3d4c3f80",
+   "sec": "crm.tem",
+   "text": "ファイナル（final approach leg）：地上 500 ft のゲートで、安定していれば着陸し、していなければ着陸復行します。",
+   "tag": "参考値",
+   "source": "安定した進入のゲート（本文 ops.landing の住所）。課目 r1 の流れ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.tem#2c3b9b46",
+   "sec": "crm.tem",
+   "text": "考えてみよう：TEM で、「チェックリストの項目を飛ばした」「高度が 300 ft ずれた」「午後に雷雨の予報」は、それぞれ何にあたる？",
+   "tag": "参考値",
+   "source": "例題の場面（TEM の分け方。ICAO Doc 9683・SKYbrary の定義）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#db084f10",
+   "sec": "crm.crm",
+   "text": "目的は、安全で効率のよい運航です（SKYbrary・AC 120-51E）。",
+   "tag": "参考値",
+   "source": "SKYbrary: Crew Resource Management・FAA AC 120-51E 第 5 項（CRM の定義）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#db3ec9b1",
+   "sec": "crm.crm",
+   "text": "航空会社の事故とインシデントの 60〜80% には、人のエラーが関わっています。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E 第 5 項 b（human error is a contributing factor in 60 to 80 percent of all air carrier incidents and accidents）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#463c8f41",
+   "sec": "crm.crm",
+   "text": "集団で決めること・伝え合うこと・リーダーシップ・資源の管理の問題です（AC 120-51E）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E 第 5 項 b（NASA の研究：interpersonal communications, decision making, and leadership）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#c45b28f7",
+   "sec": "crm.crm",
+   "text": "NASA は 1979 年に、このテーマのワークショップを開いています（NASA CP-2120）。",
+   "tag": "参考値",
+   "source": "NASA CP-2120 Resource Management on the Flight Deck（1979 年 6 月のワークショップ）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#9bb5b504",
+   "sec": "crm.crm",
+   "text": "米国では、資源管理の訓練が規則で求められています（米国の 14 CFR 121.404）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 121.404（CRM・DRM の訓練）。R1 の本文のまま、W32 が 2026-10-31 に確かめた",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#caed2bb2",
+   "sec": "crm.crm",
+   "text": "FAA の AC 120-51E は、懸念を伝える行動を 3 つにまとめています。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E 付録（Inquiry/Advocacy/Assertion）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#c8f9a613",
+   "sec": "crm.crm",
+   "text": "例（巡航中）：「教官、目的地の雲が低くなってきています。予報では到着のころ 800 ft です。手前の空港へ変更しませんか。いかがですか？」",
+   "tag": "参考値",
+   "source": "例題の場面（懸念の伝え方の例）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.crm#20ac203f",
+   "sec": "crm.crm",
+   "text": "時間がない場面（地上 500 ft で進入が不安定など）では、長い説明はしません。",
+   "tag": "参考値",
+   "source": "例題の場面（短いコールの例）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#95b1d5f1",
+   "sec": "crm.pm",
+   "text": "2 人で飛ぶときの役割の分け方と介入のしかた、体調の急変への備え、大事な場面で操縦に集中する決まりを覚えます。",
+   "tag": "参考値",
+   "source": "FAA SAFO 15011・AC 120-71B（PF と PM の役割・介入）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#0fb71fa7",
+   "sec": "crm.pm",
+   "text": "操縦士 2 人で飛ぶ運航（two-pilot operation）では、2 つの役割に分けます。",
+   "tag": "参考値",
+   "source": "FAA SAFO 15011（two-pilot operations の PF と PM）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#1eff6bc7",
+   "sec": "crm.pm",
+   "text": "古い資料では PM を PNF（Pilot Not Flying）と呼んでいます（AC 120-51E）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-51E 第 3 項（previous references to PNF have been changed to pilot monitoring (PM)）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#989785f5",
+   "sec": "crm.pm",
+   "text": "FAA は、役割を次のようにはっきり決めるよう勧めています（SAFO 15011・AC 120-71B）。",
+   "tag": "参考値",
+   "source": "FAA SAFO 15011・AC 120-71B（PF・PM の役割を SOP で決める）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#6ea7bbce",
+   "sec": "crm.pm",
+   "text": "いつでも、PF は 1 人、PM は 1 人です。",
+   "tag": "参考値",
+   "source": "FAA SAFO 15011（at any point in time there is one PF and one PM）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#ad1f5470",
+   "sec": "crm.pm",
+   "text": "写真：NASA Ames 研究所の研究用フライトシミュレータ（ACFS・2006 年）の操縦席。",
+   "tag": "参考値",
+   "source": "写真の説明（book-photos.js crewCab の caption：NASA の写真。W22 が確かめた）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#cb0d8851",
+   "sec": "crm.pm",
+   "text": "2 人で飛ぶときは、この 2 つの席で PF と PM の役割を分けます",
+   "tag": "参考値",
+   "source": "写真の説明（book-photos.js crewCab の caption）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#94dca335",
+   "sec": "crm.pm",
+   "text": "PM のコールに応え、直す（“Correcting”＝いま直しています） ｜ 2 回コールしても応答や修正がなければ、SOP に従って操縦を代わることを考える（AC 120-71B） ｜",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.6.2.1（no response or flightpath correction after two challenges）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#886505c3",
+   "sec": "crm.pm",
+   "text": "2 回呼びかけても応答や修正がないことも、その手がかりです（AC 120-71B）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.6.2.1（subtle incapacitation or no response or flightpath correction after two challenges）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#9b5d6918",
+   "sec": "crm.pm",
+   "text": "その段階では、運航の安全に要らない仕事と会話を禁じます（米国の 14 CFR 121.542）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 121.542(b)(c)（critical phases of flight：taxi, takeoff, landing, all other flight operations below 10,000 feet except cruise flight）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#8f088315",
+   "sec": "crm.pm",
+   "text": "巡航を除く 10,000 ft より下の飛行も入ります。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 121.542(c)。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#403013b0",
+   "sec": "crm.pm",
+   "text": "1 人で飛ぶ訓練でも、自分で自分にコールします。",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B（callouts）・RMH（SRM）の考え方の当てはめ。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#8b02ba8d",
+   "sec": "crm.pm",
+   "text": "PM の目を持つ練習です（例：「500 ft、安定」「速度プラス 10」。）。",
+   "tag": "参考値",
+   "source": "例題の場面（自分へのコールの例）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#c3c6af95",
+   "sec": "crm.pm",
+   "text": "PF は 1 人、PM は 1 人。",
+   "tag": "参考値",
+   "source": "FAA SAFO 15011（at any point in time there is one PF and one PM）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#db0fc345",
+   "sec": "crm.pm",
+   "text": "2 回で直らなければ SOP に従って介入",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.6.2.1。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.pm#e8faf54e",
+   "sec": "crm.pm",
+   "text": "2 回コールしても応答や修正がなければ、SOP に従って操縦を代わることを考えます（AC 120-71B）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.6.2.1（no response or flightpath correction after two challenges）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#c7457104",
+   "sec": "crm.jet",
+   "text": "2 人で飛ぶジェット機へ進む人が、先に知っておくと役立つ、プロペラ機との一般的な違いを見ます。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（プロペラ機からジェット機への違い）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#d7dc1dc0",
+   "sec": "crm.jet",
+   "text": "ジェットエンジンはアイドルからの加速が遅く、全開まで、長いと 10 秒ほどかかります（AFH 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（the transition to full power could take up to 10 seconds）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#d7af7bce",
+   "sec": "crm.jet",
+   "text": "出力の反応 ｜ スロットルを動かすと、すぐ推力が変わる ｜ アイドルからの加速（spool-up）が遅く、全開の推力まで、長いと 10 秒ほどかかる。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（the transition to full power could take up to 10 seconds）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#9ad759f3",
+   "sec": "crm.jet",
+   "text": "水平飛行・アイドルで 10 kt 減らすのに約 1 NM。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（in level flight at idle power, it takes about 1 mile to lose 10 knots of airspeed）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#f89ef4c6",
+   "sec": "crm.jet",
+   "text": "写真：NASA の DC-8 空中研究機（2000 年）。",
+   "tag": "参考値",
+   "source": "写真の説明（book-photos.js dc8 の caption：NASA の写真。W22 が確かめた）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#748b844b",
+   "sec": "crm.jet",
+   "text": "AFH の目安は、降りる高さ（千 ft）× 3 NM に、水平飛行で減速する距離（アイドルで 1 NM に約 10 kt）を足すことです。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes Descent Planning（planned descent in thousands of feet × 3 ＋ about 10 KIAS per mile in level flight）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#0bc681ff",
+   "sec": "crm.jet",
+   "text": "空港の標高より 35,000 ft 上から降りるなら、35 × 3 ＝ 105 NM に約 15 NM を足します。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（35,000 ft above airport elevation → approximately 120 miles: 35 × 3 plus about 15 miles）。W32 が 2026-10-31 に読んだ",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#5ac179a8",
+   "sec": "crm.jet",
+   "text": "だから、約 120 NM 手前から降り始めます（AFH 第 16 章）。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（approximately 120 miles from the airport）。W32 が 2026-10-31 に読んだ",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#ed1d3ac0",
+   "sec": "crm.jet",
+   "text": "入れる前に、方向舵を中立にします（AC 61-107B）。",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）第 2 章（rudder controls should be centered before engaging the yaw damper）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#501ab4f4",
+   "sec": "crm.jet",
+   "text": "Super と Heavy の機体は、無線の呼出符号に \"super\"・\"heavy\" を付けます（米国の AIM 7-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-4（pilots of super or heavy aircraft should always use the word super or heavy in radio communications）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#bb159ac2",
+   "sec": "crm.jet",
+   "text": "Heavy ｜ 300,000 lb 以上で離陸できる機体（そのときの重さによらない） ｜",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary: AIRCRAFT CLASSES（Heavy：takeoff weights of 300,000 pounds or more）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#691696b6",
+   "sec": "crm.jet",
+   "text": "Large ｜ 最大離陸重量が 41,000 lb を超え、300,000 lb 未満 ｜",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary: AIRCRAFT CLASSES（Large：more than 41,000 pounds up to but not including 300,000 pounds）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#b9b01668",
+   "sec": "crm.jet",
+   "text": "Small ｜ 最大離陸重量が 41,000 lb 以下 ｜",
+   "tag": "参考値",
+   "source": "FAA Pilot/Controller Glossary: AIRCRAFT CLASSES（Small：41,000 pounds or less）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#2dae76db",
+   "sec": "crm.jet",
+   "text": "B757 の後ろの Small の機にも、同じように間隔をあけます（米国の AIM 7-4-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-4-9 Air Traffic Wake Turbulence Separations（behind a Super or Heavy, and Small aircraft behind a B757）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#71fbd36e",
+   "sec": "crm.jet",
+   "text": "写真：試験室に取り付けたターボファンエンジン（NASA Lewis 研究所・1974 年）。",
+   "tag": "参考値",
+   "source": "写真の説明（book-photos.js turbofan の caption：NASA の写真。W22 が確かめた）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#d4f07195",
+   "sec": "crm.jet",
+   "text": "降下の目安：千 ft × 3 NM ＋ 減速の分",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes Descent Planning。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.jet#147b02c6",
+   "sec": "crm.jet",
+   "text": "エンジンがアイドル近くから加速するのに時間がかかる（全開まで、長いと 10 秒ほど）ので、早めに足します。",
+   "tag": "参考値",
+   "source": "FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes（the transition to full power could take up to 10 seconds）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#7d0ef5bd",
+   "sec": "crm.auto",
+   "text": "モードの確認は 2 人の仕事です（AC 120-71B。）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.9（autoflight mode awareness）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#fbcb8745",
+   "sec": "crm.auto",
+   "text": "だから、モードを読むときは、使える推力と機体のエネルギーも一緒に見ます（AC 120-71B）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-71B 6.9.1（pitch mode annunciations and their relationship to available thrust and the aircraft’s energy state, e.g. the risk of using vertical speed mode to climb at high altitudes with limited available thrust）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#88b58312",
+   "sec": "crm.auto",
+   "text": "自動化にとまどうパイロットの疑問として、NASA の研究（Wiener、1989 年）で知られています。",
+   "tag": "参考値",
+   "source": "NASA CR-177528（Wiener 1989, Human Factors of Advanced Technology (\"Glass Cockpit\") Transport Aircraft）の 3 つの問い。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#353d2f63",
+   "sec": "crm.auto",
+   "text": "AC 120-123 は、決まった「段階」で考えません。",
+   "tag": "参考値",
+   "source": "FAA AC 120-123 Flightpath Management（2022：level of automation ではなく、状況に合った自動化の組み合わせを選び、手で飛ぶことも含めて切り替える）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#eeb5996b",
+   "sec": "crm.auto",
+   "text": "FAA の SAFO 13002（運航者向けの安全情報、Safety Alert for Operators。2013 年）は、自動化の使いすぎに注意しています。",
+   "tag": "参考値",
+   "source": "FAA SAFO 13002 Manual Flight Operations（2013）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.auto#9e71df6b",
+   "sec": "crm.auto",
+   "text": "AC 120-123（2022）は、手で飛ぶことを、ほかの操縦の技術の土台と位置づけています（SAFO 17007 も同じ考え方です）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-123（2022）・SAFO 17007（2017）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#b0f8d64d",
+   "sec": "crm.upset",
+   "text": "ふだんの飛行や訓練の範囲を、意図せずに超えた状態です（AFH 第 5 章・AC 120-111）。",
+   "tag": "参考値",
+   "source": "FAA AFH 第 5 章・AC 120-111（upset の定義）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#5dcf321e",
+   "sec": "crm.upset",
+   "text": "機首上げ ｜ 25° を超える ｜",
+   "tag": "参考値",
+   "source": "FAA AFH 第 5 章（unintentionally exceeds pitch attitude greater than 25° nose up）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#00e647ee",
+   "sec": "crm.upset",
+   "text": "機首下げ ｜ 10° を超える ｜",
+   "tag": "参考値",
+   "source": "FAA AFH 第 5 章（pitch attitude greater than 10° nose down）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#acd5c416",
+   "sec": "crm.upset",
+   "text": "バンク ｜ 45° を超える ｜",
+   "tag": "参考値",
+   "source": "FAA AFH 第 5 章（bank angle greater than 45°）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#66abdc35",
+   "sec": "crm.upset",
+   "text": "回復の 2 つの型（大型機：AC 120-111）",
+   "tag": "参考値",
+   "source": "FAA AC 120-111（Nose High / Nose Low recovery）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#c2c9a82a",
+   "sec": "crm.upset",
+   "text": "バンクは、ふつう約 60° を超えないようにします。",
+   "tag": "参考値",
+   "source": "FAA AC 120-111（bank angle normally not exceeding approximately 60°）。ERRATA T.overview.T1 の直し（R1）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#c7c8cb25",
+   "sec": "crm.upset",
+   "text": "昇降舵（エレベーター、elevator）とトリム（trim）で機首を制御できているときは、推力を減らすことはすすめられません（AC 120-111）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-111（thrust reduction not recommended when pitch control with elevator and trim is adequate）。ERRATA T.overview.T1 の直し（R1）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#5bd60215",
+   "sec": "crm.upset",
+   "text": "ずれが続けば、声に出して伝えます（AC 120-111）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-111（the PM monitors and calls out）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#9fac6b53",
+   "sec": "crm.upset",
+   "text": "引きすぎて荷重を大きくしたり、早く引き起こして失速したりしないようにします（AC 120-111）。",
+   "tag": "参考値",
+   "source": "FAA AC 120-111。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "crm.upset#c72c54bc",
+   "sec": "crm.upset",
+   "text": "Archer の制限荷重は、普通類（normal category）で +3.8 G です（実用類では +4.4 G。POH）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH 第 2 章（制限荷重倍数：普通類 +3.8 G・実用類 +4.4 G）。R1 の本文のまま",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#5d0b8f48",
+   "sec": "jet.speed",
+   "text": "マッハ数（Mach number）は、真対気速度（true airspeed）を、その場所の音速で割った値です（米国の 14 CFR 1.1・AFH 第 16 章）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 1.1（Mach number means the ratio of true airspeed to the speed of sound）・FAA AFH（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#15a4b8a7",
+   "sec": "jet.speed",
+   "text": "標準大気の海面（15 ℃）では 661 kt ですが、40,000 ft（−55 ℃）では 574 kt に下がります（PHAK 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK（FAA-H-8083-25C）第 5 章 Speed Ranges（661 knots at 15 °C sea level; 574 knots at 40,000 feet, −55 °C）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#82bff0e8",
+   "sec": "jet.speed",
+   "text": "気温 250 K（−23 ℃）の空気で、真対気速度 200 m/s のときのマッハ数を求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso04.9 の数値を書き直し。a ＝ √(γRT)：NASA Glenn Speed of Sound）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#9936c23e",
+   "sec": "jet.speed",
+   "text": "a ＝ √(1.4 × 287 × 250) ≒ 317 m/s です。",
+   "tag": "参考値",
+   "source": "計算：√(1.4 × 287 × 250) ＝ 316.9 m/s、200 ÷ 316.9 ＝ 0.631（NASA Glenn: a ＝ √(γRT)）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#58a259d4",
+   "sec": "jet.speed",
+   "text": "臨界マッハ数を 5〜10% 超えると、抗力が急に増え始めます（抗力発散）。",
+   "tag": "参考値",
+   "source": "FAA PHAK 第 5 章（at speeds 5–10 percent above the critical Mach number, compressibility effects begin; drag begins to rise sharply）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.speed#a7e9ee72",
+   "sec": "jet.speed",
+   "text": "考えてみよう：同じ真対気速度で、高度 5,000 ft から 35,000 ft へ上がった。",
+   "tag": "参考値",
+   "source": "例題の場面（PHAK 第 5 章：音速は気温で変わる）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#92131771",
+   "sec": "jet.fms",
+   "text": "米国では、輸送機と、31 席以上の大きなコミューター機・ビジネス機に TCAS II が要ります（米国の AIM 4-4-16）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16（transport category aircraft, and larger commuter and business aircraft holding 31 passenger seats or more, are required to be TCAS II equipped）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#0a7e7020",
+   "sec": "jet.fms",
+   "text": "TA だけで、管制の指示から外れません（米国の AIM 4-4-16）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16（do not deviate from an assigned clearance based only on TA information）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#55c265fe",
+   "sec": "jet.fms",
+   "text": "RA で管制の指示から外れたら、できるだけ早く管制に伝えます（米国の AIM 4-4-16・14 CFR 91.123）。",
+   "tag": "条文",
+   "source": "FAA AIM 4-4-16・eCFR 14 CFR 91.123(a)(c)（deviation in response to a TCAS RA; notify ATC as soon as possible）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#399bdd78",
+   "sec": "jet.fms",
+   "text": "TCAS だけで、いつも間隔が保てるわけではありません（米国の AIM 4-4-16）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16 NOTE（TCAS alone does not ensure safe separation in every case）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#84f30cd8",
+   "sec": "jet.fms",
+   "text": "米国では、乗客の席が 6 席以上のタービン機に TAWS が要ります（米国の 14 CFR 91.223）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.223(a)(b)（turbine-powered airplane configured with six or more passenger seats）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#417dcace",
+   "sec": "jet.fms",
+   "text": "多くの機のレーダーは波長が 3 cm で、強い雨に電波が吸われます（減衰）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook（FAA-H-8083-28B）15.2.4・15.2.5.1（most aircraft radars 3 cm; significant precipitation attenuation）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#9c115cd1",
+   "sec": "jet.fms",
+   "text": "米国の AIM 7-1 は、表示の時刻より 15〜20 分古いことがあるとし、雷雨（雷雲、thunderstorm）のすき間を抜けるためには使わないよう求めています。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-1（the weather conditions depicted may be 15 to 20 minutes older than indicated; not for tactical maneuvering）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#b2d77516",
+   "sec": "jet.fms",
+   "text": "強い雷雨からは 20 マイル以上離れます（米国の AIM 7-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 7-1（avoid by at least 20 miles any thunderstorm identified as severe or giving an intense radar echo）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#a31a3088",
+   "sec": "jet.fms",
+   "text": "米国の AIM 4-4-16 は、RA で外れる量は、RA を満たすのに要る最小にするとしています。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16（deviations should be kept to the minimum necessary to satisfy an RA）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#91eda0a5",
+   "sec": "jet.fms",
+   "text": "RA に従ったあと、管制の IFR の間隔が戻るのは、次のどれかのときです（米国の AIM 4-4-16）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-16（standard IFR separation after an RA maneuver until one of the following conditions exists）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#fa71f695",
+   "sec": "jet.fms",
+   "text": "地上の気象レーダー（WSR-88D）は波長が 10 cm で、雨による減衰が小さく、出力も大きいです。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook 15.2.3〜15.2.5（WSR-88D 10 cm・750 kW・not significantly attenuated; most aircraft radars < 50 kW）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.fms#efb8034a",
+   "sec": "jet.fms",
+   "text": "多くの機上のレーダーが距離による弱まりを補うのは、50〜75 NM までです（AWH 第 15 章）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Weather Handbook 15.2.5.2（most airborne radars only compensate for range attenuation out to 50 to 75 NM）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#2b6b2a49",
+   "sec": "jet.next",
+   "text": "2 人で飛ぶ役割分担と CRM（crew resource management）を身につけます。",
+   "tag": "参考値",
+   "source": "UK CAA: Multi-pilot type rating for aeroplanes（MCC training course）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#b1c340df",
+   "sec": "jet.next",
+   "text": "英国の規則では、2 人で操縦する機種の資格を初めて取る前に、学科 25 時間以上・実技 20 時間以上の MCC の課程を修めます（英国 CAA）。",
+   "tag": "参考値",
+   "source": "UK CAA: Multi-pilot type rating for aeroplanes（MCC course: at least 25 hours of theoretical knowledge instruction and exercises and 20 hours of practical MCC training; prerequisite for the first multi-pilot type rating unless combined）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#583c01fd",
+   "sec": "jet.next",
+   "text": "米国では、12,500 lb を超える大型機とターボジェット機の機長（pilot in command）に要ります（米国の 14 CFR 61.31・1.1）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 61.31(a)（type rating for large aircraft and turbojet-powered airplanes）・14 CFR 1.1（large aircraft: more than 12,500 pounds）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#3acd6ef6",
+   "sec": "jet.next",
+   "text": "米国のエアラインの規則は、型式と乗務の席ごとに、この経験を求めています（米国の 14 CFR 121.434）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 121.434(a)（operating experience on that type airplane and in that crewmember position）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#71c9bd9e",
+   "sec": "jet.next",
+   "text": "ATP CTP と呼ぶ課程で、学科 30 時間以上と、シミュレーター 10 時間以上です（米国の 14 CFR 61.156）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 61.156（30 hours of classroom instruction; 10 hours in an FSTD, including 6 hours in a Level C or higher FFS）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#8acd9bec",
+   "sec": "jet.next",
+   "text": "V2 は離陸の安全速度です（米国の 14 CFR 1.2）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 1.2（V2 means takeoff safety speed）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "jet.next#f2c0284e",
+   "sec": "jet.next",
+   "text": "V1 は輸送機の認証と性能の資料が前提の速度です（米国の 14 CFR 1.2）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 1.2（V1 の定義：accelerate-stop distance・takeoff distance）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.arch#9fa69113",
+   "sec": "tsys.arch",
+   "text": "米国では、壊れた装置を積んだまま離陸（takeoff）するには、承認された最低装備のリスト（MEL）とその許可などが要ります（米国の 14 CFR 91.213）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.213(a)（approved Minimum Equipment List and letter of authorization）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#5c644886",
+   "sec": "tsys.power",
+   "text": "作動の圧力は、小型機の数百 psi から、大型の輸送機の 5,000 psi まであります（AMT ハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA AMT Handbook — Airframe Volume 2（FAA-H-8083-31A）第 12 章（from a couple hundred psi in small aircraft to 5,000 psi in large transports）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#56e31d6c",
+   "sec": "tsys.power",
+   "text": "ふつうのブレーキより約 40% 軽く、高い温度に耐えます（AMT ハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA AMT Handbook — Airframe Volume 2 第 13 章 Carbon Brakes（approximately forty percent lighter; withstand temperatures fifty percent higher）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#ddd8f096",
+   "sec": "tsys.power",
+   "text": "① 圧力の差 10 MPa が、面積 4.0 cm² のピストンに働くときの力を求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso02.09 の例を書き直し。仮想の値）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#f050794d",
+   "sec": "tsys.power",
+   "text": "② 最初の使用可能な燃料 2,400 kg、いまの残り 1,550 kg、同じ時刻からの使用量の積算 650 kg のとき、収支の差を求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso02.13 の例を書き直し。仮想の値）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#61e0a9ae",
+   "sec": "tsys.power",
+   "text": "10 MPa ＝ 10,000,000 Pa、4.0 cm² ＝ 0.00040 m² なので、10,000,000 × 0.00040 ＝ 4,000 N です。",
+   "tag": "参考値",
+   "source": "計算：F ＝ Δp × A ＝ 10,000,000 Pa × 0.00040 m² ＝ 4,000 N",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#db64a62a",
+   "sec": "tsys.power",
+   "text": "② 使った量だけから考える残りは 2,400 − 650 ＝ 1,750 kg です。",
+   "tag": "参考値",
+   "source": "計算：2,400 − 650 ＝ 1,750 kg",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#a2bc9e95",
+   "sec": "tsys.power",
+   "text": "差は 2,400 −（1,550 ＋ 650）＝ 200 kg です。",
+   "tag": "参考値",
+   "source": "計算：2,400 − 2,200 ＝ 200 kg",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.power#83bf1931",
+   "sec": "tsys.power",
+   "text": "質量 1,200 kg・対地速度（groundspeed）30 m/s なら 540 kJ、36 m/s なら 777.6 kJ で、1.44 倍です（仮想の値）。",
+   "tag": "参考値",
+   "source": "計算（基礎教材 kiso02.15 の例を書き直し）：½ × 1,200 × 30² ＝ 540,000 J、½ × 1,200 × 36² ＝ 777,600 J、36² ÷ 30² ＝ 1.44",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#840fe8cd",
+   "sec": "tsys.env",
+   "text": "与圧の機体は、ふつう、設計の最大の巡航高度（cruising altitude）で客室高度を約 8,000 ft に保ちます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK 第 7 章 Pressurized Aircraft（maintains a cabin pressure altitude of approximately 8,000 feet at the maximum designed cruising altitude）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#bcf89244",
+   "sec": "tsys.env",
+   "text": "米国の輸送機の基準も、通常の運航で客室高度を 8,000 ft 以下とします（米国の 14 CFR 25.841）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 25.841(a)（cabin pressure altitude of not more than 8,000 feet under normal operating conditions）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#eb601e4c",
+   "sec": "tsys.env",
+   "text": "0.5 秒より短い減圧は爆発的減圧と呼ばれ、霧・ほこり・飛ぶ物が出ます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK 第 7 章（decompression in less than 0.5 seconds explosive; fog, dust, or flying debris）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#056d3a74",
+   "sec": "tsys.env",
+   "text": "AC 61-107B の表では、25,000 ft で 3〜5 分が、急減圧のあとは 1.5〜2.5 分です。",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）図 2-3（25,000 ft：3–5 min、following rapid decompression 1.5–2.5 min）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#fe18a1ce",
+   "sec": "tsys.env",
+   "text": "客室高度の警報は、客室高度が 10,000 ft で鳴ります（米国の Part 23・25 の機体。AC 61-107B）。",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）第 2 章 c（cabin altitude warning systems activate at a cabin altitude of 10,000 ft：14 CFR part 23 or 25）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#743e0da2",
+   "sec": "tsys.env",
+   "text": "化学式の酸素発生器は、一度火が付くと止められず、ふつう 10〜20 分酸素を出し、熱を出します（AMT ハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA AMT Handbook — Airframe Volume 2 第 16 章 Chemical Oxygen Systems（cannot be extinguished once lit; typically 10–20 minutes of oxygen）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#cfe4f46c",
+   "sec": "tsys.env",
+   "text": "力 ＝ 差圧 × 面積 なので、2.0 kPa が 0.60 m² の平らな面に働けば、2,000 × 0.60 ＝ 1,200 N です（仮想の値）。",
+   "tag": "参考値",
+   "source": "例題の場面と計算（基礎教材 kiso02.19 の例を書き直し。2,000 × 0.60 ＝ 1,200 N。仮想の値）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#e447e945",
+   "sec": "tsys.env",
+   "text": "米国の AC 61-107B の表は、有効意識時間を、18,000 ft で 20〜30 分、30,000 ft で 1〜2 分、35,000 ft で 30 秒〜1 分としています。",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）図 2-3（18,000 ft 20–30 min・30,000 ft 1–2 min・35,000 ft 30 s–1 min）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#9bc32b95",
+   "sec": "tsys.env",
+   "text": "急減圧のあとは、それぞれ 10〜15 分、30 秒〜1 分、15〜30 秒に縮みます。",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）図 2-3 の急減圧のあとの列（10–15 min・30 s–1 min・15–30 s）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#bd72c0f2",
+   "sec": "tsys.env",
+   "text": "客室高度はふつう約 8,000 ft。",
+   "tag": "参考値",
+   "source": "FAA PHAK 第 7 章（approximately 8,000 feet）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.env#6f4c9ef4",
+   "sec": "tsys.env",
+   "text": "警報は 10,000 ft で、すぐマスク",
+   "tag": "参考値",
+   "source": "FAA AC 61-107B（Change 1）第 2 章 c（10,000 ft）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#4c9c50bc",
+   "sec": "tsys.turbine",
+   "text": "バイパスの流れ 400 kg/s・コアの流れ 50 kg/s なら、400 ÷ 50 ＝ 8 です。",
+   "tag": "参考値",
+   "source": "例題と計算（基礎教材 kiso03.20 の例を書き直し。バイパス比の定義：NASA Glenn Turbofan Engine）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#373cea27",
+   "sec": "tsys.turbine",
+   "text": "全部の流れ 450 kg/s を 50 で割った 9 ではありません。",
+   "tag": "参考値",
+   "source": "例題と計算（400 ＋ 50 ＝ 450、450 ÷ 50 ＝ 9 はバイパス比ではない）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#f0730f43",
+   "sec": "tsys.turbine",
+   "text": "② 入力 9,000 rpm を 3 対 1 の減速ギアで落とすときの、出力の回転とトルクを求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso03.21 の例を書き直し）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#55316644",
+   "sec": "tsys.turbine",
+   "text": "② 出力は 9,000 ÷ 3 ＝ 3,000 rpm です。",
+   "tag": "参考値",
+   "source": "計算：9,000 ÷ 3 ＝ 3,000 rpm",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#6a5835dc",
+   "sec": "tsys.turbine",
+   "text": "軸の出力は同じなので、トルクは 3 倍になります。",
+   "tag": "参考値",
+   "source": "計算：軸の出力 ＝ トルク × 回転数が同じなら、回転が 1/3 でトルクは 3 倍（損失なし）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.turbine#1a0a9a7c",
+   "sec": "tsys.turbine",
+   "text": "写真：中が見えるように外殻を透明にした、ガスタービンの展示品（台座に PT6 の文字。2012 年の航空見本市）。",
+   "tag": "参考値",
+   "source": "写真の説明（book-photos-k.js ch03-photo6 の caption。W22 が確かめた）",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#c434cd9f",
+   "sec": "tsys.wb",
+   "text": "ふつう、重心が MAC の 25% 付近にあると、飛び方がよいとされます（W&B ハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook（FAA-H-8083-1B）第 3 章（acceptable flight characteristics if the CG is located somewhere near the 25 percent average chord point）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#c70374f3",
+   "sec": "tsys.wb",
+   "text": "そして、滑走路状態コード（RwyCC）を 6（乾いている）〜1（悪い）で伝えます（米国の AIM 4-3-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-9 Runway Condition Reports（RwyCC values range from 1 (poor) to 6 (dry); assessments for touchdown, mid-point, roll-out）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#272b8359",
+   "sec": "tsys.wb",
+   "text": "0 は、ブレーキが効かない NIL の報告を表します（米国の AIM 4-3-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-9（a RwyCC of 0 is used to delineate a braking action report of NIL）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#8d601d88",
+   "sec": "tsys.wb",
+   "text": "操縦士は、このコードを、機体の性能・重量・風・経験と合わせて使います（米国の AIM 4-3-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-9（pilots should use runway condition code information with other knowledge including aircraft performance characteristics, type, and weight, previous experience, wind conditions）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#c107b632",
+   "sec": "tsys.wb",
+   "text": "① 重心のアーム 2.392857 m、LEMAC のアーム 2.10 m、MAC 1.50 m のときの %MAC を求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso05.13 の例を書き直し。仮想の値）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#00a7fb4e",
+   "sec": "tsys.wb",
+   "text": "② 荷物 30 kg が 0.20 m² に均等にかかるときの、床への荷重を求めます。",
+   "tag": "参考値",
+   "source": "例題の場面（基礎教材 kiso05.22 の例を書き直し。仮想の値）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#87ac75b1",
+   "sec": "tsys.wb",
+   "text": "MAC の前縁から、MAC の長さの約 19.5% 後ろにあるという意味です。",
+   "tag": "参考値",
+   "source": "計算：（2.392857 − 2.10）÷ 1.50 × 100 ＝ 19.52%MAC",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#2ea010ed",
+   "sec": "tsys.wb",
+   "text": "機体の全長の 19.5% ではありません。",
+   "tag": "参考値",
+   "source": "計算の読み方（%MAC は MAC の長さに対する割合：W&B ハンドブック第 3 章）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#b2b3c45c",
+   "sec": "tsys.wb",
+   "text": "② 30 ÷ 0.20 ＝ 150 kg/m² です。",
+   "tag": "参考値",
+   "source": "計算：30 ÷ 0.20 ＝ 150 kg/m²",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#1bb6e30f",
+   "sec": "tsys.wb",
+   "text": "W&B ハンドブックの例では、MAC は 144 in から 206 in（長さ 62 in）、重心は 161 in です。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook 第 3 章 図 3-17（MAC 144–206 in・62 in、CG 161 in、27.4% MAC）。W32 が 2026-10-31 に読んだ",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#570bb9d4",
+   "sec": "tsys.wb",
+   "text": "機体の全長の 22.4% の位置という意味？",
+   "tag": "参考値",
+   "source": "例題の場面（%MAC の読み方）",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "tsys.wb#785136af",
+   "sec": "tsys.wb",
+   "text": "MAC の前縁（LEMAC）から後ろへ、MAC の長さの 22.4% の位置という意味です（W&B ハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aircraft Weight and Balance Handbook 第 3 章（percent MAC は LEMAC から MAC の長さに対する割合）。例題の答え",
+   "kind": "例題",
+   "by": "W32",
+   "note": "W32（2026-10-31）：第 6 部の章 crm・jet・tsys の下書き drafts/p6.js（図は drafts/p6-figs.js、主張は drafts/p6.claims.json）。このパッチは、章 crm・jet を置き換えて tsys を足すコミットで取り込む"
+  }
+ ]
+}

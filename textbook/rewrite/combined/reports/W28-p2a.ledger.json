@@ -1,0 +1,1440 @@
+{
+ "unit": "W28",
+ "about": "W28-p2a（R3）：第 2 部の章 ground（書き直し、新 3 節）と ops（書き直し、新 1 節）の下書き drafts/p2a.js・drafts/p2a-figs.js・drafts/p2a.claims.json の台帳のパッチ。章を登録するコミットで統合役が取り込む（apply-patches.mjs）。CLAIMS の op: add は drafts/p2a.claims.json と同じ行（既存の行はない）。",
+ "patches": [
+  {
+   "id": "kiso11.1",
+   "status": "done",
+   "where": "drafts/p2a.js ground.day（from。訓練の 1 回のフライトの流れ：ブリーフィング → 準備と点検 → 課目 → デブリーフィングと記録、図 FIG.dayFlow）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.2",
+   "status": "done",
+   "where": "drafts/p2a.js ground.day（from。書類と情報・機体と操縦席・前提が変われば計算し直す。飛行規程と POH、不具合のある装備は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.3",
+   "status": "done",
+   "where": "drafts/p2a.js ground.walk（from。見落とさない 5 つの確かめ・一周の順番は折りたたみ・FL.jur の preflight と docs の囲み）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.4",
+   "status": "done",
+   "where": "drafts/p2a.js ground.crew（from。操縦の受け渡しの 3 段階、図 FIG.controlHandover。座席・権威勾配・Say again／Unable は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.5",
+   "status": "done",
+   "where": "drafts/p2a.js ground.start（from。Prop clear・油圧 30 秒・START ENGD・燃料ポンプを切っての確かめ・始動時のエンジン火災。スターターと訓練校の順番は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.6",
+   "status": "done",
+   "where": "drafts/p2a.js ground.taxi（from。飛行場の図と停止線・速さ・ブレーキ・曲がる・見る・風のときの操縦輪、図 FIG.taxiWind）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.7",
+   "status": "done",
+   "where": "drafts/p2a.js ops.sl（from。外の景色と計器の見方：外の目標は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。to の 3 節（ops.sl・ops.climb・ops.turns）は全部この下書きにある"
+  },
+  {
+   "id": "kiso11.10",
+   "status": "done",
+   "where": "drafts/p2a.js ops.sl（from。小さいずれを早く・小さく直す、ACS と教材の許容幅の表）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。to の 3 節（ops.sl・ops.climb・ops.turns）は全部この下書きにある"
+  },
+  {
+   "id": "kiso11.11",
+   "status": "done",
+   "where": "drafts/p2a.js ops.climb（from。上昇・レベルオフ（昇降率の 10% は目安：RULINGS R.numeric-cues））",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。to の 3 節（ops.sl・ops.climb・ops.turns）は全部この下書きにある"
+  },
+  {
+   "id": "kiso11.12",
+   "status": "done",
+   "where": "drafts/p2a.js ops.climb（from。降下・降下からのレベルオフ・滑空は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。to の 3 節（ops.sl・ops.climb・ops.turns）は全部この下書きにある"
+  },
+  {
+   "id": "kiso11.13",
+   "status": "done",
+   "where": "drafts/p2a.js ops.turns（from。旋回の入り方と戻り・急旋回・V<sub>O</sub>・オーバーバンキング傾向は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）。to の 3 節（ops.sl・ops.climb・ops.turns）は全部この下書きにある"
+  },
+  {
+   "id": "kiso11.8",
+   "status": "done",
+   "where": "drafts/p2a.js ops.trim（from。姿勢＋出力＝性能・教材値の 4 つの釣り合いの表・見る → 変える → 待つ → 確かめる → トリム）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.9",
+   "status": "done",
+   "where": "drafts/p2a.js ops.trim（from。トリムは最後・低速トリムで出力を足すときの機首上げ（AFH 第 9 章））",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.14",
+   "status": "done",
+   "where": "drafts/p2a.js ops.energy（新しい節。from。エネルギーの管理（energy management）・図 FIG.energyFlow・FIG.energyErrors・計算演習 110→76 kt ≒ 280 ft）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.15",
+   "status": "done",
+   "where": "drafts/p2a.js ops.slow・ops.stall（from。低速飛行の定義と許容幅・失速の 4 段階（flight.test の文のまま）・二次失速・スピンの知識）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.19",
+   "status": "done",
+   "where": "drafts/p2a.js ops.ground（from。針路と航跡、図 FIG.crabTrack・FIG.turnsAroundPoint・AFH 第 7 章と 14 CFR 91.119 は折りたたみ・計算演習 33°／45°）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso11.28",
+   "status": "done",
+   "where": "drafts/p2a.js ground.after（新しい節。from。滑走路を出る・止まってから着陸後のチェックリスト・一周・デブリーフィング。POH 4.5n〜p・61.189 は折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。書き直し（転記なし。原本の文と 20 字続けて同じ所がないことは確かめ役が見る）"
+  },
+  {
+   "id": "kiso10.24",
+   "status": "done",
+   "where": "hf.srm（W20。本にある：from に kiso10.24）・drafts/p2a.js ground.crew（from に kiso10.24。操縦教員との立場の差＝権威勾配、気づいた危険を短く伝える、Say again／Unable は「もっと深く」）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。行き先の残り ground.crew を置いたので、2 つの行き先がそろう"
+  },
+  {
+   "id": "kiso11.16",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。to のうち ground.runup（試運転・離陸ブリーフィング：止まる条件と、浮揚後のエンジン故障で引き返さない）は drafts/p2a.js（from に kiso11.16）。emg の節は W28-p2b の下書き drafts/p2b.js（emg.abort・emg.engine の from）。閉じるのは p2b のパッチと合わせて"
+  },
+  {
+   "id": "kiso11.q1",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ground の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q2",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ground に書き直した（章 ground の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q3",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ground に書き直した（章 ground の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q4",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ground の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q5",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ground の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q6",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ground に書き直した（章 ground の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q16",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ground に書き直した（章 ground の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q28",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ground の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q7",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q8",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q9",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q10",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q11",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q12",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ops に書き直した（章 ops の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q13",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q14",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。written:ops に書き直した（章 ops の written、bk.see で節へのリンク）。g2.review（第 2 部のまとめの章）の分は残るので開いたまま"
+  },
+  {
+   "id": "kiso11.q15",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "kiso11.q19",
+   "status": "done",
+   "where": "drafts/p2a.js 章 ops の written（書き直し。答えの手がかりは bk.see で節へ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "id": "ch11-fig11-7",
+   "status": "done",
+   "where": "FIG.energyFlow（ops.energy。AFH 第 4 章の貯水槽のたとえ：スロットルが全体を出し入れし、昇降舵が高さと速さの間で移し、抗力が減らす。数はない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。W21 の持ち物の図を章の単位が描いた（暗い板・390 px で 10 px 以上を check-figures で確かめた）。W21 の目視で確かめてほしい"
+  },
+  {
+   "id": "ch11-fig11-9",
+   "status": "done",
+   "where": "FIG.crabTrack（ops.ground。上から見た道路・左からの風・風上へ向けた機首、針路＋風＝航跡の 3 本の矢印。模式図）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。W21 の持ち物の図を章の単位が描いた（暗い板・390 px で 10 px 以上を check-figures で確かめた）。W21 の目視で確かめてほしい"
+  },
+  {
+   "id": "ch11-fig11-5",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。描き直していない：Vx と Vy（同じ距離・同じ時間）は perf.climb の図（R2、飛行モデルの数から描く）がすでに描き、ops.climb は表と {ch}・bk.see で perf.climb へつなぐ。plan を drop（理由：perf.climb の図と重複）にするかは W33 が決める"
+  },
+  {
+   "id": "R.pitch-power",
+   "status": "fixed",
+   "where": "drafts/p2a.js ops.trim（「速度は機首、高度は出力」は場面ごとの使い方で、理由は次の節）・ops.energy（新しい節：エネルギーの管理（energy management）の太字の定義、スロットルは全体の量・昇降舵は配分、AFH 第 4 章、図 FIG.energyFlow・FIG.energyErrors）・ops.slow（低速では速度は機首、高度は出力。理由と ops.energy へのリンク）",
+   "verified": true,
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。AFH（FAA-H-8083-3C）第 4 章 Energy Management（figure 4-3・4-11・4-12）を 2026-10-31 に読んで確かめた。FL.terms の energy-management（W04）の名前で書いた"
+  },
+  {
+   "id": "R.numeric-cues",
+   "status": "fixed",
+   "where": "drafts/p2a.js ops.climb（レベルオフは昇降率の 10% 手前から。10% は目安なので、昇降率の変化が止まる様子を見て合わせる）・ops.turns（戻りはバンク角の半分手前から。半分は目安なので、機体の戻り方を見て合わせる）。ops.flare（地上 10〜20 ft は始める目安）は W28-p2b の drafts/p2b.js",
+   "verified": true,
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。AFH 3C 第 3 章（approximately 10 percent of the rate of climb・lead by one-half the angle of bank）を 2026-10-31 に読んで確かめた。ops.flare の文は p2b の下書きにある（p2b のパッチと重なってよい）"
+  },
+  {
+   "id": "C.mag-check",
+   "status": "done",
+   "where": "sys.engine（住所：原理）・drafts/p2a.js ground.runup（思い出そう：2 文、sys.engine へのリンク。数の限度 175・50 rpm と手順は ground.runup の表と折りたたみ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。呼び戻す側（ground.runup）の思い出そうを置いた"
+  },
+  {
+   "id": "C.control-handover",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。住所 ground.crew に太字の定義（操縦の受け渡し（positive exchange of flight controls））と 3 段階の図を書いた。crm.pm の太字の定義がまだ残る（check-concepts の definition-repeated）。crm.pm を 2 行の思い出そうにするのは W32。そろったら done"
+  },
+  {
+   "id": "C.runway-clearances",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。ground.taxi の思い出そう（地上滑走の指示で行けるのは停止線の手前まで・米国の AIM 2-3-5・4-3-18、comm.runway へのリンク）を置いた。これで recalls の 3 節（comm.dep・comm.tower・ground.taxi）がそろう"
+  },
+  {
+   "id": "C.wake-turbulence",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。住所 ops.wake は章 tl の節なので W28-p2b の drafts/p2b.js が書いた（p2a は書いていない）。hf.vision を 1 行の案内にするのは hf の持ち主（W20 の下書きは登録ずみ）か統合役"
+  },
+  {
+   "id": "T.human.T8",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。後方乱気流の住所 ops.wake は W28-p2b の drafts/p2b.js（章 tl）。hf.vision の段落を 1 行の案内にする変更は、p2a の持ち物の外（報告 W28-p2a.md の「ほかの単位への頼み」）"
+  },
+  {
+   "id": "K.vfr.E3",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む。章 ground・ops の下書きは、この文書名を使わない（kiso11 の出典 [11] にあたる文を合本の章に書いていない）。合本の文として直す所は p2a にはない"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.day#17d07c0a",
+   "sec": "ground.day",
+   "text": "訓練の 1 回のフライトを、ブリーフィング（briefing）からデブリーフィング（debriefing）と記録までの流れで見ます。",
+   "tag": "参考値",
+   "source": "数ではない（「訓練の 1 回のフライト」という言い方。流れは AFH 第 2 章・basics.flight）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.day#5c241c0d",
+   "sec": "ground.day",
+   "text": "図：訓練の 1 回のフライトの流れ（例）。",
+   "tag": "参考値",
+   "source": "数ではない（「訓練の 1 回のフライト」という言い方。流れは AFH 第 2 章・basics.flight）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.day#7628ff0e",
+   "sec": "ground.day",
+   "text": "訓練の 1 回は、ブリーフィング → 準備と点検 → 課目 → ふり返りと記録",
+   "tag": "参考値",
+   "source": "数ではない（「訓練の 1 回のフライト」という言い方。流れは AFH 第 2 章・basics.flight）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#f61aaa6a",
+   "sec": "ground.walk",
+   "text": "飛べる状態かを決めるのは、機長（pilot in command）の責任です（米国の 14 CFR 91.7）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.7(a)(b)（the pilot in command … is responsible for determining whether that aircraft is in condition for safe flight）。AFH 第 2 章 p.2-1 も引く。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#b257dca5",
+   "sec": "ground.walk",
+   "text": "公開されている訓練校のチェックリスト（2025 年版）の順で、操縦席 → 右翼 → 機首 → 左翼 → 胴体と尾翼と回ります。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：PREFLIGHT INTERIOR → EXTERIOR の右翼・機首・左翼・胴体の順",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#ac79ab14",
+   "sec": "ground.walk",
+   "text": "公開されている訓練校の Archer III のチェックリスト（2025 年版）では、① 操縦席 → ② 右翼 → ③ 機首 → ④ 左翼 → ⑤ 胴体と尾翼の順に回ります。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：PREFLIGHT INTERIOR → EXTERIOR の右翼・機首・左翼・胴体の順",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#d11ddfb5",
+   "sec": "ground.walk",
+   "text": "書類が機内にあることを確かめます（米国の 14 CFR 91.203・91.9。下の日米の囲み）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.203(a)(b)（耐空証明の掲示・登録証明）・91.9(b)（運用の限界：承認された AFM・POH・標示）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#62b98b2e",
+   "sec": "ground.walk",
+   "text": "主脚の緩衝支柱（出ているピストンの長さ 約 4.5 in）・タイヤ・ブレーキを見ます。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Main Gear Strut CHECK (4.5 in)",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#cbece431",
+   "sec": "ground.walk",
+   "text": "空気の取り入れ口がふさがっていないことと、前脚の緩衝支柱（約 3.25 in）・タイヤを見ます。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Nose Gear Strut CHECK (3.25 in.)",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#58319105",
+   "sec": "ground.walk",
+   "text": "IFR か空港の近くでない飛行は、気象の報告と予報・燃料・代わりの案・管制の遅れも確かめる（14 CFR 91.103） ｜ 機長は、整備状況、離着陸の重量・重心位置・重量分布、航空情報、気象情報、燃料と滑油の量と品質、積載物の安全を確かめてから出発させる（航空法第 73 条の 2・航空法施行規則第 164 条の 15） ｜",
+   "tag": "条文",
+   "source": "FL.jur preflight の囲み（flight-lab/src/book-jur.js。W06 が 2026-10-27 に一次資料と e-Gov で確かめた文。W28 は書いていない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#265c1311",
+   "sec": "ground.walk",
+   "text": "承認された飛行規程（AFM・POH）か、承認された資料・標示・表示板（14 CFR 91.203・91.9） ｜ 航空機登録証明書・耐空証明書・搭載用航空日誌・運用限界等指定書・飛行規程・飛行に適した航空図（航空運送事業は運航規程も）（航空法第 59 条・航空法施行規則第 144 条・航空法施行規則第 144 条の 2） ｜",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.203(a)(b)（耐空証明の掲示・登録証明）・91.9(b)（運用の限界：承認された AFM・POH・標示）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.walk#70635bb8",
+   "sec": "ground.walk",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.book.bk.jur が FL.jur の LAWS から描く版と確認日の行（W06）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.start#2ed56359",
+   "sec": "ground.start",
+   "text": "かかったら約 1,000 rpm にし、まず油圧が上がるのを確かめます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 2 章 Engine Starting（In general, 1,000 rpm is recommended following engine start）。W28 が 2026-10-31 に読んだ。R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Throttle ADJUST TO 1000 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.start#6cbcc138",
+   "sec": "ground.start",
+   "text": "30 秒以内に上がらなければ、すぐにエンジンを止めます（POH 4.5b・AFH 第 2 章）。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.5b（If a positive oil pressure is not indicated within 30 seconds following an engine start, stop the engine）。W28 が 2026-10-31 に読んだ。FAA Airplane Flying Handbook（FAA-H-8083-3C）第 2 章 Engine Starting（within 30 seconds）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.start#2bd581ff",
+   "sec": "ground.start",
+   "text": "Archer III の POH は、1 回 10 秒まで、間に 2 分休み、5 回までとしています。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.5b NOTE（starter cranking periods be limited to 10 seconds with a 2 minute rest period … Maximum of 5 start periods）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.start#66b3e08c",
+   "sec": "ground.start",
+   "text": "800〜1,200 rpm にし、アビオニクスを ON にします（POH 4.5e）。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.5e WARM-UP（THROTTLE 800 to 1200 RPM）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.start#2f298f19",
+   "sec": "ground.start",
+   "text": "30 秒以内に上がらなければ止める",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.5b（If a positive oil pressure is not indicated within 30 seconds following an engine start, stop the engine）。W28 が 2026-10-31 に読んだ。FAA Airplane Flying Handbook（FAA-H-8083-3C）第 2 章 Engine Starting（within 30 seconds）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.taxi#0316e506",
+   "sec": "ground.taxi",
+   "text": "入る・横切る許可をもらうまで、実線の側で止まります（米国の AIM 2-3-5・4-3-18）。",
+   "tag": "条文",
+   "source": "FAA AIM 2-3-5（Runway Holding Position Markings：実線の側で止まる）・4-3-18（Taxiing：taxi の指示で滑走路に入る・横切る許可はない）。comm.runway（R2）の文と同じ。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#46123fb7",
+   "sec": "ground.runup",
+   "text": "図：ランナップのマグネトーの点検（2,000 rpm）。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：RUNUP Throttle 2000 RPM・Magnetos (max drop 175 rpm, max difference 50 rpm)。図 magCheck は book-figs.js のまま",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#5e77c37d",
+   "sec": "ground.runup",
+   "text": "公開されている訓練校の Archer III チェックリストの限度は、落ちが最大 175 rpm、左右の差が 50 rpm 以内。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：RUNUP Magnetos CHECK (max drop 175 rpm, max difference 50 rpm)。POH 4.5g も MAX. DROP 175 RPM・MAX. DIFF. 50 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#87d2243a",
+   "sec": "ground.runup",
+   "text": "回転 ｜ ブレーキをかけ、ミクスチャー全開、2,000 rpm ｜ ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Mixture FULL RICH・Throttle 2000 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#39f33499",
+   "sec": "ground.runup",
+   "text": "落ちは最大 175 rpm、左右の差は 50 rpm 以内 ｜ 点火の系統が 2 つとも働くか。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：RUNUP Magnetos CHECK (max drop 175 rpm, max difference 50 rpm)。POH 4.5g も MAX. DROP 175 RPM・MAX. DIFF. 50 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#58d8fafc",
+   "sec": "ground.runup",
+   "text": "キャブレターヒーター（キャブレターヒート、carburetor heat） ｜ ON にして、回転が少し落ちる（約 75 rpm）のを確かめ、OFF ｜ 熱い空気は薄いので出力が落ちる＝キャブレターヒーターが働いている ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Carburetor Heat/Alternate Air CHECK (CH-75 RPM/AA-40 RPM drop)。POH 4.5g CARB HEAT APPROX. 75 RPM DROP",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#19638378",
+   "sec": "ground.runup",
+   "text": "アイドル ｜ スロットルをアイドルにして止まらないか → 1,000 rpm ｜ 着陸の進入で、エンジンが止まらない ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Throttle IDLE CHECK THEN 1000 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#c8378f61",
+   "sec": "ground.runup",
+   "text": "例（60・76 kt はチェックリストと同じ値です）：",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Normal Rotation 60 KIAS・Best Rate of Climb (Vy) 76 KIAS。教材値 AR.rotate・AR.y も同じ値（FL.physics）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#395ec514",
+   "sec": "ground.runup",
+   "text": "「滑走路 36、フラップ 0°、60 kt でローテーション、76 kt で上昇。」",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Normal Rotation 60 KIAS・Best Rate of Climb (Vy) 76 KIAS。教材値 AR.rotate・AR.y も同じ値（FL.physics）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#c59b7dc4",
+   "sec": "ground.runup",
+   "text": "マグネトーの落ちが限度を超えたときの手順：2,000 rpm のままミクスチャーを少し薄くして 20〜30 秒回し、点火栓の汚れを焼きます。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：If out of limits: At 2000 RPM lean and hold 20–30 sec … Enrich Mixture & recheck … if still exceeding → SQUAWK",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#561a63ca",
+   "sec": "ground.runup",
+   "text": "Archer III の POH は、片方のマグネトーだけで回すのは 10 秒までとしています。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.5g（Operation on one magneto should not exceed 10 seconds）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#21390fdd",
+   "sec": "ground.runup",
+   "text": "マグネトーは落ち 175 rpm・差 50 rpm まで",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：RUNUP Magnetos CHECK (max drop 175 rpm, max difference 50 rpm)。POH 4.5g も MAX. DROP 175 RPM・MAX. DIFF. 50 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#714764fe",
+   "sec": "ground.runup",
+   "text": "考えてみよう：マグネトーの点検で、左にしたら 100 rpm、右にしたら 200 rpm 落ちた。",
+   "tag": "参考値",
+   "source": "例題の場面（この本で決めた値）。限度は R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#f4a2e808",
+   "sec": "ground.runup",
+   "text": "右の落ちが限度の 175 rpm を超え、左右の差も 50 rpm を超えています。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：RUNUP Magnetos CHECK (max drop 175 rpm, max difference 50 rpm)。POH 4.5g も MAX. DROP 175 RPM・MAX. DIFF. 50 RPM",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.runup#d3bfcae7",
+   "sec": "ground.runup",
+   "text": "チェックリストの手順（少し薄くして 20〜30 秒回し、戻して確かめる）で直らなければ、飛ばずに整備に知らせます。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：If out of limits: At 2000 RPM lean and hold 20–30 sec … Enrich Mixture & recheck … if still exceeding → SQUAWK",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ground.after#88e32fd4",
+   "sec": "ground.after",
+   "text": "操縦教員は、訓練をした人のログブックに署名します（米国の 14 CFR 61.189）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 61.189(a)（A flight instructor must sign the logbook of each person to whom that instructor has given flight training or ground training）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#bb9a5a55",
+   "sec": "ops.trim",
+   "text": "図：同じ Archer でも、姿勢（ピッチ）と出力の組み合わせで、速度と昇降率が決まります（この教材のフライトモデルの値・3,000 ft。スロットルの % はレバーの開きで、エンジンの出力の % ではありません。絵の傾きは見やすく 2 倍にしてあります）",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（FIG.attitudePower、book-figs.js のまま）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#eb688f0f",
+   "sec": "ops.trim",
+   "text": "この教材の Archer（教材値・3,000 ft） ｜ ピッチ ｜ スロットル ｜ 結果 ｜",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（ops4()：3,000 ft の 4 つの釣り合い）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#356a37b6",
+   "sec": "ops.trim",
+   "text": "巡航 ｜ +0.6° ｜ 約 75%（約 2,400 rpm） ｜ 110 kt・水平 ｜",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（ops4()：3,000 ft の 4 つの釣り合い）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#bacb1a2f",
+   "sec": "ops.trim",
+   "text": "上昇（Vy） ｜ +9.7° ｜ 全開（約 2,500 rpm） ｜ 76 kt・+660 fpm ｜",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（ops4()：3,000 ft の 4 つの釣り合い）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#b4a6207a",
+   "sec": "ops.trim",
+   "text": "降下 ｜ −0.4° ｜ 約 25%（約 1,750 rpm） ｜ 90 kt・−500 fpm ｜",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（ops4()：3,000 ft の 4 つの釣り合い）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#a8fd62a9",
+   "sec": "ops.trim",
+   "text": "進入（フラップ 40°） ｜ −3.0° ｜ 約 55%（約 2,050 rpm） ｜ 70 kt・−370 fpm ｜",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（ops4()：3,000 ft の 4 つの釣り合い）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#bc29cfe9",
+   "sec": "ops.trim",
+   "text": "上昇 76 kt と進入 70 kt は、訓練校のチェックリスト（checklist）の値と同じです（参考値）。",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Best Rate of Climb (Vy) 76 KIAS・Airspeed 70 KIAS ON FINAL。教材値 AR.y・AR.appr と同じ値",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.trim#fac4e54a",
+   "sec": "ops.trim",
+   "text": "ACS の「出力 65%」などは、エンジンの出力の % です。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.C.S4（Set power … to no less than 65 percent power）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#8b23922d",
+   "sec": "ops.energy",
+   "text": "フラップ（flaps）は、使える速さ（Archer は VFE 102 KIAS）以下で下げます（POH 2.3）。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 2.3 Maximum Flaps Extended Speed (VFE) 102 KIAS。W28 が 2026-10-31 に読んだ。R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：(Vfe) 102 KIAS",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#246bfdcc",
+   "sec": "ops.energy",
+   "text": "この教材の Archer が 110 kt で水平に飛んでいます。",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（AR.cruise 110・AR.y 76）。計算演習の場面",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#870a2f11",
+   "sec": "ops.energy",
+   "text": "抗力を考えずに、機首を上げて 76 kt まで速さを高さに変えると、何 ft 上がれますか。",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（AR.cruise 110・AR.y 76）。計算演習の場面",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#6bf3b301",
+   "sec": "ops.energy",
+   "text": "1 kt ＝ 1.688 ft/s、g ＝ 32.17 ft/s² とします。",
+   "tag": "参考値",
+   "source": "換算：1 kt ＝ 1,852 m/h ÷ 0.3048 ÷ 3,600 ≒ 1.6878 ft/s（NIST SP 811 の ft・NM の定義）、g ＝ 9.80665 m/s² ≒ 32.174 ft/s²（標準重力）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#d698a94e",
+   "sec": "ops.energy",
+   "text": "110 kt ＝ 185.7 ft/s、76 kt ＝ 128.3 ft/s です。",
+   "tag": "参考値",
+   "source": "計算：110 × 1.68781 ≒ 185.7、76 × 1.68781 ≒ 128.3、（185.66² − 128.27²）÷（2 × 32.174）≒ 280 ft（p2a.js の dh() が計算。式は AFH 第 4 章のエネルギー高度 h ＋ V²/2g）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.energy#51666ae9",
+   "sec": "ops.energy",
+   "text": "高さの差は（185.7² − 128.3²）÷（2 × 32.17）≒ 280 ft です。",
+   "tag": "参考値",
+   "source": "計算：110 × 1.68781 ≒ 185.7、76 × 1.68781 ≒ 128.3、（185.66² − 128.27²）÷（2 × 32.174）≒ 280 ft（p2a.js の dh() が計算。式は AFH 第 4 章のエネルギー高度 h ＋ V²/2g）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.sl#4e0284a0",
+   "sec": "ops.sl",
+   "text": "この教材の目安では、高度が 50 ft ずれたら、ピッチを 1〜2° だけ変えて戻します。",
+   "tag": "教材値",
+   "source": "この教材の目安（教科書の文のまま。課目 a2 の練習の目安で、出典の値ではない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.sl#2ad8aa26",
+   "sec": "ops.sl",
+   "text": "自家用 ACS（計器だけで飛ぶ直線水平飛行の課目） ｜ ±200 ft ｜ ±20° ｜ ±10 kt ｜",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VIII.A.S2（Maintain altitude ±200 feet, heading ±20°, and airspeed ±10 knots）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.sl#ede89e53",
+   "sec": "ops.sl",
+   "text": "この教材の「基礎」 ｜ ±100 ft ｜ ±10° ｜ ±10 kt ｜",
+   "tag": "教材値",
+   "source": "この教材の課目 a2 の採点の幅（flight-lab/src/syllabus.js・school.js）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.sl#90bce30e",
+   "sec": "ops.sl",
+   "text": "この教材の「精度」（基礎の 6 割） ｜ ±60 ft ｜ ±6° ｜ ±6 kt ｜",
+   "tag": "教材値",
+   "source": "この教材の課目 a2 の採点の幅（flight-lab/src/syllabus.js・school.js）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#9b517e6d",
+   "sec": "ops.climb",
+   "text": "レベルオフ：目標高度の昇降率の 10% 手前から、機首をゆっくり下げ始めます（500 fpm なら 50 ft 手前。AFH 第 3 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Level-off（should begin at approximately 10 percent of the rate of climb）・descent の level off も 10 percent。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues（目安として、変化を見て合わせる）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#f58b9519",
+   "sec": "ops.climb",
+   "text": "10% は目安なので、昇降率の変化が止まる様子を見て合わせます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Level-off（should begin at approximately 10 percent of the rate of climb）・descent の level off も 10 percent。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues（目安として、変化を見て合わせる）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#0ae3dbd5",
+   "sec": "ops.climb",
+   "text": "目標高度の手前（降下率の 10%）から、出力を戻しながら機首を水平へ戻します（AFH 第 3 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Level-off（should begin at approximately 10 percent of the rate of climb）・descent の level off も 10 percent。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues（目安として、変化を見て合わせる）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#22a4f344",
+   "sec": "ops.climb",
+   "text": "Vx（最良上昇角） ｜ 64 kt：短い距離で高さを稼ぐ（障害物を越える） ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Best Angle of Climb (Vx) 64 KIAS",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#ad4baec9",
+   "sec": "ops.climb",
+   "text": "Vy（最良上昇率） ｜ 76 kt：短い時間で高さを稼ぐ（離陸のあとの上昇） ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：Best Rate of Climb (Vy) 76 KIAS",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#e5779de5",
+   "sec": "ops.climb",
+   "text": "巡航上昇 ｜ 87 kt：前がよく見え、エンジンも冷える（地上 1,000 ft から上） ｜",
+   "tag": "参考値",
+   "source": "R.archerCk：Archer III w/ G1000 PA-28-181 Pilot's Checklist（Middle Georgia State University、版 09012025）。W28 が 2026-10-31 に読んだ：En Route Climb 87 KIAS（at 1000 AGL）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#5cc56774",
+   "sec": "ops.climb",
+   "text": "レベルオフは昇降率の 10% 手前から。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Level-off（should begin at approximately 10 percent of the rate of climb）・descent の level off も 10 percent。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues（目安として、変化を見て合わせる）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#89618b9f",
+   "sec": "ops.climb",
+   "text": "考えてみよう：500 fpm で降下している。",
+   "tag": "参考値",
+   "source": "例題の場面と答え（AFH 第 3 章の 10% の目安で計算：500 × 0.1 ＝ 50 ft）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#42465b17",
+   "sec": "ops.climb",
+   "text": "3,000 ft で水平にしたい。",
+   "tag": "参考値",
+   "source": "例題の場面と答え（AFH 第 3 章の 10% の目安で計算：500 × 0.1 ＝ 50 ft）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#6ad9e93c",
+   "sec": "ops.climb",
+   "text": "約 3,050 ft です。",
+   "tag": "参考値",
+   "source": "例題の場面と答え（AFH 第 3 章の 10% の目安で計算：500 × 0.1 ＝ 50 ft）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.climb#e0309ae1",
+   "sec": "ops.climb",
+   "text": "降下率の 10%（50 ft）手前から、出力を戻しながら機首を水平へ戻します（AFH 第 3 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Level-off（should begin at approximately 10 percent of the rate of climb）・descent の level off も 10 percent。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues（目安として、変化を見て合わせる）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#dc8f7726",
+   "sec": "ops.turns",
+   "text": "高度を保ったまま旋回し、ねらった針路で止める方法と、45° の急旋回（steep turn）のこつを覚えます。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.V.A.S3（a coordinated 360° steep turn with approximately a 45° bank）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#c7a14fa6",
+   "sec": "ops.turns",
+   "text": "戻りは、目標の針路の「バンク角の半分」手前から始めます（30° なら 15° 手前。AFH 第 3 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Turns（A rule of thumb is to lead by one-half the angle of bank. For example, if the bank is 30°, lead the rollout by 15°）。W28 が 2026-10-31 に読んだ。RULINGS R.numeric-cues",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#011a19ca",
+   "sec": "ops.turns",
+   "text": "中程度の旋回 ｜ バンク 30°、高度を保って 360° ｜ ACS の課目ではない。",
+   "tag": "教材値",
+   "source": "この教材の課目 a4 の採点の幅（flight-lab/src/syllabus.js）。ACS の課目ではない（ACS 6C に中程度の旋回の Task はない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#a8769c18",
+   "sec": "ops.turns",
+   "text": "この教材は バンク ±5°・高度 ±100 ft・ロールアウト ±10° ｜",
+   "tag": "教材値",
+   "source": "この教材の課目 a4 の採点の幅（flight-lab/src/syllabus.js）。ACS の課目ではない（ACS 6C に中程度の旋回の Task はない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#4aa59a9c",
+   "sec": "ops.turns",
+   "text": "急旋回（自家用 ACS） ｜ バンク約 45°、高度と速度を保って 360° ｜ 高度 ±100 ft・速度 ±10 kt・バンク ±5°・ロールアウト ±10° ｜",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.V.A.S3・S5（approximately a 45° bank・altitude ±100 feet, airspeed ±10 knots, bank ±5°, roll out on the entry heading ±10°）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#32bed9b9",
+   "sec": "ops.turns",
+   "text": "急旋回（事業用 ACS） ｜ バンク約 50° ｜ 同じ許容幅 ｜",
+   "tag": "参考値",
+   "source": "R.acsC：FAA-S-ACS-7B（2023-11）CA.V.A.S3・S5（approximately a 50° bank・同じ許容幅）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#95a0829b",
+   "sec": "ops.turns",
+   "text": "45° では荷重倍数（G、load factor）が 1.41 G になり、失速速度（stall speed）が約 19% 上がります（第 5 章）。",
+   "tag": "参考値",
+   "source": "計算：1 ÷ cos 45° ≒ 1.414、√1.414 ≒ 1.189（PHAK 第 5 章 Load Factors・aero.turn の表と同じ）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#fecd211f",
+   "sec": "ops.turns",
+   "text": "2,550 lb で 113 KIAS、1,917 lb で 98 KIAS です。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 2.3 Maximum Operating Maneuvering Speed (VO)：At 2550 lbs. G.W. 113 KIAS・At 1917 lbs. G.W. 98 KIAS。W28 が 2026-10-31 に読んだ。教材値 AR.va 113 と同じ。safety-R2 の S3（V<sub>O</sub> と書く）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#51693fd1",
+   "sec": "ops.turns",
+   "text": "45° くらいより深いと、外側の翼が内側の翼より速く動きます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 3 章 Turns（Steep turns … approximately 45° or more … overbanking tendency … opposite aileron）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#6259be63",
+   "sec": "ops.turns",
+   "text": "考えてみよう：バンク 45° の急旋回から、針路 360° で翼を水平にしたい。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.V.A.S3（a coordinated 360° steep turn with approximately a 45° bank）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#4cebf036",
+   "sec": "ops.turns",
+   "text": "バンク角の半分の 20〜25° 手前です。",
+   "tag": "参考値",
+   "source": "例題（AFH 第 3 章のバンク角の半分の目安で計算：45 ÷ 2 ≒ 20〜25°）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#0732151a",
+   "sec": "ops.turns",
+   "text": "右旋回なら約 335〜340°、左旋回なら約 020〜025° で戻し始めます（AFH 第 3 章）。",
+   "tag": "参考値",
+   "source": "例題（AFH 第 3 章のバンク角の半分の目安で計算：45 ÷ 2 ≒ 20〜25°）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.turns#ee2d60a7",
+   "sec": "ops.turns",
+   "text": "✈ シミュレータで体験：30° の旋回から、45° の急旋回へ進みます。",
+   "tag": "教材値",
+   "source": "課目 a4（バンク 30°）・a5（バンク 45°）の内容（flight-lab/src/syllabus.js）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#1ad780d1",
+   "sec": "ops.slow",
+   "text": "低速飛行（自家用 ACS） ｜ 高度 ±100 ft・針路 ±10°・速度 ＋10／−0 kt・バンク ±10°。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.A.S2・S5（no lower than 1,500 feet AGL (ASEL)・altitude ±100 feet; heading ±10°; airspeed +10/-0 knots; bank ±10°）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#ad32962e",
+   "sec": "ops.slow",
+   "text": "地上 1,500 ft より上で終わるように始める（単発） ｜",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.A.S2・S5（no lower than 1,500 feet AGL (ASEL)・altitude ±100 feet; heading ±10°; airspeed +10/-0 knots; bank ±10°）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#1c13804b",
+   "sec": "ops.slow",
+   "text": "低速飛行（事業用 ACS） ｜ 高度 ±50 ft・針路 ±10°・速度 ＋5／−0 kt・バンク ±5° ｜",
+   "tag": "参考値",
+   "source": "R.acsC：FAA-S-ACS-7B（2023-11）CA.VII.A.S5（altitude ±50 feet; heading ±10°; airspeed +5/-0 knots; bank ±5°）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#6a12e317",
+   "sec": "ops.slow",
+   "text": "この教材の課目 a6 ｜ 速度 58〜68 kt（フラップ 25°）・高度 ±100 ft・針路 ±10°・失速警報なし ｜",
+   "tag": "教材値",
+   "source": "課目 a6 の採点の幅（flight-lab/src/syllabus.js：速度 58 kt の +10/−0・高度 ±100 ft・針路 ±10°・失速警報なし）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#62b96e17",
+   "sec": "ops.slow",
+   "text": "この教材の失速速度は、着陸の形態で 45 kt、フラップを上げて 50 kt です（教材値）。",
+   "tag": "教材値",
+   "source": "教材値：FL.physics（pa28 の steadyState・AIRCRAFT の v）から本文に差し込む値。この教材の飛行モデルの値（AR.s0 45・AR.s1 50）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#f9ccdef8",
+   "sec": "ops.slow",
+   "text": "POH も、2,550 lb・出力アイドル・フラップ全開で 45 KIAS、フラップを上げると 5 kt 増えるとしています（参考値：POH 4.7）。",
+   "tag": "参考値",
+   "source": "R.archerPoh：Piper PA-28-181 Archer III POH（VB-2266・2013） 4.7 Stalls（The gross weight stalling speed … with power off and full flaps is 45 KIAS. With the flaps up this speed is increased 5 KTS）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#43c2c3e1",
+   "sec": "ops.slow",
+   "text": "地上 1,500 ft より上で終わる高さで練習する",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.A.S2（no lower than 1,500 feet AGL）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.slow#6387ac46",
+   "sec": "ops.slow",
+   "text": "高度 ±100 ft・針路 ±10°・速度 +10/−0 kt・バンク ±10°（FAA-S-ACS-6C PA.VII.A） ｜ 操縦士実地試験実施細則の科目と許容幅は〔要確認〕 ｜",
+   "tag": "参考値",
+   "source": "FL.jur check.slow の囲み（flight-lab/src/book-jur.js。W06 が 2026-10-27 に一次資料と e-Gov で確かめた文。W28 は書いていない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.stall#35696f81",
+   "sec": "ops.stall",
+   "text": "直進なら針路 ±10°、旋回ならバンク 20° まで（±10°）。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.B.S2〜S9・PA.VII.C.S2〜S9（1,500 feet AGL・heading ±10°・bank not to exceed 20°, ±10°・no less than 65 percent power・accelerate to VX or VY）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.stall#51374899",
+   "sec": "ops.stall",
+   "text": "パワーオン失速 ｜ 離陸・出発か巡航の形態で、出力 65% 以上。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.B.S2〜S9・PA.VII.C.S2〜S9（1,500 feet AGL・heading ±10°・bank not to exceed 20°, ±10°・no less than 65 percent power・accelerate to VX or VY）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.stall#14371350",
+   "sec": "ops.stall",
+   "text": "針路 ±10°・バンク 20° まで（±10°）・完全に失速してからすぐに回復、は同じ ｜",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.B.S2〜S9・PA.VII.C.S2〜S9（1,500 feet AGL・heading ±10°・bank not to exceed 20°, ±10°・no less than 65 percent power・accelerate to VX or VY）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.stall#12524a69",
+   "sec": "ops.stall",
+   "text": "どちらも ｜ 地上 1,500 ft より上で終わるように始める（単発）。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.VII.B.S2〜S9・PA.VII.C.S2〜S9（1,500 feet AGL・heading ±10°・bank not to exceed 20°, ±10°・no less than 65 percent power・accelerate to VX or VY）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.stall#bffb22ee",
+   "sec": "ops.stall",
+   "text": "直線は針路 ±10°、旋回はバンク 20° 以内で ±10°（FAA-S-ACS-6C PA.VII.B・C） ｜ 操縦士実地試験実施細則の失速の科目と回復の基準は〔要確認〕 ｜",
+   "tag": "参考値",
+   "source": "FL.jur check.stall の囲み（flight-lab/src/book-jur.js。W06 が 2026-10-27 に一次資料と e-Gov で確かめた文。W28 は書いていない）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#47079cf3",
+   "sec": "ops.ground",
+   "text": "ダウンウインド（downwind leg）へ 45° で入る。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.V.B.S3a（Rectangular course: … 600 to 1,000 feet AGL … 45° to the downwind leg）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#74aa5ae1",
+   "sec": "ops.ground",
+   "text": "自家用 ACS では、地上 600〜1,000 ft で行い、高度 ±100 ft・速度 ±10 kt を保ちます。",
+   "tag": "参考値",
+   "source": "R.acsP：FAA-S-ACS-6C（2023-11）PA.V.B.S3・S7（600 to 1,000 feet AGL・Maintain altitude ±100 feet; maintain airspeed ±10 knots）。W28 が 2026-10-31 に読んだ（scratchpad acs/pa6.txt）",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#33c4942e",
+   "sec": "ops.ground",
+   "text": "障害物からは、上に 500 ft・横に 2,000 ft 以上離します。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Introduction（obstruction clearance of no less than 500 feet vertically above the obstruction and 2,000 feet horizontally）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#ff5702df",
+   "sec": "ops.ground",
+   "text": "始める前に、左右へ 90° ずつの見張りのための旋回で、周りと上下を確かめます（AFH 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Introduction（Pilots should always clear the area with two 90° clearing turns looking to the left and the right, as well as above and below）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#83788705",
+   "sec": "ops.ground",
+   "text": "長方形コースは、畑などの境から 1/2〜3/4 マイル離して、境と平行に飛びます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Rectangular Course（parallel to and at an equal distance between one-half to three-fourths of a mile away from the field boundaries）。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#9e34d93b",
+   "sec": "ops.ground",
+   "text": "米国の最低安全高度（minimum safe altitude）は、14 CFR 91.119 が決めています。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.119 Minimum safe altitudes: General（(b) congested areas 1,000 ft・(c) other than congested 500 ft）。ops.ground の今の key の文。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#5f0962a2",
+   "sec": "ops.ground",
+   "text": "速度 90 kt・風 10 kt で、半径 890 ft の円を回ります。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#3a8d8d26",
+   "sec": "ops.ground",
+   "text": "風下に向かう所（対地 100 kt）で、バンクは約 45° です。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#6dae64df",
+   "sec": "ops.ground",
+   "text": "風上に向かう所（対地 80 kt）では、約何度ですか。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#1152c10a",
+   "sec": "ops.ground",
+   "text": "tan θ ＝ 80² ÷（11.26 × 890）≒ 6,400 ÷ 10,021 ≒ 0.639 なので、θ ≒ 33° です。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#563ffab5",
+   "sec": "ops.ground",
+   "text": "AFH も約 33° としています。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#e0136c83",
+   "sec": "ops.ground",
+   "text": "風下では 100² ÷ 10,021 ≒ 0.998 で、約 45° です。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#a85318cd",
+   "sec": "ops.ground",
+   "text": "バンクは 45° までにし、深くなりすぎたら、いったん抜けて入り直します（AFH 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 7 章 Drift and Ground Track Control（downwind at 100 knots groundspeed … 10 knots … 45° bank … approximately 890 feet … upwind … approximately 33°）・Introduction（should not exceed a bank angle of 45°）。W28 が 2026-10-31 に読んだ。式 tan θ ＝ GS² ÷（11.26 r）は FIG.turnsAroundPoint と同じ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  },
+  {
+   "op": "add",
+   "ledger": "CLAIMS",
+   "id": "ops.ground#9fbc2685",
+   "sec": "ops.ground",
+   "text": "低い高度なので、緊急着陸できる場所・障害物・人家に気を配る（米国の最低安全高度は 14 CFR 91.119）",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.119 Minimum safe altitudes: General（(b) congested areas 1,000 ft・(c) other than congested 500 ft）。ops.ground の今の key の文。W28 が 2026-10-31 に読んだ",
+   "by": "W28",
+   "note": "W28（2026-10-31）：第 2 部の章 ground・ops の下書き drafts/p2a.js（図は drafts/p2a-figs.js、主張は drafts/p2a.claims.json）。このパッチは、章 ground・ops を登録するコミットで取り込む"
+  }
+ ]
+}

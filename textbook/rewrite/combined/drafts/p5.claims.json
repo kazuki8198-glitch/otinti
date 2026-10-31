@@ -1,0 +1,1554 @@
+{
+ "ledger": "CLAIMS",
+ "draft": "textbook/rewrite/combined/drafts/p5.js",
+ "unit": "W31",
+ "chapter": "me, oei",
+ "updated": "2026-10-31",
+ "by": "W31（p5）",
+ "about": "第 5 部の章 me（書き直し、新 2 節：me.prop・me.sys）と oei（書き直し、新 1 節：me.case）の下書きの主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・表・図のキャプション・日米の囲み・考えてみよう・ここが大切・折りたたみ）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W31.ledger.json にも同じ行がある）。checkedBy は事実確認役（W31 と別）が付ける。POH は Piper の Information Manual（REPORT VB-1942。POH と同じ内容の公開資料）で読んだ。AFH・ACS・AIM・POH・公開のガイドとチェックリスト・NTSB の文は規則でない資料なので 参考値、14 CFR の文は 条文、飛行モデル・課目（m1〜m5）・架空の事例の値は 教材値。日米の囲みの文は FL.jur が描く文で W06 が確かめた値（W31 は書いていない）。kind: 例題 は、この本で決めた場面の設定と計算の文。二次資料（Aviation Consumer・Jane's）の 3 つの数字は 参考値 のまま UNVERIFIED U.seminole-poh に残す。",
+ "format": {
+  "id": "<節ID>#<8 桁>",
+  "sec": "節 ID",
+  "text": "文",
+  "tag": "教材値／参考値／条文／推測・要確認",
+  "source": "出典と確かめた日",
+  "kind": "例題（仮定の場面）のときだけ",
+  "by": "書いた単位",
+  "checkedBy": "確かめ役（書いた人と別）",
+  "checkedOn": "確認日"
+ },
+ "counts": {
+  "rows": 151,
+  "byTag": {
+   "参考値": 124,
+   "教材値": 20,
+   "条文": 7
+  },
+  "examples": 13
+ },
+ "rows": [
+  {
+   "id": "me.basics#65bea06c",
+   "sec": "me.basics",
+   "text": "脚を操作してよい速度（Vlo）は、上げるとき 109 kt 以下、下げるとき 140 kt 以下です（POH 2.3）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3 Airspeed Limitations（VLO 109 KIAS・VLE 140 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#bb8f8ab7",
+   "sec": "me.basics",
+   "text": "脚を出したまま飛べる最大の速度は着陸装置下げ速度（maximum landing gear extended speed、Vle）で、140 kt です。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VLE 140 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#faedb102",
+   "sec": "me.basics",
+   "text": "燃料タンクは、左右のエンジンナセル（エンジンを包む覆い）に 55 gal ずつあります。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.15 Fuel System（55 gallon のタンクが各ナセルに 1 つ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#cfd7038b",
+   "sec": "me.basics",
+   "text": "使える燃料は合計 108 gal です（POH 7.15）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.15（使える燃料 108 gal）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#b9c7df9e",
+   "sec": "me.basics",
+   "text": "1,500 rpm 以上で 1 分以上回します。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Fuel Crossfeed：1,500 rpm 以上の中くらいの出力で少なくとも 1 分）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#8397cc5d",
+   "sec": "me.basics",
+   "text": "そのあと元のタンクで 1 分以上回してから離陸します（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Fuel Crossfeed：終わったら元のタンクで少なくとも 1 分）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#4a846ae9",
+   "sec": "me.basics",
+   "text": "75 kt でローテーションし、88 kt（Vy）で上昇します。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.5 Takeoff（Rotate Speed 75 KIAS）・4.3（Best Rate of Climb Speed 88 KIAS）。W31 が 2026-10-31 に読んだ。ガイドも Vr 75・Vy 88",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#de95d1bd",
+   "sec": "me.basics",
+   "text": "上昇を確かめ、降りられる滑走路が残っていなければ、ブレーキを軽く当てて脚 UP（109 kt 以下）にします。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Normal Takeoff：降りられる滑走路がなくなってから脚を上げる。ブレーキで車輪を止める）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VLO 109 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#3f0177d8",
+   "sec": "me.basics",
+   "text": "ガイドは地上 500 ft から 110 kt・25 インチ・2,500 rpm です。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Takeoff 9)（500 ft AGL から巡航上昇 110 KIAS・25 in・2,500 rpm）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#a874b583",
+   "sec": "me.basics",
+   "text": "公開のチェックリスト（checklist）は、地上 1,000 ft から 105 kt です。",
+   "tag": "参考値",
+   "source": "Seminole PA-44-180 Pilot's Checklist（Middle Georgia State University・公開資料、R.seminoleCk）ENROUTE CLIMB（at 1000 AGL）Climb Speed 105 KIAS。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#2c4fef16",
+   "sec": "me.basics",
+   "text": "脚を上げるのは 109 kt 以下。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VLO 109 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.basics#e70738fb",
+   "sec": "me.basics",
+   "text": "課目の基準は、地上 500 ft までに脚 UP です。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js の課目 m1（基準「500 ft までに脚 UP」）（この教材の基準）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#177e1bb7",
+   "sec": "me.prop",
+   "text": "出力は、スロットルで決まる吸気圧力と、プロペラレバーで決まる回転数で決まります（例：25 インチ・2,500 rpm）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 12 章 Transition to Complex Airplanes（Constant-Speed Propeller：出力は吸気圧力と回転数で決める）。W31 が 2026-10-31 に読んだ。例の 25 in・2,500 rpm は Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Takeoff 9)。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#65b97697",
+   "sec": "me.prop",
+   "text": "プロペラレバーを後ろいっぱい（FEATHER）まで引くとフェザーになり、Seminole では約 6 秒かかります（POH 7.5）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.5 Engines and Propellers（FEATHER まで引く・約 6 秒）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#b6da23f1",
+   "sec": "me.prop",
+   "text": "Seminole は 950 rpm より下ではフェザーできません（POH 7.5）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.5（feathering lock：950 RPM より下ではフェザーできない）・3.5。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#dd9e6fa3",
+   "sec": "me.prop",
+   "text": "AFH の例は約 800 rpm で、機体によって違います。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Feathering：約 800 rpm より下で anti-feathering lock pins）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#3124f94d",
+   "sec": "me.prop",
+   "text": "定速プロペラの羽根の角度の範囲は約 11.5〜40° で、この範囲の中なら回転数は一定に保たれます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 12 章 Transition to Complex Airplanes（Constant-Speed Propeller：羽根の角度の範囲は約 11.5〜40°）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#f5dc6b8c",
+   "sec": "me.prop",
+   "text": "この方式では、フェザーに 10〜17 秒、戻すのに 8〜12 秒かかります（POH 7.5）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.5 Unfeathering Accumulators（フェザー 10〜17 秒・戻す 8〜12 秒、油温による）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#c3fd247a",
+   "sec": "me.prop",
+   "text": "5〜7 秒で風車状態にならなければ、スターターを 1〜2 秒回します（POH 3.11）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.11a Unfeathering Procedure（5〜7 秒で風車状態にならなければ、スターターを 1〜2 秒）・3.5b。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.prop#818aee01",
+   "sec": "me.prop",
+   "text": "Seminole は 950 rpm より下ではできない",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.5（950 RPM）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#bcf08bfc",
+   "sec": "me.sys",
+   "text": "Seminole は、14 V・60 A の発電機を各エンジンに 1 つずつ持ちます（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.17 Electrical System（ベルトで回す 14 V・60 A の発電機が 2 つ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#103aee3b",
+   "sec": "me.sys",
+   "text": "Seminole では、左のタンクから 1 時間に約 0.5 gal を使います（POH 7.23）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.23 Heating, Ventilating and Defrosting System（電動の燃料ポンプが左のタンクから約 0.5 gal/h）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#2056cbd8",
+   "sec": "me.sys",
+   "text": "圧力の差が 10 MPa、ピストンの面積が 4.0 cm² です。",
+   "tag": "教材値",
+   "source": "例題の場面（この本で決めた数字。圧力 × 面積 ＝ 力）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#96462515",
+   "sec": "me.sys",
+   "text": "同じピストンに 1 分に 2.4 L の作動油が流れ込むと、ピストンは 1 秒に何 m 動きますか。",
+   "tag": "教材値",
+   "source": "例題の場面（この本で決めた数字。流量 ÷ 面積 ＝ 速さ）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#337941f6",
+   "sec": "me.sys",
+   "text": "10 MPa ＝ 10,000,000 Pa、4.0 cm² ＝ 0.00040 m² なので、F ＝ 10,000,000 × 0.00040 ＝ 4,000 N です。",
+   "tag": "教材値",
+   "source": "例題の答え（10 MPa × 0.00040 m² ＝ 4,000 N。W31 が計算した）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.sys#5a5bea34",
+   "sec": "me.sys",
+   "text": "流量は 2.4 L/min ＝ 0.0024 m³ ÷ 60 s ＝ 0.000040 m³/s なので、v ＝ 0.000040 ÷ 0.00040 ＝ 0.10 m/s です。",
+   "tag": "教材値",
+   "source": "例題の答え（2.4 L/min ＝ 0.000040 m³/s、÷ 0.00040 m² ＝ 0.10 m/s。W31 が計算した）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#1f83cefb",
+   "sec": "me.speeds",
+   "text": "Vmc（赤い線） ｜ 56 kt ｜ 急に片方のエンジンの推力を失っても、方向の操縦を保てる最小の速度。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3・2.5・3.3（VMCA 56 KIAS・赤い線）。W31 が 2026-10-31 に読んだ。表の値は SM.mc（教材の機体モデル）で POH と同じ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#9acfd3ba",
+   "sec": "me.speeds",
+   "text": "決められた条件（生きているエンジンが最大出力・止まった側は風車状態・後方の重心・生きている側へバンク 5° 以内など）での値。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC の認証の条件：臨界発動機が風車状態・最大出力・後方の重心・バンク 5° 以内など）。W31 が 2026-10-31 に読んだ。旧 14 CFR 23.149 と同じ内容",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#8cbd9efc",
+   "sec": "me.speeds",
+   "text": "Vyse（青い線） ｜ 88 kt ｜ 片方のエンジンで最もよく上昇できる速度（最良上昇率）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3・2.5（One Engine Inoperative Best Rate of Climb Speed 88 KIAS・青い線）。W31 が 2026-10-31 に読んだ。表の値は SM.yse で同じ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#346d7563",
+   "sec": "me.speeds",
+   "text": "Vxse ｜ 82 kt ｜ 1 発動機不作動時の最良上昇角速度（best single-engine angle of climb speed）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.3 Airspeeds for Emergency Operations（One engine inoperative best angle of climb 82 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#6842ce60",
+   "sec": "me.speeds",
+   "text": "Vsse ｜ 82 kt ｜ 訓練で、わざと片方のエンジンを止めてよい最小の速度（safe single-engine speed） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.45 VSSE（82 KIAS）・4.3。W31 が 2026-10-31 に読んだ。表の値は SM.sse で同じ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#dcd421f3",
+   "sec": "me.speeds",
+   "text": "Vxse の 82 kt は、Piper の Information Manual の値です（参考値：POH 3.3）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.3（82 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#258182ed",
+   "sec": "me.speeds",
+   "text": "POH と同じ内容の資料で、公開チェックリストも 82 kt です。",
+   "tag": "参考値",
+   "source": "Seminole PA-44-180 Pilot's Checklist（Middle Georgia State University・公開資料、R.seminoleCk）VXSE 82 KTS。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#46bee57c",
+   "sec": "me.speeds",
+   "text": "ガイドの速度表は 88 kt です。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）速度表（Vxse 88 と書いてある）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#9cd5a3fc",
+   "sec": "me.speeds",
+   "text": "この教材の機体モデルの表も、ガイドに合わせて 88 kt です（教材値）。",
+   "tag": "教材値",
+   "source": "この教材の飛行モデル（flight-lab/src/physics.js の pa44 と SM の速度表）の SM.xse ＝ 88。ガイドに合わせた値。POH の 82 は同じ節の前の文（参考値）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#4bfc5ef6",
+   "sec": "me.speeds",
+   "text": "Vr / Vx / Vy ｜ 75 / 82 / 88 kt ｜ 両発のローテーション速度（Vr、rotation speed）・最良上昇角速度（Vx、best angle of climb speed）・最良上昇率速度（Vy） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.5（Rotate Speed 75 KIAS）・4.3（Best Angle 82・Best Rate 88 KIAS）。W31 が 2026-10-31 に読んだ。表の値は SM.rotate / SM.x / SM.y で同じ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#81031afc",
+   "sec": "me.speeds",
+   "text": "Vso / Vs1 ｜ 55 / 57 kt ｜ 失速（stall）する速度（着陸の形態 / 決められた形態） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.5 Airspeed Indicator Markings（白の弧 55 kt から・緑の弧 57 kt から）。W31 が 2026-10-31 に読んだ。表の値は SM.s0 / SM.s1 で同じ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#e84194ec",
+   "sec": "me.speeds",
+   "text": "Vfe ｜ 111 kt ｜ フラップを出してよい最大の速度 ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VFE 111 KIAS）・4.3。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#6164d213",
+   "sec": "me.speeds",
+   "text": "Vlo / Vle ｜ 上げ 109・下げ 140 / 140 kt ｜ 脚を操作してよい速度 / 着陸装置下げ速度 ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VLO 109・VLE 140 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#6aa93776",
+   "sec": "me.speeds",
+   "text": "Va ｜ 135 kt ｜ 設計運動速度（Va、design maneuvering speed）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VA：3,800 lb で 135 KIAS）・3.3。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#5c9e0a20",
+   "sec": "me.speeds",
+   "text": "最大の重量（重力、weight）3,800 lb のとき。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（At 3800 lb Gross Weight 135 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#fea7c4ae",
+   "sec": "me.speeds",
+   "text": "軽いほど小さく、2,700 lb で 112 kt ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（At 2700 lb Gross Weight 112 KIAS。軽いほど小さい）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.speeds#8a09b847",
+   "sec": "me.speeds",
+   "text": "Vno / Vne ｜ 169 / 202 kt ｜ 構造上の最大巡航速度（最大構造巡航速度、maximum structural cruising speed。黄の弧の始まり）/ 超過禁止速度（never-exceed speed。赤い線） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3・2.5（VNO 169・VNE 202 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#3672e23f",
+   "sec": "me.pattern",
+   "text": "ダウンウインド（downwind leg）に入る ｜ 18 インチ・2,300 rpm・約 100 kt。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 1)（ダウンウインドに 18 in・2,300 rpm・約 100 kt で入る）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#7070ccb7",
+   "sec": "me.pattern",
+   "text": "1 分に 200〜300 ft で降下を始める ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 3)（真横でフラップ 10・200〜300 fpm で降下）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#f4ae7e70",
+   "sec": "me.pattern",
+   "text": "ベース ｜ 青い線（88 kt）まで減速し、フラップ 25。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 4)（ベースで青い線 88 kt・フラップ 25）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#83477255",
+   "sec": "me.pattern",
+   "text": "ファイナル（final approach leg） ｜ 着陸が確実になるまで青い線（88 kt）を保つ。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 5)（着陸が確実になるまで 88 kt）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#f79a6e3e",
+   "sec": "me.pattern",
+   "text": "地上 500 ft より下で安定した進入になっているか確かめる ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 6)（500 ft AGL より下で安定した進入）。W31 が 2026-10-31 に読んだ・FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Stabilized approach：500 ft AGL 以内）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#906a066e",
+   "sec": "me.pattern",
+   "text": "着陸が確実になったら ｜ フラップを全部（40°）出し、80 kt に減速。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 7)（フラップを全部・80 KIAS）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（フラップ全開 40°）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#03900291",
+   "sec": "me.pattern",
+   "text": "速度はガイドが 82 kt、公開チェックリストはフラップを 25° にして 88 kt です。",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Go-Around（Vx 82 KIAS）。W31 が 2026-10-31 に読んだ・Seminole PA-44-180 Pilot's Checklist（Middle Georgia State University・公開資料、R.seminoleCk）BALKED LANDING, GO AROUND（Flaps 25°・88 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#a5355103",
+   "sec": "me.pattern",
+   "text": "上昇を確かめて、脚 UP にします（109 kt 以下）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（VLO 109 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.pattern#7200a6a8",
+   "sec": "me.pattern",
+   "text": "着陸の前は GUMPS を 2 回（ダウンウインドとベース）",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Normal Landing 2)・4)（ダウンウインドとベースで GUMP(S)）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#41a186ca",
+   "sec": "me.perf",
+   "text": "しかし片方が止まると、出力は半分でも、上昇性能は 80〜90% 失われます（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（冒頭：出力の 50% を失うと上昇性能は 80〜90% 減る）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#aa1287f7",
+   "sec": "me.perf",
+   "text": "Seminole の POH の図の例（1,250 ft・8°C・3,430 lb・88 KIAS・脚 UP） ｜ 上昇率 1,505 fpm ｜ 上昇率 285 fpm ｜ 約 81% 減（参考値：POH 図 5-19・5-21） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）5 章 図 5-19（両発の上昇率）・図 5-21（片発の上昇率）の例：1,250 ft・8°C・3,430 lb で 1,505 fpm と 285 fpm。W31 が 2026-10-31 に読んだ。81% は W31 の計算（1 − 285/1,505）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#489ce2e3",
+   "sec": "me.perf",
+   "text": "教材のフライトモデルの Seminole（海面付近・88 kt） ｜ 上昇率 約 1,330 fpm ｜ 上昇率 約 280 fpm ｜ 約 79% 減（教材値） ｜",
+   "tag": "教材値",
+   "source": "この教材の飛行モデル（flight-lab/src/physics.js の pa44 と SM の速度表）。海面付近・88 kt で W31 が飛行モデルから計算した上昇率（両発 約 1,330・片発 約 280 fpm、約 79% 減）。2026-10-31",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#a18f6f4d",
+   "sec": "me.perf",
+   "text": "だから計画では、公表の片発の上昇率が少なくとも 100〜200 fpm なければ、離陸を続ける選択肢はないと考えます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Single-engine climb：公表の片発の上昇率が少なくとも 100〜200 fpm なければ、離陸の続行の選択肢はないと考える）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#b8cb180b",
+   "sec": "me.perf",
+   "text": "乱気流（turbulence）・エンジンの摩耗・操縦のまずさで、200 fpm はすぐなくなるからです（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（同じ所：乱気流・突風・エンジンとプロペラの摩耗・まずい操縦で 200 fpm はすぐなくなる）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#a6066ffb",
+   "sec": "me.perf",
+   "text": "Seminole の型式証明は 1978 年です。",
+   "tag": "参考値",
+   "source": "EASA Type-Certificate Data Sheet EASA.A.232 Piper PA-44（PA-44-180 の FAA 型式証明 1978 年）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#5096f7e6",
+   "sec": "me.perf",
+   "text": "米国の基準は、FAR Part 23 の改正 23-16 までが当てはまります（EASA の型式証明書のデータシート）。",
+   "tag": "参考値",
+   "source": "EASA TCDS EASA.A.232（PA-44-180 の認証の基準：14 CFR Part 23、改正 23-16 まで）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#869af782",
+   "sec": "me.perf",
+   "text": "この時代の米国の基準では、最大重量 6,000 lb 以下・Vso 61 kt 以下の双発機は、片発の上昇率を決めて示すだけでした。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Performance：最大重量 6,000 lb 以下・VSO 61 kt 以下の双発機は 5,000 ft の片発の上昇率を決めるだけ（マイナスでもよい））。W31 が 2026-10-31 に読んだ。旧 14 CFR 23.67 と同じ内容",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#5749949b",
+   "sec": "me.perf",
+   "text": "米国の今の 14 CFR 23.2120(b)(1) は、低速の小さな双発機に上昇勾配を求めます。",
+   "tag": "条文",
+   "source": "14 CFR 23.2120(b)(1)（Amdt. 23-64・23-65。レベル 1・2 の低速機で片発の耐衝撃の要件を満たさない機体）。eCFR で W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#cfe60942",
+   "sec": "me.perf",
+   "text": "推力を失ったあと、気圧高度（pressure altitude）5,000 ft・巡航の形態で 1.5% です。",
+   "tag": "条文",
+   "source": "14 CFR 23.2120(b)(1)（気圧高度 5,000 ft・巡航の形態で上昇勾配 1.5%）。eCFR で W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#eaecf485",
+   "sec": "me.perf",
+   "text": "加速継続距離（加速続行距離、accelerate-go distance） ｜ 決めた速度でエンジンが止まっても離陸を続け、50 ft の高さに達するまでの距離（公表していない機体もある） ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Terms：accelerate-go distance（50 ft まで）。公表していない機体もある）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#e879789b",
+   "sec": "me.perf",
+   "text": "上昇勾配（climb gradient） ｜ 水平に 100 ft 進む間に上がる高さ（%） ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Terms：climb gradient（水平距離に対する高さの百分率））。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#cac36292",
+   "sec": "me.perf",
+   "text": "両発の実用上昇限度（service ceiling） ｜ 両発で 1 分に 100 ft 上昇できなくなる高度 ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Terms：service ceiling（両発で 100 fpm））。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#e9908d06",
+   "sec": "me.perf",
+   "text": "片発の実用上昇限度 ｜ 片発で 1 分に 50 ft 上昇できなくなる高度 ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Terms：single-engine service ceiling（片発で 50 fpm））。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#142a1bcb",
+   "sec": "me.perf",
+   "text": "AFH の例では、片発の上昇率が 150 fpm くらいの双発機は、50 ft から 500 ft まで上がるのに約 3 分かかります。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Single-engine climb の例：約 150 fpm・90 kt の VYSE で 500 ft AGL まで約 3 分）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#60fa9c1a",
+   "sec": "me.perf",
+   "text": "その間に約 5 NM 進みます。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（同じ例：その間に約 5 NM 進む）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#f79ebcc9",
+   "sec": "me.perf",
+   "text": "両発の上昇率は約 1,340 fpm、片発の上昇率は約 212 fpm（最大重量）です。",
+   "tag": "参考値",
+   "source": "二次資料：Aviation Consumer 誌 2000 年 8 月号・Jane's All the World's Aircraft 1982–83（PA-44-180 の両発 約 1,340 fpm・片発 約 212 fpm）。POH（Information Manual）には同じ数字がない（UNVERIFIED U.seminole-poh）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#02deec3c",
+   "sec": "me.perf",
+   "text": "片発の実用上昇限度は約 4,100 ft です。",
+   "tag": "参考値",
+   "source": "二次資料：同じ（片発の実用上昇限度 約 4,100 ft）。POH には同じ数字がない（UNVERIFIED U.seminole-poh）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#9ad14761",
+   "sec": "me.perf",
+   "text": "出典は Aviation Consumer 誌 2000 年 8 月号と Jane's All the World's Aircraft 1982–83 で、どれも参考値・二次資料です。",
+   "tag": "参考値",
+   "source": "本文が自分で二次資料と書いている文（出典の名前）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#f3cb54a3",
+   "sec": "me.perf",
+   "text": "1 発動機不作動の上昇率が 200 fpm、対地速度（groundspeed）が 100 kt です。",
+   "tag": "教材値",
+   "source": "例題の場面（この本で決めた数字）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#60f25f30",
+   "sec": "me.perf",
+   "text": "1 NM 進む間に何 ft 上がりますか。",
+   "tag": "教材値",
+   "source": "例題の問い",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#c96cdeec",
+   "sec": "me.perf",
+   "text": "対地速度が 120 kt ならどうですか。",
+   "tag": "教材値",
+   "source": "例題の問い（対地速度 120 kt）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#25dabcd9",
+   "sec": "me.perf",
+   "text": "また、POH の図の例の 285 fpm を、対地速度 88 kt（無風）として直すとどうなりますか。",
+   "tag": "参考値",
+   "source": "例題の問い。285 fpm は Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）図 5-21 の例。W31 が 2026-10-31 に読んだ。88 kt は Vyse",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#2b38bae3",
+   "sec": "me.perf",
+   "text": "100 kt は 1 分に 100 ÷ 60 ≒ 1.67 NM なので、200 ÷（100 ÷ 60）＝ 120 ft/NM です。",
+   "tag": "教材値",
+   "source": "例題の答え（200 ÷ 1.67 ＝ 120 ft/NM。W31 が計算した）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#660ba357",
+   "sec": "me.perf",
+   "text": "120 kt では 1 分に 2 NM なので、200 ÷ 2 ＝ 100 ft/NM です。",
+   "tag": "教材値",
+   "source": "例題の答え（200 ÷ 2 ＝ 100 ft/NM。W31 が計算した）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#77a6d2eb",
+   "sec": "me.perf",
+   "text": "285 fpm は 285 ÷（88 ÷ 60）≒ 194 ft/NM です。",
+   "tag": "参考値",
+   "source": "例題の答え（285 ÷ 1.467 ≒ 194 ft/NM。W31 が計算した。285 fpm は POH 図 5-21 の例）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#cf3960d1",
+   "sec": "me.perf",
+   "text": "米国の計器出発の標準の 200 ft/NM（AIM 5-2-9）に届きません。",
+   "tag": "参考値",
+   "source": "AIM 5-2-9（計器出発の標準の上昇勾配 200 ft/NM）。faa.gov で W31 が 2026-10-31 に読んだ",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#a8ac0df4",
+   "sec": "me.perf",
+   "text": "Seminole の POH も、75 KIAS より前か脚 DOWN なら、スロットルを閉じてまっすぐ止まる（POH 3.5） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.5a・3.9c Engine Failure During Takeoff（Speed Below 75 KIAS or Gear Down）：両方のスロットルを閉じ、まっすぐ止まる。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#645a6207",
+   "sec": "me.perf",
+   "text": "② 脚 UP・片発で上昇できる ｜ 操縦（方向舵（ラダー、rudder）で偏揺れを止め、生きている側へ少しバンク）→ Vyse（88 kt）・全部前へ・脚とフラップ UP → 止まったエンジンを特定・確認 → フェザー ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.5a・3.9d（Speed Above 75 KIAS）。W31 が 2026-10-31 に読んだ・FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine failure after lift-off）。W31 が 2026-10-31 に読んだ・FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.IX.F（Vyse・脚とフラップ UP・特定・確認・フェザー）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#a7a6d149",
+   "sec": "me.perf",
+   "text": "片方のエンジンが止まると、上昇性能は 80〜90% 失われる",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（冒頭：上昇性能は 80〜90% 減る）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#f0cfd01f",
+   "sec": "me.perf",
+   "text": "同じ資格の水準で飛行機の限定を持っていれば、学科試験は要らない（14 CFR 61.63(c)） ｜ 陸上多発の等級の限定。",
+   "tag": "条文",
+   "source": "FL.jur multi.rating の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめた文。W31 は書いていない）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#b46ff5f5",
+   "sec": "me.perf",
+   "text": "限定は実地試験に使った航空機で決まり、操縦士は陸上多発ピストン機で受けても、陸上多発ピストン機と陸上多発タービン機の両方の限定になる（航空法第 25 条・航空法施行規則第 53 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur multi.rating の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめた文。W31 は書いていない）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.perf#70635bb8",
+   "sec": "me.perf",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur multi.rating の囲み（flight-lab/src/book-jur.js。W06 が一次資料と e-Gov で確かめた文。W31 は書いていない）。e-Gov の版の表示",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "oei.what#27361115",
+   "sec": "oei.what",
+   "text": "方向舵（生きている側の足）で止めるが、遅いほど方向舵の効きが弱い ｜ Vmc（赤い線・56 kt）より速く ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative flight：遅いほど方向舵が効かない）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.5（赤い線 56 kt）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "oei.what#e941f3bc",
+   "sec": "oei.what",
+   "text": "上昇（performance） ｜ 上昇性能が 80〜90% 失われる。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（冒頭：上昇性能は 80〜90% 減る）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "oei.what#a75c0bce",
+   "sec": "oei.what",
+   "text": "脚・フラップ（flaps）・風車状態のプロペラ・横滑りが、残りの上昇の力を奪う ｜ Vyse（青い線・88 kt） ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Drag：脚・フラップ・風車状態のプロペラ・横滑りが上昇を奪う）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.5（青い線 88 kt）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "oei.what#8d333b06",
+   "sec": "oei.what",
+   "text": "写真：NASA の研究機 Piper PA-30 Twin Comanche（1971 年）。",
+   "tag": "参考値",
+   "source": "写真の記録（flight-lab/src/book-photos.js の twinPa30：NASA の写真・パブリックドメイン。キャプションは W22 が確かめた写真の記録の文）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#6a73898b",
+   "sec": "me.vmc",
+   "text": "図：速度が下がるほど、方向を保つのに必要な方向舵が増え、いっぱいになる速度が Vmc です（教材のフライトモデルの Seminole：左エンジン停止・右は全開・バンク 5°）。",
+   "tag": "教材値",
+   "source": "この教材の飛行モデル（flight-lab/src/physics.js の pa44 と SM の速度表）。図 vmcRudder の曲線は W31 が飛行モデルで求めた方向舵の量（左エンジン停止・右全開・バンク 5°）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#34346282",
+   "sec": "me.vmc",
+   "text": "どちらの高さでも、方向舵がいっぱいになる前に失速警報（約 62 kt）が鳴ります",
+   "tag": "教材値",
+   "source": "この教材の飛行モデル（flight-lab/src/physics.js の pa44 と SM の速度表）。飛行モデルの失速警報は約 62 kt（W31 が確かめた）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#b7fc3045",
+   "sec": "me.vmc",
+   "text": "米国の今の規則（14 CFR 23.2135(c)）は、較正対気速度（calibrated airspeed）で決めます。",
+   "tag": "条文",
+   "source": "14 CFR 23.2135(c)（VMC は較正対気速度）。eCFR で W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#771d5ed4",
+   "sec": "me.vmc",
+   "text": "特に、翼を水平にしたまま飛ぶと、公表値より 20 kt 近く高い速度で方向を失うことがあります（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC：翼を水平にすると、公表の VMC より 20 kt 近く高い速度で方向を失うことがある）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#a66d67a0",
+   "sec": "me.vmc",
+   "text": "Seminole の POH は、Vmc の 56 KIAS は失速した状態だと書いています（POH 4.47）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.47 VMCA（56 KIAS and is a stalled condition）・2.3。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#45fdd1c1",
+   "sec": "me.vmc",
+   "text": "地上 3,000 ft（機体の推奨が高ければその高さ）より下がらずに終わる高さで行います（ACS・AFH）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC demonstration：3,000 ft AGL より下がらずに終わる高さ）。W31 が 2026-10-31 に読んだ・FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.B（risk management の 3,000 ft AGL）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#03d9705d",
+   "sec": "me.vmc",
+   "text": "Seminole の POH は 4,000 ft 以上です（POH 4.47）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.47（4000 feet above the ground より低い所では行わない）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#bc925471",
+   "sec": "me.vmc",
+   "text": "Vsse の約 10 kt 上で（事業用 ACS。AFH は Vsse と Vyse の高い方の約 10 kt 上）、片方のエンジンをアイドル（風車状態）、もう片方を離陸の出力にします。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.B.S2（Vsse の約 10 kt 上）。W31 が 2026-10-31 に読んだ・FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC demonstration：Vsse と Vyse の高い方の約 10 kt 上）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#562bceb4",
+   "sec": "me.vmc",
+   "text": "生きている側へ 5° 以内のバンクにし、方向舵で針路（ヘディング、heading）を保ちます。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.B.S3（生きているエンジンの側へ 5° を超えないバンク）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#c988bace",
+   "sec": "me.vmc",
+   "text": "機首を少しずつ上げ、1 秒に約 1 kt ずつ減速します。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.B.S4（約 1 kt/秒で減速）。W31 が 2026-10-31 に読んだ・FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（1 knot per second）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.47。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#0a980494",
+   "sec": "me.vmc",
+   "text": "入った針路の ±20° 以内で回復し、出力を戻して Vsse / Vyse（±5 kt）へ加速します。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.B.S7（入った針路の ±20° 以内で回復）・S8（Vsse / Vyse ±5 kt へ加速）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#023fd5c5",
+   "sec": "me.vmc",
+   "text": "条件と要因（米国の旧 14 CFR 23.149 で Vmc を決めた条件と、Vmc を変える要因） ｜ Vmc への影響 ｜ 理由 ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Factors affecting VMC）。W31 が 2026-10-31 に読んだ・旧 14 CFR 23.149（2016-01-01 版、eCFR の過去の版で W31 が 2026-10-31 に読んだ）",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#dd8f73c9",
+   "sec": "me.vmc",
+   "text": "生きている側へバンク（5° まで） ｜ 低くなる ｜ 揚力の横向きの成分が方向舵の横向きの力とつり合い、方向舵を助ける（横滑りが減る）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Bank：生きている側へのバンクが VMC を下げる。揚力の横の成分が方向舵を助ける）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#c60a7ea5",
+   "sec": "me.vmc",
+   "text": "翼を水平にすると、1° あたり 3 kt 以上、20 kt 近く高くなることがある ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC：バンクを 1° 減らすごとに 3 kt より多く上がることがある・20 kt 近く）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#9d3b4775",
+   "sec": "me.vmc",
+   "text": "Seminole は、米国の以前の規則（旧 14 CFR 23.149）で認証されています。",
+   "tag": "参考値",
+   "source": "EASA TCDS EASA.A.232（FAR 23 の改正 23-16 まで）・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.47（Federal Aviation Regulations で決めた）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#076a8c20",
+   "sec": "me.vmc",
+   "text": "この規則での Vmc は、「臨界発動機が急に止まっても操縦を保ち、そのあと同じ速度で、バンク 5° 以内でまっすぐ飛べる速度」です。",
+   "tag": "条文",
+   "source": "旧 14 CFR 23.149(a)（2016-01-01 版：臨界発動機が急に不作動になっても操縦を保ち、そのあと同じ速度でバンク 5° 以内でまっすぐ飛べる較正対気速度）。eCFR の過去の版で W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#bee30282",
+   "sec": "me.vmc",
+   "text": "このときは、失速より約 20 kt 上の速度で行います（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（VMC demonstration：方向舵を制限するときは失速より約 20 kt 上）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#f46d6c19",
+   "sec": "me.vmc",
+   "text": "このシミュレータの Seminole では、失速警報（約 62 kt）が Vmc（56 kt）より先に鳴ります。",
+   "tag": "教材値",
+   "source": "この教材の飛行モデル（flight-lab/src/physics.js の pa44 と SM の速度表）。シミュレータの失速警報 約 62 kt・SM.mc 56 kt",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.vmc#9467ced1",
+   "sec": "me.vmc",
+   "text": "課目の基準「回復で失う高度 300 ft 以内」は、ACS の基準ではありません。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js の課目 m3（基準「回復で失う高度 300 ft 以内」は教材の基準。ACS の CA.X.B に高度の損失の基準はない）（この教材の基準）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#ea446d1d",
+   "sec": "me.drag",
+   "text": "生きている側へ約 2° バンクし、ボールを 1/3〜1/2 ずらすと、横滑りがなくなります（AFH 第 13 章）",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：生きている側へ約 2°・ボールは 1/3〜1/2）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#14a9d594",
+   "sec": "me.drag",
+   "text": "AFH は、生きている側へ約 2° バンクし、ボールが生きている側へ1/3〜1/2 ずれるくらいに方向舵を使う組み合わせを勧めています。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：約 2° のバンクとボール 1/3〜1/2 の組み合わせ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#b443f65c",
+   "sec": "me.drag",
+   "text": "Seminole の POH は、生きている側へ 2〜3°・ボールは約 1/2 です（POH 3.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9（2° to 3° bank toward the operative engine with approximately 1/2 ball slip）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#92510d2e",
+   "sec": "me.drag",
+   "text": "横滑りがゼロになる正確なバンクは、機体によって 1.5〜2.5° と少しずつ違います（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：正確なバンクは機体で違う（1.5〜2.5° など））。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#36e140b2",
+   "sec": "me.drag",
+   "text": "エンジンが止まった直後は、偏揺れを止めて方向を保つため、生きている側へ 5〜10° のバンクを一瞬だけ使います。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine failure：最初は 5〜10° のバンクを一瞬使って方向を保つ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#011772ef",
+   "sec": "me.drag",
+   "text": "方向を保てたら、約 2° に戻します（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（そのあと約 2° に戻す）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#988dd9d7",
+   "sec": "me.drag",
+   "text": "脚 DOWN・フラップ UP ｜ 約 −250 fpm ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9j Summary of Factors Affecting Single Engine Operations（Landing gear extended/Flaps Up − 250 ft/min）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#95baecfd",
+   "sec": "me.drag",
+   "text": "フラップ 25°・脚 DOWN ｜ 約 −490 fpm ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9j（Flaps extended 25°/Gear Down − 490 ft/min）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#3922af2d",
+   "sec": "me.drag",
+   "text": "フラップいっぱい・脚 DOWN ｜ 約 −525 fpm ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9j（Flaps extended fully/Gear Down − 525 ft/min）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#95d62387",
+   "sec": "me.drag",
+   "text": "止まった側のプロペラが風車状態（脚とフラップ UP） ｜ 約 −200 fpm ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9j（Inoperative engine propeller windmilling (Gear and Flaps Up) − 200 ft/min）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#36353136",
+   "sec": "me.drag",
+   "text": "フラップ 10° ｜ 約 200〜250 fpm ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Drag demonstration 9)（フラップ 10：約 200〜250 fpm）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#19d6faec",
+   "sec": "me.drag",
+   "text": "＋脚 DOWN ｜ 約 200〜300 fpm ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Drag demonstration 10)（脚：約 200〜300 fpm）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#468751eb",
+   "sec": "me.drag",
+   "text": "＋フラップ 40°（全開。ガイドの表記は 45） ｜ 約 400〜500 fpm ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Drag demonstration 11)（フラップ 45 と書いてある：約 400〜500 fpm）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）2.3（フラップ全開 40°）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#1d0e8a9f",
+   "sec": "me.drag",
+   "text": "＋止まった側を風車状態に（ゼロスラストをやめる） ｜ 約 500〜600 fpm ｜",
+   "tag": "参考値",
+   "source": "Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料、R.seminoleG）Drag demonstration 12)（ゼロスラストから風車状態へ：約 500〜600 fpm）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#0892955b",
+   "sec": "me.drag",
+   "text": "方向舵を使わず、バンクだけ（8〜10°） ｜ 生きている側へ大きく横滑りする。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（3 つの飛び方：方向舵なしでバンクだけ（8〜10°）は大きな横滑り）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#ff86bdff",
+   "sec": "me.drag",
+   "text": "生きている側へ約 2° バンク・ボールは生きている側へ 1/3〜1/2 ｜ 横滑りゼロ。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（3 つの飛び方：約 2° のバンクとボール 1/3〜1/2 で横滑りゼロ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#e2a960b9",
+   "sec": "me.drag",
+   "text": "横滑りゼロ：生きている側へ約 2° バンク、ボールは生きている側へ 1/3〜1/2",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：約 2°・ボール 1/3〜1/2）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.drag#b78f1568",
+   "sec": "me.drag",
+   "text": "生きている側へ約 2° バンクし、ボールを生きている側へ 1/3〜1/2 ずらすと、横滑りがゼロになります（AFH 第 13 章）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：約 2°・ボール 1/3〜1/2）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#a41ba98d",
+   "sec": "me.oei",
+   "text": "速度は Vyse（88 kt）（障害物があれば Vxse か Vmc ＋5 kt の大きい方。事業用 ACS） ｜ まず方向。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.IX.F.S2（Vyse。障害物があれば Vxse か Vmc ＋5 kt の大きい方）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.3（Vyse 88 KIAS）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#8f622657",
+   "sec": "me.oei",
+   "text": "回転が下がる前に（Seminole は 950 rpm より上で） ｜",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）7.5・3.5（950 RPM より上でフェザー）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#0c613143",
+   "sec": "me.oei",
+   "text": "7 横滑りゼロ ｜ 生きている側へ約 2° バンク、ボールは生きている側へ 1/3〜1/2 ｜ 上昇性能を最大にする（） ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Zero sideslip：約 2°・ボール 1/3〜1/2。上昇性能が最大になる）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#1b3d4809",
+   "sec": "me.oei",
+   "text": "スロットルを絞って確かめ、プロペラは 950 rpm より下がる前にフェザーします（POH 3.5）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.5a（Propeller FEATHER (950 RPM Min.)）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#01ca26df",
+   "sec": "me.oei",
+   "text": "Area IX Task F：離陸直後の片発停止 ｜ Vyse（障害物があれば Vxse か Vmc ＋5 kt の大きい方）・脚とフラップ UP・模擬フェザー。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.IX.F.S2〜S4（Vyse か Vxse / Vmc ＋5・脚とフラップ UP・模擬フェザー）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#6d67ce7e",
+   "sec": "me.oei",
+   "text": "針路 ±10°・速度 ±5 kt。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.IX.F.S9（針路 ±10°・速度 ±5 kt）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#c2ed3df3",
+   "sec": "me.oei",
+   "text": "Area X Task A：片発での飛行 ｜ 高度 ±100 ft（または最小の降下率）・速度 ±10 kt・針路 ±10°。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.X.A.S7（高度 ±100 ft か最小の降下率・速度 ±10 kt・針路 ±10°）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#6ca082ab",
+   "sec": "me.oei",
+   "text": "離陸滑走中の模擬故障は、計算した Vmc の 50% までの速度で行います。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative training：離陸滑走中の模擬故障は VMC の 50% 以下）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#730fdfd5",
+   "sec": "me.oei",
+   "text": "離陸後の模擬故障は、地上 400 ft 以上で、Vsse（または Vxse・Vyse）以上になってからです。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative training：離陸後の模擬故障は 400 ft AGL 以上・Vsse 以上）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#3130c2ca",
+   "sec": "me.oei",
+   "text": "地上 3,000 ft より下では、スロットルを絞ってゼロスラストにして模擬します（本当には止めない）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative training：3,000 ft AGL より下はスロットルを絞ってゼロスラスト）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#68d72f0f",
+   "sec": "me.oei",
+   "text": "本当にフェザーするのは、再始動まで地上 3,000 ft より下がらない高さで、再始動できなくても空港に安全に降りられる位置だけです。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative training：本当のフェザーは、再始動できなくても安全に降りられる位置と高さで）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#43f4182a",
+   "sec": "me.oei",
+   "text": "Seminole のゼロスラストの回転数の目安は、82 KIAS で 1,850 rpm、88 KIAS で 2,180 rpm です（POH 4.49）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）4.49 Practice One Engine Inoperative Flight（82 KIAS で 1,850 rpm・88 KIAS で 2,180 rpm）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#dc78756c",
+   "sec": "me.oei",
+   "text": "課目 m4 は、地上 250 ft で故障が起きます。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js の課目 m4（地上 250 ft で故障）（この教材の基準）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#f71f22e1",
+   "sec": "me.oei",
+   "text": "シミュレータだからできる練習で、実機の訓練は 400 ft 以上です。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative training：実機は 400 ft AGL 以上）。W31 が 2026-10-31 に読んだ。前半の「シミュレータだからできる」は課目 m4 の説明",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.oei#6a09ae12",
+   "sec": "me.oei",
+   "text": "課目の基準「故障の直後 ±20°・30 秒以内に正しいエンジンをフェザー」は教材の基準です。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js の課目 m4（基準「±20°（故障直後）・30 秒以内に止まった側をフェザー」）（この教材の基準）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#cc6ed4dd",
+   "sec": "me.land",
+   "text": "余裕があれば、フラップ 10° と降下もここから（機体の手順が優先。Seminole の POH は、着陸できると確かになってから脚とフラップを出す） ｜",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative approach and landing）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9（着陸が確かになってから脚とフラップ）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#dcdfa8b9",
+   "sec": "me.land",
+   "text": "ベース ｜ 性能が足りればフラップを中間（ふつう 25°）に。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative approach and landing：ベースでフラップを中間に）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#08ef3357",
+   "sec": "me.land",
+   "text": "ファイナル（final approach leg） ｜ ふつうの 3° の進入。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative approach and landing：ふつうの進入角）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#feb326a9",
+   "sec": "me.land",
+   "text": "着陸が確実になるまで Vyse（88 kt）を保ち、そのあと機体の手順の速度へ（Seminole の POH は最終進入 90 KIAS・フラップ 25°）。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative approach and landing：着陸が確実になるまで Vyse）。W31 が 2026-10-31 に読んだ・Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.5・3.9（Final Approach Speed 90 KIAS・フラップ 25°）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#a3a30b75",
+   "sec": "me.land",
+   "text": "脚とフラップを上げる間に、500 ft 以上失うことも珍しくありません。",
+   "tag": "参考値",
+   "source": "FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章 Transition to Multiengine Airplanes（Engine inoperative approach and landing：脚とフラップを上げる間に 500 ft 以上失うことも）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#7a949d96",
+   "sec": "me.land",
+   "text": "Seminole の POH が 25° のフラップと 90 KIAS を勧めるのは、もし着陸復行が要っても、いちばんよい形にしておくためです（POH 3.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-44-180 Seminole Information Manual（REPORT VB-1942、2006-05-26 版。POH と同じ内容）3.9（A final approach speed of 90 KIAS and the use of 25° rather than full wing flaps ... best configuration for a go-around）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#8b5fa137",
+   "sec": "me.land",
+   "text": "事業用 ACS（Area IX Task G）では、着陸が確実になるまで、着陸の形態で推奨の進入速度（approach speed）±5 kt を保ち、安定した進入をします。",
+   "tag": "参考値",
+   "source": "FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）CA.IX.G.S6（着陸の形態で推奨の進入速度 ±5 kt）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.land#12654c69",
+   "sec": "me.land",
+   "text": "課目はファイナルの 5 km 手前、脚 UP の状態から始まります。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js の課目 m5（ファイナルの約 5 km 手前から始まる）（この教材の基準）。W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.case#b88bf57d",
+   "sec": "me.case",
+   "text": "2 人と荷物を積み、気温が高いので、片発の上昇はふだんより小さいはずです。",
+   "tag": "教材値",
+   "source": "架空の事例（この本で決めた場面。実在の便ではない）",
+   "kind": "例題",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "me.case#85731085",
+   "sec": "me.case",
+   "text": "総飛行時間が約 18,000 時間の操縦士でも、その機種に慣れていなかった事故があります（Piper PA-31T）。",
+   "tag": "参考値",
+   "source": "NTSB Safety Alert SA-081（総飛行時間 約 18,000 時間の定期運送用操縦士・Piper PA-31T・その機種に慣れていなかった）。ntsb.gov で W31 が 2026-10-31 に読んだ",
+   "by": "W31",
+   "checkedBy": null,
+   "checkedOn": null
+  }
+ ]
+}

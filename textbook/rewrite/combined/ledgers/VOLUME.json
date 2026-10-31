@@ -1,0 +1,358 @@
+{
+ "ledger": "VOLUME",
+ "version": 1,
+ "updated": "2026-10-31",
+ "by": "Wdeep",
+ "about": "DESIGN 5 章の基準 22（本文の量）の部ごとの予算と、Wdeep（R3、所有者の判断 12）が測った値。予算は第 2〜6 部の書き手（R3 の stage B）が書くときの目安。検査は tools/check-volume.mjs（部の予算を超えたら warn、本全体が上限を超えたら error）。この台帳は行（rows）を持たない記録で、ledgers/validate.mjs の対象外。",
+ "rule": {
+  "counting": "DESIGN 1.2 の数え方：節の HTML から図の SVG・タグ・空白を除いた字数（実体参照は 1 字）。",
+  "readFirst": "「まず読む」本文＝序部〜第 6 部の節で、まとめの章（gN）と sim を除き、deep: true の節を除き、節の中の折りたたみ（もっと深く bk.deep・計算演習 bk.drill：<details>、画面では閉じ、CADET の授業は読まない）を除いた本文。DESIGN 3.2「読み方の 2 つの道」の「発展（deep の節と折りたたみ）」と所有者の判断 12 による。考えてみよう（bk.q）は答えも数える（今の教科書の 182,000 字もそう数えた）。",
+  "limit": 254800,
+  "base": 182000,
+  "factor": 1.4,
+  "changedBy": "Wdeep（R3）：check-volume.mjs が折りたたみを「まず読む」から外して数えるようにした。R2 の締めまでの数え方（節全体）では 418,452 字（PROGRESS の基準 22）。"
+ },
+ "method": {
+  "formula": "部の予算 ＝ 上限 × w ÷ Σw を 100 字に丸めた値（合計が上限になるよう、端数の大きい部から 100 字ずつ足した）。w ＝ 今の教科書のその部の本文 ＋ 1,203 字 ×（DESIGN 3.3 でその部に新しく入る「まず読む」節の数）。",
+  "why": "指示のとおり「今の教科書での部の割合」と「教える重み」で分けた。教える重みは、DESIGN 3.3 がその部に足す新しい節の数で測り、1 節を今の教科書の平均の長さ（180,440 字 ÷ 150 節 ≒ 1,203 字）と数えた。新しい節は gN・sim・DESIGN 3.3 で発展とした節（aero.struct・sys.radio・wx.stab・nav.pnr・nav.adf）を除く。合計を上限にそろえるため、全体に 0.9290 を掛けた。",
+  "originalCommit": "89a3f52（DESIGN を書いた時点。R1 の前の教科書 27 章・154 節）を同じ数え方で数えた：185,997 字（sim の 5,557 字を除くと 180,440 字）。DESIGN 1.2 の「約 18.2 万字」とは数え方の細部で約 2% 違うが、上限は DESIGN のとおり 254,800 字のまま。",
+  "density": 1203,
+  "scale": 0.92902,
+  "sumOfWeights": 274269
+ },
+ "parts": {
+  "p0": {
+   "budget": 19800,
+   "original": 5674,
+   "originalChapters": "intro",
+   "plannedReadFirstSections": 18,
+   "newReadFirstSections": 13,
+   "weight": 21312,
+   "exact": 19799,
+   "measured": {
+    "r2CloseOldRule": 44293,
+    "beforeWdeep": 44293,
+    "afterWdeep": 29699
+   },
+   "overBudget": 9899,
+   "note": "序部は今の教科書では intro だけ（5,674 字）で、basics・english と intro の 2 節が新しい。予算は intro の量＋新しい 13 節分。囲み（日米の対照・日本では・米国では・出典・考えてみよう）だけで約 1.1 万字あり、basics の全節が章末・g1 の問いと課目の根拠なので、Wdeep の後も予算を約 9.9 千字超える（報告 Wdeep.md の 4）。"
+  },
+  "p1": {
+   "budget": 124200,
+   "original": 90402,
+   "originalChapters": "aero・sys・perf・wx・law・radio1〜5・hf",
+   "plannedReadFirstSections": 113,
+   "newReadFirstSections": 36,
+   "weight": 133708,
+   "exact": 124216,
+   "measured": {
+    "r2CloseOldRule": 281893,
+    "beforeWdeep": 267109,
+    "afterWdeep": 219363
+   },
+   "overBudget": 95163,
+   "note": "今の教科書の第 1 部の章の量（90,402 字）＋新しい 36 節分（DESIGN 3.3 の新 41 節から発展の 3 節と g1 の 2 節を除く）。Wdeep の後も約 9.5 万字超える。囲み・ねらい・最初の図だけで約 7.9 万字、課目・〔安全〕・CADET の決め打ちの 27 節で約 6 万字ある（報告 Wdeep.md の 4）。"
+  },
+  "p2": {
+   "budget": 39600,
+   "original": 35354,
+   "originalChapters": "ground・ops・tl・emg・solo",
+   "plannedReadFirstSections": 38,
+   "newReadFirstSections": 6,
+   "weight": 42572,
+   "exact": 39550,
+   "measured": {
+    "r2CloseOldRule": 37785,
+    "beforeWdeep": 37785,
+    "afterWdeep": 37785
+   },
+   "overBudget": 0,
+   "note": "今の教科書の ground・ops・tl・emg・solo（35,354 字）＋新しい 6 節分（ground.day・ground.crew・ground.after・ops.energy・ops.wake・emg.imc）。今 37,785 字なので、新しい節と基礎教材 第 11 章の中身は、はじめから大部分を発展（bk.deep・deep の節）に書く。"
+  },
+  "p3": {
+   "budget": 15000,
+   "original": 12547,
+   "originalChapters": "navp・navr・navd",
+   "plannedReadFirstSections": 15,
+   "newReadFirstSections": 3,
+   "weight": 16156,
+   "exact": 15009,
+   "measured": {
+    "r2CloseOldRule": 14629,
+    "beforeWdeep": 14629,
+    "afterWdeep": 14629
+   },
+   "overBudget": 0,
+   "note": "今の navp・navr・navd（12,547 字）＋新しい 3 節分（nav.efb・ops.night・ops.nightld）。nav.pnr・nav.adf は DESIGN 3.3 のとおり発展の節（deep: true）として数えない。今 14,629 字。"
+  },
+  "p4": {
+   "budget": 21700,
+   "original": 13756,
+   "originalChapters": "ifr・ifrp",
+   "plannedReadFirstSections": 17,
+   "newReadFirstSections": 8,
+   "weight": 23379,
+   "exact": 21720,
+   "measured": {
+    "r2CloseOldRule": 16593,
+    "beforeWdeep": 16593,
+    "afterWdeep": 16593
+   },
+   "overBudget": 0,
+   "note": "今の ifr・ifrp（13,756 字）＋新しい 8 節分（ifr.vacuum・ifr.auto・ifr.dep・ifr.enr・ifr.pt・ifr.pbn・ifr.circle・ifr.case）。今 16,593 字。ifr.circle の〔安全〕②の文は発展に入れない。"
+  },
+  "p5": {
+   "budget": 16200,
+   "original": 13795,
+   "originalChapters": "me・oei",
+   "plannedReadFirstSections": 12,
+   "newReadFirstSections": 3,
+   "weight": 17404,
+   "exact": 16168,
+   "measured": {
+    "r2CloseOldRule": 14701,
+    "beforeWdeep": 14701,
+    "afterWdeep": 14701
+   },
+   "overBudget": 0,
+   "note": "今の me・oei（13,795 字）＋新しい 3 節分（me.prop・me.sys・me.case）。今 14,701 字。me.oei の〔安全〕①の文は発展に入れない。"
+  },
+  "p6": {
+   "budget": 18300,
+   "original": 8912,
+   "originalChapters": "crm・jet（sim は数えない）",
+   "plannedReadFirstSections": 15,
+   "newReadFirstSections": 9,
+   "weight": 19738,
+   "exact": 18337,
+   "measured": {
+    "r2CloseOldRule": 9426,
+    "beforeWdeep": 9426,
+    "afterWdeep": 9426
+   },
+   "overBudget": 0,
+   "note": "今の crm・jet（8,912 字）＋新しい 9 節分（crm.case・jet.speed・jet.fms・jet.next・tsys の 5 節）。今 9,426 字。tsys（輸送機のシステム）は、課目と学科テストがつながらなければ節ごと発展にできる（Wdeep の案）。"
+  }
+ },
+ "total": {
+  "budget": 254800,
+  "r2CloseOldRule": 419320,
+  "beforeWdeep": 404536,
+  "afterWdeep": 342196
+ },
+ "chapters": {
+  "intro": {
+   "part": "p0",
+   "sections": 7,
+   "counted": true,
+   "oldRule": 18196,
+   "before": 18196,
+   "after": 9840,
+   "deepSections": 0,
+   "folds": 8495
+  },
+  "basics": {
+   "part": "p0",
+   "sections": 9,
+   "counted": true,
+   "oldRule": 17637,
+   "before": 17637,
+   "after": 14465,
+   "deepSections": 1,
+   "folds": 1673
+  },
+  "english": {
+   "part": "p0",
+   "sections": 2,
+   "counted": true,
+   "oldRule": 8460,
+   "before": 8460,
+   "after": 5394,
+   "deepSections": 0,
+   "folds": 3128
+  },
+  "sim": {
+   "part": "p0",
+   "sections": 4,
+   "counted": false,
+   "oldRule": 5569,
+   "before": 5569,
+   "after": 5569,
+   "deepSections": 0,
+   "folds": 0
+  },
+  "aero": {
+   "part": "p1",
+   "sections": 16,
+   "counted": true,
+   "oldRule": 36396,
+   "before": 30880,
+   "after": 26268,
+   "deepSections": 1,
+   "folds": 10268
+  },
+  "sys": {
+   "part": "p1",
+   "sections": 12,
+   "counted": true,
+   "oldRule": 24857,
+   "before": 22453,
+   "after": 19602,
+   "deepSections": 1,
+   "folds": 5338
+  },
+  "inst": {
+   "part": "p1",
+   "sections": 8,
+   "counted": true,
+   "oldRule": 24929,
+   "before": 23807,
+   "after": 17855,
+   "deepSections": 0,
+   "folds": 7186
+  },
+  "perf": {
+   "part": "p1",
+   "sections": 7,
+   "counted": true,
+   "oldRule": 19647,
+   "before": 18751,
+   "after": 13662,
+   "deepSections": 0,
+   "folds": 6083
+  },
+  "wb": {
+   "part": "p1",
+   "sections": 5,
+   "counted": true,
+   "oldRule": 11409,
+   "before": 10328,
+   "after": 8014,
+   "deepSections": 0,
+   "folds": 3501
+  },
+  "wx": {
+   "part": "p1",
+   "sections": 14,
+   "counted": true,
+   "oldRule": 36389,
+   "before": 35208,
+   "after": 28093,
+   "deepSections": 1,
+   "folds": 8488
+  },
+  "navb": {
+   "part": "p1",
+   "sections": 4,
+   "counted": true,
+   "oldRule": 16576,
+   "before": 14511,
+   "after": 9035,
+   "deepSections": 0,
+   "folds": 7663
+  },
+  "law": {
+   "part": "p1",
+   "sections": 8,
+   "counted": true,
+   "oldRule": 23247,
+   "before": 22956,
+   "after": 18518,
+   "deepSections": 0,
+   "folds": 4852
+  },
+  "radio1": {
+   "part": "p1",
+   "sections": 4,
+   "counted": true,
+   "oldRule": 6776,
+   "before": 6776,
+   "after": 5725,
+   "deepSections": 0,
+   "folds": 1078
+  },
+  "radio2": {
+   "part": "p1",
+   "sections": 4,
+   "counted": true,
+   "oldRule": 5801,
+   "before": 5801,
+   "after": 5308,
+   "deepSections": 0,
+   "folds": 499
+  },
+  "radio3": {
+   "part": "p1",
+   "sections": 6,
+   "counted": true,
+   "oldRule": 14883,
+   "before": 14883,
+   "after": 14132,
+   "deepSections": 0,
+   "folds": 776
+  },
+  "radio4": {
+   "part": "p1",
+   "sections": 7,
+   "counted": true,
+   "oldRule": 14222,
+   "before": 14222,
+   "after": 14222,
+   "deepSections": 0,
+   "folds": 0
+  },
+  "radio5": {
+   "part": "p1",
+   "sections": 7,
+   "counted": true,
+   "oldRule": 12517,
+   "before": 12517,
+   "after": 11257,
+   "deepSections": 0,
+   "folds": 1296
+  },
+  "hf": {
+   "part": "p1",
+   "sections": 9,
+   "counted": true,
+   "oldRule": 22744,
+   "before": 22744,
+   "after": 18264,
+   "deepSections": 0,
+   "folds": 4600
+  },
+  "adm": {
+   "part": "p1",
+   "sections": 5,
+   "counted": true,
+   "oldRule": 11500,
+   "before": 11272,
+   "after": 9408,
+   "deepSections": 0,
+   "folds": 2152
+  },
+  "g1": {
+   "part": "p1",
+   "sections": 2,
+   "counted": false,
+   "oldRule": 13639,
+   "before": 13639,
+   "after": 13639,
+   "deepSections": 0,
+   "folds": 0
+  }
+ },
+ "floor": {
+  "about": "序部と第 1 部で、決まり（ねらい・ここが大切・最初の図は折りたたまない。課目・章末と学科テストの問いの理由・CADET の決め打ち・命に関わる 7 項目が要る文も折りたたまない）を守ったときの、「まず読む」本文の下限の見積もり（Wdeep が測った）。",
+  "p1": {
+   "boxesAimFirstFigure": 78895,
+   "protectedSections27": 60390,
+   "autoFoldWithGuards": "約 17.5〜18 万字（各節の説明を最初の約 150 字まで残し、問い・要点・定義・概念の住所の文だけを残して、ほかを全部折りたたんだ場合の試算。読む流れが切れるので採らなかった）",
+   "chosen": 219363
+  },
+  "p0": {
+   "boxesAimFirstFigure": 12666,
+   "chosen": 29699
+  }
+ }
+}

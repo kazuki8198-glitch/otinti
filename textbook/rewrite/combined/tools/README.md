@@ -25,7 +25,7 @@ node textbook/rewrite/combined/tools/selftest.mjs               # 道具その�
 | form | check-form.mjs | 節の形（ねらい → 最初の図 → 説明 → 囲み → ここが大切（2〜4 項目・60 字以内）→ … → シミュレータが最後、写真は最初の図より後）（3.2） |
 | data | check-data.mjs | 節のデータ（from・deep・use・jcab・faa）と ID の形、DESIGN 3.3 の部と違う章（11・6.2 の決まり 1） |
 | style | check-style.mjs | です・ます、体言止め、1 文の平均 40 字・最長 80 字、留保の言い方は 1 節 1 回、数字と単位の間の空白、（FL.terms があれば）用語の初出の形（21） |
-| volume | check-volume.mjs | 本文の量（1.2 の数え方）：序部〜第 6 部の「まず読む節」は今の教科書 約 18.2 万字の 1.4 倍まで（22） |
+| volume | check-volume.mjs | 本文の量（1.2 の数え方）：序部〜第 6 部の「まず読む」本文（deep の節と折りたたみ `bk.deep`・`bk.drill` を除く。所有者の判断 12）は今の教科書 約 18.2 万字の 1.4 倍まで（超えたら error）。部ごとの予算（`ledgers/VOLUME.json`）を超えた部は warn。部と章の内訳、折りたたみの外が 200 字未満の節は info（22） |
 | jurisdiction | check-jurisdiction.mjs | 全節に scope、米国の規則の言葉は us の範囲・米国の囲み・「米国」と書いた文だけ、日本の規則の言葉は jp の範囲・日本の囲みだけ（8）。scope のない節は DESIGN 3.3 の「範囲」の列で調べる |
 | chapter-refs | check-chapter-refs.mjs | 出典の前置き（PHAK・AFH・AIM・基礎教材 など）のない直書きの「第 N 章」（6.2 の決まり 2・3） |
 | claims | check-claims.mjs | 数字と単位・条番号・法令名を含む文を抜き出し、主張の台帳 CLAIMS.json の札と照らす（3）。「教材値」だけで「参考値」のない節（6、info）。台帳の行の文が本のどこにもないときだけ「本にない」（info）。抜き出さない文（手で足した `#hand-` の行・単位のない数・表）が本にある行は数だけ（R2 の統合） |

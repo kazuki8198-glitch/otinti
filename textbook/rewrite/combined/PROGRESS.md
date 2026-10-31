@@ -4,14 +4,15 @@
 
 次のエージェントは、ここと台帳（JSON）から続けます（DESIGN 7.4）。
 
-## 今の状態（2026-10-30）
+## 今の状態（2026-10-31）
 
+- **R3A**：**R3 の始め（R2 の残りと描く部品・発展）を統合した**（[`reports/integrate-R3A.md`](reports/integrate-R3A.md)）。W21（第 1 部の図：序部と第 1 部の 145 枚を目視、36 枚を直し、新しい図 `wingletVortex` を `aero.wing` に、`lightGunSignals` に信号灯の場面、`altimeterHighLow` を消した、図の中の古い名前を `FL.terms` の正式名に）・R2V（第 1 部の主張の二人目：CLAIMS 2,114 行・PROVENANCE 462 行に署名、`perf.da` の計算の誤りを直した、計算の例の台帳 `ledgers/CALC.json` 148 行、思い出そうの囲み 7・`aero.forces` の参考値・長い文の分け方 7）・W10c（使う場面の札と試験の項目の注記：`FL.book.secMarks` が課目・学科テスト・まとめ・JCAB の科目のリンクと `jcab`・`faa` から描く。149 節に札、104 節に注記）・Wdeep（所有者の判断 12：序部と第 1 部の 152 か所を「もっと深く」の折りたたみに、`basics.case` を発展の節に、`check-volume.mjs` が折りたたみを外して数え、部ごとの予算 `ledgers/VOLUME.json`）。本は 7 部・34 章・208 節のまま、図は 173 → 174。「まず読む」本文は 342,196 字（上限 254,800 字の 1.34 倍、今の教科書の 1.88 倍）で、基準 22 はまだ満たさない（所有者の判断を待つ：下の「未解決」）。CLAIMS の署名のない行は 4（開いている裁定の 2・POH の図で確かめる参考値の 2）。コミットは単位ごと：`d95bb64` W10c・`124a83d` R2V・`921f091` W21・`085e873` Wdeep と統合。出力（3 つの HTML）は作り直していない（R3 の最後に）。
 - **版**：**R2（第 1 部 地上学科）を閉じた**（[`reports/integrate-R2.md`](reports/integrate-R2.md)）。R2 の確かめ（DESIGN 7.2 の W27 のうち、事実の二人目 [factcheck2-R2](reports/factcheck2-R2.md)・本文だけで解けるか [answerable-R2](reports/answerable-R2.md)・〔安全〕の文の安全レビュー [safety-R2](reports/safety-R2.md)）を統合した：3 つの報告に must はなく、should 6 つ（安全 S1〜S3・解けるか G1・事実 S1・S2）と nit 7 つを直すか、直さない理由を書いた。3 つの出力を作り直した（ビルドのコミット `12820d5`）。W21（第 1 部の図）は R2 ではしていない（R3 の始め：「次」）。本は 7 部・34 章・208 節のまま。
 - **R2C**：R2（第 1 部）の W23・W24・W25・W26・W07d2 を本に入れた（R2C）**（[`reports/integrate-R2C.md`](reports/integrate-R2C.md)）：第 1 部のまとめの章 `g1`（新しいファイル `book-gates.js`、第 20 章）・第 1 部の扉（`PARTS` の p1 の `door`、`FL.book.doorHtml`）・付録のページ「JCAB 学科の道」（`FL.book.jcabRoadHtml`）を FLIGHT LAB と TEXTBOOK に、用語の表 `FL.terms` を 436 語に（序部と第 1 部の本文の名前と初出の形をそろえた）、学科テストの 14 分野に第 1 部の 81 問（145 → 226）、CADET の授業 6 回の中に新しい章（`basics`・`inst`・`wb`・`navb`・`adm`）と `deep` を飛ばす講義、課目と教科書の食い違いの 26 行（W07d2）。本は **7 部・34 章・208 節**、第 1 部は DESIGN 3.3 の **16 章・118 節**、`#aero.lift` は 5.3。CADET のゲームの本は 30 章・193 節のまま（`g1` は CADET に出ない）。R2 の残りは W21 図・W27 R2 の確かめと、版の最後の出力の作り直し。
 - **R2B**：第 1 部の章を本に入れた。R2B（章の単位 W13〜W20 の下書き 9 つ：`aero`・`sys`・`inst`・`perf`・`wb`・`wx`・`navb`・`law`・`radio1`〜`radio5`・`hf`・`adm`）を統合し、章ごとにコミットした（[`reports/integrate-R2B.md`](reports/integrate-R2B.md)）。第 1 部は 15 章（`g1` を除く）・116 節、本は 7 部・33 章・206 節。6 つの移動（`sys.g1000`・`sys.compass` → `inst`、`perf.wb`・`perf.wbex` → `wb`）を済ませた。所有者の判断 11（失速の課目の高度は参考の行）を入れた。
 - **R2A**：W10b 描く部品・W22 写真の仕組みとクレジット・R1V R1 の確かめの残りを統合した（[`reports/integrate-R2A.md`](reports/integrate-R2A.md)）。
 - **R1**：**R1（誤りの修正・日米の違い・序部）を閉じた**。P1（W01・W02・W03・W05）、P2（W04・W04b・W06）、P3（W07a・W07b・W07c・W07f・W07d・W11）、P4（W09・W08a・W08b・W08c）、P5（W10：序部の 3 章）、W12（R1 の確かめ）を統合してコミットした（`reports/integrate-R1.md`）。R1 の本は 7 部・29 章・167 節。
-- **テスト**（`textbook/rewrite/tools/testall.sh`、R2 の締めの木）：FLIGHT LAB 92/92・TEXTBOOK 36/36・CADET 269/269（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 3。R2C の統合も 92/92・36/36・269/269（[`reports/integrate-R2C.md`](reports/integrate-R2C.md) の 3）。R2B の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R2A の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R1 の締めは 83/83・22/22・266/266）。
+- **テスト**（`textbook/rewrite/tools/testall.sh`）：R3A の最終の木で FLIGHT LAB 95/95・TEXTBOOK 38/38・CADET 270/270（[`reports/integrate-R3A.md`](reports/integrate-R3A.md) の 3。途中のコミットの木も全部通った。CADET のブラウザのテスト 2 件は、2 つの testall を同時に流したときだけ落ち、1 つだけで流すと通る：「未解決」）。R2 の締めの木：FLIGHT LAB 92/92・TEXTBOOK 36/36・CADET 269/269（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 3。R2C の統合も 92/92・36/36・269/269（[`reports/integrate-R2C.md`](reports/integrate-R2C.md) の 3）。R2B の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R2A の統合は FLIGHT LAB 89/89・TEXTBOOK 34/34・CADET 268/268、R1 の締めは 83/83・22/22・266/266）。
 - **出力**（`FLIGHT-LAB.html`・`TEXTBOOK.html`・`CADET.html`）：R2 の締めで作り直してコミットした（ビルドのコミット `12820d5`。`textbook/README.md`・`cadet/README.md` の raw.githack のリンクはこのコミットを指す。大きさは下の「R2 の締め」の基準 25）。R1 の締めのビルドは `2097b59`。
 
 ## できたこと
@@ -43,6 +44,10 @@
 | R2C 第 1 部の残り（W23・W24・W25・W26・W07d2） | W23：学科テストの 14 分野の後ろに第 1 部の新しい中身の 81 問（145 → 226、`common` 50・`us` 31・日本の法令 0。足した問は 5 つめの要素 `{ sec, scope, jur? }`）とテスト。W24：`FL.terms` に JCAB の資料で確かめた 134 語（302 → 436）、序部と第 1 部の本文の名前（教官 → 操縦教員、方向舵、無線呼出符号、必要馬力・利用馬力・余剰馬力、剥離 など）と初出の形、`wx.shear` に気象庁の情報名の日本の囲み、国際標準大気 1013.25 hPa、裁定 3 行（`R.windshear-term`・`R.ceiling-term`・`R.aoa-term`）。W25：まとめの章 `g1`（`g1.review` 問い 15・口述 4、`g1.japan` 門 g1 の 25 項目を `bk.jur` で、確認問題 10・序部 4）・第 1 部の扉・JCAB 学科の道の下書き。W26：CADET の授業 6 回の中を DESIGN 6.3 のとおり（`basics` も）、`BANK_OF` に 4 章、講義で `deep` を飛ばす、授業の 2 問は `sec` でその日に話した節から。W07d2：課目と教科書の食い違い 26 行（a7 の入り方・m2 のバンク約 2°〔安全〕・n2 の採点・i5 の開始点・MAYDAY の順・Sanford の模式図など）。統合で：`g1` を新しいファイル `flight-lab/src/book-gates.js` に（共有の列・CADET の `FL_LEAVE_OUT`・開発用ページ・TEXTBOOK 19 ファイル）、図 2 枚を `book-figs.js` に、扉のデータと `FL.book.doorHtml` を `book-core.js` に、扉と JCAB 学科の道を FLIGHT LAB の教科書の目次（部の名前の下・付録）と TEXTBOOK の目次（`#door:p1`・`#jcab`）と全文（印刷）に、まとめの章では章末の日米の表を描かない、`jur.test.mjs` の ① の例外と ② の確かめ、テストの定数（`COUNTS`・`ORDER`・見出し・`FL_MODULES.length`・用語の数の上限・CADET の授業の列）、STYLE（用語の数・教官と操縦教員・判断 3 の補足）、DESIGN の付記 10 | [W23](reports/W23.md)・[W24](reports/W24.md)・[W25](reports/W25.md)・[W26](reports/W26.md)・[W07d2](reports/W07d2.md)・[integrate-R2C](reports/integrate-R2C.md) | `check-chapter.mjs g1`（error 0）、`check-jur.mjs`（② found 25・missing 0）、3 製品のテスト、`validate.mjs`（error 0） |
 
 | W27 R2 の確かめ（R2 の締め） | 事実の二人目（factcheck2-R2：R2 の差分の数字・規則・計算・図、考えてみよう 72・計算演習 31・学科テストの 81 問・`g1`・W07d2・W24 の 140 語の根拠、R2 で閉じた ERRATA 49・RULINGS 23 行を一次資料と照らした。must 0・should 2・nit 1）、本文だけで解けるか（answerable-R2：序部と第 1 部の章末 143・説明してみよう 233・`g1` の問い 23 の 399 問を本文だけで解いて 399 問正解・全部の答えを本文に見つけた。追加の考えてみよう 91・学科テスト 81。should 1・nit 2）、安全レビュー（safety-R2：7 項目とスピン・荷重倍数・着氷・体調、新しい判断の目 34・もっと深く 19、W07d2 の課目。must 0・should 3・nit 5）。統合役が should と nit を直した（`wx.shear`・`hf.body`・課目 a5・`aero.flaps`・`aero.stall`・`inst.ap`・`perf.wb`・`wx.ts`・`g1.review` 問 6・`basics.flight`）、台帳に 2 人目の署名（ERRATA 49・RULINGS 23）、CLAIMS の本にない文 386 行を外した（パッチの `op: "remove"` を足した）、`check-claims.mjs` の「本にない」の数え方、COUNTS の R2 の作った本の数、DESIGN の付記 11、出力の作り直し | [factcheck2-R2](reports/factcheck2-R2.md)・[answerable-R2](reports/answerable-R2.md)・[safety-R2](reports/safety-R2.md)・[integrate-R2](reports/integrate-R2.md) | 3 製品のテスト（`flight.test.mjs`「textbook: the seven safety items…」）、`validate.mjs`（warning 538 → 466）、`check-claims.mjs`（本にない行 763 → 0）、`selftest.mjs`（31） |
+| W21 第 1 部の図（R3A） | 序部と第 1 部の 145 枚と新しい 1 枚を `figshot.mjs` の 390 px と 760 px で 1 枚ずつ見た（報告の 3 の表）。はみ出し・詰まり 4 枚（`instShared`・`flightOverviewMap`・`swissCheese`・`clouds`）、図の中の古い名前（ソロ・教官・エルロン・ラダー・タキシー・コールサイン・はく離・必要パワーほか → `FL.terms` の正式名）、図が本文より先に出す用語に英語（初出の形の warn：図が原因の分 23 → 3）、`hypoxiaAltitudes` のキャプションを 91.211 の言葉に。新しい図 `wingletVortex`（PHAK 第 4 章・図 4-8。統合で `aero.wing` のウイングレットの段落の後ろ）、`lightGunSignals` に信号灯の場面（AIM 4-3-13）、使っていない `altimeterHighLow` を消した。ERRATA `K.weather.K5`・`K.human.K8` を閉じた、PROVENANCE の外す図 63 行を `dropped`、描き直した図 36 行に目視の署名（統合で、閉じた 2 行と外した 63 行に統合役の署名） | [W21](reports/W21.md)・[integrate-R3A](reports/integrate-R3A.md) | `check-figures.mjs`（error 0）、`check-chapter.mjs`（序部と第 1 部の 19 章 error 0）、TEXTBOOK の `COUNTS.figs` 174 |
+| R2V 第 1 部の主張の二人目（R3A） | CLAIMS の署名待ち 2,126 行を一次資料（eCFR・AIM・PHAK・AFH・IFH・AWH・POH・e-Gov など、2026-10-30 に取り直し）で確かめた：署名 2,114、誤りで直した文 1（`perf.da` の hPa の式：表示の 1016.3 で計算して −27 ft）、基準 21 で分けた文 4、署名しない 2（`hf.body`：開いている裁定 `R.vfr-into-imc`）。計算の例の台帳 `ledgers/CALC.json`（148 行、`calc-check.mjs` 178 例 error 0）。PROVENANCE の署名待ち 463 行のうち 462 行に署名。基準 15：住所が前にある 7 組を思い出そうの囲みに。基準 6：`aero.forces` の教材値（約 9 倍）の隣に POH 図 5-33 の参考値（約 11 倍）。基準 21：第 1 部の長い文 0・平均 40 字を超える節 0。統合で、R2V が分けた・直した文の 8 行に統合役が署名（一次資料と計算）、W21 のキャプションの 5 行に R2V の署名を写した | [R2V](reports/R2V.md)・[integrate-R3A](reports/integrate-R3A.md) | `validate.mjs`（warning 466 → 3：署名待ちは CONCEPTS 3）、`calc-check.mjs`、`check-claims.mjs`（序部と第 1 部の署名なし 4） |
+| W10c 使う場面の札と試験の項目の注記（R3A） | `FL.book.secMarks` が、題・範囲の札・由来の行の下に「使う場面：課目 a6・a7／学科テスト「飛行の原理」／まとめ 1／JCAB 航空工学」を描く（課目の `book`・学科テストの `book` と問の `meta.sec`・まとめの章のリンク・`jcab` の科目から自動、節の `use` は足りない分だけ）。リンクは行き先があるときだけ（まとめは章が本にあるとき、JCAB は「JCAB 学科の道」が並べる節だけ）。「試験の項目を見る」で開く注記：JCAB の出題範囲参考の番号の書き方（`JCAB-MAP.json` の 491 行の `label` と一致）と ACS の符号、「FAA の学科を受けるかは未公表」。FLIGHT LAB は課目・学科テストを課程表のカードで開き、TEXTBOOK は札の下に課目の説明。CADET は出さない（安全網 `PAGE_MARKS`）。統合で `intro.marks` の約束の表に 2 行、`use` の科目名を JCAB の書き方（航空工学）に、STYLE の `use`・`jcab`・`faa` の書き方 | [W10c](reports/W10c.md)・[integrate-R3A](reports/integrate-R3A.md) | `flight.test.mjs`（2）・`browser.test.mjs`（1）、`textbook/test/use.test.mjs`（2）、`cadet/test/content.test.mjs`（1） |
+| Wdeep 発展に回す（R3A。所有者の判断 12） | 序部と第 1 部の 152 か所を `bk.deep` の折りたたみに（`<h4>` の小見出しのまとまりを単位に。文は 1 文も消さず書き換えず、見出しが折りたたみの題に移った）、`basics.case` を発展の節（`deep: true`）に。ねらい・ここが大切・最初の図・囲み・課目の節・命に関わる 7 項目・CADET の決め打ち・問いの理由の語・後で使う定義は折りたたまない。`check-volume.mjs` が折りたたみ（`bk.deep`・`bk.drill`）と deep の節を外して「まず読む」を数え、部ごとの予算 `ledgers/VOLUME.json` と部・章の内訳を出す。序部 44,293 → 29,699 字・第 1 部 267,109 → 219,363 字、本全体 342,196 字（1.88 倍）。統合で TEXTBOOK の `COUNTS.folds` 50 → 202 | [Wdeep](reports/Wdeep.md)・[integrate-R3A](reports/integrate-R3A.md) | `check-volume.mjs`（error 1：上限を超える・warn 2：p0・p1 の予算）、`textbook/test/browser.test.mjs`（#all の閉じた details 380） |
 
 台帳で閉じた行（P1）：ERRATA `APP.max-bytes`・`APP.index-photos`・`APP.menu-read-count`・`APP.record-textbook-row`（W02）・`APP.base64-xxx`（W01）、UNVERIFIED `U.docs-article`・`U.egov-version`（W05）。どれも確かめ役の署名（`checkedBy`）は W12 が付ける（`validate.mjs` の warning 7 件）。新しい行：ERRATA `APP.cadet-comm-practice-ch-sim`（W02 が見つけた。P3 で W07a が閉じた）。
 
@@ -63,6 +68,25 @@
 台帳（R2C）：W23 → W07d2 → W24 → W25 → integrate-R2C のパッチを、単位のコミットごとに取り込んだ（`apply-patches.mjs --write` → `validate.mjs` ok：error 0・warning 538。warning は確かめ役の署名待ち）。閉じた行：ERRATA の課目と教科書の食い違い 26 行（W07d2：fixed 25・not-error 1。`SYNC.pa44-vxse`・`SYNC.atis-few035` は open のまま note）、RULINGS 3 行（W24）、PROVENANCE `kiso01.x1`・`kiso02.x1`（扉）・`kiso03.28`・`kiso04.28`・`kiso05.28`（`sys`・`inst`・`wb` の説明してみようと `g1.review` の口述の練習）を done、`kiso09.q8`・`kiso09.q18`・`kiso10.q28` の `to` に `g1.review`（W25）。CLAIMS：W24 の 48 行（用語をそろえて文の id が変わった行）と W25 の `g1` の 90 行（どれも署名なし：W27）。W24 の前の id の 47 行は消さずに note「本にない文」（統合）。COUNTS：`book.quiz`（W23）・`book.terms`（436 語）・`origin.written.gates`（`g1` を登録）に note。
 
 台帳（R2 の締め）：factcheck2-R2 → safety-R2 → integrate-R2 のパッチを取り込んだ（`apply-patches.mjs --write` → `validate.mjs` ok：error 0・warning 538 → 466。残りは PROVENANCE 463・CONCEPTS 3 の署名待ち）。3 つの確かめの単位は「直さない役」でパッチを書かなかったので、統合役が報告の表から各単位の名前のパッチを書いた（DESIGN の付記 11）。署名：R2 で閉じた ERRATA 47 行・RULINGS 23 行に `checkedBy: factcheck2-R2`、〔安全〕の ERRATA 2 行（`K.navigation.K1`・`K.human.K5`）に `checkedBy: safety-R2`。ERRATA・RULINGS で閉じた行に署名のない行は 0。`SYNC.m3-speed` に AFH と ACS の Vmc デモの入りの速度の言い方の違い（factcheck2-R2 の N1）、`R.vfr-into-imc` に安全レビューの承認（open のまま：`emg.imc` W28）。CLAIMS：本のどこにも文がない 386 行を外した（`op: "remove"`、記録は `CLAIMS.json` の `removed`。R2B・R2C が「本にない文」の note で残した 394 行の大半と、R2 の締めで直した文の前の 2 行）、W24 が用語だけをそろえた 8 行に R1V の署名を引き継いだ（`checkedBy: integrate-R2`）、R2 の締めで直した文の 4 行（札つき・署名待ち）。COUNTS：部 7・章 34・節 208・第 1 部 16 章 118 節（今 77・新 41）・TEXTBOOK の読み込み 19・`#aero.lift` 5.3・学科テスト 226・用語 436・章末の 4 択 213・説明してみよう 233・図 178／173・課目 39 と book 57 本、出力の大きさ（ビルドのコミット）。
+
+台帳（R3A）：R2V → W21 → integrate-R3A のパッチをこの順に取り込んだ（`apply-patches.mjs --write` → `validate.mjs` ok：error 0・warning 466 → 4 → 68 → 3。全部のパッチを流し直しても変わらない：0 行・飛ばすファイル 0）。R2V：CLAIMS 2,114 行・PROVENANCE 462 行の署名、直した・分けた文の 5 行を外して 10 行を足した。W21：ERRATA `K.weather.K5`・`K.human.K8` fixed、PROVENANCE の外す図 63 行 `dropped`・描き直した図 36 行の目視の署名、キャプションを直した CLAIMS の 5 行の差し替え。integrate-R3A：R2V の新しい行 8 行に統合役の署名、W21 の 5 行に R2V の署名を写した、`intro.cert` の図のキャプションの行の差し替え、COUNTS の `book.figures`・`book.text`。PROVENANCE `ch09-fig9-2` の `to`・`plan` を `where` に合わせた（統合役が台帳を直接）。`apply-patches` の取り込み済みの add の見分けを直した（null の署名があとで埋まった行：DESIGN の付記 12）。integrate-R3A は W21 が外した図の 63 行と ERRATA `K.weather.K5`・`K.human.K8` にも署名した（外す理由を DESIGN 4.2 と、名指す節と図を本と道具で照らした。wx・hf・adm の図は Chromium 390 px で error 0）。署名待ちは CONCEPTS 3 行（前から：W36）
+
+## R3A で動いた基準（DESIGN 5 章。序部と第 1 部）
+
+R2 の締めの表（下）のうち、R3A で変わった行だけ。ほかは下の表のまま。
+
+| # | 基準 | R3A の結果 | 確かめたもの | 残り（行き先） |
+|---|---|---|---|---|
+| 3 | 主張の台帳 | **満たす（序部と第 1 部、署名のない 4 行を除く）**：札なし 0、本にない文の行 0、二人目の署名は 2,523 行のうち 2,519 行（R2V 2,114・統合役 8 ほか） | `check-claims.mjs`（序部と第 1 部の warn 0）、`validate.mjs` | `hf.body` の 2 行（裁定 `R.vfr-into-imc`）・`aero.forces` の POH の図の 2 行（W36） |
+| 5 | 計算の例は検算済み | **満たす（序部と第 1 部）**：台帳 `CALC.json` 148 行（R2V）、見本 30 と合わせて 178 例 error 0 | `calc-check.mjs` | 第 2〜6 部（R3 の章の単位） |
+| 6 | 教材値と参考値を並べる | **満たす（第 1 部）**：`aero.forces` に POH 図 5-33 の参考値 | `check-claims.mjs` の info（残りは `ops.trim`・`ops.slow`） | `ops.*`（W28） |
+| 11 | 由来表 | **一部**：第 1 部と序部の 463 行のうち 462 行に二人目の署名（R2V）、`ch09-fig9-2` の行き先を直した。W21 が外した図 63 行に統合役の署名 | `validate.mjs`（PROVENANCE の warning 0） | kiso11〜13（W33） |
+| 15 | 1 つの概念に住所は 1 つ | **一部**：住所が前にある 7 組を思い出そうの囲みにした（`check-concepts` の warn 34 → 27、序部と第 1 部 18 → 11）。残る 11 組は住所が後ろ（呼び戻す節を先に読む） | `check-concepts.mjs` | 決め方（道具か台帳を「予告」に：W01・W03）、序部の 3 組のリンクは基準 23 の上限と一緒に |
+| 16 | 図 | **満たす（序部と第 1 部）**：145 枚と新しい 1 枚を 390 px・760 px で目視（W21 の報告の 3）、174 枚が Chromium 390 px の検査を通る | `check-figures.mjs`（error 0・warn 6：第 3・4 部の図いっぱいの塗り） | 第 2〜6 部の図（W33：古い名前 9 枚・R1V の nit 2） |
+| 21 | 文体 | **一部**：第 1 部の長い文 0・平均 40 字を超える節 0（R2V） | `check-style.mjs` | 初出の形の warn 118（数え方：W01・W24） |
+| 22 | 読みやすさ | **満たさない**：数え方を判断 12 の形に（deep の節と折りたたみを除く。Wdeep）。序部と第 1 部 311,402 → 249,062 字、本全体 342,196 字（上限 254,800 字。今の教科書の 1.88 倍）。部の予算は `VOLUME.json`（p0・p1 が超える） | `check-volume.mjs` | 所有者の判断（Wdeep の報告の 7 の案）、第 2〜6 部は予算で書く（W28〜W32）、まず読む本文だけの初学者の読み（W36） |
+| 24 | 3 製品で正しく出る | **一部（部品はそろった）**：使う場面の札と試験の項目の注記を FLIGHT LAB と TEXTBOOK が描き、CADET に出ないことをテストした（W10c） | `flight.test.mjs`・`browser.test.mjs`・`textbook/test/use.test.mjs`・`cadet/test/content.test.mjs` | 第 2〜6 部の節のデータ `use`・`jcab`・`faa`（R3 の章の単位）、まとめの章 `g2`〜`g6`（W35） |
+| 25 | 全テストと容量 | **満たす** | `testall.sh`（下の「テスト」） | 出力は R3 の最後に作り直す |
 
 ## R2 の締め：DESIGN 5 章の基準（第 1 部。7.2 の W27）
 
@@ -123,14 +147,14 @@ R1 の範囲（台帳は教科書の行と序部、取り違えは囲みの分�
 
 R2A で動いた基準（R1 の表は R1 の締めの記録としてそのまま）：**1**（R1 で閉じた行の署名待ちだった ERRATA 2 行 `SYNC.e3-glide-entry`・`SYNC.i2-upset` に R1V が署名。閉じた行で署名がないのは R2A で閉じた `APP.bk-photo-mod`・`R.photo-mod` と PROVENANCE の写真 35 行：W27）、**3**（CLAIMS の署名のない行 320 → 7）、**11**（序部の由来表 32 行に署名。由来の行と説明してみようの `from` が画面に出る）、**16**（W07f が直した図 32 枚の目視の記録：`reports/R1V.md` の 2.4）、**17**（81 枚のクレジットを元のページの値と照らした・写真ごとの `mod`・`check-photos.mjs` error 0。基礎教材の写真 50 枚は章の単位が置く）、**24**（範囲の札・由来の行・発展の札・説明してみようを FLIGHT LAB と TEXTBOOK が同じ形で描き、CADET に出ないことをテストした。使う場面の札 `use` はまだ）、**25**（`testall.sh` 89/89・34/34・268/268、FLIGHT-LAB.html 9,748,145 バイト、写真のデコード後 3,364,306 バイト）、**26**（`bookWritten` の消毒・統合・書き出しと、R1 の書き出しの見本の読み込みのテスト）。
 
-## 次（R3：第 2〜6 部。R2 の締めのあと）
+## 次（R3：第 2〜6 部。R3A のあと）
 
-R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 の章の単位と並べて進められる）。
+R3 の始めの 4 つ（W21・R2V・W10c・Wdeep）は R3A で済んだ（下の 1・2 と、描く部品・発展）。次は R3 の章の単位（3）。
 
-1. **W21 第 1 部の図**（R2 でしていない）：第 1 部の図の目視の記録・描き直しの残り（DESIGN 7.2 の W21：描き直し 約 30・新しい図 約 15 のうち章の単位がしなかった分）、使っていない `altimeterHighLow`（消すか使う）、`aero.wing` のウイングレットと `comm.nordo` の写真か図、図の中に残る古い名前（ソロ・教官・エルロン・ラダー・タキシー・コールサイン・はく離・必要パワー：W24 の報告 6 の 3）と図が本文より前に用語を出す所、ERRATA `K.weather.K5`・`K.human.K8`（図）、`T.human.T9` の `where` と `hypoxiaAltitudes` のキャプション、図の nit（`ifr.ils`・`sectionalSymbols`・`fuelSystem`：W21・W33）。
-2. **R2V 第 1 部の主張の二人目**（R1 の R1V と同じ形。DESIGN の付記 11）：CLAIMS の第 1 部 2,127 行（署名 5）と序部の署名のない 4 行を一次資料で確かめて署名、`CALC.json`（第 1 部の計算の例。factcheck2-R2 の 3 の検算を台帳に）、PROVENANCE の署名待ち 463 行（第 1 部の基礎教材の行き先）、基準 15 の第 1 部の呼び戻し（リンクと「思い出そう」の囲み）、`aero.forces` の参考値（基準 6）、第 1 部の長い文 6・平均 40 字を超える節 6、R2 の締めで統合役が直した〔安全〕の文（`wx.shear`・`hf.body`・`aero.stall`・`inst.ap`・`perf.wb`・課目 a5）の 2 回目の安全レビューは W36 でもよい。
-3. **R3 の章の単位**（DESIGN 7.2 の R3）：W28 第 2 部（`emg.imc`〔安全〕③の本番の節と `hf.body` からの呼び戻し、`ops.wake`・`T.human.T8`、`ops.turns`・`emg.fire`・`ifr.upset` の「Va（設計運動速度）」を V<sub>O</sub> に：safety-R2 の 8）・W29 第 3 部・W30 第 4 部（`ifr.circle`〔安全〕②、VFR の巡航高度の住所を `comm.arrive` と第 3 部のどちらにするか：answerable-R2 の 5）・W31 第 5 部・W32 第 6 部 → W33 図と写真・W34 問題・W35 `g2`〜`g6`・扉 p2〜p6・`SY.GATES`・W50 用語をアプリ全体で → W36 R3 の確かめ（安全レビュー・事実の二人目・初学者）→ 出力の作り直し。各章の単位は `missing-scope` 72・`forward-see` 41（上限 40）と予告なし 3（`sim.can`→`hf.body` は序部から第 1 部への予告：R2V か W28）も直す。
-4. **R2 から持ち越す小さなこと**（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 6）：ACS-MAP の `sections` に `inst` の節（W42 でもよい）、`aimPdf` の版（次の AIM Basic は 2026-12-24：W37）、本文の量の上限（基準 22。数え方と削る所を所有者と）、章末の確認問題の正解の位置（基準 18。章末は並べ替えずに出す）。
+1. ~~**W21 第 1 部の図**~~（R3A で済んだ：[W21](reports/W21.md)）。残り：第 2〜6 部だけが使う図の古い名前 9 枚と R1V の nit 2（`ifr.ils`・`sectionalSymbols`）は W33、`check-style` が `courseMap` の部の題を初出と数える（W01）、`figshot.mjs` が文字の縁取りを重なりと数える（道具の持ち主）。
+2. ~~**R2V 第 1 部の主張の二人目**~~（R3A で済んだ：[R2V](reports/R2V.md)）。残り：CLAIMS の署名のない 4 行（`hf.body` の 2 行は裁定 `R.vfr-into-imc`、`aero.forces` の POH 図 5-33 の 2 行）、基準 15 の住所が後ろにある 11 組の決め方、R2 の締めで直した〔安全〕の文の 2 回目の安全レビュー（W36）。
+3. **R3 の章の単位**（DESIGN 7.2 の R3。所有者の判断 12：各部の「まず読む」本文は `ledgers/VOLUME.json` の予算の内に書き、基礎教材の深さ・例題・計算ははじめから発展（`bk.deep`・`deep: true`）に。節のデータ `use`・`jcab`・`faa` を書くと使う場面の札と試験の項目が自動で出る：STYLE の「節のデータ」）：W28 第 2 部（`emg.imc`〔安全〕③の本番の節と `hf.body` からの呼び戻し、`ops.wake`・`T.human.T8`、`ops.turns`・`emg.fire`・`ifr.upset` の「Va（設計運動速度）」を V<sub>O</sub> に：safety-R2 の 8）・W29 第 3 部・W30 第 4 部（`ifr.circle`〔安全〕②、VFR の巡航高度の住所を `comm.arrive` と第 3 部のどちらにするか：answerable-R2 の 5）・W31 第 5 部・W32 第 6 部 → W33 図と写真・W34 問題・W35 `g2`〜`g6`・扉 p2〜p6・`SY.GATES`・W50 用語をアプリ全体で → W36 R3 の確かめ（安全レビュー・事実の二人目・初学者）→ 出力の作り直し。各章の単位は `missing-scope` 72・`forward-see` 41（上限 40）と予告なし 3（`sim.can`→`hf.body` は序部から第 1 部への予告：R2V か W28）も直す。
+4. **R2 から持ち越す小さなこと**（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 6）：ACS-MAP の `sections` に `inst` の節（W42 でもよい）、`aimPdf` の版（次の AIM Basic は 2026-12-24：W37）、本文の量の上限（基準 22。所有者の判断 12 の形で Wdeep が数え直し、序部と第 1 部を発展に回した。上限に届かない分の扱いは所有者：「未解決」の R3A）、章末の確認問題の正解の位置（基準 18。章末は並べ替えずに出す）。
 
 書く単位は、用語を `FL.terms`（`find`・`firstUse`）から、日米の数字を `FL.jur` から取る（STYLE の「用語」「日米の書き分け」）。節を書く単位は、その節が 3.4 の「囲みの節」なら、登録するコミットで囲みを `bk.jur(...ids)`（違いがないときは `bk.same(id)`）で置く（数字を手で書かない。`flight-lab/test/jur.test.mjs` の ① が、本にある囲みの節に項目の囲みがあり、ほかの節にないことを確かめる）。章末の「この章の日米の違い」は FLIGHT LAB の `pages.js` と TEXTBOOK の `render.js` が自動で出す。付録の対照表 `FL.book.jurAppendix()` のページは W47。
 
@@ -138,9 +162,20 @@ R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 �
 
 ## 未解決のこと
 
+- **R3A で増えた未解決**（[`reports/integrate-R3A.md`](reports/integrate-R3A.md) の 6）：
+  - **所有者の判断（基準 22）**：判断 12 の形（deep の節と折りたたみを除く）で数えても、「まず読む」本文は 342,196 字（上限 254,800 字、今の教科書の 1.88 倍）。序部 29,699／予算 19,800・第 1 部 219,363／124,200。Wdeep の案（報告の 7）：① 上限を R3 の章のあとで測り直す、② 日米の囲みと出典の行を数えない（約 2 万字減る）、③ 説明をさらに発展へ（約 4 万字減るが読む流れが切れる。勧めない）、④ 今のまま（序部と第 1 部はこの形で止め、第 2〜6 部は予算で書く）。計算演習（`bk.drill`）を発展に数えるか（今は数えない：数えると第 1 部が 7,180 字増える）。決まるまで R3 の章の単位は `VOLUME.json` の予算で書く。
+  - **まず読む本文だけの初学者の読み**（Wdeep の 10）：折りたたみの外だけで序部と第 1 部が通じるか（W36 の reader）。安全レビューで「まず読む」本文に 7 項目がそろっていること（`hf.body`・`wx.shear`・`hf.self`・`perf.fuel`・`law.rules` は折りたたみなし、`aero.stall` は翼の作りの小見出しだけ）を見る（W36）。`intro.marks` の約束の表は全部が折りたたみの中（「記号と書き方の一覧」）。
+  - **確かめ役の署名待ち**（`validate.mjs` の warning 3）：CONCEPTS 3 行（前から）。CLAIMS の署名のない 4 行（`hf.body` の 2 行は裁定 `R.vfr-into-imc` が開いているので W36 の安全レビューのあと、`aero.forces#30de3690`・`#405c2071` は POH 図 5-33 の値）。W36。
+  - **基準 15 の 11 組**（R2V の 6 の 3）：住所が呼び戻す節より後ろにある組（`basics.alt`→`inst.alt` など）を「思い出そう」にせず、予告のリンクで通す決め方にするか、CONCEPTS の行を「予告」の種類にするか（W01・W03）。序部の 3 組にリンクを足すなら、後ろの部への `bk.see`（41／上限 40：基準 23）と一緒に。
+  - **使う場面の札**（W10c の 5）：第 2〜6 部の節には `use`・`jcab`・`faa` がまだない（課目と学科テストのリンクから出る分だけ。R3 の章の単位が書く）。「JCAB 学科の道」は `upTo: 'p1'` なので、第 2 部以降の節の JCAB は文字だけ（W47 が道を広げるとリンクになる）。本文から付録「JCAB 学科の道」へのリンクの部品はまだ（W47）。ACS の版（6C・8C・7B）は製品に書いていない（版が上がって符号が変わったら `faa` と `ACS-MAP.json` を一緒に：W42）。
+  - **検査の道具**（W01 の持ち主）：`check-style.mjs` が `courseMap` の中の `PARTS` の部の題（目的地変更・CRM・TEM）を `intro` の初出と数える（W21 の 6 の 2）。`textbook/rewrite/tools/figshot.mjs` が文字の縁取り（同じ文字を同じ位置に 2 回）を重なりと数える（`checklistFlow`）。
+  - **本文と図の名前**（W21 の 6 の 3・4）：`aero.vn` の「V-n 線図」（正式名は運動包囲線図）・`wbEnvelope` の「重心の許容範囲」・`instApBand` の「GPS のコース」は本文と同じ言い方。本文の初出に英語がない語 18（`aero.wing` の翼幅（span と `FL.terms` の wingspan）・`navb.earth` の緯度・経度など）。本文の持ち主と W24・W50。
+  - **CADET のブラウザのテストと負荷**：`cadet/test/browser.test.mjs` の「fly: … a1 — FLIGHT LAB's score for the same inputs」（「R: more throttle」）と次の「a flying day」は、R3A で `testall.sh` を 2 つ同時に流した 2 回とも落ち、1 つだけで流し直すと 21/21 通った（「もう一度」で課目を始め直したあとの 900 ms の待ちが、負荷の高いときに足りないためと見られる。確かめてはいない）。統合役は testall を 1 つずつ流す。直すなら CADET の持ち主（待ちを状態の確かめに）。
+  - **第 2〜6 部だけが使う図の古い名前**（W21 の 7 の 3）：`vmcFactors`・`walkaroundRoute`・`taxiWind`・`stallRecovery`・`goAroundProfile`・`crabWingLow`・`soloRoadmap`・`oeiForces`・`vmcRudder`、R1V の nit `ifr.ils`・`sectionalSymbols`（W33）。
+
 - **R2 の締めで増えた未解決**（[`reports/integrate-R2.md`](reports/integrate-R2.md) の 6）：
-  - **CLAIMS の第 1 部の署名**（基準 3）：2,127 行のうち署名 5。factcheck2-R2 は数字・条番号の文を読んだが本文は抜き取りで、行ごとの署名にできない（R2V）。
-  - **W21**（第 1 部の図）は R2 でしていない（「次」の 1）。
+  - ~~**CLAIMS の第 1 部の署名**（基準 3）：2,127 行のうち署名 5。factcheck2-R2 は数字・条番号の文を読んだが本文は抜き取りで、行ごとの署名にできない（R2V）。~~ R3A：R2V が 2,114 行に署名、統合役が R2V の新しい行 8 行に署名。署名のない行は 4（「R3A で増えた未解決」）。
+  - ~~**W21**（第 1 部の図）は R2 でしていない（「次」の 1）。~~ R3A で済んだ。
   - **直した〔安全〕の文の 2 回目の安全レビュー**：統合役が safety-R2 の案で直した `wx.shear`（S1：初出の形「操縦輪（ヨーク、control wheel）」を入れた）・`hf.body`（S2：数を入れずに 3 文にした。案の「1 分半以上」は速さで変わるので書かなかった）・課目 a5（S3：CADET の教官が読む）・`aero.stall`・`g1.review` 問 6・`inst.ap`・`perf.wb`・`wx.ts`・`wx.shear` の判断の目（N1〜N5）。言い方は案のとおりか、案より狭い。W36 か R2V。
   - **answerable-R2 の G3（nit）は直していない**：`hf.vision` の考えてみよう T6 の「AIM 8-1-8」は、本文の出典の行（`bk.src('米国の AIM 8-1-6・8-1-8')`）にある（解く道具が出典の行を読まなかった）。`law` の章末 Q1 の理由の「AIM 3-2-3」は、節の出典「AIM 3-2」の中の段落で正しい。
   - **答えの位置**：章末の確認問題の正解は A 19.7%・B 46.9%・C 21.6%・D 11.7%（基準 18 の 15〜35% を B と D が外れる。章末は並べ替えずに出す：answerable-R2 の 5）。直すなら章の単位が選択肢の順を入れ替える（記録 `bookQuiz` のキーは章と問の番号なので壊れないが、正解の記号が変わる。所有者に確かめてから：W23 の 8 の 1 と一緒に）。
@@ -155,7 +190,7 @@ R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 �
   - **STYLE の短い形**：正式名の後ろを短くした形（速度計・規正値・コンパス・重心・標準大気・自動操縦・場周）を章の 2 回目から許すか（許すなら表に `short`）。STYLE の持ち主（W04b）と W24（W24 の報告 5 の 3）。
   - **JCAB 学科の道**：出題範囲参考の見出しの名前（JCAB-MAP の `title`）は製品に入れていない（節の並びだけ）。見出しごとの表・JCAB 形式の問題と模擬試験は W44・W47。`intro.exams` から JCAB 学科の道のページへのリンクは、節へのリンク（`bk.see`）の部品ではページを指せないので、まだない（部品を足すか W47）。航空法規は第 1 部に節がない（設計どおり第 7 部）。
   - **まとめの問いの由来**：`g1.review` の問いのうち基礎教材から書き直した 3 つ（`kiso09.q8`・`kiso09.q18`・`kiso10.q28`）は、画面に由来の行が出ない（`bk.q` に `from` がない。由来は台帳だけ）。
-  - **扉**：p2〜p6 の扉と `g2`〜`g6` は W35（`check-path` の pending 5）。使う場面の札 `use`（「まとめ 1」）の描く部品はまだ（部品の単位）。
+  - **扉**：p2〜p6 の扉と `g2`〜`g6` は W35（`check-path` の pending 5）。使う場面の札 `use`（「まとめ 1」）の描く部品は R3A の W10c でできた。
   - **学科テストの数**：14 分野は 226 問（DESIGN 8.1 の見込み約 205 より多い：第 2〜6 部の W34 でさらに増える）。見込みの数を直すかは W27 か設計の持ち主。CADET の筆記試験 `EXAMS.written1` に `q_nav` を足すか（`navb` が第 1 章の授業に入った。足すなら `SY.GATES` の g1 とそろえる：W26 の 6 の 4・W35）。
   - **CADET の授業の長さ**：1 回目（`sys`・`inst`・`perf`・`wb`）は 31 節・74 の節点（前は約 40）。長すぎるなら各節の行を 1 行にする案（CADET の持ち主）。AI 教官の目次は 21,143 字（上限 25,000 字。R3 で約 224 節になると余裕は約 460 字：W36 が見る）。
   - **台帳**：CLAIMS の署名（W24 の 48 行・`g1` の 90 行：W27）、本にない文（R2B の 347 行・W24 の前の id の 47 行）を次の版で消すか（W27）。PROVENANCE `kiso02.x1` の行き先は扉だけ（`basics.docs` の `from` に足すなら `to` に戻す：W25 の報告 6）。
@@ -174,7 +209,7 @@ R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 �
 - **R2B で増えた未解決**（[`reports/integrate-R2B.md`](reports/integrate-R2B.md) の 6）：
   - ~~**安全レビュー**（W27・W36）~~（R2 の締めで safety-R2 が第 1 部を合格とした。should 3・nit 5 は統合役が直した）：直し役が〔安全〕に触れる文を直した・足した。`aero.spin`（思い出そう・自転と旋回率の線）・`aero.stall`（手前と完全な失速）、`sys.g1000`（飛行中の速度計の異常）・`inst.alt`（28.00 inHg より低い日）・`inst.ap`（ALT と失速・故障・入れ直さない）・`inst.pfd`（リバージョン）・`inst.flow`、`wx.shear`（下書きの言い直しはやめ、R1 の安全レビューが確かめた文に戻した：FLIGHT LAB のテスト ④）、`law`・`radio*`・`hf`（`hf.body` の雲の中の 180° 旋回は本の裁定 `R.vfr-into-imc`）。レビューを通るまで、直し終えたことにしない（STYLE）。
   - **CLAIMS の署名**：R2B の 2,352 行は署名なし（factcheck-* が「文の変わらない行は署名してよい」とした行を含む。W27 が確かめて署名する）。本にない文 347 行は、次の版で消すか（書き手のパッチから `add` を外すのと一緒に）を W27 が決める。
-  - **分量**（5 章の基準 22）：第 1 部の本文が大きくなり、`check-all` の `volume` が上限を超えた（416,000 > 254,800）。基準の数え方（図・表・囲みを数えるか）と、第 1 部の削る所を W27 と所有者で決める。
+  - **分量**（5 章の基準 22）：第 1 部の本文が大きくなり、`check-all` の `volume` が上限を超えた（416,000 > 254,800）。基準の数え方（図・表・囲みを数えるか）と、第 1 部の削る所を W27 と所有者で決める。 → 所有者の判断 12（発展に回す）と R3A の Wdeep（「R3A で増えた未解決」）。
   - **`missing-scope` 72**（第 2〜6 部の節）・`forward-see` 41（上限 40）・`check-path` の札なし 3：R3 の章の単位と W27。
   - ~~**用語の仮置き**~~：R2C で W24 が 134 語を表に足し、序部と第 1 部の初出をそろえた。足さなかった語（ロール・ピッチ・ヨー・自転・耐空類別の各類・ランバート図・メルカトル図・滑油・スタチック・ディスチャージャー・コリオリの力・着氷の形・疲労・スリップ／ラプス／ミステイク など）は W24 の報告 2.1 の終わり（持ち主と決める：W13・W14・W17・W18・W47）。
   - **CONCEPTS**：住所の行を W03・W27 に頼んだ分の残り（revise-aero 9 行・revise-inst 4 行・revise-law 10 行のうち、統合で足さなかったもの）。呼び戻す側を思い出そう（3 行以内とリンク）にするのは呼び戻す側の単位（第 2 部以降は R3）。
@@ -183,7 +218,7 @@ R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 �
   - **`navb.calc` の手書きの `bk.jp`**：`FL.jur` の `fuel.vfr` の日本の欄を直すときは一緒に直す（DESIGN の付記 9）。
   - ~~**1013.25 と 1013.2**~~：R2C で W24 が国際標準大気の海面の気圧を 1013.25 hPa にそろえた（高度計に合わせる標準の気圧 1013.2 hPa は別の量として残す）。
   - **`aimPdf`**（`R`）：AIM の版。次の AIM Basic は 2026-12-24（W27 か W37 が版を上げる）。
-  - **図**：`altimeterHighLow` は使う節がなくなった（W21 が消すか使う）。`perf.da` の hPa の思い出そうは足していない（W16 の案。W21・W24）。`T.human.T9` の `where` の文と `hypoxiaAltitudes` のキャプション（W21・W27）。
+  - ~~**図**：`altimeterHighLow` は使う節がなくなった（W21 が消すか使う）。`perf.da` の hPa の思い出そうは足していない（W16 の案。W21・W24）。`T.human.T9` の `where` の文と `hypoxiaAltitudes` のキャプション（W21・W27）。~~ R3A：W21 が `altimeterHighLow` を消し、`T.human.T9` の `where` とキャプションを直した。R2V が `perf.da` に `inst.alt` への思い出そう（1 hPa が約 27〜28 ft）を足した。
   - **COUNTS の台帳**（`ledgers/COUNTS.json`）の本の数（`book.*`）は R2B の値に直していない（W03 の道具で数え直す：W27）。
   - **出力**（3 つの HTML）は作り直していない（R2 の最後に。DESIGN 7.3）。R1 の報告などが下書きの名前 `drafts/radio.js` を引くのは、そのまま（記録）。
   - **道具**：`validate.mjs` が本を読み込むようになった（★ の節の確かめ）。本のファイルが壊れていると台帳の検査も止まる。
@@ -195,13 +230,13 @@ R3 は、R2 の残り 2 つから始める（どちらも第 1 部の分。R3 �
   - **Commons の直接の読み**：W22 の作業の日は 429 で、元のページの値は API を別の経路で読んで比べた。`photosrc.py verify` を `--pages` なしで流し直す（W27）。
   - ~~**`hf.body` の 180° 旋回の 2 文**〔安全〕③~~：W20 が「この本の判断（RULINGS `R.vfr-into-imc`）」と書き、R2 の締めで safety-R2 が承認した（AFH は雲から出る向きを書いていない。裁定の行は `emg.imc` W28 で閉じる）。
   - **`kiso-errata.js` の `hf-training`**：航空法第 71 条の 5（技能発揮訓練）は固定した版の本文に入っていて、附則で政令の日まで適用しない。施行規則第 162 条の 19〜22（修了から 2 年など）もある。写しにないので直していない（W37 が写したあと、R1V の報告 2.3 の案で）。
-  - **使う場面の札 `use` と FAA の注記 `faa`**（DESIGN 3.2・基準 24）：描く部品はまだ。`use` の「まとめ 1」は `g1` ができてから（決まり 13）。
+  - ~~**使う場面の札 `use` と FAA の注記 `faa`**（DESIGN 3.2・基準 24）：描く部品はまだ。`use` の「まとめ 1」は `g1` ができてから（決まり 13）。~~ R3A の W10c でできた（`g1` のリンクから「まとめ 1」も出る）。
   - **FLIGHT LAB の印刷**：答えを開く印刷の規則はあるが、`bk.deep`・`bk.drill` の折りたたみを印刷で開くのは TEXTBOOK だけ（FLIGHT LAB の画面は印刷を想定していない）。
   - **記録の画面の説明してみようの数**：記録の画面とメニューには出していない（DESIGN 6.4 は求めていない。要るなら `pages.js` の記録の画面に 1 行）。
   - ~~**ゲームの本の `deep` の節**~~：R2C で W26 が `gameBook().chapters[].sections` に `deep` を入れ、講義で飛ばす。
   - **R1V の初学者の読みの nit**（直していない）：`intro.cert` の「視程」の初出（W24）、`FL.jur` の `medical` の「BasicMed」の短い言いかえ（W06 の持ち物・W24）、`english` の「Hofstede」の読み方。
 - **P5 で増えた未解決**（[`reports/integrate-P5.md`](reports/integrate-P5.md) の 6）：
-  - ~~**描く部品がない**~~：R2A の W10b でできた（範囲の札・由来の行・説明してみよう。`intro.marks` の約束の表に 3 行が出る。序部の `written` 22 問が画面に出る）。使う場面の札 `use` と FAA の注記 `faa` はまだ（「次」の 3）
+  - ~~**描く部品がない**~~：R2A の W10b でできた（範囲の札・由来の行・説明してみよう。`intro.marks` の約束の表に 3 行が出る。序部の `written` 22 問が画面に出る）。使う場面の札 `use` と FAA の注記 `faa` は R3A の W10c でできた
   - ~~**写真 `ch00-photo5`**~~：R2A で `basics.alt` に置いた（`book-photos-k.js`、キャプションは W22 が書き直した。富士山と MSL・AGL）
   - **用語の表にない語**（W04 の持ち物。序部の 3 つの書き手と読み手が挙げた）：`intro` の事業用操縦士・自家用操縦士・定期運送用操縦士・准定期運送用操縦士・指定航空従事者養成施設・学科試験・実地試験・航空無線通信士・航空特殊無線技士・型式の限定・等級・単発機・双発機・課目・許容幅・自社養成・航空機使用事業・計器航法・スロットル・過給機・加速失速・裏書き・ログブック・航空交通管制、`basics` の MSL・AGL・協定世界時・日本標準時・EST／EDT・フライトレベル・マッハ数・法定マイル・インチ水銀柱・副操縦士・SOP・デブリーフィング・真北／磁北・静圧・管制空域・最低気象条件、METAR・ATIS・TAF の読み。足したら各章の初出をその形にそろえる（W24）。`english` が求めた 5 語は統合で足した。`walk-around`・`spin`・`landing-gear`・`turn-coordinator` の通称と note、PF・PM・PFD・POH の `common` が意味の説明であること（factcheck-english 7 の 2・reader-english 12 の 2）も W04。
   - **`FL.jur` の文**（W06 の持ち物）：`time` の日本の欄の夏時間の〔要確認〕、`alt.transition` の「100 NM 以内の局」「出発点の標高」、`ir.need` の「計器航法」、`medical` の「BasicMed」、`multi.rating` の「級」（本文と表は「等級」）と「AMEL」、`english.radio` の「本邦内と本邦外」に短い言いかえを足せるか（序部の読み手 3 人）。`alt.unit` は統合で直した。

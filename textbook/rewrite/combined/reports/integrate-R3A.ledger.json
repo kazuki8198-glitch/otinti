@@ -1,0 +1,511 @@
+{
+ "unitName": "integrate-R3A",
+ "about": "統合 R3A（W21・R2V・W10c・Wdeep、2026-10-31）：R2V が分けた・直した文の CLAIMS 8 行に統合役の署名（一次資料と計算で照らした）、W21 がキャプションを直した 5 行に R2V の署名を写す（R2V の報告 6 の 1）、W21 のパッチになかった図 certLadder のキャプションの行（intro.cert）の差し替え、COUNTS の図と本文の量。W21 が外した図の PROVENANCE 63 行と ERRATA K.weather.K5・K.human.K8 に統合役の署名（理由と本を道具で照らした）",
+ "patches": [
+  {
+   "id": "wx.ice#d022de0f",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が前の行 wx.ice#80c7dc0e を 2 文に分けた文。統合役が FAA AIM 7-1-19（Change 3、HTML を 2026-10-31 に取得）の「The effects of ice on aircraft are cumulative‐thrust is reduced, drag increases, lift lessens, and weight increases」と照らした（害は 4 つ）"
+  },
+  {
+   "id": "law.basis#5f888559",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が前の行 law.basis#1f6892ba を 2 文に分けた文。統合役が eCFR versioner の Title 14 の構造（2026-10-27 の版）で Chapter I—Federal Aviation Administration, Department of Transportation が Parts 1–199 であることを照らした"
+  },
+  {
+   "id": "law.basis#9361520a",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が前の行 law.basis#1f6892ba を 2 文に分けた文。統合役が eCFR versioner の 14 CFR Part 91（2026-10-27 の版）の Authority（49 U.S.C. 106(f), 40101, 40103 …）と照らした（合衆国法典の第 49 編）"
+  },
+  {
+   "id": "law.pilot#f0dda99f",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が前の行 law.pilot#d3ae2886 を 2 文に分けた文。統合役が eCFR versioner の 14 CFR 61.15(c)(1)・(e)（2026-10-27 の版：motor vehicle action の conviction、written report … not later than 60 days）と照らした。後ろの文（免許の停止なども同じ）は 61.15(c)(2)"
+  },
+  {
+   "id": "comm.callsign#dee4fc6b",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が前の行 comm.callsign#20841e89 を 2 文に分けた文。統合役が FAA AIM 4-2-4（Change 3、HTML を 2026-10-31 に取得）の「ATC specialists may initiate abbreviated call signs … after communications are established. The pilot may use the abbreviated call sign in subsequent contacts」と照らした"
+  },
+  {
+   "id": "perf.da#1e6acda7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が直した計算の文。統合役が計算し直した：30.01 × 33.8639 ＝ 1016.26 → 表示 1016.3 hPa、55 ＋（1013.25 − 1016.3）× 27 ＝ −27.35 ≒ −27 ft（標高 55 ft は physics.js の GROUND_FT）"
+  },
+  {
+   "id": "perf.da#a9b0a668",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が足した思い出そうの文（inst.alt の呼び戻し）。統合役が計算し直した：100 Pa ÷（1.225 kg/m³ × 9.80665 m/s²）＝ 8.32 m ＝ 27.3 ft（海面の近く、1 hPa あたり）。約 27〜28 ft は inst.alt の文と同じ"
+  },
+  {
+   "id": "aero.forces#2d66f842",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：R2V が足した教材値の文。統合役が physics.js の pa28（質量 1,050 kg・翼面積 15.8 m²・CD0 0.032・K 0.05）で計算し直した：110 kt・海面の密度で CL ＝ 0.332、L/D ＝ 8.86 ≒ 9"
+  },
+  {
+   "id": "aero.vn#9b4da2ab",
+   "checkedBy": "R2V",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R3A（2026-10-31）：W21 が図のキャプションを直した新しい文（前の行 aero.vn#f18f1d30）。R2V が一次資料で確かめ、R2V の報告の 6 の 1 に「checkedBy: R2V を引き継いでよい」と書いた署名を、統合役が台帳に写した"
+  },
+  {
+   "id": "wb.limits#7810c98f",
+   "checkedBy": "R2V",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R3A（2026-10-31）：W21 が図のキャプションを直した新しい文（前の行 wb.limits#50996fb6）。R2V が一次資料で確かめ、R2V の報告の 6 の 1 に「checkedBy: R2V を引き継いでよい」と書いた署名を、統合役が台帳に写した"
+  },
+  {
+   "id": "comm.basic#3bdf7638",
+   "checkedBy": "R2V",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R3A（2026-10-31）：W21 が図のキャプションを直した新しい文（前の行 comm.basic#cd2eaf80）。R2V が一次資料で確かめ、R2V の報告の 6 の 1 に「checkedBy: R2V を引き継いでよい」と書いた署名を、統合役が台帳に写した"
+  },
+  {
+   "id": "comm.nordo#189f199a",
+   "checkedBy": "R2V",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R3A（2026-10-31）：W21 が図のキャプションを直した新しい文（前の行 comm.nordo#fe29a5d6）。R2V が一次資料で確かめ、R2V の報告の 6 の 1 に「checkedBy: R2V を引き継いでよい」と書いた署名を、統合役が台帳に写した"
+  },
+  {
+   "id": "hf.altitude#f97a6410",
+   "checkedBy": "R2V",
+   "checkedOn": "2026-10-30",
+   "note": "integrate-R3A（2026-10-31）：W21 が図のキャプションを直した新しい文（前の行 hf.altitude#474036bb）。R2V が一次資料で確かめ、R2V の報告の 6 の 1 に「checkedBy: R2V を引き継いでよい」と書いた署名を、統合役が台帳に写した"
+  },
+  {
+   "op": "remove",
+   "id": "intro.cert#99f67466",
+   "by": "integrate-R3A",
+   "note": "integrate-R3A（2026-10-31）：W21 が図 certLadder のキャプションの「教官」を「操縦教員」にした（W24 の報告 6 の 3 の古い名前）。新しい行は intro.cert#53bfb913（W21 のパッチに行がなかったので統合役が足した）"
+  },
+  {
+   "op": "add",
+   "id": "intro.cert#53bfb913",
+   "sec": "intro.cert",
+   "text": "米国の学生操縦士の資格は申請で取れますが、単独飛行の前に操縦教員の行う知識の試験と裏書きが要ります。",
+   "tag": "条文",
+   "source": "14 CFR 61.85（申請）・14 CFR 61.87(b)（知識の試験：教官が行い、間違えた答えを見直してから単独飛行を許す）・61.87(n)（ログブックへの裏書き、90 日以内）。Cornell LII で 2026-10-29 に読んだ（eCFR 2026-10-23 の版は factcheck-intro N8 が読んだ）",
+   "kinds": [
+    "extra"
+   ],
+   "by": "W21",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：図 certLadder のキャプションの文（W21 が「教官」を FL.terms の正式名「操縦教員」にした）。R1V が一次資料で確かめて署名した前の行 intro.cert#99f67466 と、条番号・出典が同じで、違いは用語だけ（差分を確かめて署名を引き継いだ。integrate-R2 と同じ決まり）"
+  },
+  {
+   "id": "book.figures",
+   "built": "図の関数 178（book-figs.js：altimeterHighLow を消し、wingletVortex を足した）、本に出る図 174（TEXTBOOK の COUNTS）",
+   "builtBy": "integrate-R3A",
+   "builtOn": "2026-10-31",
+   "by": "integrate-R3A",
+   "note": "integrate-R3A（2026-10-31）：R3A（W21）の本で数えた"
+  },
+  {
+   "id": "book.text",
+   "built": "序部〜第 6 部の「まず読む」本文 342,196 字（今の教科書 182,000 字の 1.88 倍。上限 254,800 字を超える）、発展は deep の節 9,073 字・折りたたみ 77,423 字、全節 447,900 字。部ごと（まず読む／予算）：p0 29,699／19,800・p1 219,363／124,200・p2 37,785／39,600・p3 14,629／15,000・p4 16,593／21,700・p5 14,701／16,200・p6 9,426／18,300（ledgers/VOLUME.json）",
+   "builtBy": "integrate-R3A",
+   "builtOn": "2026-10-31",
+   "by": "integrate-R3A",
+   "note": "integrate-R3A（2026-10-31）：check-volume.mjs（Wdeep の数え方：判断 12 で deep の節と折りたたみ bk.deep・bk.drill を除く）で R3A の本を数えた。基準 22 は満たさない（所有者の判断を待つ：reports/Wdeep.md の 7）"
+  },
+  {
+   "id": "ch00-fig2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch00-fig3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch00-fig4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig9",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch01-fig10",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch02-fig2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch02-fig4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch02-fig11",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch03-fig3-1",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch03-fig3-3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch03-fig3-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch03-fig3-5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch04-fig4-2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch04-fig4-3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch04-fig4-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch04-fig4-7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch04-fig4-12",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-9",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-10",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch05-fig5-11",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-1",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-2",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch06-fig6-12",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch07-fig7-5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch07-fig7-6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch07-fig7-7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch07-fig7-8",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch07-fig7-12",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch08-fig8-1",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch08-fig8-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch08-fig8-8",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch08-fig8-10",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch08-fig8-12",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-1",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-3",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-7",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-8",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-9",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-10",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-11",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch09-fig9-12",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch10-fig10-1",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch10-fig10-4",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch10-fig10-6",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch10-fig10-9",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "ch10-fig10-11",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：外す理由を読んで DESIGN 4.2（と 3.3・10.2）の扱いと合うことを確かめ、理由が名指す節（near）が本にあり、名指す図（FIG.dragCurve・basicsSpeedChain・instAsi・basicsAlt・instAltErrors・tafTimeline・tem・engineFlow・elecSystem・vestibular など）がその節のソースで使われていることを道具で確かめた（W21 とは別の読み込みで本を組み立てて照らした）"
+  },
+  {
+   "id": "K.weather.K5",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：check-chapter.mjs wx hf adm（Chromium 390 px）で wx・hf・adm の図 31 枚 error 0、check-figures.mjs の本全体（174 枚）で最小の文字 10.3 px を確かめた"
+  },
+  {
+   "id": "K.human.K8",
+   "checkedBy": "integrate-R3A",
+   "checkedOn": "2026-10-31",
+   "note": "integrate-R3A（2026-10-31）：図 10-1・10-6・10-9 の行が dropped（理由は DESIGN 4.2 の「IMSAFE・PAVE・総論の箱の図（教科書の表と図で置き換え）」）、置き換える hf.self の IMSAFE の表と hf.adm の 3P の表・FIG.threePLoop が本にあることを確かめた"
+  }
+ ]
+}

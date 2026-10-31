@@ -351,7 +351,8 @@
       const { ch, sec } = x, i = ch.secs.indexOf(sec);
       art.innerHTML = '';
       // the title with the section's marks beside it (FL.book.secMarks: the scope badge, 発展, the provenance line of a
-      // section written from the basic course; DESIGN 3.2「節のデータ」— the same HTML as TEXTBOOK's)
+      // section written from the basic course, 使う場面の札 and the notes on the exams; DESIGN 3.2「節のデータ」— the same
+      // HTML as TEXTBOOK's)
       const head = h('div', { class: 'bk-head' }, h('h2', { class: 'bk-title', text: sec.t }));
       if (BK.secMarks) head.insertAdjacentHTML('beforeend', BK.secMarks(sec));   // static textbook data (trusted)
       art.append(h('div', { class: 'bk-chap', text: `第 ${ch.n} 章　${ch.t}（${i + 1} / ${ch.secs.length}）` }), head);
@@ -396,6 +397,14 @@
       // the "try it in the simulator" buttons and the figure calculators inside the section
       for (const b of art.querySelectorAll('[data-lesson]')) b.addEventListener('click', () => app.startLesson(b.dataset.lesson, S.prefs.level));
       for (const b of art.querySelectorAll('[data-sec]')) b.addEventListener('click', () => openSection(b.dataset.sec));
+      // 使う場面の札 (W10c): a lesson or a test bank opens in the syllabus at its card (its brief and its start button: not
+      // flown from here), 「JCAB 学科の道」 opens as a page of the book, and the notes on the exams show and hide
+      for (const b of art.querySelectorAll('.bk-use [data-use-lesson], .bk-use [data-use-bank]')) b.addEventListener('click', () => openSchool(b.dataset.useLesson || b.dataset.useBank));
+      for (const b of art.querySelectorAll('.bk-use button[data-page]')) b.addEventListener('click', () => openBookPage(b.dataset.page));
+      for (const b of art.querySelectorAll('.bk-exam-btn')) {
+        const box = art.querySelector(`[id="${b.getAttribute('aria-controls')}"]`);
+        if (box) b.addEventListener('click', () => { const open = box.hidden; box.hidden = !open; b.textContent = open ? '試験の項目を閉じる' : '試験の項目を見る'; b.setAttribute('aria-expanded', String(open)); });
+      }
       if (BK.wire) BK.wire(art);
       art.scrollTop = 0;
       for (const b of document.querySelectorAll('#bkNav .bk-item')) b.classList.toggle('sel', b.querySelector('.bk-num') && b.lastChild.textContent === sec.t);

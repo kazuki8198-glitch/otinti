@@ -497,3 +497,33 @@ test('book: the boxes of the section form — kept in the book (the folds folded
   assert.deepEqual([o.summary, o.keyPoints], ['ほかの節のねらいです。', ['ほかの節のねらいです。']]);
   assert.match(o.html, /<span class="bk-see" data-sec="zz.a">→ 箱の節<\/span>/);
 });
+
+// ---------------------------------------------------------------- W10c: the line 使う場面 and the notes on the exams
+// (FLIGHT LAB's FL.book.secMarks from the sections' data use・jcab・faa and the links of the lessons, the test banks and the
+// summary chapters; textbook/rewrite/combined/DESIGN.md 3.2, 6.3): drawn by FLIGHT LAB's and TEXTBOOK's pages, never in
+// this book — no section, summary, key point, chapter or section list, nor the AI instructor's contents, has the line,
+// the summary chapters it names (まとめ N) or Japan's 出題範囲参考; were the marks ever pasted into a body, they go whole.
+const NOT_IN_GAME = /使う場面：|>まとめ [1-7]<|試験の項目を|出題範囲参考の見出し|ACS の知識の項目|JCAB 学科の道|FAA の学科を受けるかは未公表|bk-use|bk-exam|data-use-|data-page=/;
+test('book: no 使う場面 line and no notes on the exams — in no section, summary, key point or list, nor the AI instructor\'s contents; pasted marks go whole', async () => {
+  const { bookIndex } = await import('../src/ai/tutor.js');
+  let lined = 0;
+  for (const id of SECTIONS) {
+    const s = BOOK.section(id), src = FL.book.findSection(id).sec;
+    for (const x of [s.html, s.text, s.summary, ...s.keyPoints]) assert.doesNotMatch(x, NOT_IN_GAME, id);
+    if (/bk-use/.test(FL.book.secMarks(src))) lined++;
+  }
+  assert.ok(lined >= 50, `FLIGHT LAB draws the line for ${lined} of this book's sections (from the data), not this book`);
+  for (const c of BOOK.chapters) {
+    assert.deepEqual(Object.keys(c).filter(k => /use|jcab|faa|marks/i.test(k)), [], `${c.id}: no use, jcab, faa`);
+    for (const s of c.sections) assert.deepEqual(Object.keys(s).filter(k => /use|jcab|faa/i.test(k)), [], `${c.id}.${s.id}`);
+  }
+  assert.doesNotMatch(bookIndex(BOOK), NOT_IN_GAME, 'the AI instructor\'s contents');
+  // FLIGHT LAB's marks pasted into a body (never done): the line, the notes and the badge go whole; the body stays
+  const marks = FL.book.secMarks('aero.stall');
+  assert.match(marks, /bk-use[\s\S]*bk-exam/, 'aero.stall has the line and the notes in FLIGHT LAB');
+  const fake = { book: { CHAPTERS: [{ id: 'zz', part: 'p1', t: '試しの章', summary: '試しの章です。', secs: [{ id: 'zz.a', t: '札の節', h: () => `${marks}${FL.book.bk.aim('ねらいの文です。')}<p>説明の文です。</p>` }] }] }, syllabus: FL.syllabus };
+  const s = gameBook(fake).section('zz.a');
+  assert.doesNotMatch(s.html, NOT_IN_GAME);
+  assert.doesNotMatch(s.html, /bk-marks|をもとに改稿/);
+  assert.equal(s.summary, 'ねらいの文です。説明の文です。');
+});

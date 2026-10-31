@@ -2,7 +2,8 @@
 // The DOM: the table of contents, one section at a time (#節ID), a page that is not a section (#door:p1 a part's door,
 // #jcab the appendix 「JCAB 学科の道」) or the whole book (#all), the search (marks on the
 // shown text nodes only), FLIGHT LAB's lesson buttons turned into tags, the calculators (FL.book.wire), the check
-// questions, the answers of 説明してみよう (shown and hidden here; not recorded: FLIGHT LAB keeps that record), the read
+// questions, the answers of 説明してみよう (shown and hidden here; not recorded: FLIGHT LAB keeps that record), the line
+// 使う場面 under a section's title (its lessons open their goal under it; the notes on the exams show and hide), the read
 // marks and the settings (this browser's localStorage only, keys "textbook.*"), the print.
 (function () {
   'use strict';
@@ -67,6 +68,21 @@
     t.after(lessonInfo(t.dataset.lessonId)); t.setAttribute('aria-expanded', 'true');
   }
   function toTags(el) { for (const b of el.querySelectorAll('button[data-lesson]')) b.replaceWith(lessonTag(b.dataset.lesson)); }
+  // a lesson in the line 使う場面 (FL.book.secMarks: button[data-use-lesson], a short link, not a tag) opens the same goal,
+  // reason and standard under the line; the same one again closes it, another one takes its place
+  function toggleUseLesson(b) {
+    const line = b.closest('.bk-use'), id = b.dataset.useLesson, next = line.nextElementSibling;
+    const open = next && next.classList.contains('bk-lesson-info') ? next : null, same = open && open.dataset.lessonId === id;
+    if (open) { open.remove(); for (const x of line.querySelectorAll('[data-use-lesson]')) x.setAttribute('aria-expanded', 'false'); }
+    if (same) return;
+    const box = lessonInfo(id); box.dataset.lessonId = id;
+    line.after(box); b.setAttribute('aria-expanded', 'true');
+  }
+  // the notes on the exams under the line 使う場面: shown and hidden by their button (printed open: style.css)
+  function toggleExam(b) {
+    const box = document.getElementById(b.getAttribute('aria-controls')); if (!box) return;
+    const open = box.hidden; box.hidden = !open; b.textContent = open ? '試験の項目を閉じる' : '試験の項目を見る'; b.setAttribute('aria-expanded', String(open));
+  }
   // wide tables scroll sideways (the weight-and-balance calculator scrolls as a whole: .bk-calc)
   function wrapTables(el) {
     for (const t of el.querySelectorAll('table')) {
@@ -75,7 +91,10 @@
       t.replaceWith(w); w.append(t);
     }
   }
-  function enhance(el) { toTags(el); wrapTables(el); if (BK.wire) BK.wire(el); }
+  function enhance(el) {
+    toTags(el); wrapTables(el); if (BK.wire) BK.wire(el);
+    for (const b of el.querySelectorAll('button[data-use-lesson]')) b.setAttribute('aria-expanded', 'false');
+  }
 
   // ------------------------------------------------------------ search marks: the shown text nodes only
   const SKIP = 'svg, button, input, textarea, select, option, script, style, mark, .tb-pager';
@@ -196,8 +215,10 @@
 
   // ------------------------------------------------------------ the clicks (one listener: the views are redrawn)
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-go], button[data-sec], button[data-page], a[data-jump], .tb-check, button.bk-lesson, button.bk-w-btn'); if (!t) return;
+    const t = e.target.closest('[data-go], button[data-sec], button[data-page], a[data-jump], .tb-check, button.bk-lesson, button.bk-w-btn, button[data-use-lesson], button.bk-exam-btn'); if (!t) return;
     if (t.matches('button[data-page]')) { showPage(t.dataset.page); return; }
+    if (t.matches('button[data-use-lesson]')) { toggleUseLesson(t); return; }
+    if (t.matches('button.bk-exam-btn')) { toggleExam(t); return; }
     if (t.matches('button.bk-lesson')) { toggleLesson(t); return; }
     if (t.matches('button.bk-w-btn')) { const box = t.closest('.bk-w'); showAnswer(box, box.querySelector('.bk-w-a').hidden); return; }
     if (t.matches('a[data-jump]')) { e.preventDefault(); go(t.dataset.jump); return; }

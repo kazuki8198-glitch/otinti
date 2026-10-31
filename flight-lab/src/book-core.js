@@ -4,8 +4,8 @@
 // sources: FAA handbooks, the ACS, the AIM, 14 CFR, ANA's public pages, published training material), the writing
 // helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators, photos, the
 // US–Japan boxes, the boxes of the section form: もっと深く・計算演習・判断の目・ここを混同しない・思い出そう), the
-// lookups the pages use, and what the pages draw from the data (the scope badge and the provenance line of a section:
-// secMarks; the chapter-end 説明してみよう: writtenHtml). The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
+// lookups the pages use, and what the pages draw from the data (the scope badge, the provenance line, 使う場面の札 and the
+// notes on the exams of a section: secMarks; the chapter-end 説明してみよう: writtenHtml). The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
 // (FL.book.add); the figures in book-figs.js; the photos in book-photos.js and the basic course's photos in
 // book-photos-k.js (both loaded after this file by FLIGHT LAB and TEXTBOOK, not by CADET).
 (function (FL) {
@@ -478,6 +478,149 @@
   }
   const kisoFrom = ids => { const p = kisoPlace(ids); return `${KISO_BOOK}${p}${/\d$/.test(p) ? ' ' : ''}をもとに改稿`; };
   const secOf = x => (typeof x === 'string' ? (findSection(x) || {}).sec : x) || null;
+
+  // 使う場面の札 (DESIGN 3.2「節のデータ」use, 5 criterion 24; W10c) — 「使う場面：課目 a6・a7／学科テスト「飛行の原理」／
+  // まとめ 1／JCAB 航空工学」, each kind once and in that order. It is made from the links the data has already: the lessons
+  // whose `book` names the section (FL.syllabus), the test banks whose `book` or whose questions' `meta.sec` name it
+  // (FL.quiz: FLIGHT LAB only), the summary chapters gN that link it (a bk.see in their sections, the `sec` of their
+  // questions), the JCAB subjects of the headings its `jcab` names (FL.book.JCAB_ROAD: book-gates.js). The section's own
+  // `use` adds what the links do not say: '課目 k1', 'まとめ 1・まとめ 6', 'JCAB 工学' (a subject's short name is read as the
+  // road's: 工学 → 航空工学; a note in brackets stays: 工学（無線工学） → 航空工学（無線工学）); anything else is shown as it
+  // is, last. A label links only to what is there (DESIGN 6.2 rules 6 and 13): a lesson or a test bank of this product
+  // (button[data-use-lesson] / [data-use-bank]: FLIGHT LAB opens it in the syllabus, TEXTBOOK shows the lesson's goal), a
+  // summary chapter that is in the book (button[data-sec]: its first section) — one that is not yet is left out and shows
+  // when its chapter comes —, the page 「JCAB 学科の道」 when it lists the section (button[data-page="jcab"]).
+  // The notes on the exams, behind the button 「試験の項目を見る」 (shown and hidden by the pages; printed open): the
+  // headings of JCAB's 出題範囲参考 that `jcab` names, numbered as the 出題範囲参考 numbers them (cpl.1.4.1.2 → 事業用
+  // １（４）ア（イ）; siblings after their parent: １（４）ア（ア）（イ）), and the knowledge elements of the FAA's ACS that `faa`
+  // names (PA.VII.B.K1・K2: PA ＝ the ACS, VII ＝ the area of operation, B ＝ the task, K1 ＝ knowledge element 1), with
+  // 「FAA の学科を受けるかは未公表」 (intro.exams; UNVERIFIED U.faa-written). Data of the wrong form is an error.
+  const JCAB_DOCS = Object.freeze([['cpl', '事業用'], ['ir', '計器飛行証明'], ['ppl', '自家用']]);
+  const JCAB_ID = /^(cpl|ir|ppl)((?:\.[1-9][0-9]?){2,4})$/;
+  const KANA = 'アイウエオカキクケコサシスセソタチツテト';
+  const fullWidth = n => String(n).replace(/[0-9]/g, d => String.fromCharCode(0xFF10 + Number(d)));
+  // one level of a heading's number as the 出題範囲参考 writes it: １ → （１） → ア → （ア）
+  const jcabLevel = (n, i) => (i === 0 ? fullWidth(n) : i === 1 ? `（${fullWidth(n)}）` : i === 2 ? KANA[n - 1] : `（${KANA[n - 1]}）`);
+  // ['cpl.1.4.1.1', 'cpl.1.4.1.2', 'ppl.1.2.6.1'] → '事業用 １（４）ア（ア）（イ）／自家用 １（２）カ（ア）' (numeric order)
+  function jcabHeads(ids) {
+    const byDoc = JCAB_DOCS.map(([doc, name]) => ({ doc, name, nums: [] }));
+    for (const id of ids) {
+      const m = String(id).match(JCAB_ID), nums = m && m[2].slice(1).split('.').map(Number);
+      if (!m || nums.slice(2).some(n => n > KANA.length)) throw new Error(`FL.book: "${id}" is not a heading of JCAB's 出題範囲参考 (cpl｜ir｜ppl.科目.大項目.ア.（ア）, as JCAB-MAP.json)`);
+      byDoc.find(d => d.doc === m[1]).nums.push(nums);
+    }
+    const cmp = (a, b) => { for (let i = 0; i < Math.max(a.length, b.length); i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) - (b[i] || 0); return 0; };
+    return byDoc.filter(d => d.nums.length).map(d => {
+      const groups = [];
+      for (const n of d.nums.sort(cmp)) {
+        const key = n.slice(0, -1).join('.'), k = n.length - 1, kid = jcabLevel(n[k], k);
+        let g = groups.find(x => x.key === key && x.k === k);
+        if (!g) groups.push(g = { key, k, head: n.slice(0, -1).map(jcabLevel).join(''), kids: [] });
+        if (!g.kids.includes(kid)) g.kids.push(kid);
+      }
+      return `${d.name} ${groups.map(g => g.head + g.kids.join(g.k === 2 ? '・' : '')).join('、')}`;
+    }).join('／');
+  }
+  const ACS = Object.freeze([['PA', '自家用'], ['IR', '計器'], ['CA', '事業用']]);
+  const ACS_ID = /^(PA|IR|CA)\.([IVXL]+)\.([A-Z])\.(K[0-9]+[a-z]?)$/;
+  // ['PA.VII.B.K2', 'PA.VII.B.K1', 'IR.I.B.K4'] → '自家用 PA.VII.B.K1・K2／計器 IR.I.B.K4' (the tasks in the order given, each
+  // task's elements in their order)
+  function acsItems(ids) {
+    const byAcs = ACS.map(([acs, name]) => ({ acs, name, tasks: [] }));
+    for (const id of ids) {
+      const m = String(id).match(ACS_ID);
+      if (!m) throw new Error(`FL.book: "${id}" is not a knowledge element of the FAA's ACS (PA｜IR｜CA.area.task.Kn, as ACS-MAP.json)`);
+      const a = byAcs.find(x => x.acs === m[1]), task = `${m[1]}.${m[2]}.${m[3]}`;
+      let t = a.tasks.find(x => x.task === task); if (!t) a.tasks.push(t = { task, ks: [] });
+      if (!t.ks.includes(m[4])) t.ks.push(m[4]);
+    }
+    const kNum = k => parseInt(k.slice(1), 10) * 100 + (k.length > 1 && /[a-z]$/.test(k) ? k.charCodeAt(k.length - 1) - 96 : 0);
+    return byAcs.filter(a => a.tasks.length).map(a => `${a.name} ${a.tasks.map(t => `${t.task}.${t.ks.sort((x, y) => kNum(x) - kNum(y)).join('・')}`).join('、')}`).join('／');
+  }
+  const list = (sec, key) => {
+    const v = sec[key];
+    if (v === undefined) return [];
+    if (!Array.isArray(v) || !v.length || v.some(x => typeof x !== 'string' || !x.trim())) throw new Error(`FL.book.secMarks: ${sec.id}: ${key} must be a list of strings`);
+    return v;
+  };
+  // what the links of the whole book say about each section, made once for a book (the book is complete when the pages
+  // draw it; a chapter, a lesson, a test bank or the road added later makes it again)
+  let linked = null;
+  function links() {
+    const lessons = FL.syllabus && Array.isArray(FL.syllabus.STAGES) ? FL.syllabus.STAGES.flatMap(st => st.lessons || []) : null;
+    const banks = FL.quiz && Array.isArray(FL.quiz.BANKS) ? FL.quiz.BANKS : null;
+    const key = [CHAPTERS.map(c => c.id).join(' '), lessons ? lessons.length : '-', banks ? banks.reduce((n, b) => n + b.qs.length, 0) : '-', typeof FL.book.jcabRoad].join('|');
+    if (linked && linked.key === key) return linked;
+    const gates = new Map();                       // section id → [the summary chapters that link it]
+    for (const c of CHAPTERS) {
+      if (!/^g[1-9]$/.test(c.id)) continue;
+      const to = new Set((c.quiz || []).map(q => q.sec).filter(Boolean));
+      for (const s of c.secs) for (const m of html(s).matchAll(/data-sec="([^"]+)"/g)) to.add(m[1]);
+      for (const id of to) { if (!gates.has(id)) gates.set(id, []); gates.get(id).push(c); }
+    }
+    let road = null;                               // the sections the page 「JCAB 学科の道」 lists
+    if (typeof FL.book.jcabRoad === 'function') { road = new Set(); for (const r of FL.book.jcabRoad()) for (const x of [...r.first, ...r.deep]) road.add(x.id); }
+    return (linked = { key, lessons, banks, gates, road });
+  }
+  const useBtn = (data, text, title) => `<button type="button" class="bk-use-l" ${data} title="${attr(title)}">${text}</button>`;
+  function useHtml(sec) {
+    const L = links(), inBook = !!findSection(sec.id), own = list(sec, 'use');
+    const lessonIds = [], gateNs = [], subjects = [], other = [];
+    // the lessons that name the section, then the ones its use names (each once)
+    if (L.lessons && inBook) for (const l of L.lessons) if ((l.book || []).includes(sec.id)) lessonIds.push(l.id);
+    const road = FL.book.JCAB_ROAD && Array.isArray(FL.book.JCAB_ROAD.subjects) ? FL.book.JCAB_ROAD.subjects : null;
+    const subjectOf = name => {
+      const base = name.replace(/（[^（）]*）$/, ''), note = name.slice(base.length);
+      const s = road && (road.find(x => x.t === base) || road.find(x => x.t.endsWith(base)));
+      if (road && !s) throw new Error(`FL.book.secMarks: ${sec.id}: use "JCAB ${name}": not a subject of 「JCAB 学科の道」 (${road.map(x => x.t).join('・')})`);
+      return { t: s ? s.t : base, note };
+    };
+    for (const u of own) {
+      const m = u.match(/^(課目|まとめ|JCAB)\s*(.+)$/);
+      if (!m) { other.push(u); continue; }
+      if (m[1] === '課目') {
+        for (const id of m[2].split(/[・、,\s]+/).filter(Boolean)) {
+          if (!L.lessons) continue;                // no syllabus loaded: no lesson to link
+          if (!L.lessons.some(l => l.id === id)) throw new Error(`FL.book.secMarks: ${sec.id}: use "${u}": "${id}" is not a lesson of the syllabus`);
+          if (!lessonIds.includes(id)) lessonIds.push(id);
+        }
+      } else if (m[1] === 'まとめ') {
+        const ns = [...m[2].matchAll(/[0-9]+/g)].map(x => Number(x[0]));
+        if (!ns.length || ns.some(n => n < 1 || n > 7)) throw new Error(`FL.book.secMarks: ${sec.id}: use "${u}": まとめ 1〜7 (the summary chapters g1〜g7)`);
+        for (const n of ns) if (!gateNs.includes(n)) gateNs.push(n);
+      } else for (const name of m[2].split('・').map(x => x.trim()).filter(Boolean)) {
+        const s = subjectOf(name), had = subjects.find(x => x.t === s.t);
+        if (!had) subjects.push(s); else if (s.note && !had.note) had.note = s.note;
+      }
+    }
+    // the summary chapters that link the section, with the ones its use names; only those in the book, in their order
+    for (const c of (inBook && L.gates.get(sec.id)) || []) { const n = Number(c.id.slice(1)); if (!gateNs.includes(n)) gateNs.push(n); }
+    const gateChs = gateNs.map(n => CHAPTERS.find(c => c.id === `g${n}`)).filter(c => c && c.secs.length && !c.secs.some(s => s.id === sec.id)).sort((a, b) => a.n - b.n);
+    // the JCAB subjects of the headings in jcab (the road's order), with the ones its use names
+    const heads = list(sec, 'jcab');
+    if (road) for (const s of road) if (heads.some(id => s.heads.some(h => id === h || id.startsWith(`${h}.`))) && !subjects.some(x => x.t === s.t)) subjects.push({ t: s.t, note: '' });
+    if (road) subjects.sort((a, b) => road.findIndex(x => x.t === a.t) - road.findIndex(x => x.t === b.t));
+    const banks = L.banks && inBook ? L.banks.filter(b => b.book === sec.id || (b.qs || []).some(q => q && q[4] && q[4].sec === sec.id)) : [];
+    const lessonOf = id => L.lessons.find(l => l.id === id);
+    const groups = [];
+    if (lessonIds.length) groups.push(`課目 ${lessonIds.map(id => useBtn(`data-use-lesson="${attr(id)}"`, attr(id), `課目 ${id}　${lessonOf(id).title || ''}`)).join('・')}`);
+    if (banks.length) groups.push(`学科テスト${banks.map(b => `「${useBtn(`data-use-bank="${attr(b.id)}"`, attr(b.title), `学科テスト「${b.title}」`)}」`).join('')}`);
+    if (gateChs.length) groups.push(gateChs.map(c => useBtn(`data-sec="${attr(c.secs[0].id)}"`, `まとめ ${c.id.slice(1)}`, `第 ${c.n} 章　${c.t}`)).join('・'));
+    if (subjects.length) {
+      const t = `JCAB ${subjects.map(s => attr(s.t + s.note)).join('・')}`;
+      groups.push(L.road && L.road.has(sec.id) && typeof FL.book.jcabRoadHtml === 'function' ? useBtn('data-page="jcab"', t, '付録「JCAB 学科の道」') : t);
+    }
+    groups.push(...other.map(attr));
+    // the notes on the exams (folded)
+    const faa = list(sec, 'faa'), notes = [];
+    if (heads.length) notes.push(`<span class="bk-jcab" data-jcab="${attr(heads.join(' '))}">JCAB 出題範囲参考の見出し：${jcabHeads(heads)}</span>`);
+    if (faa.length) notes.push(`<span class="bk-faa" data-faa="${attr(faa.join(' '))}">FAA ACS の知識の項目：${acsItems(faa)}（FAA の学科を受けるかは未公表）</span>`);
+    if (!groups.length && !notes.length) return '';
+    const xid = `bkx-${sec.id}`;
+    const btn = notes.length ? `<button type="button" class="bk-exam-btn" aria-expanded="false" aria-controls="${attr(xid)}">試験の項目を見る</button>` : '';
+    return `<span class="bk-use" data-use-for="${attr(sec.id)}">${groups.length ? `<b>使う場面</b>：${groups.join('／')}` : ''}${btn}</span>`
+      + (notes.length ? `<span class="bk-exam" id="${attr(xid)}" hidden>${notes.join('')}</span>` : '');
+  }
   // → '<div class="bk-marks">…</div>', or '' when the section has none of them. A section without scope gets no badge
   // (none is guessed); a scope or a from that is not of the right form is an error (a typo must not hide)
   function secMarks(x) {
@@ -492,6 +635,8 @@
       if (!Array.isArray(sec.from) || !sec.from.length) throw new Error(`FL.book.secMarks: ${sec.id}: from must be a list of the basic course's section ids`);
       out.push(`<span class="bk-from" data-from="${attr(sec.from.join(' '))}">${kisoFrom(sec.from)}</span>`);
     }
+    const use = useHtml(sec);                      // 使う場面の札 and the notes on the exams (W10c), under the provenance line
+    if (use) out.push(use);
     return out.length ? `<div class="bk-marks">${out.join('')}</div>` : '';
   }
   // The chapter-end 説明してみよう: ch.written = [[question, answer], …] or [{ q, a, from }, …] — HTML (static, trusted

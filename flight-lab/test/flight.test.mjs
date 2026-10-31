@@ -981,7 +981,9 @@ test('book: FL.book.secMarks — the scope badge on every section that has a sco
   for (const c of BK.CHAPTERS) for (const s of c.secs) {
     const m = BK.secMarks(s);
     assert.equal(BK.secMarks(s.id), m, `${s.id}: by id or by section, the same`);
-    if (s.scope === undefined && s.from === undefined && !s.deep) { assert.equal(m, '', s.id); continue; }
+    // no badge, 発展 or provenance line is guessed (the line 使う場面 and the notes on the exams come from the links and
+    // the data use・jcab・faa: W10c's test below)
+    if (s.scope === undefined && s.from === undefined && !s.deep) { assert.doesNotMatch(m, /data-scope=|class="bk-scope|bk-from/, s.id); continue; }
     assert.match(m, /^<div class="bk-marks">[\s\S]*<\/div>$/, s.id);
     if (s.scope !== undefined) { scoped++; assert.ok(m.includes(`<span class="bk-scope bk-scope-${s.scope}" data-scope="${s.scope}">${SCOPE[s.scope]}</span>`), s.id); }
     else assert.doesNotMatch(m, /data-scope=/, `${s.id}: no badge is guessed`);
@@ -1010,9 +1012,10 @@ test('book: FL.book.secMarks — the scope badge on every section that has a sco
   assert.throws(() => BK.secMarks({ id: 'x.y', from: [] }), /from must be a list/);
   assert.equal(BK.secMarks('no.such.section'), '');
   assert.equal(BK.secMarks({ id: 'x.y', scope: 'jp', from: ['kiso05.14', 'kiso05.16', 'kiso09.q3'] }).match(/>(パイロット[^<]*)</)[1], 'パイロット基礎教材（第 3 版）第 5 章 14・16 節、第 9 章 問 3 をもとに改稿');
-  // intro.marks explains the badge, the line and 発展 now that the pages draw them (its rows wait for the parts)
+  // intro.marks explains the badge, the line, 使う場面 and the notes on the exams (W10c) and 発展 now that the pages draw
+  // them (its rows wait for the parts)
   const marks = BK.html(BK.findSection('intro.marks').sec);
-  for (const t of ['範囲の札', '由来の行', 'パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿', '<b>発展</b>']) assert.ok(marks.includes(t), t);
+  for (const t of ['範囲の札', '由来の行', 'パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿', '<b>使う場面</b>', '<b>試験の項目</b>', '<b>発展</b>']) assert.ok(marks.includes(t), t);
 });
 
 test('book: the boxes of the section form — もっと深く・計算演習 fold, 判断の目・ここを混同しない take items or a block, 思い出そう needs its link', () => {
@@ -1106,4 +1109,106 @@ test('progress: bookWritten (the 説明してみよう answers opened) through t
   assert.deepEqual(j.progress.lessons, oj.progress.lessons);
   const merged = SC.mergeProgress(j.progress, p);
   assert.deepEqual([merged.read, merged.bookWritten], [oj.progress.read, ['basics.w0', 'intro.w0']]);
+});
+
+// ------------------------------------------------------------------ W10c: 使う場面の札 and the notes on the exams
+// (textbook/rewrite/combined/DESIGN.md 3.2「節のデータ」use・jcab・faa, 5 criterion 24, 6.2 rules 6 and 13): FL.book.secMarks
+// draws the line 使う場面 from the links the data has — the lessons' book, the test banks' book and their questions' sec,
+// the summary chapters' links, the JCAB subjects of jcab — and the section's own use; every link in it has its target
+// and a summary chapter that is not in the book is not named. The notes on the exams (behind their button) number JCAB's
+// headings as the 出題範囲参考 does (the labels of ledgers/JCAB-MAP.json) and say that the FAA written test is not announced.
+const W10C_LEDGER = f => JSON.parse(fs.readFileSync(path.join(FL_ROOT, '..', 'textbook/rewrite/combined/ledgers', f), 'utf8')).rows;
+test('book: 使う場面の札 — from the lessons, the test banks, the summary chapters and jcab, with the section\'s own use; links only to what is there', () => {
+  const lessons = SY.STAGES.flatMap(st => st.lessons), road = new Set(BK.jcabRoad().flatMap(r => [...r.first, ...r.deep].map(x => x.id)));
+  const gates = BK.CHAPTERS.filter(c => /^g[1-9]$/.test(c.id)), firstOfGate = new Set(gates.map(g => g.secs[0].id));
+  const linksOf = g => new Set([...(g.quiz || []).map(q => q.sec), ...g.secs.flatMap(s => [...BK.html(s).matchAll(/data-sec="([^"]+)"/g)].map(m => m[1]))]);
+  const gateLinks = new Map(gates.map(g => [g.id, linksOf(g)]));
+  const banksOf = id => QZ.BANKS.filter(b => b.book === id || b.qs.some(q => q[4] && q[4].sec === id));
+  let lined = 0, noted = 0;
+  const xids = new Set();
+  for (const c of BK.CHAPTERS) for (const s of c.secs) {
+    const m = BK.secMarks(s), line = (m.match(/<span class="bk-use" data-use-for="[^"]+">([\s\S]*?)<\/span>(?=<span class="bk-exam"|<\/div>$)/) || [])[1];
+    const want = { lessons: lessons.filter(l => (l.book || []).includes(s.id)).map(l => l.id), banks: banksOf(s.id).map(b => b.id),
+      gates: gates.filter(g => gateLinks.get(g.id).has(s.id) && g !== c).map(g => g.id) };
+    for (const u of s.use || []) {
+      const k = u.match(/^課目\s*(.+)$/); if (k) want.lessons.push(...k[1].split(/[・、,\s]+/).filter(Boolean));
+      if (/^まとめ/.test(u)) for (const n of u.match(/[0-9]+/g)) if (gates.some(g => g.id === `g${n}`) && c.id !== `g${n}`) want.gates.push(`g${n}`);
+      else assert.doesNotMatch(line || '', new RegExp(`まとめ ${n}<`), `${s.id}: まとめ ${n} is not in the book yet`);
+    }
+    const anything = want.lessons.length || want.banks.length || want.gates.length || s.jcab || s.faa || s.use;
+    assert.equal(line !== undefined, !!anything, `${s.id}: the line when there is something to say, and only then`);
+    if (!line) continue;
+    lined++;
+    for (const id of want.lessons) assert.ok(line.includes(`data-use-lesson="${id}"`), `${s.id}: lesson ${id}`);
+    for (const id of want.banks) assert.ok(line.includes(`data-use-bank="${id}"`), `${s.id}: bank ${id}`);
+    for (const id of want.gates) assert.ok(line.includes(`data-sec="${id}.review"`) || line.includes(`data-sec="${gates.find(g => g.id === id).secs[0].id}"`), `${s.id}: ${id}`);
+    // every link of the line has its target: a lesson, a bank, a summary chapter's first section, the road that lists it
+    for (const [, id] of line.matchAll(/data-use-lesson="([^"]+)"/g)) assert.ok(SC.lesson(id), `${s.id} → lesson ${id}`);
+    for (const [, id] of line.matchAll(/data-use-bank="([^"]+)"/g)) assert.ok(QZ.BANKS.some(b => b.id === id), `${s.id} → bank ${id}`);
+    for (const [, id] of line.matchAll(/data-sec="([^"]+)"/g)) assert.ok(BK.findSection(id) && firstOfGate.has(id), `${s.id} → ${id}`);
+    for (const [, p] of line.matchAll(/data-page="([^"]+)"/g)) assert.ok(p === 'jcab' && road.has(s.id), `${s.id} → page ${p}`);
+    assert.equal(/data-page="jcab"/.test(line), road.has(s.id) && !!(s.jcab || (s.use || []).some(u => /^JCAB/.test(u))), `${s.id}: the road is linked when it lists the section`);
+    // the JCAB subjects of its headings, in the road's order, in the road's names
+    const subs = BK.JCAB_ROAD.subjects.filter(sub => (s.jcab || []).some(id => sub.heads.some(h => id === h || id.startsWith(`${h}.`))));
+    for (const sub of subs) assert.ok(line.includes(sub.t), `${s.id}: JCAB ${sub.t}`);
+    assert.doesNotMatch(line, /JCAB (?:工学|気象|航法)/, `${s.id}: JCAB's subjects as JCAB names them`);
+    assert.doesNotMatch(line, /（別の章）|\{ch:|undefined/, s.id);
+    // the notes on the exams: behind their button, one id each
+    const ex = m.match(/<span class="bk-exam" id="([^"]+)" hidden>([\s\S]*)<\/span><\/div>$/);
+    assert.equal(!!ex, !!(s.jcab || s.faa), `${s.id}: notes when there is jcab or faa`);
+    if (!ex) { assert.doesNotMatch(m, /bk-exam-btn/, s.id); continue; }
+    noted++;
+    assert.equal(ex[1], `bkx-${s.id}`); assert.ok(!xids.has(ex[1])); xids.add(ex[1]);
+    assert.ok(line.includes(`<button type="button" class="bk-exam-btn" aria-expanded="false" aria-controls="bkx-${s.id}">試験の項目を見る</button>`), s.id);
+    assert.equal(ex[2].includes('（FAA の学科を受けるかは未公表）'), !!s.faa, `${s.id}: the FAA note says it is not announced`);
+    for (const id of s.faa || []) { const p = id.split('.'); assert.ok(ex[2].includes(`${p.slice(0, 3).join('.')}.`) && ex[2].includes(p[3]), `${s.id}: ${id}`); }
+  }
+  assert.ok(lined >= 100 && noted >= 80, `${lined} lines, ${noted} with notes`);
+});
+
+test('book: the notes on the exams — JCAB\'s headings numbered as the 出題範囲参考 (JCAB-MAP.json\'s labels), the ACS elements by task; the line from a section\'s own use', () => {
+  const JM = new Map(W10C_LEDGER('JCAB-MAP.json').map(r => [r.id, r])), AM = new Set(W10C_LEDGER('ACS-MAP.json').map(r => r.id));
+  const DOC = { cpl: '事業用', ir: '計器飛行証明', ppl: '自家用' };
+  // the same grouping, from the ledger's own labels: siblings after their parent, documents in the order 事業用・計器・自家用
+  const fromLedger = ids => ['cpl', 'ir', 'ppl'].map(doc => {
+    const mine = ids.filter(id => id.startsWith(`${doc}.`) && JM.has(id)).sort((a, b) => a.split('.').slice(1).map(Number).reduce((r, n, i) => r || n - (b.split('.').slice(1).map(Number)[i] || 0), 0));
+    const groups = [];
+    for (const id of mine) {
+      const label = JM.get(id).label.replace(/\s/g, ''), depth = id.split('.').length - 1;
+      const last = depth === 3 ? label.slice(-1) : label.match(/（[^（）]+）$/)[0], head = label.slice(0, label.length - last.length);
+      let g = groups.find(x => x.head === head && x.depth === depth); if (!g) groups.push(g = { head, depth, kids: [] });
+      if (!g.kids.includes(last)) g.kids.push(last);
+    }
+    return groups.length ? `${DOC[doc]} ${groups.map(g => g.head + g.kids.join(g.depth === 3 ? '・' : '')).join('、')}` : '';
+  }).filter(Boolean).join('／');
+  let checked = 0;
+  for (const c of BK.CHAPTERS) for (const s of c.secs) {
+    if (!s.jcab) continue;
+    if (!s.jcab.every(id => JM.has(id))) continue;   // a heading not in the ledger: check-maps.mjs reports it
+    const note = BK.secMarks(s).match(/JCAB 出題範囲参考の見出し：([^<]*)<\/span>/)[1];
+    assert.equal(note, fromLedger(s.jcab), s.id);
+    checked++;
+  }
+  assert.ok(checked >= 80, `${checked} sections`);
+  for (const c of BK.CHAPTERS) for (const s of c.secs) for (const id of s.faa || []) if (!AM.has(id)) assert.match(id, /^CA\./, `${s.id}: ${id} (not in ACS-MAP.json)`);
+  // a section's own use, and the notes, on a section that no link names (x.y): each kind once, in its order
+  const m = BK.secMarks({ id: 'x.y', use: ['課目 a1', 'まとめ 1・まとめ 6', 'JCAB 工学（無線工学）', '試験の外の場面'], jcab: ['cpl.1.4.1.2', 'cpl.1.4.1.1', 'ppl.3.1.2.3', 'cpl.1.3.3'], faa: ['PA.VII.B.K2', 'PA.VII.B.K1', 'IR.I.B.K4'] });
+  const plainOf = h => h.replace(/<[^>]+>/g, '');
+  assert.equal(plainOf(m.match(/<span class="bk-use"[^>]*>([\s\S]*?)<\/span><span class="bk-exam"/)[1]), '使う場面：課目 a1／まとめ 1／JCAB 航空工学（無線工学）・空中航法／試験の外の場面試験の項目を見る');
+  assert.ok(m.includes('<button type="button" class="bk-use-l" data-use-lesson="a1" title="課目 a1　姿勢・出力・トリム">a1</button>'));
+  assert.ok(m.includes(`data-sec="g1.review" title="第 ${BK.CHAPTERS.find(c => c.id === 'g1').n} 章　第 1 部のまとめ">まとめ 1</button>`));
+  assert.doesNotMatch(m, /まとめ 6|data-page=/, 'g6 is not in the book; x.y is not on the road');
+  assert.equal(plainOf(m.match(/<span class="bk-jcab"[^>]*>([\s\S]*?)<\/span>/)[1]), 'JCAB 出題範囲参考の見出し：事業用 １（３）ウ、１（４）ア（ア）（イ）／自家用 ３（１）イ（ウ）');
+  assert.equal(plainOf(m.match(/<span class="bk-faa"[^>]*>([\s\S]*?)<\/span>/)[1]), 'FAA ACS の知識の項目：自家用 PA.VII.B.K1・K2／計器 IR.I.B.K4（FAA の学科を受けるかは未公表）');
+  assert.equal(BK.secMarks({ id: 'x.y', faa: ['PA.I.A.K1'] }).replace(/<span class="bk-exam"[\s\S]*$/, ''), '<div class="bk-marks"><span class="bk-use" data-use-for="x.y"><button type="button" class="bk-exam-btn" aria-expanded="false" aria-controls="bkx-x.y">試験の項目を見る</button></span>');
+  // a door (secMarks({ id: 'door.p1', from })) has no line
+  assert.doesNotMatch(BK.secMarks({ id: 'door.p1', from: ['kiso01.x1'] }), /bk-use|bk-exam/);
+  // a typo does not hide
+  assert.throws(() => BK.secMarks({ id: 'x.y', jcab: ['cp.1.1'] }), /出題範囲参考/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', jcab: ['cpl.1'] }), /出題範囲参考/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', faa: ['PA.I.A'] }), /ACS/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', use: 'まとめ 1' }), /use must be a list/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', use: ['課目 zz9'] }), /not a lesson/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', use: ['まとめ 9'] }), /まとめ 1〜7/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', use: ['JCAB 料理'] }), /not a subject/);
 });

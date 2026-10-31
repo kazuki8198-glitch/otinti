@@ -10,9 +10,12 @@
 // bk.same, the 日本 column of bk.jur and the line under it, the links to Part 7 and the summary chapters:
 // textbook/rewrite/combined/DESIGN.md 3.4 and 6.3).
 // The section's marks (FLIGHT LAB's FL.book.secMarks: the scope badge, 発展, the provenance line 「パイロット基礎教材
-// （第 3 版）… をもとに改稿」) and the chapter-end 説明してみよう (ch.written, FL.book.writtenHtml) are drawn by FLIGHT LAB's
-// and TEXTBOOK's pages from the data, not written in the sections' bodies: this book takes the bodies only, so neither is
-// shown here nor read aloud (DESIGN 6.3). The boxes of the section form stay in the book (もっと深く・計算演習 folded,
+// （第 3 版）… をもとに改稿」, the line 使う場面 with its lessons, tests, summary chapters and JCAB subjects, and the notes on
+// the exams — JCAB's 出題範囲参考 and the FAA's ACS) and the chapter-end 説明してみよう (ch.written, FL.book.writtenHtml) are
+// drawn by FLIGHT LAB's and TEXTBOOK's pages from the data (use・jcab・faa are the section's data, not its body), not
+// written in the sections' bodies: this book takes the bodies only, so none of them is shown here nor read aloud (DESIGN
+// 6.3: the summary chapters and Japan's exams are not in the game). Were the marks ever pasted into a body, the filter
+// drops them whole (PAGE_MARKS). The boxes of the section form stay in the book (もっと深く・計算演習 folded,
 // 判断の目, ここを混同しない, 思い出そう), filtered as the rest; the instructor's words (summary, key points) leave them out,
 // as they leave out the cautions.
 // A section is filtered the first time it is asked for, then kept.
@@ -125,8 +128,10 @@ export function usSideOnly(html) {
   return dropByClass(html, JAPAN_SIDE).replace(/<div class="jur-h"><b>[^<]*<\/b><\/div>/g, `<div class="jur-h"><b>${US_HEAD}</b></div>`);
 }
 
+// what FLIGHT LAB's and TEXTBOOK's pages draw from the section's data (FL.book.secMarks), never the game's
+const PAGE_MARKS = Object.freeze(['bk-marks', 'bk-use', 'bk-exam']);
 function filterHtml(html, sectionExists) {
-  let h = usSideOnly(html);
+  let h = usSideOnly(dropByClass(html, PAGE_MARKS));
   // FLIGHT LAB's own pages: "try it in the simulator" boxes, calculators, notes on its keys and its unbuilt parts
   h = h.replace(/<div class="bk-sim">[\s\S]*?<\/div>/g, '').replace(/<div class="bk-calc[^"]*"[^>]*>\s*<\/div>/g, '');
   h = h.replace(/<p class="(?:small )?mute">([\s\S]*?)<\/p>/g, (m, t) => (/シミュレータ|教材/.test(t) ? '' : m));

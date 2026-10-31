@@ -62,6 +62,7 @@ npm run shots   # 画面の絵を docs/ に撮る（npm test には入ってい�
 - `test/content.test.mjs`：7 部（序部 p0 と第 1〜6 部。どの部も空でない）・34 章・208 節、章の並び、全節が描けること、章末の数（確認問題 213・用語 741・例 115・注意 94・出典 446・飛行課目 75）、章末の「この章の日米の違い」（日米の囲みのある章だけ。まとめの章は除く）、図 173・写真 50、第 1 部の扉と「JCAB 学科の道」のページなど（数は `test/load.mjs` の `COUNTS` に 1 か所でまとめています）。
 - `test/build.test.mjs`：1 ファイル・外部の読み込みなし・全スクリプトの構文・19 ファイルの順番・注意書き・同じ出力になること。
 - `test/marks.test.mjs`：節の題の横の範囲の札・発展の札・由来の行（`FL.book.secMarks`）と、章末の説明してみよう（`FL.book.writtenHtml`。答えはボタンで開く・検索で見つけた答えだけ開く・印刷で全部開く）。
+- `test/use.test.mjs`：節の題の下の使う場面の札（課目・まとめ・JCAB の科目。このページには学科テストがないので出ない）と試験の項目の注記（JCAB の出題範囲参考の見出し・FAA の ACS の知識の項目。ボタンで開け閉め・印刷で開く）、札の課目を押すと札の下に課目の説明。
 - `test/photos.test.mjs`：写真の 2 つの入れ物（教科書の `book-photos.js`・基礎教材の `book-photos-k.js`）の形・原本とのバイト一致・加工の表示・置く節・容量・クレジットの一覧と元のページの記録。
 - `test/egov.test.mjs`：e-Gov の条文の写し。
 - `test/browser.test.mjs`：すでにこの環境にある Playwright で、`file://` から開いて操作を確かめます（http(s) の要求はすべて止めて数え、0 件であること）。Playwright が見つからないときは skip します。探す順番は、環境変数 `PLAYWRIGHT` → `require('playwright')` → `/opt/node22/lib/node_modules/playwright` です。

@@ -3,8 +3,10 @@
 // FLIGHT LAB's (FL.book.html, unchanged); the chapter's end matter (terms, examples, cautions, the check questions,
 // the lessons, the sources) is plain text in FLIGHT LAB's data, so it is escaped here (the same as textContent); the
 // chapter's 日米の違い table is FLIGHT LAB's own HTML (FL.book.jurTable, drawn from FL.jur and escaped there), and so are
-// the section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line) and the chapter's
-// 説明してみよう (FL.book.writtenHtml: its answers open with their buttons, page.js) — the same HTML as FLIGHT LAB's.
+// the section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line, the line 使う場面
+// and the notes on the exams — this page has no test banks, so no 学科テスト in the line; its lessons, summary chapters
+// and the road 「JCAB 学科の道」 are its links: page.js) and the chapter's 説明してみよう (FL.book.writtenHtml: its answers
+// open with their buttons, page.js) — the same HTML as FLIGHT LAB's.
 // Lessons are written as FLIGHT LAB writes them (button[data-lesson]); page.js turns every one into a tag.
 // The pages of the book that are not sections — a part's door (FL.book.doorHtml) and the appendix 「JCAB 学科の道」
 // (FL.book.jcabRoadHtml, book-gates.js) — are FLIGHT LAB's HTML too: pageHtml('door:p1') / pageHtml('jcab'), opened

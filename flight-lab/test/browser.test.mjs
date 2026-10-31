@@ -492,3 +492,72 @@ test('browser: 教科書 — the scope badge and the provenance line beside the 
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }
 });
+
+// W10c (textbook/rewrite/combined/DESIGN.md 3.2「節のデータ」use・jcab・faa, 5 criterion 24): under the title, the line
+// 使う場面 (FL.book.secMarks) — a lesson and a test bank open the syllabus at their card (the brief and its start button,
+// not a flight), まとめ 1 opens the summary chapter, 「JCAB 航空工学」 the page of the road — and the notes on the exams behind
+// their button (JCAB's headings, the ACS elements, 「FAA の学科を受けるかは未公表」), printed open.
+test('browser: 教科書 — the line 使う場面 under the title (lessons and tests open their card in the syllabus, まとめ 1 and 「JCAB 学科の道」 open), the notes on the exams shown and hidden', { skip: !chromium && 'Playwright not found' }, async () => {
+  const { out } = build({ quiet: true });
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await ctx.route(/^https?:/, r => r.abort());
+    await page.addInitScript(() => { try { localStorage.setItem('flightlab-prefs-v2', JSON.stringify({ ack: true, tour: true })); } catch (e) { /* storage blocked */ } });
+    await page.goto('file://' + out);
+    await page.waitForFunction(() => window.__lab && __lab.sceneOk());
+    const open = async id => {
+      await page.evaluate(() => __lab.showPage('book'));
+      await page.evaluate(id => {
+        const f = FL.book.findSection(id), n = `${f.ch.n}.${f.ch.secs.indexOf(f.sec) + 1}`;
+        [...document.querySelectorAll('#bkNav .bk-item')].find(b => b.querySelector('.bk-num').textContent.trim() === n).click();
+      }, id);
+    };
+    await open('aero.stall');
+    const want = await page.evaluate(() => ({ html: FL.book.secMarks('aero.stall'), lessons: FL.syllabus.STAGES.flatMap(s => s.lessons).filter(l => (l.book || []).includes('aero.stall')).map(l => l.id) }));
+    const u = await page.evaluate(() => {
+      const t = document.querySelector('#bkArt .bk-head .bk-title'), f = document.querySelector('#bkArt .bk-head .bk-from'), line = document.querySelector('#bkArt .bk-head .bk-use'), x = document.querySelector('#bkArt .bk-head .bk-exam'), r = e => e.getBoundingClientRect();
+      return { text: line.textContent, under: r(line).top >= r(f).bottom - 1 && r(f).top >= r(t).bottom - 1, inside: r(line).right <= r(document.querySelector('#bkArt')).right + 1,
+        hidden: x.hidden && x.offsetHeight === 0, lessons: [...line.querySelectorAll('[data-use-lesson]')].map(b => b.dataset.useLesson), btn: line.querySelector('.bk-exam-btn').getAttribute('aria-expanded') };
+    });
+    assert.ok(want.html.includes('bk-use') && want.lessons.length >= 1, JSON.stringify(want.lessons));
+    assert.match(u.text, /^使う場面：課目 .*／学科テスト「飛行の原理」.*／まとめ 1／JCAB 航空工学試験の項目を見る$/);
+    assert.deepEqual([u.under, u.inside, u.hidden, u.lessons, u.btn], [true, true, true, want.lessons, 'false']);
+    // the notes: shown and hidden by their button; printed open, without the button
+    await page.locator('#bkArt .bk-exam-btn').click();
+    const ex = await page.evaluate(() => { const x = document.querySelector('#bkArt .bk-exam'), b = document.querySelector('#bkArt .bk-exam-btn'); return { shown: !x.hidden && x.offsetHeight > 0, text: x.textContent, b: [b.textContent, b.getAttribute('aria-expanded')] }; });
+    assert.ok(ex.shown);
+    assert.match(ex.text, /^JCAB 出題範囲参考の見出し：事業用 １（１）ア（オ）（ケ）／自家用 １（１）ア（オ）（ケ）FAA ACS の知識の項目：自家用 PA\.I\.F\.K3、.*（FAA の学科を受けるかは未公表）$/);
+    assert.deepEqual(ex.b, ['試験の項目を閉じる', 'true']);
+    await page.locator('#bkArt .bk-exam-btn').click();
+    assert.equal(await page.locator('#bkArt .bk-exam').isVisible(), false);
+    await page.emulateMedia({ media: 'print' });
+    assert.deepEqual(await page.evaluate(() => [getComputedStyle(document.querySelector('#bkArt .bk-exam')).display, getComputedStyle(document.querySelector('#bkArt .bk-exam-btn')).display]), ['block', 'none']);
+    await page.emulateMedia({ media: 'screen' });
+    // まとめ 1 opens the summary chapter; 「JCAB 航空工学」 the page of the road
+    await page.locator('#bkArt .bk-use button[data-sec="g1.review"]').click();
+    assert.equal(await page.textContent('#bkArt .bk-title'), '第 1 部の振り返り：問いと口述の練習');
+    await open('aero.stall');
+    await page.locator('#bkArt .bk-use button[data-page="jcab"]').click();
+    assert.equal(await page.textContent('#bkArt .bk-road h3'), 'JCAB 学科の道');
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#bkNav .bk-page.sel')].map(b => b.dataset.page)), ['jcab']);
+    // a lesson opens the syllabus at its card: its brief and its start button (nothing is flown from the book)
+    await open('aero.stall');
+    await page.locator(`#bkArt .bk-use [data-use-lesson="${want.lessons[0]}"]`).click();
+    const s1 = await page.evaluate(id => ({ school: !document.getElementById('school').hidden, sel: [...document.querySelectorAll('#sch-stages .sch-item.sel')].map(c => c.dataset.id), h: document.querySelector('#sch-brief h2').textContent, go: !!document.querySelector('#sch-start .sch-go'), flying: !!(__lab.lesson() && !__lab.lesson().free && __lab.lesson().id === id) }), want.lessons[0]);
+    assert.deepEqual(s1, { school: true, sel: [want.lessons[0]], h: await page.evaluate(id => FL.school.lesson(id).title, want.lessons[0]), go: true, flying: false });
+    // a test bank: its card in the first stage, with 「テストを始める」
+    await open('aero.stall');
+    await page.locator('#bkArt .bk-use [data-use-bank="q_aero"]').click();
+    const s2 = await page.evaluate(() => ({ school: !document.getElementById('school').hidden, sel: [...document.querySelectorAll('#sch-stages .sch-item.sel')].map(c => c.dataset.id), go: document.querySelector('#sch-start .sch-go').textContent.trim() }));
+    assert.deepEqual(s2, { school: true, sel: ['q_aero'], go: 'テストを始める' });
+    // a section the links do not name has no line (ground.walk: R3 writes Part 2)
+    await open('ground.walk');
+    assert.equal(await page.locator('#bkArt .bk-use').count(), await page.evaluate(() => (/bk-use/.test(FL.book.secMarks('ground.walk')) ? 1 : 0)));
+    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => __lab.errors), []);
+  } finally { await browser.close(); }
+});

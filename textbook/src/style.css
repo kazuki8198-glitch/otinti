@@ -166,6 +166,18 @@ mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2
 .bk-scope-jp { color: var(--red); border-color: var(--red); }
 .bk-scope-mixed, .bk-deep-tag { color: var(--part); border-color: var(--part); }
 .bk-from { display: block; flex-basis: 100%; margin: 0 0 8px; font-size: .78rem; line-height: 1.5; color: var(--muted); }
+/* 使う場面の札 and the notes on the exams under it (FL.book.secMarks, W10c): the lessons (their goal opens under the line:
+   page.js), the summary chapters and the road 「JCAB 学科の道」 as links in the line; the notes shown and hidden by their
+   button, printed open */
+.bk-use { display: block; flex-basis: 100%; margin: 0 0 8px; font-size: .8rem; line-height: 1.7; color: var(--muted); overflow-wrap: anywhere; }
+#tbView .bk-use > b { color: var(--muted); }
+.bk-use .bk-use-l { display: inline; padding: 0 1px; margin: 0; border: 0; border-radius: 2px; background: none; font: inherit; color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; }
+.bk-use .bk-use-l:hover { text-decoration-style: solid; }
+.bk-use .bk-exam-btn { margin-left: 8px; padding: 0 8px; font-size: .72rem; line-height: 1.6; border-radius: 9px; color: var(--muted); }
+.bk-exam { display: block; flex-basis: 100%; margin: -2px 0 10px; padding: 6px 10px; border-left: 3px solid var(--line); background: var(--soft); border-radius: 4px; font-size: .76rem; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+.bk-exam[hidden] { display: none; }
+.bk-exam .bk-jcab, .bk-exam .bk-faa { display: block; }
+.bk-head .bk-lesson-info { flex-basis: 100%; margin-top: -2px; }
 /* the boxes of the section form (bk.deep・bk.drill folds, bk.judge, bk.dont, bk.recall) */
 .bk-deep, .bk-drill { margin: 12px 0; padding: 8px 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; }
 .bk-deep summary, .bk-drill summary { cursor: pointer; font: 700 .85rem var(--jp); color: var(--accent); }
@@ -266,6 +278,9 @@ table.terms th { color: var(--muted); font-weight: 600; }
   /* 説明してみよう: the answers printed open, without their buttons (the folds are opened by page.js on beforeprint) */
   .bk-w-a[hidden] { display: block !important; }
   .bk-w-btn { display: none !important; }
+  /* the notes on the exams printed open, without their button (W10c) */
+  .bk-exam[hidden] { display: block !important; }
+  .bk-exam-btn { display: none !important; }
   .bk-judge, .bk-dont, .bk-recall, .bk-w { break-inside: avoid; }
   .tb-scroll, .bk-calc { overflow: visible; }
   a { color: inherit; }

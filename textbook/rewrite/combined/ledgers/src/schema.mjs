@@ -55,10 +55,13 @@ const hasNote = p => typeof p.note === 'string' && p.note.trim() !== '';
 // an add was applied before when its row is there. An add with a note is known by its note, which starts the row's note
 // (later patches only append to it): a later unit's patch may have set the row's other fields since (status, where, by…:
 // W07a closing W02's APP.cadet-comm-practice-ch-sim, W11 writing notes on W06's rows), and that must not make the add
-// look like a second row with the same id. An add without a note: when the row holds every field as the patch has it
+// look like a second row with the same id. An add without a note: when the row holds every field as the patch has it,
+// except an empty signature (checkedBy / checkedOn null in the add) that a checker's patch has filled since (R3A: W25's
+// CLAIMS adds, signed by R2V, made the whole W25 file look new again)
+const SIGNED_LATER = new Set(['checkedBy', 'checkedOn']);
 export const alreadyAdded = (row, p) => !!row && (hasNote(p)
   ? String(row.note || '').startsWith(p.note)
-  : Object.entries(patchFields(p)).every(([k, v]) => same(row[k], v)));
+  : Object.entries(patchFields(p)).every(([k, v]) => same(row[k], v) || (v === null && SIGNED_LATER.has(k))));
 // a set was applied before when the row already holds it. A set with a note is known by its note (already part of the
 // row's note): a later unit's patch may have set the same row's other fields since (by, status…), and applying the
 // earlier patch again must not turn them back nor add its note twice (several units write notes on one row: W05, W04

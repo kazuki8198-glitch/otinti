@@ -156,7 +156,7 @@ ${bk.t(['種類', '書き方', '言い方', '出典'], [
   ['速度', '120 kt', 'one two zero knots', 'AIM 4-2-11'],
   ['滑走路', '36 / 9R / 27C', 'runway three six / runway niner right / runway two seven center', 'JO 7110.65 2-4-17'],
   ['時刻', '14:30 UTC', 'one four three zero Zulu', 'AIM 4-2-12']])}
-<p>管制官は、周波数の小数点以下 3 けた目を言わない決まりです（135.275 → one three five point two seven）（JO 7110.65 2-4-17）。</p>
+<p>管制官は、周波数の小数点以下 3 けた目を言わない決まりです（JO 7110.65 2-4-17）。たとえば 135.275 は、one three five point two seven と言います。</p>
 <h4>② 高度と雲の高さは「千・百」で言う</h4>
 ${bk.t(['高度', '言い方', '決まり'], [['500 ft', 'five hundred', '9,900 ft までの、きりのよい数（高度・雲の高さ）は「千・百」で言う（AIM 4-2-8）'], ['4,500 ft', 'four thousand five hundred', '同じ'], ['10,000 ft', 'one zero thousand', 'thousand の前の数字を 1 けたずつ（AIM 4-2-8）'], ['13,500 ft', 'one three thousand five hundred', '同じ'], ['FL190（19,000 ft）', 'flight level one niner zero', '米国では 18,000 ft MSL から flight level（AIM 4-2-9）']])}
 <p>聞きまちがいを防ぐため、管制官が高度を「ten thousand」のようにまとめて言い直すこともあります（JO 7110.65 2-4-17・2-4-18）。</p>
@@ -170,7 +170,7 @@ ${bk.q('“Climb and maintain one zero thousand five hundred” は何 ft？ “
       { id: 'comm.callsign', t: '無線呼出符号の決まり', scope: 'us', h: () => `
 ${bk.aim('無線呼出符号は「誰への交信か」を決める、いちばん大切な部分です。省略してよいときと、いけないときを覚えます。')}
 <ul><li><b>最初の交信では省略しない</b>：機種名・型式名かメーカー名のあとに、登録記号の数字と文字を言います。機種名を言うときは、<b>先頭の N を省きます</b>（例：Bonanza Six Five Five Golf）（AIM 4-2-4）。</li>
-<li><b>省略は管制官から</b>：交信が確立したあと、管制官が「機種名＋最後の 3 文字」に省略して呼んだら、操縦士もそれを使ってかまいません（AIM 4-2-4）。例：Cessna One Two Three Four Five → Cessna Three Four Five。</li>
+<li><b>省略は管制官から</b>：交信が確立したあとに、管制官が「機種名＋最後の 3 文字」で呼んだとします。そのときは、操縦士もその形を使ってかまいません（AIM 4-2-4）。例：Cessna One Two Three Four Five → Cessna Three Four Five。</li>
 <li><b>似た無線呼出符号がいるとき</b>は省略しません。自分への指示か疑わしいときは「<b>Verify clearance for</b>（完全な無線呼出符号）」と言います。似た無線呼出符号の取りちがえは、ほかの機への許可を自分のものとして実行してしまう事故につながります（AIM 4-2-4）。</li>
 <li><b>エアライン</b>は、会社の呼び名と便名を、数字をまとめた形で言います（例：United Twenty-Five Heavy）（AIM 4-2-4）。日本の ANA の呼び名は “All Nippon” です。</li></ul>
 <p>この教材の無線呼出符号「<b>Archer Seven Lima Alpha</b>」は、練習用に決めた架空の機体（N7LA）のものです。同じ登録記号の実在の機とは関係ありません。登録記号の最後の 3 文字が 7LA なので、省略しても同じ言い方になります。本の中では「Archer 7LA」と短く書きますが、読み方は同じです。</p>

@@ -22,19 +22,34 @@ function fileBytes(lod) {
 }
 
 const COMPONENTS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
-// one accessor as a Float32Array (normalized integers scaled to 0…1), or the indices as a Uint32Array
-function read(json, bin, i, asIndex = false) {
-  const a = json.accessors[i], v = json.bufferViews[a.bufferView], n = COMPONENTS[a.type], count = a.count;
-  const T = { 5126: Float32Array, 5125: Uint32Array, 5123: Uint16Array, 5121: Uint8Array }[a.componentType];
-  const size = T.BYTES_PER_ELEMENT, stride = v.byteStride || n * size, base = bin.byteOffset + (v.byteOffset || 0) + (a.byteOffset || 0);
-  const dv = new DataView(bin.buffer), out = asIndex ? new Uint32Array(count * n) : new Float32Array(count * n);
-  const get = { 5126: (o) => dv.getFloat32(o, true), 5125: (o) => dv.getUint32(o, true), 5123: (o) => dv.getUint16(o, true), 5121: (o) => dv.getUint8(o) }[a.componentType];
-  const scale = a.normalized ? { 5123: 1 / 65535, 5121: 1 / 255 }[a.componentType] : 1;
+// one accessor as a Float32Array (normalized integers scaled to 0…1), or the indices as a Uint32Array.
+// Sparse accessors occur where a morph target moves nothing (Blender writes the teeth's expression keys — the
+// same points as closed — sparsely, with no buffer view of their own): read as zeros with the sparse values
+// scattered in.
+function readRaw(json, bin, bv, byteOffset, compType, count, n, normalized, out) {
+  const v = json.bufferViews[bv], T = { 5126: Float32Array, 5125: Uint32Array, 5123: Uint16Array, 5121: Uint8Array }[compType];
+  const size = T.BYTES_PER_ELEMENT, stride = v.byteStride || n * size, base = bin.byteOffset + (v.byteOffset || 0) + byteOffset;
+  const dv = new DataView(bin.buffer);
+  const get = { 5126: (o) => dv.getFloat32(o, true), 5125: (o) => dv.getUint32(o, true), 5123: (o) => dv.getUint16(o, true), 5121: (o) => dv.getUint8(o) }[compType];
+  const scale = normalized ? { 5123: 1 / 65535, 5121: 1 / 255 }[compType] : 1;
   for (let k = 0; k < count; k++) for (let c = 0; c < n; c++) out[k * n + c] = get(base + k * stride + c * size) * scale;
+  return out;
+}
+function read(json, bin, i, asIndex = false) {
+  const a = json.accessors[i], n = COMPONENTS[a.type], count = a.count;
+  const out = asIndex ? new Uint32Array(count * n) : new Float32Array(count * n);
+  if (a.bufferView != null) readRaw(json, bin, a.bufferView, a.byteOffset || 0, a.componentType, count, n, a.normalized, out);
+  if (a.sparse) {   // (sparse indices / values name their buffer views directly, not accessors)
+    const si = a.sparse.indices, sv = a.sparse.values, m = a.sparse.count;
+    const idx = readRaw(json, bin, si.bufferView, si.byteOffset || 0, si.componentType, m, 1, false, new Uint32Array(m));
+    const val = readRaw(json, bin, sv.bufferView, sv.byteOffset || 0, sv.componentType ?? a.componentType, m, n, false, new Float32Array(m * n));   // (the values take the accessor's own type)
+    for (let k = 0; k < m; k++) for (let c = 0; c < n; c++) out[idx[k] * n + c] = val[k * n + c];
+  }
   return { data: out, n };
 }
 
-// → Map name → { part, variant, key, cls, position, normal, shade (rgb per vertex), index, morph (relative) }
+// → Map name → { part, variant, key, cls, position, normal, shade (rgb per vertex), index, morph (relative),
+// morphs (all targets, the mouth's expressions), uv (only the iris parts carry them: the face texture's space) }
 export function actorModel(lod = 'far') {
   if (!FILES[lod]) throw new Error('actor-model: no detail ' + lod);
   if (MODELS[lod]) return MODELS[lod];
@@ -55,11 +70,13 @@ export function actorModel(lod = 'far') {
     const col = at.COLOR_0 != null ? read(json, bin, at.COLOR_0) : null, nv = json.accessors[at.POSITION].count;
     const shade = new Float32Array(nv * 3);
     for (let i = 0; i < nv; i++) for (let c = 0; c < 3; c++) shade[i * 3 + c] = col ? col.data[i * col.n + c] : 1;
+    const morphs = p.targets ? p.targets.map(t => read(json, bin, t.POSITION).data) : null;
     model.set(m.name, {
       part, variant, key, cls, shade,
       position: read(json, bin, at.POSITION).data, normal: at.NORMAL != null ? read(json, bin, at.NORMAL).data : null,
       index: read(json, bin, p.indices, true).data,
-      morph: p.targets && p.targets[0] ? read(json, bin, p.targets[0].POSITION).data : null,
+      morph: morphs ? morphs[0] : null, morphs,
+      uv: at.TEXCOORD_0 != null ? read(json, bin, at.TEXCOORD_0).data : null,
     });
   }
   return model;

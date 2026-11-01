@@ -1,5 +1,7 @@
 // CADET — actor tests (node --test): the instructor's body (src/npc/actor.js), without a browser.
-//  - it builds within budget: ≤ 8,000 triangles far from the eye (as the crowd draws most people), ≤ 16,000 up close,
+//  - it builds within budget: ≤ 8,000 triangles far from the eye (as the crowd draws most people), ≤ 80,000 up close
+//    (the character quality pass: only the instructor and one or two others are ever near — the sculpted hair locks,
+//    the denser face and the gradient eyes are paid for there; far stays lean for the crowd),
 //    ≤ 20 meshes, 1.70–1.78 m tall, feet at y = 0, facing +z;
 //  - 600 frames with a moving lookAt (talking or not) stay finite, and the head turns only within human limits while the
 //    eyes do the first 15°; someone behind is not followed round;
@@ -54,7 +56,7 @@ test('actor: builds within budget, the right size and the right way round', () =
   a.root.traverse(o => { if (o.isMesh) { meshes++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } });
   assert.ok(meshes <= 20, `${meshes} meshes`);
   assert.ok(a.trianglesFar <= 8000, `far: ${a.trianglesFar} triangles`);
-  assert.ok(a.triangles <= 16000, `near: ${a.triangles} triangles`);
+  assert.ok(a.triangles <= 80000, `near: ${a.triangles} triangles`);
   assert.ok(tris <= a.triangles, `counted ${tris} > reported ${a.triangles}`);
   assert.equal(a.radius, 0.3);
   a.root.updateMatrixWorld(true);
@@ -70,16 +72,21 @@ test('actor: builds within budget, the right size and the right way round', () =
   const foot = new THREE.Box3().setFromObject(a.bones.footL, true);
   assert.ok(foot.max.z > 0.18 && foot.min.z > -0.1, 'toes forwards');
   // every body part casts a shadow (the tiny face parts may not); one shared material, and one of its own for the mouth
-  // (the only morph target: sharing a material with it would switch the shader program every frame)
+  // (the only morph target: sharing a material with it would switch the shader program every frame) and one for the
+  // two iris meshes (they alone carry the face texture — the iris detail drawn on a canvas at run time)
   for (const n of ['torso', 'hips', 'head', 'upperArmL', 'forearmR', 'handL', 'thighR', 'shinL', 'footR']) {
     const m = a.meshes.find(x => x.name === 'actor-' + n);
     assert.ok(m && m.castShadow, `${n} casts a shadow`);
   }
-  const morph = a.meshes.filter(m => m.geometry.morphAttributes.position), plain = a.meshes.filter(m => !m.geometry.morphAttributes.position);
+  const morph = a.meshes.filter(m => m.geometry.morphAttributes.position);
+  const iris = a.meshes.filter(m => m.name === 'actor-irisL' || m.name === 'actor-irisR');
+  const plain = a.meshes.filter(m => !m.geometry.morphAttributes.position && !iris.includes(m));
   assert.deepEqual(morph.map(m => m.name), ['actor-mouth']);
   assert.equal(new Set(plain.map(m => m.material)).size, 1);
-  assert.ok(!plain.some(m => m.material === morph[0].material), 'the mouth\'s material is its own');
+  assert.equal(iris.length, 2); assert.equal(new Set(iris.map(m => m.material)).size, 1, 'the irises share their material');
+  assert.ok(!plain.some(m => m.material === morph[0].material || m.material === iris[0].material), 'the mouth\'s and the irises\' materials are their own');
   assert.equal(morph[0].material.roughnessMap, plain[0].material.roughnessMap, 'with the same palette');
+  assert.equal(iris[0].material.roughnessMap, plain[0].material.roughnessMap, 'the irises too');
   assert.equal(createActor().meshes.find(m => m.name === 'actor-mouth').material, morph[0].material, 'and shared by every actor');
   for (const m of a.meshes) for (const k of ['position', 'normal', 'color', 'uv']) assert.ok(m.geometry.attributes[k], `${m.name}: ${k}`);
   // another height scales the whole body
@@ -415,17 +422,36 @@ test('actor: the model — every look within budget, faces turned out, the mouth
     assert.ok(wrong <= all * 0.01, `${name}: ${(100 * wrong / all).toFixed(1)}% of its area faces inwards`);
   }
   for (const look of [{}, { hair: 'long', bars: 1, tag: 'ASAHI' }, { hair: 'bun', glasses: true, tie: false, badge: false, bars: 0, tag: 'MILLER' }, { hair: 'crop', lanyard: false, tie: false, bars: 0 },
-    { bars: 4, tag: 'MAKABE' }, { bars: 1, glasses: true, tag: 'MORI' }, { tag: 'WMWMWMW', glasses: true, hair: 'long' }]) {
+    { bars: 4, tag: 'MAKABE' }, { bars: 1, glasses: true, tag: 'MORI' }, { tag: 'WMWMWMW', glasses: true, hair: 'long' },
+    { hair: 'bob', face: 'fem', tag: 'SAEKI' }, { hair: 'tail', face: 'fem', tag: 'TAKANE' }, { hair: 'long', face: 'fem' }, { hair: 'slick', bars: 4, glasses: true }, { hair: 'mop', glasses: true }, { hair: 'centre' }, { hair: 'neat', bars: 4 }]) {
     const a = createActor({ look });
-    assert.ok(a.trianglesFar <= 8000 && a.triangles <= 16000, `${JSON.stringify(look)}: ${a.trianglesFar} triangles far, ${a.triangles} near`);
+    assert.ok(a.trianglesFar <= 8000 && a.triangles <= 80000, `${JSON.stringify(look)}: ${a.trianglesFar} triangles far, ${a.triangles} near`);
   }
   const mouth = createActor().meshes.find(m => m.name === 'actor-mouth').geometry;
-  assert.ok(mouth.morphTargetsRelative && mouth.morphAttributes.position[0].count === mouth.attributes.position.count, 'the mouth: one relative morph target');
+  assert.ok(mouth.morphTargetsRelative && mouth.morphAttributes.position[0].count === mouth.attributes.position.count, 'the mouth: relative morph targets');
+  // three of them, in the model's order: open (talking), smile, frown (the expressions)
+  assert.equal(mouth.morphAttributes.position.length, 3, 'the mouth: open, smile and frown targets');
   let open = 0; for (const v of mouth.morphAttributes.position[0].array) open = Math.max(open, Math.abs(v));
   assert.ok(open > 0.008 && open < 0.02, `the mouth opens ${open} m`);
+  let smile = 0; for (const v of mouth.morphAttributes.position[1].array) smile = Math.max(smile, Math.abs(v));
+  assert.ok(smile > 0.002, `the smile moves the mouth ${smile} m`);
   // the name: letters on the plate (more triangles than without), none without a tag
   const torso = (look) => createActor({ look }).meshes.find(m => m.name === 'actor-torso').geometry.index.count / 3;
   assert.ok(torso({ tag: 'HAYASE' }) > torso({ tag: 'I' }) && torso({ tag: 'I' }) > torso({}), 'the name plate and its letters');
+});
+
+test('actor: expressions — the smile and frown morphs ease in, and gestures carry theirs', () => {
+  const a = createActor({ seed: 5 }), mouth = a.meshes.find(m => m.name === 'actor-mouth');
+  const step = (s) => { for (let t = 0; t < s; t += 1 / 30) a.update(1 / 30, { talking: false }); };
+  step(1);
+  assert.ok(Math.abs(mouth.morphTargetInfluences[1]) < 0.05 && a.state.expression === null, 'at rest, no expression');
+  a.setExpression('smile'); step(1);
+  assert.ok(mouth.morphTargetInfluences[1] > 0.8, `the smile eases in (${mouth.morphTargetInfluences[1].toFixed(2)})`);
+  assert.equal(a.state.expression, 'smile');
+  a.setExpression(null); step(1);
+  assert.ok(mouth.morphTargetInfluences[1] < 0.2 && a.state.expression === null, 'and out again');
+  a.gesture('shrug'); step(1);
+  assert.ok(mouth.morphTargetInfluences[2] > 0.5, `a shrug frowns (${mouth.morphTargetInfluences[2].toFixed(2)})`);
 });
 
 // ---------------------------------------------------------------- seated

@@ -13,8 +13,10 @@
 // The look is fictional: a white short-sleeved pilot shirt with navy epaulettes (3 gold bars), a navy tie, a lanyard
 // ID card, a small SHOYO wing badge and a name plate, navy trousers, black shoes. opts.look changes it for the
 // academy's other people (M5): the bars (0–4: a cadet 1, the chief instructor 4, none for the staff), the tie, the
-// badge, the lanyard, the name on the plate (tag: Latin letters; none, no plate), the hair (short, crop, long — tied
-// back in a tail —, bun), glasses; opts.colors the shirt, the trousers, the hair, the skin.
+// badge, the lanyard, the name on the plate (tag: Latin letters; none, no plate), the hair (ten styles of sculpted
+// locks: short, neat, slick, crop, centre, mop, bob, long, bun, tail), the face (base / fem proportions), glasses;
+// opts.colors the shirt, the trousers, the hair, the skin. The shading is cel (see tuneActorShader): soft shadow
+// bands and a rim light over the baked occlusion, and the iris carries a run-time canvas texture of its detail.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -57,23 +59,95 @@ const CLASSES = {
   tie: [0.5, 0], trousers: [0.86, 0], leather: [0.4, 0], shoe: [0.24, 0], rubber: [0.9, 0], gold: [0.32, 0.85], silver: [0.26, 0.9], plastic: [0.32, 0],
 };
 const CLASS_IDS = Object.keys(CLASSES);
+// cel shading (Q2): the standard material with its diffuse response pushed through a soft 3-band ramp (hue kept:
+// both direct and indirect light are scaled by the same factor), plus a view-dependent rim light. Injected into
+// lights_fragment_begin / before opaque_fragment — chunks the indoor shading (render/indoor.js, which rewrites
+// lights_pars_begin and lights_fragment_maps) never touches, so the two compose. The class palette moves to the
+// uv1 attribute (the palette texture's channel), leaving uv free for the one textured part (the iris, below).
+function tuneActorShader(mat) {
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <lights_fragment_begin>', `#include <lights_fragment_begin>
+      { // the ramp: quantize the diffuse luminance into soft bands, scale both lights by the same factor
+        vec3 cdD = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+        float cdL = dot( cdD, vec3( 0.333333 ) );
+        float cdB = cdL * 3.0;
+        float cdQ = ( floor( cdB ) + smoothstep( 0.3, 0.7, fract( cdB ) ) ) / 3.0;
+        float cdT = mix( cdL, cdQ * 0.92 + 0.05, 0.88 );
+        float cdK = cdL > 1e-5 ? cdT / cdL : 1.0;
+        reflectedLight.directDiffuse *= cdK;
+        reflectedLight.indirectDiffuse *= cdK;
+      }`)
+      .replace('#include <opaque_fragment>', `{ // the rim: a cool edge light where the surface turns away
+        vec3 cdNv = normalize( vNormal );
+        vec3 cdVv = normalize( vViewPosition );
+        float cdFr = pow( 1.0 - clamp( dot( cdNv, cdVv ), 0.0, 1.0 ), 3.0 );
+        float cdLit = clamp( dot( reflectedLight.directDiffuse + reflectedLight.indirectDiffuse, vec3( 0.3333 ) ) * 1.6, 0.0, 1.0 );
+        outgoingLight += cdFr * vec3( 0.30, 0.33, 0.38 ) * ( 0.35 + 0.65 * cdLit ) * 0.55;
+      }
+      #include <opaque_fragment>`);
+  };
+  mat.customProgramCacheKey = () => 'actor-cel1';
+  return mat;
+}
 let MAT = null;
 export function actorMaterial() {
   if (MAT) return MAT;
   const n = CLASS_IDS.length, data = new Uint8Array(n * 4);
   CLASS_IDS.forEach((k, i) => { const [r, m] = CLASSES[k]; data.set([255, Math.round(r * 255), Math.round(m * 255), 255], i * 4); });
   const t = new THREE.DataTexture(data, n, 1, THREE.RGBAFormat);
-  t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; t.channel = 1;   // (read through uv1)
   MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 1, roughnessMap: t, metalnessMap: t });
   MAT.name = 'actor';
-  return MAT;
+  return tuneActorShader(MAT);
 }
 // the mouth (the one part with a morph target) has a material of its own: one shared with the meshes that have none
 // would make three.js switch the shader program back and forth every frame
 let MOUTH_MAT = null;
 function mouthMaterial() {
-  if (!MOUTH_MAT) { MOUTH_MAT = actorMaterial().clone(); MOUTH_MAT.name = 'actor-mouth'; }   // (the same palette texture)
+  if (!MOUTH_MAT) { MOUTH_MAT = tuneActorShader(actorMaterial().clone()); MOUTH_MAT.name = 'actor-mouth'; }   // (the same palette texture)
   return MOUTH_MAT;
+}
+// the iris texture (Q1): the fine detail of the eye — the limbus ring, the radial striations, the bright
+// collarette, the lid's shadow at the top, the painted highlight — drawn once into a canvas, the way the G1000
+// screens and the label atlas are drawn at run time, so the single HTML grows by nothing. It multiplies the
+// person's iris colour (the vertex colour) and the baked gradient; the geometry catchlights stay white on top.
+// In Node (the tests) there is no canvas: the material then just has no map (the baked gradient carries it).
+function irisTexture() {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+  const S = 256, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const x = cv.getContext('2d'); if (!x) return null;
+  // (the UVs are planar over 2.35 eye radii: the pupil's edge falls at 0.22 of the canvas radius, the iris' at 0.51)
+  const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0.0, '#4a4a4a'); g.addColorStop(0.20, '#7a7a7a'); g.addColorStop(0.26, '#ffffff');
+  g.addColorStop(0.40, '#d2d2d2'); g.addColorStop(0.485, '#8a8a8a'); g.addColorStop(0.53, '#2c2c2c'); g.addColorStop(1.0, '#2c2c2c');
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  x.lineWidth = 1;
+  for (let i = 0; i < 110; i++) {   // the striations: fine radial fibres, alternating light and dark
+    const a = rnd() * Math.PI * 2, r0 = S * (0.085 + rnd() * 0.03), r1 = S * (0.20 + rnd() * 0.045);
+    x.strokeStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
+    x.beginPath(); x.moveTo(S / 2 + Math.cos(a) * r0, S / 2 + Math.sin(a) * r0); x.lineTo(S / 2 + Math.cos(a) * r1, S / 2 + Math.sin(a) * r1); x.stroke();
+  }
+  const top = x.createLinearGradient(0, 0, 0, S * 0.52);   // the upper lid's shadow over the iris
+  top.addColorStop(0, 'rgba(0,0,0,0.42)'); top.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = top; x.fillRect(0, 0, S, S * 0.52);
+  const bot = x.createLinearGradient(0, S * 0.62, 0, S);   // light gathered at the bottom
+  bot.addColorStop(0, 'rgba(255,255,255,0)'); bot.addColorStop(1, 'rgba(255,255,255,0.20)');
+  x.fillStyle = bot; x.fillRect(0, S * 0.62, S, S * 0.38);
+  x.fillStyle = 'rgba(255,255,255,0.85)';                  // under the main catchlight disc (which is geometry)
+  x.beginPath(); x.arc(S * 0.37, S * 0.36, S * 0.045, 0, Math.PI * 2); x.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  return tex;
+}
+let IRIS_MAT = null;
+function irisMaterial() {
+  if (!IRIS_MAT) {
+    IRIS_MAT = tuneActorShader(actorMaterial().clone()); IRIS_MAT.name = 'actor-iris';
+    const tex = irisTexture(); if (tex) IRIS_MAT.map = tex;
+  }
+  return IRIS_MAT;
 }
 const uOf = (cls) => (CLASS_IDS.indexOf(cls) + 0.5) / CLASS_IDS.length;
 
@@ -133,13 +207,18 @@ class Part {
   constructor(colors) { this.geos = []; this.C = colors; }
   // (shade: a factor per vertex and channel, linear — the model's baked occlusion and tints)
   add(geo, col, cls, shade = null) {
-    for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal') geo.deleteAttribute(k);
+    // (uv is kept when the model brings one — only the iris parts do — everything else is dropped)
+    for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') geo.deleteAttribute(k);
     if (!geo.attributes.normal) geo.computeVertexNormals();
     if (!geo.index) geo.setIndex([...Array(geo.attributes.position.count).keys()]);
     const n = geo.attributes.position.count, c = _c.set(typeof col === 'string' ? this.C[col] : col), cv = new Float32Array(n * 3), uv = new Float32Array(n * 2), u = uOf(cls);
     for (let i = 0; i < n; i++) { cv[i * 3] = c.r; cv[i * 3 + 1] = c.g; cv[i * 3 + 2] = c.b; uv[i * 2] = u; uv[i * 2 + 1] = 0.5; }
     if (shade) for (let i = 0; i < n * 3; i++) cv[i] *= shade[i];
-    geo.setAttribute('color', new THREE.BufferAttribute(cv, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setAttribute('color', new THREE.BufferAttribute(cv, 3));
+    // the class palette is read through uv1 (the material's palette texture has channel 1); uv itself is the
+    // model's own where it has one and the palette point elsewhere, so every geometry carries the same set
+    geo.setAttribute('uv1', new THREE.BufferAttribute(uv, 2));
+    if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.BufferAttribute(uv.slice(), 2));
     geo.clearGroups(); this.geos.push(geo); return geo;
   }
   build(origin = null) {
@@ -169,20 +248,24 @@ const MOUTH = { y: 1.548 }; MOUTH.z = faceZ(0, MOUTH.y);
 // the model's meshes of one part whose variant the look shows, added to a Part (its colour times the baked shading)
 // (the biggest first: the part's main surface, the skin or the shirt, leads its geometry)
 function addModel(Pt, part, shows, lod = 'far') {
-  const list = [...actorModel(lod).values()].filter(m => m.part === part && shows(m.variant)).sort((a, b) => b.index.length - a.index.length);
+  const list = [...actorModel(lod).values()].filter(m => m.part === part && shows(m.variant, m)).sort((a, b) => b.index.length - a.index.length);
   for (const m of list) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(m.position.slice(), 3));
     if (m.normal) g.setAttribute('normal', new THREE.BufferAttribute(m.normal.slice(), 3));
+    if (m.uv) g.setAttribute('uv', new THREE.BufferAttribute(m.uv.slice(), 2));
     g.setIndex(new THREE.BufferAttribute(m.index.slice(), 1));
-    if (m.morph) g.morphAttributes.position = [new THREE.BufferAttribute(m.morph.slice(), 3)];
+    if (m.morphs) g.morphAttributes.position = m.morphs.map(t => new THREE.BufferAttribute(t.slice(), 3));
+    else if (m.morph) g.morphAttributes.position = [new THREE.BufferAttribute(m.morph.slice(), 3)];
     Pt.add(g, m.key.startsWith('x') ? parseInt(m.key.slice(1), 16) : m.key, m.cls, m.shade);
   }
 }
-const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun'].includes(LK.hair) ? LK.hair : 'short');
+const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun', 'neat', 'slick', 'centre', 'mop', 'bob', 'tail'].includes(LK.hair) ? LK.hair : 'short');
 function buildHead(C, lod) {
-  const H = new Part(C), LK = C.look || {}, hair = hairOf(LK);
-  addModel(H, 'head', (v) => v === 'base' || v === hair || (v === 'glasses' && !!LK.glasses), lod);
+  const H = new Part(C), LK = C.look || {}, hair = hairOf(LK), face = LK.face === 'fem' ? 'fem' : 'base';
+  // the face variant supplies the skin, the eyeballs and the brows; the rest of the head is the shared base
+  addModel(H, 'head', (v, m) => (v === face && (m.key === 'skin' || m.key === 'eye' || m.cls === 'brow')) ||
+    (v === 'base' && m.key !== 'skin' && m.key !== 'eye' && m.cls !== 'brow') || v === hair || (v === 'glasses' && !!LK.glasses), lod);
   return H.build(P.head);
 }
 // the upper lids: one mesh for both eyes, turned about the line through the eyes' centres (blinks, follows the gaze)
@@ -258,7 +341,7 @@ function nameLetters(text) {
 // bars, the wing badge, the lanyard and ID card, the name plate (with look.tag: the name)
 function buildTorso(C, lod) {
   const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) }, bars = Math.min(4, Math.max(0, LK.bars | 0));
-  const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
+  const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'tieclip' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
     (v === 'badge' && LK.badge) || (v === 'lanyard' && LK.lanyard) || (v === 'nametag' && !!LK.tag);
   addModel(T, 'torso', shows, lod);
   const letters = LK.tag ? nameLetters(LK.tag) : null;
@@ -624,7 +707,7 @@ export function createActor(opts = {}) {
   const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C, 'near'), mouthPivot, false);
   mouth.material = mouthMaterial(); far.set(mouth, buildMouth(C, 'far'));
   const lids = bone('lids', head, [0, EYE.y, EYE.z]); withFar(mesh('lids', buildLids(C, 'near'), lids, false), buildLids(C, 'far'));
-  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); withFar(mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s, 'near'), e, false), buildIris(C, s, 'far')); return e; });
+  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); const im = withFar(mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s, 'near'), e, false), buildIris(C, s, 'far')); im.material = irisMaterial(); return e; });
   const arm = {}, leg = {};
   for (const s of [1, -1]) {
     const L = s > 0 ? 'L' : 'R';
@@ -697,6 +780,10 @@ export function createActor(opts = {}) {
   const HY = 0, HP = 2, EY = 4, EP = 6, MO = 8, TN = 10;
   const G = new Float64Array(CH.length), F = new Float64Array(CH.length);
   let time = 0, gDef = null, gName = null, gT = 0, fadeT = 1;
+  // expressions (Q3): the mouth's smile / frown morph targets, eased towards the asked-for expression (a held
+  // one, or a pulse from a gesture); exprCur is what the morphs show this frame
+  let exprName = null, exprUntil = -1; const exprCur = { smile: 0, frown: 0 };
+  function setExpression(name, secs = 0) { exprName = name === 'smile' || name === 'frown' ? name : null; exprUntil = secs > 0 ? time + secs : Infinity; }
   // walking (Phase 2): walkGoal 0..1 (1 ≈ a natural 1.25 m/s, set by setWalk), walkAmt eases towards it, walkPhase
   // runs the cycle (a full cycle — two steps — per ~1.3 m). The ankles are driven on the cycle and the leg IK does
   // the rest; the arms swing against the legs, the hips bob twice a cycle.
@@ -1119,8 +1206,14 @@ export function createActor(opts = {}) {
     lids.rotation.x = -lerp(lidOpen, -27 * DEG, close);
     spring(S, MO, mouthT, 42, dt);
     const m = clamp(S[MO], 0, 1); mouth.morphTargetInfluences[0] = m;
+    // the expression morphs (targets 1 and 2, when the model has them): eased, so the face changes over ~0.3 s
+    const exprOn = exprName && time <= exprUntil ? exprName : null, ek = 1 - Math.exp(-dt * 6);
+    exprCur.smile += ((exprOn === 'smile' ? 1 : 0) - exprCur.smile) * ek;
+    exprCur.frown += ((exprOn === 'frown' ? 1 : 0) - exprCur.frown) * ek;
+    if (mouth.morphTargetInfluences.length > 2) { mouth.morphTargetInfluences[1] = exprCur.smile; mouth.morphTargetInfluences[2] = exprCur.frown; }
 
     state.headYaw = Y; state.headPitch = Pt; state.eyeYaw = S[EY]; state.eyePitch = S[EP]; state.blink = close; state.mouth = m; state.gesture = gName; state.walk = walkAmt; state.crouch = cro;
+    state.expression = exprCur.smile > 0.4 ? 'smile' : exprCur.frown > 0.4 ? 'frown' : null;
     if (inCrowd) applyDraw();
   }
 
@@ -1139,8 +1232,15 @@ export function createActor(opts = {}) {
     crowd: { join() { inCrowd = true; applyDraw(); }, parts: crowdParts, view },
     // the geometry the crowd draws for one of its meshes far from the eye (its own, if it has no far detail)
     farGeometry: (m) => (m === arm.L.hm ? arm.L.relaxedFar : m === arm.R.hm ? arm.R.relaxedFar : far.get(m) || m.geometry),
-    // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
-    gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
+    // plays once and goes back to idle; returns its length in seconds (0 for an unknown name). Gestures carry
+    // their expression with them (Q3): a wave smiles, a shrug is troubled, a nod smiles briefly
+    gesture(name) {
+      const r = GESTURE_NAMES.includes(name) ? startGesture(name) : 0;
+      if (r > 0) { if (name === 'wave') setExpression('smile', 2.2); else if (name === 'shrug') setExpression('frown', 1.4); else if (name === 'nod') setExpression('smile', 0.9); }
+      return r;
+    },
+    // hold an expression ('smile' / 'frown') until cleared with null, or pulse it for `secs`
+    setExpression(name, secs = 0) { setExpression(name, secs); },
     // a point in the world (kept in the room's frame from now on: see pointTarget above)
     pointAt(target) {
       if (!(target && Number.isFinite(target.x + target.y + target.z))) { hasPoint = false; return; }

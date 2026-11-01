@@ -227,7 +227,7 @@ test('career M6: after the first solo, chapter 3 the next morning; each later ch
 });
 
 test('career M6: the checks and their aircraft, the weather of the later chapters', () => {
-  assert.deepEqual(Object.keys(CHECKS), ['xc', 'ir', 'me', 'final', 'cx']);   // (next-wave item 6: the complex endorsement's check)
+  assert.deepEqual(Object.keys(CHECKS), ['xc', 'ir', 'me', 'final', 'cx', 'typerate']);   // (next-wave item 6: the complex endorsement's check; the first-officer phase: the type-rating check)
   assert.equal(CHECKS.final.who, 'examiner'); assert.equal(CHECKS.xc.who, null);
   assert.equal(STAGE.ch5.aircraft, 'pa44');
   // low cloud: no flying by sight; the instrument chapter flies in it (not alone)

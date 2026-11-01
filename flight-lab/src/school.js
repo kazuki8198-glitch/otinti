@@ -38,6 +38,14 @@
   };
   function pwrTxt(ss, o, A) {
     if (o.pwr === 'dead') return A && A.twin ? '片方のエンジンが停止（もう片方は全開）' : 'エンジン停止（プロペラは風で回るだけ）';
+    // (first-officer S1) a jet's power is read as N1, not rpm: the physics hands ss.rpm as the fan speed
+    // (100% N1 ≒ 5,200 rpm), so N1% = rpm / 52 — the guide quotes "N1 約 xx%" in place of an rpm figure
+    if (A && A.jet) {
+      const n1 = ss.rpm ? `（N1 約 ${Math.round(ss.rpm / 52)}%）` : '';
+      if (o.pwr === 'full') return `スロットル全開${n1}`;
+      if (o.pwr === 'idle') return `スロットル アイドル${n1}`;
+      return `スロットル 約 ${r5(ss.thr * 100)}%${n1}`;
+    }
     if (o.pwr === 'full') return `スロットル全開${ss.rpm ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
     if (o.pwr === 'idle') return `スロットル アイドル${ss.rpm ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
     return `スロットル 約 ${r5(ss.thr * 100)}%${ss.rpm && !(A && A.cs) ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
@@ -142,6 +150,29 @@
       ['G：Gas（燃料）', '燃料の多い側', s => fullerSide(s)], ['U：Undercarriage（脚）', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98], ['M：Mixture', 'RICH（降下前に戻す）', s => s.eng.every(e => mixNow(s, e) >= 0.95)],
       ['P：Propeller', 'FULL FORWARD（, / . キー：一番前。ゴーアラウンドに備える）', s => (s.prop == null ? 1 : s.prop) >= 0.98],
       ['S：Switches / Seatbelts', '着陸灯 ON・ベルト着用'], ['進入速度', s => `${s.A.v.appr} kt`] ] },
+    // (first-officer S1) the jet's checklists: no magnetos, no mixture, no propeller — fuel PUMPS instead of a
+    // selector, the takeoff flap set BEFORE the checklist verifies it, stab trim, the speed bugs, and on the
+    // landing side the spoiler ARMED and the autobrake (arming states the textbook physics does not model are
+    // read-and-verify items, like the un-judged lines of the other lists; everything with a judge reads the
+    // physics' real state)
+    before_takeoff_jet: { title: '離陸前点検・ジェット（BEFORE TAKEOFF・教材の簡略版）', items: [
+      ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く（W / S / A / D / Q / E で確認）'], ['計器（エンジン表示）', 'PFD・MFD 異常なし、N1・EGT・燃料流量が正常範囲、高度計規正（BARO）'],
+      ['重量と重心', wbText, wbOk],
+      ['燃料ポンプ', 'ON（タンクのポンプで供給。セレクターはポンプの読み替え）', s => s.eng.every(e => (e.sel || 'L') !== 'OFF')],
+      ['フラップ', s => `離陸フラップ ${s.A.flapLabels[s.A.v.toFlaps || 1]}（V キーでセットしてから確認）`, s => s.flapIdx === (s.A.v.toFlaps || 1)],
+      ['トリム（スタブトリム）', '離陸位置（Shift+T でリセット）', s => Math.abs(s.trim) < 0.05],
+      ['速度バグ', s => `Vr ${s.A.v.rotate}・V2（Vr＋約 10）をセット`],
+      ['スポイラー', '格納（速度ブレーキは出ていない）', s => !(s.spoiler > 0)],
+      ['スロットル', 'アイドル', s => s.thr < 0.1],
+      ['離陸の計画', s => `Vr ${s.A.v.rotate}。V1 の前の異常は止まる。浮揚後のエンジン異常は V2 で飛び続ける（ドリフトダウンの考え方は j3）`] ] },
+    before_landing_jet: { title: '着陸前点検・ジェット（BEFORE LANDING・教材の簡略版）', items: [
+      ['燃料ポンプ', 'ON', s => s.eng.every(e => (e.sel || 'L') !== 'OFF')],
+      ['脚', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98],
+      ['フラップ', s => `着陸フラップ ${s.A.flapLabels[s.A.v.apprFlaps || 3]} へ段階的に（V キー）。現在 ${s.A.flapLabels[s.flapIdx]}`, s => s.flapIdx >= 1],
+      ['スポイラー', 'ARM（接地で自動的に展開）'],
+      ['オートブレーキ', 'セット（着陸用：滑走路の長さと路面で選ぶ）'],
+      ['進入速度', s => `Vref＋5 ＝ ${s.A.v.appr} kt（速度バグをセット）`],
+      ['着陸許可', '受領・復唱'] ] },
     ms_engine_failure: { title: '片発停止の記憶操作（教材の簡略版・機体の POH が優先）', items: [
       ['ピッチ', s => `機首を下げて Vyse ${s.A.v.yse} kt（青線）を保つ`], ['出力', 'ミクスチャー・プロペラ・スロットル 前（全開）'], ['外形', 'フラップ UP・脚 UP（G）', s => s.flapIdx === 0 && !s.gearDown],
       ['Identify（特定）', '踏んでいない足の側＝止まったエンジン（Dead foot, dead engine）'], ['Verify（確認）', '止まったと思う側のスロットルを絞っても何も変わらないこと'],
@@ -463,7 +494,7 @@
     const q = L.atc; if (!q || L.done) return null;
     const ok = i === q.ok;
     L.results.push({ step: '無線（復唱）', rows: [{ name: '応答', val: ok ? '正しい' : `誤り（正解：${q.opts[q.ok]}）`, std: '正しく復唱', pass: ok }] });
-    L.atc = null; L.atcResult = { ok, why: q.why, t: L.t };
+    L.atc = null; L.atcResult = { ok, why: q.why, t: L.t, i };   // (i: which answer was picked — the CFI lessons branch the trainee's next flight on how the instruction was given, not only on whether it was right)
     L.st.done = true;
     return { ok, why: q.why, right: q.opts[q.ok] };
   }

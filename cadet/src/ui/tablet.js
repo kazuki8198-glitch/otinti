@@ -86,6 +86,9 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (m.evening) put(plan, make('div', 'tb-note', '今日はここまで。寮の自室のベッドで寝ると、次の日になります。'));
     // (M8) after the graduation: the epilogue again (Haneda, the right seat of the 737)
     if (m.graduated && act.epilogue) put(plan, btn('終章：羽田の 737（もう一度）', () => { close(); act.epilogue(); }, 'tb-btn ghost'));
+    // (first-officer phase) the airline's offer, and the day's line duty out of Haneda
+    if (m.canJoin && act.join) put(plan, btn('翔洋航空に入社する（主任教官の案内）', () => { close(); act.join(); }, 'tb-btn'));
+    if (m.lineToday && act.line) put(plan, btn(`本日の運航を開始：${m.lineToday.title}`, () => { close(); act.line(); }, 'tb-btn'));
     const wx = put(make('div', 'tb-card'), make('h3', '', `天気：${m.weather.ja}`),
       make('div', 'tb-mono', m.weather.metarAm), make('div', 'tb-mono', m.weather.metarPm), make('div', 'tb-mono', m.weather.taf),
       ...(m.weather.fd ? [make('div', 'tb-mono', m.weather.fd)] : []),
@@ -120,6 +123,10 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (m.gradRank) put(scr, put(make('div', 'tb-card'), make('h3', '', `卒業評価　${m.gradRank.rank}`),
       make('div', 'sub', `総合 ${m.gradRank.total}（操縦 35%・知識 25%・交信 15%・判断 25%）`),
       make('div', 'sub', `一発合格率 ${m.gradRank.firstRate}%（課目・審査の初回）　筆記試験の受験 ${m.gradRank.examTries} 回　飛行の平均スコア ${m.gradRank.avgScore}`)));
+    // (first-officer phase) the line record: sectors and block time towards the line check
+    if (m.fo) put(scr, put(make('div', 'tb-card'), make('h3', '', '副操縦士（翔洋航空・羽田）'),
+      make('div', 'sub', `セクター ${m.fo.sectors}・飛行時間 ${Math.floor(m.fo.blockMin / 60)} 時間 ${m.fo.blockMin % 60} 分${m.fo.evalAvg != null ? `・機長評価 平均 ${m.fo.evalAvg} 点` : ''}`),
+      make('div', 'sub', m.fo.done ? '一人前の副操縦士です。次は機長昇格訓練（予告）' : m.fo.lineCheckReady ? 'ラインチェックの時期です（セクター 12 以上・飛行時間 900 分以上）' : `一人前まで：あとセクター ${Math.max(0, 12 - m.fo.sectors)}・あと ${Math.max(0, 900 - m.fo.blockMin)} 分`)));
     // (chapter 1's sections: heard or not, and the last answers — the classes', the checks', the evening study's)
     if (m.marks) {
       put(scr, make('h3', '', '座学の節（✓ 前回合っていた　△ 前回間違えた　・ まだ問われていない　空白 まだ聞いていない）'));

@@ -15,6 +15,7 @@ import { buildGround } from './world/ground.js';
 import { createCb } from './world/cb.js';
 import { cbFor } from './flight/cb.js';
 import { buildAirfield, airfieldColliders, STANDS } from './world/airfield.js';
+import { buildClouds } from './world/clouds.js';
 import { buildBuildings } from './world/buildings.js';
 import { buildAcademy, ACADEMY } from './world/academy.js';
 import { buildDorm, DORM } from './world/dorm.js';
@@ -26,8 +27,11 @@ import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
 import { buildLandmarks } from './world/landmarks.js';
 import { buildStrip } from './world/strip.js';
-import { STRIP_LABEF, airfields } from './flight/airfields.js';
-import { parkedAircraft, colliderBoxes } from './aircraft/exterior.js';
+import { STRIP_LABEF, airfields, LINE_AIRFIELDS, lineAirfieldById } from './flight/airfields.js';
+import { createLineDuty, routeById as lineRouteById } from './flight/line.js';
+import { joinDialogs, captainLines } from './content/dialog/first-officer.js';
+import { parkedAircraft, colliderBoxes, setPaintDetail, setGlowQuality } from './aircraft/exterior.js';
+import { setGlassRain, setGlassRainQuality, tickGlassRain } from './render/materials.js';
 import { TODAY, PARKED_ARCHERS, PARKED_SEMINOLES } from './aircraft/registrations.js';
 import { PRESETS, ORDER, gpuName, pickPreset, rememberPreset, makeDynRes } from './core/quality.js';
 import { createInput } from './core/input.js';
@@ -59,6 +63,8 @@ import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
 import { trafficForDay, trafficForTwinDay } from './flight/traffic.js';
 import { toCSV as recToCSV, toGPX as recToGPX } from './flight/recorder.js';
+import { analyzeRecording } from './flight/analysis.js';
+import { seriesOf as profileSeries, touchdownOf as profileTouchdown } from './flight/profile.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
 import { createCast, FAR as CAST_FAR } from './npc/cast.js';
@@ -94,7 +100,7 @@ import { withEnglish, CHECK_EN, WHO_EN } from './content/dialog/en.js';
 import { buildHaneda, OFFSET as HANEDA_OFFSET, EYE as HANEDA_EYE, CAPTAIN as HANEDA_SEAT } from './epilogue/haneda.js';
 import { epilogueDialogs, CAPTAIN } from './content/dialog/epilogue.js';
 import { departurePose, DEPARTURE_CUES } from './epilogue/departure.js';
-import { seatFromBody } from './npc/actor.js';
+import { seatFromBody, setActorLightDir } from './npc/actor.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -152,6 +158,9 @@ async function boot() {
   if (settings.get('qShadow') === false || settings.get('qAO') != null || settings.get('qBloom') != null)
     preset = { ...preset, ...(settings.get('qShadow') === false ? { shadow: 0 } : {}), ...(settings.get('qAO') != null ? { ao: settings.get('qAO') } : {}), ...(settings.get('qBloom') != null ? { bloom: settings.get('qBloom') } : {}) };
   pipe.setQuality(preset);
+  setPaintDetail(preset.paintDetail ?? 1);
+  setGlassRainQuality(preset.glassRain ?? 1);
+  setGlowQuality(preset.glowDetail ?? 1);
   const { scene, camera, renderer } = pipe;
   setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
   const world = createCollisionWorld();
@@ -164,6 +173,7 @@ async function boot() {
   const ground = buildGround(L, FL, { quality: preset }); scene.add(ground.group);
   const cbVis = createCb(scene);   // (B3.3) the day's cumulonimbus, when the day has one
   const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group); airfieldColliders(airfield, world);
+  const clouds = buildClouds(L, FL, { quality: preset }); scene.add(clouds.group);
   bootMsg('訓練所を作っています…', 0.45); await frame();
   const buildings = buildBuildings(L, { world, kit: createPropKit() }); scene.add(buildings.group);
   const spec = academySpec(FL);
@@ -177,6 +187,10 @@ async function boot() {
   const landmarks = buildLandmarks(L, FL); scene.add(landmarks.group);
   // (B2.5) the second airfield: the grass strip at LAB-F, and the world's airfield data for whoever lists it
   const strip = buildStrip(L, STRIP_LABEF); scene.add(strip.group);
+  // (first-officer phase) the line network's simple airfields (Haneda and the destinations): a strip
+  // of the same drawing at each field the line duty flies to — the ground there is the world's flat
+  // ground, the strip is the place the nav data (flight/airfields.js LINE_AIRFIELDS) names
+  for (const f of LINE_AIRFIELDS) { const s = buildStrip(L, f); scene.add(s.group); }
   window.__cadetAirfields = airfields(FL.physics);
   bootMsg('機体を並べています…', 0.7); await frame();
 
@@ -248,7 +262,7 @@ async function boot() {
   let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
     const st = sky.setTime(hours, dayOfYear(career.day));   // (the sun for the career's own date: the days drift from April to the autumn)
-    pipe.setHaze({ sunDir: st.dir, el: st.el });
+    pipe.setHaze({ sunDir: st.dir, el: st.el }); setActorLightDir(st.dir);   // (the faces' SDF shadow reads the same sun)
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn); dorm.setNight(st.lightsOn);
     $('#time').value = String(hours);
     const hh = Math.floor(hours), mm = Math.round((hours - hh) * 60);
@@ -783,6 +797,9 @@ async function boot() {
       if (ex && ex.id === 'written1' && career.examReady('written1')) { const n = career.attempt('exam:written1'); return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: n, warm: mixedReview(FL, st, { attempt: n }) })), dialog: 'exam' }; }
       return { run: peopleRunner, dialog: 'lecturer' };
     }
+    // (first-officer phase) after the graduation, the chief instructor has the airline's offer: the
+    // joining talk (its 「入社する」 choice fires the 'join' hook → career.beginFirstOfficer)
+    if (who === 'chief' && st.graduated && !(st.fo && st.fo.hired)) return { run: startLesson('join', 'join', joinDialogs()), dialog: 'join' };
     if (who !== 'instructor') return { run: peopleRunner, dialog: who };
     if (insAt === 'apron' && !celebrate) return { run: apronRunner, dialog: 'apron' };
     if (celebrate) return { run: runner, dialog: 'celebrate' };
@@ -879,6 +896,12 @@ async function boot() {
     else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
     else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); if (lessonKind && lessonKind.kind === 'study') studyAnswered = true; }
     else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
+    // (first-officer phase) the joining talk's choice (content/dialog/first-officer.js): the airline
+    // career opens — the type-rating chapter is on the schedule from tomorrow
+    else if (name === 'hook' && arg === 'join') {
+      const joined = career.beginFirstOfficer();
+      if (joined) afterTalk.push(() => { applySlot(); toast('翔洋航空に入社しました。型式移行訓練（fo1）が予定表に入ります。まずは型式限定学科の準備を', 7000); });
+    }
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
     else if (name === 'help') { career.tire(15); }
@@ -1335,9 +1358,9 @@ async function boot() {
   const flightHud = createFlightHUD({ root: document.body, settings });
   const dayHud = createDayHUD({ settings });
   // (a click on the radio panel's choices: k4's, else the flying day's)
-  dayHud.onRadioPick((k) => { if (chair) chairAnswer(k); else if (fly && fly.dayMode && fly.dayMode.active) fly.dayMode.answer(k); });
+  dayHud.onRadioPick((k) => { if (chair) chairAnswer(k); else if (lineDuty && lineDuty.prompt) linePromptAnswer(k); else if (fly && fly.dayMode && fly.dayMode.active) fly.dayMode.answer(k); });
   fly = createFlyMode({
-    FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
+    FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud, quality: preset,
     saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a2', dayHud,
     today: () => today,
     // the right seat today: the instructor, the chief instructor on the check ride, no one on the first solo
@@ -1355,10 +1378,17 @@ async function boot() {
       const sig = chk ? { name: PEOPLE[chk.who].name, cert: chk.who === 'examiner' ? '試験官 DPE-0907（架空）' : '主任教官 CFI-0007（架空）' } : null;
       logbook.add(entryFrom(sum, { remarks, date: dateOf(career.day).iso, dayN: career.day, skippedSec: sum.transit === 'skip' ? 600 : 0, sig }));
       input.exitLock();
-      dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, exports: flightExports(), onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
+      dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, exports: flightExports(), profile: flightProfile(), onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
     }),
     // out of the aircraft after a day (done or given up): the next one is a new day (a new walk-around)
     onDayOver: (d) => { pendingNewDay = true; dayOver(d); },
+    // (first-officer phase) the line duty's observation stream, and its session's end (below)
+    onLineTick: (obs) => onLineTick(obs),
+    onLineKey: (k) => { if (lineDuty && lineDuty.prompt) linePromptAnswer(k); },
+    onLineEnd: () => {
+      dayHud.setRadio(null); dayHud.setTask(null);
+      if (lineDuty && !lineDuty.done) { lineDuty = null; toast('勤務を中断しました（記録されません）', 4200); }
+    },
     // the first solo's day is over in the seat: its line in the logbook (signed outside, with the endorsement)
     onSolo: (sum) => (flightItem() && flightItem().kind === 'xc' ? xcLanded(sum) : soloLanded(sum)),
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
@@ -1402,6 +1432,151 @@ async function boot() {
   });
 
   let pendingNewDay = false;
+
+  // ---------------------------------------------------------------- the line (first-officer phase, S3/S4)
+  // A roster duty (career.js fo2): the dispatch decision at the table (an interactor card, as the
+  // home / sim / tower cards), then the flight itself in fly-mode's line session — the duty machine
+  // (flight/line.js) is fed the session's observations here, its questions are asked on the day
+  // HUD's radio panel (the flight's choice UI), and the debrief is recorded with the career
+  // (recordLeg / recordLineCheck) and written into the logbook over the captain's signature.
+  let lineDuty = null;   // { duty, item, route, prompt, compressOffered, eventShown, lastTaskId, pmStage, pmStageT, debriefed, done }
+  let lineCardCb = null;
+  function lineCard(text, choices, cb) {
+    lineCardCb = cb;   // (the card's buttons carry k from 1; the click handler brings the 0-based index)
+    interactor.showCard('路線運航（運航管理）', text, choices.map((c, i) => ({ k: i + 1, text: c })));
+    audio.ui('examine');
+  }
+  function lineChoose(k) {
+    const cb = lineCardCb; lineCardCb = null; interactor.closeCard();
+    if (cb) cb(k);
+    return true;
+  }
+  const lineFrame = (f) => ({ n: f.n, e: f.e, trueHdg: f.trueHdg, lenM: f.len });
+  function startLineDuty(item) {
+    if (lineDuty || talk || (fly && fly.active)) return;
+    const route = lineRouteById(item.route) || lineRouteById('HND-KMQ');
+    const duty = createLineDuty({ route: route.id, role: item.role, captain: item.captain === 'examiner' ? { id: 'examiner', strict: 0.92 } : item.captain, seed: (career.state.seed * 100003 + career.day * 131) >>> 0, weather: career.weather(prog()).kind });
+    lineDuty = { duty, item, route, prompt: null, compressOffered: false, eventShown: false, lastTaskId: null, pmStage: 0, pmStageT: 0, debriefed: false, done: false };
+    duty.advance();   // brief → dispatch
+    const dc = duty.dispatchCase;
+    const brief = item.captain === 'examiner' ? `ラインチェックです。${route.id}、PF で。審査として見ています。` : captainLines.brief(item.captain, { route: route.id, role: item.role });
+    lineCard(`${brief}\n\n【ディスパッチ：${dc.title}】\n${dc.situation}`, dc.choices, (i) => {
+      const r = duty.answerDispatch(i);
+      if (!r) { lineDuty = null; return; }
+      if (r.noGo) { finishLineDuty(true); return; }   // the right call was not to go: the duty ends at the table
+      toast(r.correct ? '判断は適切です。出発しましょう' : 'その判断は記録されます。出発します', 4600);
+      boardLineFlight();
+    });
+  }
+  function boardLineFlight() {
+    const LD = lineDuty; if (!LD) return;
+    const { item, route } = LD, from = lineAirfieldById(route.from), to = lineAirfieldById(route.to);
+    // the trip fuel plus the reserves, in gallons per tank (Jet A at 6.7 lb/gal ≈ 3.04 kg/gal)
+    const fuelGal = Math.min(2400, Math.round((route.tripFuelKg + 1600) / 3.04 / 2));
+    const capName = item.captain === 'examiner' ? '審査官' : captainLines.byId(item.captain).name_ja;
+    const crew = { actor: cast.actor('chief'), name: capName, color: '#ffb35c', id: 'chief' };
+    // a PM leg starts at cruise on the way (the captain has flown the departure): 55 % along the
+    // world line between the fields, at the route's level, headed for the destination
+    const hdg = ((Math.atan2(to.e - from.e, to.n - from.n) * 180 / Math.PI) + 360) % 360;
+    const cruise = { n: from.n + (to.n - from.n) * 0.55, e: from.e + (to.e - from.e) * 0.55, altFt: route.cruiseAltFt, hdgTrue: hdg, kt: 250 };
+    fly.startLineSession({ field: lineFrame(from), role: item.role, mass: 62000, fuelGal, crew, cruise, title: `路線運航 ${route.id}（${item.role}）`, wind: { rel: 20, kt: 8, gust: 0.5 } });
+  }
+  // a question of the duty's, on the radio panel (the choices), with the situation on the task panel
+  function linePrompt(kind, { title, text, choices }) {
+    const LD = lineDuty; if (!LD) return;
+    LD.prompt = kind;
+    dayHud.setTask({ kicker: '路線運航', title, text, keys: [['クリック', '選ぶ']] });
+    dayHud.setRadio({ id: `line-${kind}-${Math.round(performance.now())}`, phase: 'choose', station: 'カンパニー', freq: '会社周波数', lines: [], q: title, choices: choices.map((en, k) => ({ k, en })), last: null, why: null, n: 0, clock: false, script: -1, time: 0, timeLeft: 0 });
+  }
+  function linePromptAnswer(k) {
+    const LD = lineDuty; if (!LD || !LD.prompt) return;
+    const kind = LD.prompt; LD.prompt = null;
+    dayHud.setRadio(null); dayHud.setTask(null);
+    if (kind === 'event') {
+      const wasDest = LD.duty.destination;
+      LD.duty.answerEvent(k);
+      if (LD.duty.destination !== wasDest) toast(`目的地を変更します：${LD.duty.destination}（代替空港）へダイバート`, 6000);
+      else toast('了解しました', 2600);
+    } else if (kind === 'compress') {
+      if (k === 0) {
+        const plan = LD.duty.compress();
+        if (plan && plan.compressRequested) {
+          const dest = lineAirfieldById(LD.duty.destination), h = dest.trueHdg * Math.PI / 180;
+          fly.lineReposition({ n: dest.n - Math.cos(h) * plan.toDistDestM, e: dest.e - Math.sin(h) * plan.toDistDestM, altFt: plan.atAltFt || LD.route.cruiseAltFt, hdgTrue: dest.trueHdg, kt: 250 });
+          toast(`巡航を進めました（約 ${Math.round(plan.elapsedMin)} 分・燃料 ${Math.round(plan.fuelUsedKg)} kg を消費したものとして）`, 5200);
+        }
+      } else toast('このまま巡航を続けます', 2600);
+    } else if (kind === 'task') {
+      LD.duty.answer(LD.lastTaskId, k);
+    }
+  }
+  // the duty machine's feed: fly-mode streams the jet's state; the distance to the CURRENT
+  // destination (a divert changes it) is added here, and the machine's questions are asked
+  function onLineTick(obs) {
+    const LD = lineDuty; if (!LD || LD.done) return;
+    const duty = LD.duty, dest = lineAirfieldById(duty.destination);
+    const distDestM = dest ? Math.hypot(obs.n - dest.n, obs.e - dest.e) : null;
+    duty.update({ ...obs, distDestM });
+    if (obs.crashed) { LD.done = true; setTimeout(() => { if (lineDuty === LD) { lineDuty = null; toast('事故が発生しました。勤務は記録されません', 6000); } }, 30); return; }
+    if (!LD.prompt) {
+      if (duty.event && !LD.eventShown) { LD.eventShown = true; const ev = duty.event; linePrompt('event', { title: '運航上の判断', text: ev.situation, choices: ev.choices }); }
+      else if (duty.phase === 'cruise' && LD.item.role === 'PF' && !LD.compressOffered) { LD.compressOffered = true; linePrompt('compress', { title: '巡航中', text: '巡航に入りました。このまま飛び続けることも、時間を進めて降下の手前まで省略することもできます。', choices: ['時間を進める（降下の手前へ）', 'このまま飛ぶ'] }); }
+      else if (LD.item.role === 'PM' && duty.phase === 'ride') { const t = duty.currentTask(); if (t && t.id !== LD.lastTaskId) { LD.lastTaskId = t.id; linePrompt('task', { title: `モニター：${t.title}`, text: t.prompt, choices: t.choices }); } }
+    }
+    // a PM leg's captain brings the jet down in two compression hops (the first officer monitors):
+    // once every task is answered, to the final; a little later, onto the runway — then the arrival
+    if (LD.item.role === 'PM' && duty.phase === 'ride') {
+      const answered = duty.tasks ? duty.tasks.filter(t => t.answered).length : 0;
+      if (!LD.pmStage && answered >= 5) {
+        LD.pmStage = 1; LD.pmStageT = obs.t;
+        const d = lineAirfieldById(duty.destination), h = d.trueHdg * Math.PI / 180;
+        fly.lineReposition({ n: d.n - Math.cos(h) * 12000, e: d.e - Math.sin(h) * 12000, altFt: 3000, hdgTrue: d.trueHdg, kt: 160, gamma: -3, flaps: 2 });
+        toast('機長が降下・進入に入ります', 3600);
+      } else if (LD.pmStage === 1 && obs.t - LD.pmStageT > 25) {
+        LD.pmStage = 2;
+        const d = lineAirfieldById(duty.destination);
+        fly.linePlaceOnRunway(lineFrame(d), Math.round(d.len * 0.3));
+        setTimeout(() => { if (lineDuty === LD && !LD.done) duty.update({ arrived: true }); }, 500);
+      }
+    }
+    if (duty.phase === 'debrief' && !LD.debriefed) { LD.debriefed = true; setTimeout(() => { if (lineDuty === LD) finishLineDuty(false); }, 400); }
+  }
+  // the duty's line in the logbook (career/logbook.js's entry shape, over the captain's signature)
+  function lineLogEntry(item, sum) {
+    const route = lineRouteById(item.route) || {}, h = Math.round((item.blockMin || route.blockMin || 60) / 6) / 10;
+    const capName = item.captain === 'examiner' ? '審査官' : captainLines.byId(item.captain).name_ja;
+    return { day: career.day, date: dateOf(career.day).iso, aircraft: 'B737-800', reg: 'JA737S', from: route.from || 'HND', to: sum.destination || route.to || '', total: h, dual: h, solo: 0, landings: item.role === 'PF' && sum.landingScore != null ? 1 : 0, xc: 0, inst: 0, me: h,
+      lessons: [{ id: 'line', title: `${item.route}（${item.role}）`, grade: sum.grade, passed: sum.total >= 65 }],
+      remarks: `路線運航 ${item.route}・${item.role}：評価 ${sum.total} 点（${sum.grade}）${sum.diverted ? '・代替空港へダイバート' : ''}`, skipped: 0, trust: 0, sig: { name: capName, cert: 'ATP（架空）' }, signed: true };
+  }
+  function finishLineDuty(atTable) {
+    const LD = lineDuty; if (!LD || LD.done) { if (LD) lineDuty = null; return; }
+    LD.done = true;
+    const { duty, item } = LD, sum = duty.summary();
+    dayHud.setRadio(null); dayHud.setTask(null);
+    if (atTable) {
+      career.done(item.kind, item.id);
+      cards.show({ kicker: '運航管理', title: '出発を見合わせました', sub: `判断 ${sum.decisionScore} 点：正しい判断です。安全は、定時性に勝ります`, ms: 3800 })
+        .then(() => { lineDuty = null; career.advance('evening'); applySlot(); });
+      return;
+    }
+    const isCheck = item.kind === 'linecheck';
+    const rec = career.recordLeg({ route: item.route, role: item.role, blockMin: item.blockMin || LD.route.blockMin, score: sum.total, captainEval: sum.total, diverted: !!sum.diverted });
+    let checkPass = null;
+    if (isCheck) { checkPass = sum.total >= 70; career.recordLineCheck(checkPass); }
+    career.done(item.kind, item.id);
+    logbook.add(lineLogEntry(item, sum));
+    const good = sum.total >= 65;
+    const debriefText = isCheck ? (checkPass ? 'ラインチェック合格です。基準を満たしました。' : 'ラインチェックは不合格でした。セクターを重ねて、また受けてください。')
+      : captainLines.debrief(item.captain, good, { route: item.route, role: item.role });
+    if (fly && fly.active) fly.leave({});
+    cards.show({ kicker: 'デブリーフィング', title: `${item.route}　評価 ${sum.grade}（${sum.total} 点）`, sub: `${debriefText}　／　セクター ${rec.sectors}・飛行時間 ${rec.blockMin} 分`, ms: 5600 })
+      .then(() => {
+        lineDuty = null;
+        if (rec.done) cards.show({ kicker: '到達', title: '一人前の副操縦士', sub: 'お疲れさまでした。次は機長昇格訓練で——その課程は、またいつか', ms: 4600 });
+        career.advance('evening'); applySlot();
+      });
+  }
   // ---------------------------------------------------------------- the career (M5): the day, the time, the work
   // Each morning the cadet wakes in their own room at the dormitory east of the car park and walks (or takes the
   // entrance hall's shortcut) to the academy; the day's plan
@@ -1433,9 +1608,13 @@ async function boot() {
     const fog = w.kind === 'amFog' || w.kind === 'amLowCloud' ? wxNow.fog : low ? 0.55 : 0;
     const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' || (w.kind === 'pmWind' && (slot === 'pm' || slot === 'evening')) ? 0.35 : 0;
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
+    // (B2) the rain on the windshield, read from the same weather: a storm day rains all day (its METAR says
+    // TSRA throughout), a pmStorm afternoon brings its thunderstorms with it; every other kind is dry. A
+    // rendering derivation like the fog and grey above — the weather itself is not touched.
+    setGlassRain(w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.85 : 0);
     sky.setWeather({ overcast });
     const st = sky.setTime(hours, dayOfYear(career.day));
-    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey }); setActorLightDir(st.dir);
     precipNow = precipFor(w.kind, slot); pipe.setPrecip(precipNow);
     window.__cadetPrecip = { k: precipNow, wet: precipNow >= 0.3, kind: w.kind };
     // (B3.3) the day's CB stands from the morning on a storm day, out west; fly-mode reads it through the ctx
@@ -1669,9 +1848,22 @@ async function boot() {
       { label: '直前の飛行を書き出す（GPX）', onClick: () => dl(`cadet-flight-${stamp}.gpx`, recToGPX(rec, neToLatLon), 'application/gpx+xml') },
     ];
   }
+  // the last flight's profile graphs for the logbook (game-quality wave, item 5): the series and the
+  // touchdown window, computed once per recording (the analysis runs over ~10 Hz samples)
+  let profCache = null;   // { rec, profile }
+  function flightProfile() {
+    const rec = fly && fly.recorder ? fly.recorder.last() : null;
+    if (!rec) return null;
+    if (!profCache || profCache.rec !== rec) {
+      let profile = null;
+      try { const a = analyzeRecording(rec, { vref: 70 }); profile = { series: profileSeries(rec), td: profileTouchdown(rec, a) }; } catch (e) { profile = null; }
+      profCache = { rec, profile };
+    }
+    return profCache.profile;
+  }
   function showLogbookNow(fresh = -1) {
     input.exitLock();
-    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, exports: flightExports(), onClose: () => { if ((mode === 'walk' || mode === 'fly') && !tablet.isOpen && (talkingNow() ? talkWantsLock() : !(fly && fly.debrief))) input.requestLock(); } });
+    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, exports: flightExports(), profile: flightProfile(), onClose: () => { if ((mode === 'walk' || mode === 'fly') && !tablet.isOpen && (talkingNow() ? talkWantsLock() : !(fly && fly.debrief))) input.requestLock(); } });
   }
   // a new day (or the game's start): the card, the cadet at the front door, everyone in place
   function startDay({ card = true, place = true } = {}) {
@@ -1857,7 +2049,7 @@ async function boot() {
     cards.show({ kicker: '', title: '移動', sub: 'アカデミー正面入口へ', ms: 200, fade: 300, onDark: () => placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face) });
     return 'examined';
   } });
-  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); else if (b && simOpen) simChoose(+b.dataset.k); else if (b && towerOpen) towerChoose(+b.dataset.k); });
+  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); else if (b && simOpen) simChoose(+b.dataset.k); else if (b && towerOpen) towerChoose(+b.dataset.k); else if (b && lineCardCb) lineChoose(+b.dataset.k); });
 
   // the day's boards: what the career has today
   function boardCard(t) {
@@ -1871,7 +2063,9 @@ async function boot() {
       : x.kind === 'checkride' ? `${CHECKS[x.id] ? CHECKS[x.id].short : '審査 c1'}（${CHECKS[x.id] && CHECKS[x.id].who === 'examiner' ? '審査官' : '主任教官'}）` : `${x.id}（早瀬 教官）`}`);
     if (id === 'metar') return { title: `気象（${date}・KLAB は架空の飛行場）`, text: `METAR ${w.metar.am}\n午後の見込み ${w.metar.pm}\n${w.taf}\n\n今日の天気：${w.ja}。訓練生の有視界飛行の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。${st.chapter === 'ch4' ? '計器飛行の訓練は、雲の中でも教官と一緒なら飛べます。' : ''}` };
     if (id === 'schedule' || id === 'status-board') {
-      const rows = [...flights, '10:00  N512SY  PA-28-181  訓練（同期）', '13:30  N806SY  PA-44-180  双発（上級）'];
+      // (first-officer phase) a line duty is on the board too: the 737 out of Haneda, begun at the tablet
+      const lineRows = sch.filter(x => x.kind === 'line' || x.kind === 'linecheck').map(x => `${x.slot === 'pm' ? '14:00' : '09:30'}  JA737S  B737-800  ${x.title}（タブレットから開始）`);
+      const rows = [...flights, ...lineRows, '10:00  N512SY  PA-28-181  訓練（同期）', '13:30  N806SY  PA-44-180  双発（上級）'];
       return { title: id === 'schedule' ? `本日の割り当て（運航管理・${date}）` : `本日のフライト（LAB 飛行場・${date}）`, text: (sch.some(x => x.kind === 'off') ? '本日は訓練休み\n' : '') + rows.join('\n') + (w.fly.am && w.fly.pm ? '' : `\n※ ${w.ja}：${w.why}`) };
     }
     if (id === 'notices') return { title: '訓練生のお知らせ', text: dailyNotices(st.day).join('\n') + '\n\n（掲示は日替わり。今日の訓練の正はタブレットで）' };
@@ -1911,6 +2105,10 @@ async function boot() {
         // (growth design v1 §4.7) the four abilities, whole numbers; after the graduation, its rank's record
         abilities: [['操縦', Math.floor(st.abilities.hand)], ['知識', Math.floor(st.abilities.know)], ['交信', Math.floor(st.abilities.comm)], ['判断', Math.floor(st.abilities.judge)]],
         gradRank: st.graduated && st.graduated.rank ? { rank: st.graduated.rank, total: st.graduated.total, firstRate: st.graduated.firstRate, examTries: st.graduated.examTries, avgScore: st.graduated.avgScore } : null,
+        // (first-officer phase) joining SHOYO AIRWAYS, the line record, and today's duty
+        canJoin: !!st.graduated && !(st.fo && st.fo.hired),
+        fo: st.fo && st.fo.hired ? { sectors: st.fo.sectors, blockMin: st.fo.blockMin, evalAvg: st.fo.evalN ? Math.round(st.fo.evalSum / st.fo.evalN * 10) / 10 : null, done: !!st.fo.done, lineCheckReady: career.lineCheckReady() } : null,
+        lineToday: (() => { const it = sch.find(x => (x.kind === 'line' || x.kind === 'linecheck') && !career.doneToday(x.kind, x.id)); return it ? { title: it.title } : null; })(),
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
         // (in chapter 1: of each bank, the questions whose answers the classes have said; the chair flight once its
         // class — the calls of one flight — is done)
@@ -1921,6 +2119,9 @@ async function boot() {
       };
     },
     act: {
+      // (first-officer phase) the chief instructor's joining talk, and the day's line duty
+      join: () => { if (!talk && mode === 'walk') tabletTalk('join', 'join', joinDialogs(), 'join', '主任教官'); },
+      line: () => { const it = planToday().find(x => (x.kind === 'line' || x.kind === 'linecheck') && !career.doneToday(x.kind, x.id)); if (it && mode === 'walk' && !talk) startLineDuty(it); },
       logbook: () => showLogbookNow(-1),
       read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
@@ -2180,7 +2381,7 @@ async function boot() {
       ...(settings.get('qAO') != null ? { ao: settings.get('qAO') } : {}),
       ...(settings.get('qBloom') != null ? { bloom: settings.get('qBloom') } : {}) };
     rememberPreset(id); settings.set('quality', id);
-    pipe.setQuality(preset); sky.applyQuality(preset); veg.setNearRadius(preset.treeNear);
+    pipe.setQuality(preset); setPaintDetail(preset.paintDetail ?? 1); setGlassRainQuality(preset.glassRain ?? 1); setGlowQuality(preset.glowDetail ?? 1); sky.applyQuality(preset); veg.setNearRadius(preset.treeNear);
     setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
     renderChips(); toast(`画質：${PRESETS[id].label}`);
   }
@@ -2402,7 +2603,7 @@ async function boot() {
     pipe.setIndoor(adapt, litK);
     fill.intensity = litK * (0.3 + 0.5 * (sky.state.lightsOn || 0));       // by day the windows already do much of it
     pool.update(dt, room ? clusters.get(room.id) : null, 7 + 4 * (sky.state.lightsOn || 0));
-    if ((ambT -= dt) <= 0) { ambT = 0.25; const up = mode === 'fly' && fly ? fly.altitude() : 0; audio.setAmbience({ indoor: (mode === 'fly' && fly && fly.view === 'cockpit') || mode === 'epilogue' ? 0.6 : k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5, airborne: up > 30 }); }
+    if ((ambT -= dt) <= 0) { ambT = 0.25; const up = mode === 'fly' && fly ? fly.altitude() : 0; audio.setAmbience({ indoor: (mode === 'fly' && fly && fly.view === 'cockpit') || mode === 'epilogue' ? 0.6 : k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5, airborne: up > 30, rain: mode === 'fly' ? 0 : precipNow }); }
     audio.update(dt);
     return { a: pa, c: pc };
   }
@@ -2423,6 +2624,7 @@ async function boot() {
     const w = mode === 'fly' && fly ? fly.wind() : null;
     airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : windNow().fromDeg, windKt: w ? w.kt : windNow().kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
+    clouds.update(t, camWorld, sky);
     crowd.update(camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;

@@ -39,6 +39,14 @@
 - 塗装は Archer と同じ架空の翔洋航空のもの。登録記号（架空の N452SY・N455SY・N457SY）の文字は、スクリプトの中で線で書いた字です。
 - 陰（アンビエントオクルージョン）は頂点の色のアルファに焼き込みます。
 
+## 操縦席の内装の模型（`assets/model/cockpit.glb`）
+
+自作です（素材もフォントも使っていません）。`tools/aircraft/build_cockpit.py` を Blender 5.2 でコマンドから動かして作ります（`node tools/aircraft/cockpit-spec.mjs > 寸法.json`、`blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- 寸法.json assets/model/cockpit.glb -`）。寸法は操縦席（`src/aircraft/cockpit.js`）の `CABIN` の記述から取り、再生成するとバイト単位で同じファイルになります。
+
+- 客室の壁・天井・風防の柱・グレアシールド・座席・後ろのベンチ・操縦桿（ヨーク）とその覆い。スイッチや計器そのものは模型ではなく、従来どおりプログラムで作ります（模型は内装の殻だけです）。
+- 塗装は頂点の色で、陰（アンビエントオクルージョン）は頂点の色のアルファに焼き込みます。
+- FLIGHT LAB では容量の都合でこの模型を同梱していないため、同じ寸法の記述からプログラムで作った内装を使います（操作できるスイッチ類はどちらも同じです）。
+
 ## 737 型の外観の模型（`assets/model/jet737.glb`・終章）
 
 自作です（素材もフォントも使っていません）。`tools/aircraft/build_737.py` を Blender 5.2 でコマンドから動かして作ります（`blender -b --factory-startup -P tools/aircraft/build_737.py -- assets/model/jet737.glb [見本の絵のフォルダ|-]`）。作る前と後の絵は `docs/737/` にあります（`model-*.jpg` が模型、`01-apron-before.jpg` が並べる前の駐機場、`02-apron-after.jpg` が並べた後、`03`〜`05` が右席からの眺め）。

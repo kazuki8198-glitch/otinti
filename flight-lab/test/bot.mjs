@@ -46,6 +46,7 @@ export function makeBot(FL) {
       SC.checklistNext(L); return;
     }
     if (S.atc && L.atc) { SC.answerAtc(L, L.atc.ok); return; }
+    if (S.observe) return;   // a step the lesson gives to the trainee (the CFI lessons): the player is told not to touch the controls, and neither does the bot — its generic level-flight hands would fight the trainee's throttle
     if (S.propTo != null) { const cur = s.prop == null ? 1 : s.prop; s.prop = clamp(cur + clamp(S.propTo - cur, -dt * 0.8, dt * 0.8), 0, 1); }   // (the complex lessons: the prop lever, moved at a hand's pace)
     if (S.estimate && !L.estimate) { const t = FL.syllabus.estimateTruth(L, S.estimate); FL.syllabus.submitEstimate(L, { hdg: t.brg, dist: t.dist, eteMin: t.eteMin }); return; }
     rudder(s, c);

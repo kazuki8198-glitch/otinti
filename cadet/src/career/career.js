@@ -41,6 +41,11 @@ export function graduationRank(state, prog) {
   const rank = total >= 68 && rate >= 0.88 && examTries <= 6 ? '優等' : total >= 62 && rate >= 0.6 ? '優秀' : '通常';
   return { rank, total: Math.round(total * 10) / 10, firstRate: Math.round(rate * 100), examTries, avgScore };
 }
+// (first-officer S1/S4) what the type-rating lessons teach, as [axis, base] pairs for C.grow(): a fixed
+// crumb per lesson (the jet lessons are about one new thing each), grown through grow() so the usual
+// diminishing return and the 100 cap apply. j5 is the type-rating check itself: a check teaches nothing
+// here (the checks' rule), so it is not in the table and lessonGrowth() returns [] for it.
+export const LESSON_GROWTH = { j1: [['hand', 2.4]], j2: [['know', 2.4]], j3: [['judge', 2.4]], j4: [['hand', 2.4]] };
 // (growth design v1 §4.1) what one finished flight lesson teaches, as [axis, base] pairs for C.grow():
 // the grade's hand base, weighted by the lesson's level; a sub-axis by the id's lesson letter (n/x/e the
 // judgement of navigation and emergencies, i the knowledge of instruments, the rest more hand); the
@@ -48,6 +53,10 @@ export function graduationRank(state, prog) {
 export function lessonGrowth(grade, levelId, lessonId, tired = false) {
   const base = { S: 5.0, A: 4.0, B: 3.0, C: 1.5 }[grade] || 0;
   if (!base) return [];
+  // (first-officer S1) the type-rating lessons teach their one fixed thing (LESSON_GROWTH); the check
+  // lesson j5 teaches nothing. Flown tired, the same rule as below: halved, and no judgement.
+  if (lessonId === 'j5') return [];
+  if (LESSON_GROWTH[lessonId]) { const g = LESSON_GROWTH[lessonId].map(([a, v]) => [a, v]); return tired ? g.filter(([a]) => a !== 'judge').map(([a, v]) => [a, v * 0.5]) : g; }
   const w = base * (levelId === 'precision' ? 1.3 : levelId === 'intro' ? 0.5 : 1.0);
   const kind = String(lessonId || '').charAt(0);
   const sub = kind === 'i' ? 'know' : (kind === 'n' || kind === 'x' || kind === 'e') ? 'judge' : 'hand';
@@ -96,7 +105,10 @@ export const CHAPTERS = {
   ch5: { n: 5, title: '第 5 章　双発', short: '第 5 章', sub: 'Piper Seminole。エンジンが 2 つ、止まるのも片方' },
   ch6: { n: 6, title: '第 6 章　最終審査', short: '第 6 章', sub: 'TEM、そして審査官の同乗する Check Flight' },
   // (next-wave item 6) not a curriculum chapter: a post-graduation endorsement, opened by beginEndorsement()
-  ch7: { n: 7, title: '第 7 章　複雑機エンドースメント（卒業後）', short: '複雑機', sub: '引込脚と定速プロペラの Arrow、そして教える側の試作' },
+  ch7: { n: 7, title: '第 7 章　複雑機エンドースメント（卒業後）', short: '複雑機', sub: '引込脚と定速プロペラの Arrow、そして教える側（CFI）' },
+  // (first-officer) not academy chapters either: the airline career after graduation, opened by beginFirstOfficer()
+  fo1: { n: 8, title: '型式移行', short: '型式移行', sub: '翔洋航空に入社し、737 級の型式限定を取る' },
+  fo2: { n: 9, title: '路線運航', short: '路線運航', sub: '羽田を拠点に、機長の隣の右席で路線を飛ぶ' },
 };
 // the chapters after the first solo (M6): their lessons in the order they are flown, the written test, the check
 // that closes them (flown with the chief instructor, the examiner, or alone), the aircraft
@@ -106,7 +118,9 @@ export const STAGE = {
   ch4: { lessons: ['i1', 'i2', 'i3', 'i8', 'i4', 'i5', 'i6', 'i7'], exam: 'instr', check: 'ir', aircraft: 'pa28' },
   ch5: { lessons: ['m1', 'm2', 'm3', 'm4', 'e6', 'm5'], exam: 'multi', check: 'me', aircraft: 'pa44' },
   ch6: { lessons: ['r1'], exam: 'final', check: 'final', aircraft: 'pa28' },          // (r1 in the Archer; the final check in the Seminole)
-  ch7: { lessons: ['cx1', 'cx2', 'cx3', 'cf1'], exam: 'complex', check: 'cx', aircraft: 'pa28r' },
+  ch7: { lessons: ['cx1', 'cx2', 'cx3', 'cf1', 'cf2', 'cf3'], exam: 'complex', check: 'cx', aircraft: 'pa28r' },
+  // (first-officer S1) the type rating: the written test first, then j1–j4 one a day, then the check (j5)
+  fo1: { lessons: ['j1', 'j2', 'j3', 'j4'], ftd: [], exam: 'type', check: 'typerate', aircraft: 'b737' },
 };
 // the checks: kind 'xc' (the solo cross-country: the navigation log in the morning, then FLIGHT LAB's n2 flown alone —
 // its diversion is the chapter's turn of events) or 'checkride' (the lessons flown one after the other with the check
@@ -117,7 +131,34 @@ export const CHECKS = {
   me: { kind: 'checkride', title: '双発の審査', short: '双発の審査', lessons: ['m4', 'm2', 'm5'], who: 'chief', ch: 'ch5' },
   final: { kind: 'checkride', title: '最終審査（Check Flight）', short: '最終審査', lessons: ['m1', 'm2', 'm5'], who: 'examiner', ch: 'ch6' },
   cx: { kind: 'checkride', title: '複雑機エンドースメント審査', short: '複雑機の審査', lessons: ['cx1', 'cx3', 'cx2'], who: 'chief', ch: 'ch7' },
+  // (first-officer S1) the type-rating check: j5 flown whole, with the examiner in the left seat
+  typerate: { id: 'typerate', name: '型式限定チェック', kind: 'checkride', title: '型式限定チェック', short: '型式チェック', lessons: ['j5'], who: 'examiner', ch: 'fo1' },
 };
+// (first-officer S3) the line roster's small tables: the routes out of Haneda (the design memo's real-number
+// table: block minutes are what a leg counts in state.fo) and the three line captains (their strictness
+// factor lives with their words in content/dialog/first-officer.js's captainLines — the ids match)
+export const FO_ROUTES = [
+  { id: 'HND-KMQ', from: 'HND', to: 'KMQ', name_ja: '羽田―小松', blockMin: 65, distKm: 290, cruiseFt: 24000 },
+  { id: 'HND-CTS', from: 'HND', to: 'CTS', name_ja: '羽田―新千歳', blockMin: 95, distKm: 820, cruiseFt: 37000 },
+  { id: 'HND-FUK', from: 'HND', to: 'FUK', name_ja: '羽田―福岡', blockMin: 115, distKm: 880, cruiseFt: 38000 },
+  { id: 'HND-OKA', from: 'HND', to: 'OKA', name_ja: '羽田―那覇', blockMin: 155, distKm: 1550, cruiseFt: 39000 },
+];
+// (the ids and names are flight/line.js's CAPTAINS' — a roster item's captain id resolves there and in
+// content/dialog/first-officer.js's captainLines, where each captain's words and strictness live)
+export const FO_CAPTAINS = [
+  { id: 'kashiwagi', name_ja: '柏木 機長' },
+  { id: 'sakurai', name_ja: '桜井 機長' },
+  { id: 'ono', name_ja: '小野 機長' },
+];
+// (first-officer S4) a new first officer's record, and whether the line check is due: 12 sectors and
+// 900 block minutes, and — after a failed check — 4 more sectors before it is offered again
+export const FO_DEFAULT = () => ({ hired: false, sectors: 0, blockMin: 0, evalSum: 0, evalN: 0, lineCheck: null, done: false, failSectors: null });
+export function foLineCheckReady(fo) {
+  if (!fo || fo.done) return false;
+  if (!(fo.sectors >= 12 && fo.blockMin >= 900)) return false;
+  if (fo.lineCheck === 'fail' && Number.isInteger(fo.failSectors)) return fo.sectors >= fo.failSectors + 4;
+  return true;
+}
 // the training device's lessons (FLIGHT LAB's stage 0), in order
 export const GROUND = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // chapter 2's lessons in the order they are flown (t1 and t3 are flown every day round the others: they are passed
@@ -161,6 +202,11 @@ export const EXAMS = {
   multi: { title: '双発の筆記試験', banks: ['q_me', 'q_emg'], n: 30, pass: 80, room: 'planning', ok: '合格です。双発の審査に進めます。' },
   final: { title: '最終の筆記試験', banks: ['q_crm', 'q_law', 'q_ops', 'q_radio'], n: 30, pass: 80, room: 'planning', ok: '合格です。残るは、最終審査の Check Flight だけです。' },
   complex: { title: '複雑機エンドースメントの筆記試験', banks: ['q_ops', 'q_me', 'q_sys'], n: 30, pass: 80, room: 'planning', ok: '合格です。複雑機の審査に進めます。' },
+  // (first-officer S1) the type-rating written test: three new banks, thirty questions, the true 80% and
+  // the 60% bank floor like every other test (exam() and examReady() carry it unchanged). The banks are
+  // FLIGHT LAB's q_jet / q_jperf / q_jsys as landed — NOT q_perf / q_sys: those ids already name the
+  // general-aviation banks written1 draws from, so the jet fields got their own ids upstream.
+  type: { title: '型式限定学科（737 級）', short: '型式学科', banks: ['q_jet', 'q_jperf', 'q_jsys'], n: 30, pass: 80, room: 'planning', ok: '合格です。型式の課目（j1 から）に進めます。' },
 };
 // the trust the first solo needs (the cadet's instructor's)
 export const SOLO_TRUST = 60;
@@ -330,6 +376,10 @@ export function newCareer(seed = 1) {
     drills: { day: 0, n: 0 },
     // (the debrief's main missed item, asked about at the next morning's briefing; null: nothing kept)
     miss: null,
+    // (first-officer S4) the airline record after graduation: hired, the legs flown (sectors), their block
+    // minutes, the captains' evaluations (sum / count), the line check ('pass' | 'fail' | null), whether
+    // the first-officer phase is done, and the sectors at a failed line check (offered again at +4)
+    fo: FO_DEFAULT(),
     // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
     // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
@@ -364,6 +414,20 @@ export function cleanCareer(o) {
   if (isObj(o.solo) && Number.isInteger(o.solo.day)) s.solo = { day: o.solo.day };
   if (isObj(o.checks)) for (const [id, v] of Object.entries(o.checks)) if (CHECKS[id] && isObj(v)) s.checks[id] = { tries: clamp(Math.round(+v.tries || 0), 0, 999), pass: !!v.pass, day: Number.isInteger(v.day) ? v.day : 0 };
   if (isObj(o.graduated) && Number.isInteger(o.graduated.day)) { s.graduated = { day: o.graduated.day }; if (['優等', '優秀', '通常'].includes(o.graduated.rank)) { s.graduated.rank = o.graduated.rank; for (const k of ['total', 'firstRate', 'examTries', 'avgScore']) if (Number.isFinite(o.graduated[k])) s.graduated[k] = clamp(o.graduated[k], 0, 9999); } }
+  // (first-officer S4) the airline record: a save from before it was kept reads as the default (not hired,
+  // nothing flown) — the numbers clamped, the line check only 'pass' / 'fail' / nothing
+  if (isObj(o.fo)) {
+    const f = o.fo;
+    s.fo = { hired: !!f.hired,
+      sectors: Number.isInteger(f.sectors) && f.sectors >= 0 ? Math.min(f.sectors, 9999) : 0,
+      blockMin: Number.isFinite(f.blockMin) && f.blockMin >= 0 ? Math.min(Math.round(f.blockMin), 999999) : 0,
+      evalSum: Number.isFinite(f.evalSum) ? clamp(f.evalSum, 0, 999999) : 0,
+      evalN: Number.isInteger(f.evalN) && f.evalN >= 0 ? Math.min(f.evalN, 9999) : 0,
+      lineCheck: f.lineCheck === 'pass' || f.lineCheck === 'fail' ? f.lineCheck : null,
+      done: !!f.done,
+      failSectors: Number.isInteger(f.failSectors) && f.failSectors >= 0 ? Math.min(f.failSectors, 9999) : null };
+    if (s.fo.done) s.fo.lineCheck = 'pass';
+  }
   // (saves from before these were kept have none: an empty record, the classes already finished taken as heard in full
   // — the pace they were heard at was not kept)
   if (isObj(o.heard)) { for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v; }
@@ -408,6 +472,7 @@ export function noteGround(rec, pass, pct = 100) {
 export const nextLesson = (prog) => CH2.find(id => !passedAt(prog, id)) || null;
 // the gates: what is still missing (an empty list: the gate is open)
 export function gate(state, prog, trust = 50) {
+  if (state.chapter === 'fo2') return [];   // (first-officer S3/S4) line flying has no chapter gate: its goal is the line check (foLineCheckReady), not a gate
   if (state.chapter === 'prologue') return state.done.prologue ? [] : ['入社の 1 日'];
   if (state.chapter === 'ch1') {
     const miss = GROUND.filter(id => !groundPassed(prog, id)).map(id => `訓練装置 ${id}`);
@@ -438,6 +503,34 @@ export const PROLOGUE_FLAGS = { welcome_done: 'ceremony:welcome', tour_done: 'to
 export function prologueFlags(state) {
   const past = state.chapter !== 'prologue' || state.done.prologue != null;
   return Object.fromEntries(Object.entries(PROLOGUE_FLAGS).map(([f, k]) => [f, past || state.done[k] != null]));
+}
+
+// ---- (first-officer S3) the line roster: a repeating pattern of at most four duty days in a row, then
+// rest days — a pure function of the career's seed and the day, so the same day always has the same duty.
+// Sundays are the academy's day off for every chapter (schedule() answers them before this is reached),
+// and they never count as a duty. The role alternates by the legs already flown (state.fo.sectors: the
+// first leg is PF, the next PM, and so on); the route and the captain are seed-and-day draws of their own.
+const FO_CYCLE = 6, FO_DUTY_IN_CYCLE = 4;
+export function foPatternDuty(seed, day) {
+  if (isOff(day)) return false;
+  const pos = (((day + (seed % FO_CYCLE)) % FO_CYCLE) + FO_CYCLE) % FO_CYCLE;
+  return pos < FO_DUTY_IN_CYCLE;
+}
+export function foDutyIndex(seed, day) { let n = 0; for (let d = 1; d < day; d++) if (foPatternDuty(seed, d)) n++; return n; }
+export function foRosterItem(state, day = state.day) {
+  if (!foPatternDuty(state.seed, day)) return { slot: 'am', kind: 'off', id: 'roster', title: '休日（ロスター）', where: null, who: null, reason: 'roster' };
+  const route = FO_ROUTES[Math.floor(rng((state.seed * 104729 + day * 7919) >>> 0)() * FO_ROUTES.length)] || FO_ROUTES[0];
+  const cap = FO_CAPTAINS[Math.floor(rng((state.seed * 31 + day * 131) >>> 0)() * FO_CAPTAINS.length)] || FO_CAPTAINS[0];
+  const flown = state.fo && Number.isInteger(state.fo.sectors) ? state.fo.sectors : 0;
+  const role = flown % 2 === 0 ? 'PF' : 'PM';
+  return { slot: 'am', kind: 'line', id: 'line', route: route.id, blockMin: route.blockMin, role, captain: cap.id, title: `路線運航：${route.name_ja}（${role}）`, where: 'haneda', who: cap.id };
+}
+// the fo2 day itself: too tired to fly (the IMSAFE line, fatigue 65) is a rest day, whatever the roster
+// says; while the line check is due it is the day's duty (a PF leg to Komatsu with the examiner captain)
+function fo2Schedule(state) {
+  if (state.fatigue >= 65) return [{ slot: 'am', kind: 'off', id: 'rest', title: '疲労のため乗務できません（休息）', where: null, who: null, reason: 'rest' }];
+  if (foLineCheckReady(state.fo)) return [{ slot: 'am', kind: 'linecheck', id: 'linecheck', route: 'HND-KMQ', blockMin: 65, role: 'PF', captain: 'examiner', title: 'ラインチェック（定期審査）：羽田―小松（PF）', where: 'haneda', who: 'examiner' }];
+  return [foRosterItem(state, state.day)];
 }
 
 // ---- what is due today: [{ slot, kind, id, title, where, who }]
@@ -475,7 +568,7 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     if (cls < 0 && !k && ((!(ex && ex.pass) && (state.examDay || {}).written1 !== state.day) || (ex && ex.pass && today('exam:written1')))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
   }
-  if (STAGE[state.chapter]) return laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+  if (STAGE[state.chapter] || state.chapter === 'fo2') return laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
   // chapter 2: one flight a day (in the morning, or the afternoon when the morning cannot be flown); the tests. A flight
   // already flown today stays today's
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|solo):/.test(k));
@@ -503,9 +596,11 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
 // next morning in the lobby; after it, days off.
 export const nextIn = (prog, list) => list.find(id => !passedAt(prog, id)) || null;
 function laterSchedule(state, prog, W, out) {
+  // (first-officer S3) line flying is not a stage: its day is the roster's (see fo2Schedule)
+  if (state.chapter === 'fo2') return fo2Schedule(state);
   const day = state.day, S = STAGE[state.chapter], C = CHECKS[S.check], ex = state.exams[S.exam];
   const today = (key) => state.done[key] === day;
-  if (state.graduated && state.chapter !== 'ch7') return [{ slot: 'am', kind: 'off', id: 'grad', title: '修了（訓練はすべて終わりました）', where: null, who: null }];   // (ch7: the endorsement trains after graduation)
+  if (state.graduated && state.chapter !== 'ch7' && state.chapter !== 'fo1') return [{ slot: 'am', kind: 'off', id: 'grad', title: '修了（訓練はすべて終わりました）', where: null, who: null }];   // (ch7: the endorsement trains after graduation; fo1: the type rating does too)
   const checkPassed = !!(state.checks[S.check] && state.checks[S.check].pass);
   if (state.chapter === 'ch6' && checkPassed) return [{ slot: 'morning', kind: 'graduation', id: 'grad', title: '修了式（ロビー）', where: 'lobby', who: 'chief' }];
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|xc):/.test(k));
@@ -514,6 +609,21 @@ function laterSchedule(state, prog, W, out) {
   let id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextIn(prog, S.lessons);
   if (flown && !flown[0].startsWith('flight:')) id = null;
   const written = (slot) => { if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && id && S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2)) out.push({ slot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); };
+  // (first-officer S1) the type rating's own order, unlike the chapters': the written test first (on its
+  // own day, examReady's rule), then the lessons one a day with the instructor, then — lessons and test
+  // both behind them — the type-rating check
+  if (state.chapter === 'fo1') {
+    if (flown && flown[0] === `${C.kind}:${S.check}`) return checkItems(state, C, S.check, W, out, true);
+    if (!(ex && ex.pass)) {
+      // (failed today: nothing more is due today and the test comes back tomorrow, §4.3 as elsewhere)
+      if ((state.examDay || {})[S.exam] !== day) out.push({ slot: 'am', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
+      return out;
+    }
+    if (today(`exam:${S.exam}`) && !flown) { out.push({ slot: 'am', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }   // (passed today: it stays as the day's record; the lessons start tomorrow)
+    if (!flySlot) { out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' }); return out; }
+    if (id) { out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' }); return out; }
+    return checkItems(state, C, S.check, W2, out, false);
+  }
   if (flown && flown[0] === `${C.kind}:${S.check}`) return checkItems(state, C, S.check, W, out, true);
   if (!flySlot) {
     out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' });
@@ -552,7 +662,7 @@ function checkItems(state, C, id, W, out, flown) {
 
 // the options a day's weather is drawn with: the forced kinds, and whether the day may be a forecast bust
 // (the twin and final chapters only — a cadet far enough along to be judged on a forecast that lies)
-const dayOpts = (state, prog) => ({ ...forcedWeather(state, prog), bustOk: !!(STAGE[state.chapter] && state.chapter !== 'ch3' && state.chapter !== 'ch4') });
+const dayOpts = (state, prog) => ({ ...forcedWeather(state, prog), bustOk: !!(STAGE[state.chapter] && state.chapter !== 'ch3' && state.chapter !== 'ch4' && state.chapter !== 'fo1') });   // (fo1: no forecast-bust diversion — the type rating's days are the academy's own)
 
 // the first day of flying and the first solo are not spoiled by the weather (the instructor picks a good day)
 function forcedWeather(state, prog) {
@@ -671,11 +781,51 @@ export function createCareer({ store = null, seed } = {}) {
     },
     soloDone() { st.solo = { day: st.day }; save(); },
     // a check flown (M6): passed or not; the graduation
-    check(id, pass) { const r = st.checks[id] || { tries: 0, pass: false, day: 0 }; r.tries++; if (pass) { r.pass = true; r.day = st.day; } st.checks[id] = r; st.done[`${CHECKS[id].kind}:${id}`] = st.day; save(); return r; },
+    // (first-officer S1) the type-rating check passed, in chapter fo1, is the chapter's end: line flying
+    // (fo2) begins — the one place the fo1 → fo2 step happens, on the check's own record
+    check(id, pass) { const r = st.checks[id] || { tries: 0, pass: false, day: 0 }; r.tries++; if (pass) { r.pass = true; r.day = st.day; } st.checks[id] = r; st.done[`${CHECKS[id].kind}:${id}`] = st.day; if (id === 'typerate' && pass && st.chapter === 'fo1') st.chapter = 'fo2'; save(); return r; },
     // (the graduation: its day, and its rank with the record it was judged by — §4.6)
     graduate(prog) { st.graduated = { day: st.day, ...graduationRank(st, prog) }; st.done['graduation:grad'] = st.day; save(); },
     // (next-wave item 6) open the post-graduation complex endorsement: only from a graduated record, and only once
     beginEndorsement() { if (!st.graduated || st.chapter !== 'ch6') return false; st.chapter = 'ch7'; save(); return true; },
+    // (first-officer S1) join SHOYO AIRWAYS: the same shape as beginEndorsement — only from a graduated
+    // record still in a post-graduation chapter (ch6, or the ch7 endorsement), and only once (not hired
+    // yet). The first-officer record starts fresh; the chapter becomes the type rating (fo1).
+    beginFirstOfficer() {
+      if (!st.graduated || !(st.chapter === 'ch6' || st.chapter === 'ch7')) return false;
+      if (st.fo && st.fo.hired) return false;
+      st.chapter = 'fo1'; st.fo = { ...FO_DEFAULT(), hired: true }; save(); return true;
+    },
+    // (first-officer S4) the line check is due: 12 sectors and 900 block minutes (and, after a fail, 4 more sectors)
+    lineCheckReady: () => foLineCheckReady(st.fo),
+    // (first-officer S3/S4) one line leg flown: the record grows (sectors, block minutes, the captain's
+    // evaluation), the duty tires like a duty does (tire(26): FDP — the flight plus the preparation, on
+    // tire()'s own scale), and the abilities grow through grow() — a PF leg the hand and the judgement,
+    // a PM leg the calls and the knowledge (the design memo's S4 weights). → the record as it now stands
+    recordLeg({ route = null, role = 'PF', blockMin = null, score = null, captainEval = null, diverted = false } = {}) {
+      if (!st.fo || typeof st.fo !== 'object') st.fo = FO_DEFAULT();
+      const fo = st.fo, R = FO_ROUTES.find(r => r.id === route) || null;
+      fo.sectors += 1;
+      fo.blockMin += Number.isFinite(blockMin) && blockMin >= 0 ? Math.round(blockMin) : R ? R.blockMin : 0;
+      const ev = Number.isFinite(captainEval) ? captainEval : Number.isFinite(score) ? score : null;
+      if (ev != null) { fo.evalSum += ev; fo.evalN += 1; }
+      st.fatigue = clamp(st.fatigue + 26, 0, 100);   // (tire(26), inlined: this object is tire()'s own home)
+      const n = fo.sectors;
+      if (role === 'PM') { applyGrow('comm', 1.6, `line:comm${n}`); applyGrow('know', 0.8, `line:know${n}`); }
+      else { applyGrow('hand', 1.2, `line:hand${n}`); applyGrow('judge', 1.2, `line:judge${n}`); }
+      save();
+      return { sectors: fo.sectors, blockMin: fo.blockMin, evalAvg: fo.evalN ? Math.round(fo.evalSum / fo.evalN * 10) / 10 : null, evalN: fo.evalN, diverted: !!diverted, fatigue: st.fatigue, lineCheckReady: foLineCheckReady(fo), done: !!fo.done };
+    },
+    // (first-officer S4) the line check flown: a pass closes the phase (state.fo.done, the milestone);
+    // a fail is kept, and the check is offered again once 4 more sectors are flown (foLineCheckReady)
+    recordLineCheck(pass) {
+      if (!st.fo || typeof st.fo !== 'object') st.fo = FO_DEFAULT();
+      const fo = st.fo;
+      fo.lineCheck = pass ? 'pass' : 'fail';
+      if (pass) { fo.done = true; fo.failSectors = null; } else fo.failSectors = fo.sectors;
+      save();
+      return { pass: !!pass, done: !!fo.done, lineCheck: fo.lineCheck, sectors: fo.sectors, blockMin: fo.blockMin, lineCheckReady: foLineCheckReady(fo) };
+    },
     // today's weather as it counts for today's flying (the instrument chapter flies in low cloud)
     flyingWeather: (prog, kind = 'flight') => weatherFor2(weatherFor(st.seed, st.day, forcedWeather(st, prog)), st.chapter, kind),
     // the day's wind field (surface + the winds aloft at the nav altitude), kept with the day it belongs to:

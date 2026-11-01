@@ -92,20 +92,29 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     return `<div class="m-row"><span>${label}</span><span></span><div class="m-chips" style="grid-column:1/-1">${chip('auto', '自動')}${chip('on', 'ON')}${chip('off', 'OFF')}</div></div>`;
   }
   // the gamepad axis map's editor: per function, an axis picker, an invert switch and a pad picker (−1 = any).
-  // Unmapped functions (the toe brakes, a quadrant's levers) start as なし — the standard layout is FLIGHT LAB's
+  // Unmapped functions (the toe brakes, a quadrant's levers) start as なし — the standard layout is FLIGHT LAB's.
+  // The pad picker also offers each connected device by its own name: an assignment by name follows the
+  // device itself, so a yoke / quadrant / pedals set keeps its roles when the browser lists them in a
+  // different order after a reconnect (a bare pad number is enumeration order, and can move)
   function axisMapHtml(v) {
     const map = v.padMap || {};
+    const devs = [], seenDev = new Set();
+    try { const gp = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const p of gp || []) if (p && p.connected && p.id && !seenDev.has(p.id)) { seenDev.add(p.id); devs.push(p.id); } } catch (err) { /* no gamepad access here */ }
+    const devName = (id) => id.length > 44 ? id.slice(0, 44) + '…' : id;
     const rows = AXIS_ROWS.map(([fn, label, std]) => {
       const e = map[fn] !== undefined ? map[fn] : (std == null ? null : { axis: std, inv: false, pad: -1 });
       const opts = [`<option value="-1" ${!e ? 'selected' : ''}>なし</option>`]
         .concat(Array.from({ length: 12 }, (_, i) => `<option value="${i}" ${e && e.axis === i ? 'selected' : ''}>軸 ${i}</option>`)).join('');
-      const padOpts = [`<option value="-1" ${!e || (e.pad ?? -1) === -1 ? 'selected' : ''}>どのパッドでも</option>`]
-        .concat([0, 1, 2, 3].map(i => `<option value="${i}" ${e && e.pad === i ? 'selected' : ''}>パッド ${i + 1}</option>`)).join('');
+      const padOpts = [`<option value="-1" ${!e || (!e.id && (e.pad ?? -1) === -1) ? 'selected' : ''}>どのパッドでも</option>`]
+        .concat([0, 1, 2, 3].map(i => `<option value="${i}" ${e && !e.id && e.pad === i ? 'selected' : ''}>パッド ${i + 1}</option>`))
+        .concat(devs.map(id => `<option value="id:${esc(id)}" ${e && e.id === id ? 'selected' : ''}>機器：${esc(devName(id))}</option>`))
+        .concat(e && e.id && !devs.includes(e.id) ? [`<option value="id:${esc(e.id)}" selected>機器：${esc(devName(e.id))}（未接続）</option>`] : []).join('');
       return `<div class="m-row"><span>${label}</span><span><select data-axis="${fn}" aria-label="${label}の軸">${opts}</select>
         <label><input type="checkbox" data-axisinv="${fn}" ${e && e.inv ? 'checked' : ''} ${!e ? 'disabled' : ''}> 反転</label>
         <select data-axispad="${fn}" aria-label="${label}のパッド">${padOpts}</select></span></div>`;
     }).join('');
-    return `<h3>ゲームパッドの軸の割り当て</h3>${rows}<p class="m-note">ヨーク・スロットルクアドラント・ペダルを別々の機器でつないでも使えます（接続した全部のパッドを読みます）。「なし」はその機能をパッドで動かしません。トーブレーキはペダルの軸を割り当てると効きます。</p>
+    return `<h3>ゲームパッドの軸の割り当て</h3>${rows}<p class="m-note">ヨーク・スロットルクアドラント・ペダルを別々の機器でつないでも使えます（接続した全部のパッドを読みます）。「なし」はその機能をパッドで動かしません。トーブレーキはペダルの軸を割り当てると効きます。機器名で割り当てると、つなぎ直して並び順が変わっても役割はその機器についていきます。</p>
       <div class="m-big"><button data-act="pad-reset">軸の割り当てを標準に戻す</button></div>`;
   }
 
@@ -216,7 +225,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     if (tab === 'free' && onFreeSetup) {
       const sel = (k, label, opts) => `<label class="m-row"><span>${label}</span><select data-free="${k}" aria-label="${label}">${opts.map(([val, text]) => `<option value="${val}" ${String(freeCfg[k]) === String(val) ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
       return sel('start', '開始位置', [['ramp', 'ランプ（駐機・エンジンは自分で始動）'], ['rwy', '滑走路上（エンジン運転中）'], ['pattern', 'ダウンウインド 1,000 ft'], ['final', '最終進入 5 km'], ['area', '訓練空域 3,000 ft'], ['ils', 'ILS 開始点 2,000 ft']])
-        + sel('aircraft', '機体', [['pa28', 'Archer（単発）'], ['pa44', 'Seminole（双発）']])
+        + sel('aircraft', '機体', [['pa28', 'Archer（単発）'], ['pa44', 'Seminole（双発）'], ['b737', '737 級ジェット（双発）']])
         + sel('hour', '時刻', [[6, '朝 6 時'], [9, '午前 9 時'], [12, '正午'], [15, '午後 3 時'], [18, '夕方 6 時'], [21, '夜 9 時'], [0, '深夜 0 時']])
         + sel('wind', '風', [['calm', '無風'], ['light', '軽い風（滑走路方向 5 kt）'], ['cross', '横風 10 kt'], ['strong', '強い風 16 kt・ガスト'], ['custom', 'カスタム']])
         + (freeCfg.wind === 'custom' ? `<label class="m-row"><span>カスタム風（滑走路から何度・何 kt）</span><span><input type="number" min="0" max="359" value="${freeCfg.windRel}" data-free-num="windRel" style="width:5em"> 度 <input type="number" min="0" max="40" value="${freeCfg.windKt}" data-free-num="windKt" style="width:4em"> kt</span></label>` : '')
@@ -303,10 +312,11 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     };
     if (d.axis) {
       const a = parseInt(e.target.value, 10);
-      patchAxis(d.axis, (base) => a < 0 ? null : { axis: a, inv: !!(base && base.inv), pad: base && typeof base.pad === 'number' ? base.pad : -1 });
+      patchAxis(d.axis, (base) => a < 0 ? null : { axis: a, inv: !!(base && base.inv), pad: base && typeof base.pad === 'number' ? base.pad : -1, ...(base && base.id ? { id: base.id } : {}) });
     } else if (d.axispad) {
-      const p = parseInt(e.target.value, 10);
-      patchAxis(d.axispad, (base) => base ? { ...base, pad: p } : undefined);
+      const val = String(e.target.value);
+      if (val.startsWith('id:')) patchAxis(d.axispad, (base) => base ? { ...base, id: val.slice(3), pad: -1 } : undefined);
+      else { const p = parseInt(val, 10); patchAxis(d.axispad, (base) => { if (!base) return undefined; const nb = { ...base, pad: p }; delete nb.id; return nb; }); }
     } else if (d.axisinv) {
       patchAxis(d.axisinv, (base) => base ? { ...base, inv: e.target.checked } : undefined);
     }

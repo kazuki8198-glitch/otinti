@@ -109,7 +109,7 @@
     if (S.paused || S.L.done) return;
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && S.L.check) { e.preventDefault(); checklistNext(); return; }
     if (/^(Digit|Numpad)[123]$/.test(e.code) && S.L.atc) { e.preventDefault(); answerAtc(+e.code.slice(-1) - 1); return; }
-    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyR: e.shiftKey ? 'thrFull' : null, KeyF: e.shiftKey ? 'thrIdle' : null, KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR', Comma: 'propDown', Period: 'propUp' }[e.code];
+    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyR: e.shiftKey ? 'thrFull' : null, KeyF: e.shiftKey ? 'thrIdle' : null, KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR', Comma: 'propDown', Period: 'propUp', Backslash: 'reverser', KeyN: 'spoiler' }[e.code];
     if (act) { e.preventDefault(); doAction(act); }
   });
   window.addEventListener('keyup', e => { S.keys.delete(e.code); });
@@ -162,6 +162,14 @@
     } else if (a === 'rtrimL' || a === 'rtrimR') {
       S.rTrim = clamp(S.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       toast(`ラダートリム ${S.rTrim === 0 ? '中立' : `${S.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(S.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`, 1400);
+    } else if (a === 'reverser') {
+      if (!A.jet) { toast('逆噴射（リバーサー）はジェット機の装置です。プロペラ機にはありません', 1800); return; }
+      s.rev = s.rev ? 0 : 1;
+      toast(s.rev ? '逆噴射（リバーサー）展開：推力を前方へ向けて減速する（効くのは接地して脚に荷重が乗っている間だけ。60 kt 以下で絞られ 25 kt で止まる）' : '逆噴射（リバーサー）格納：推力は通常へ', 2400);
+    } else if (a === 'spoiler') {
+      if (!A.jet) { toast('スポイラーはジェット機の装置です（教材モデル）。プロペラ機にはありません', 1800); return; }
+      s.spoiler = s.spoiler ? 0 : 1;
+      toast(s.spoiler ? 'スポイラー展開：翼の揚力を捨てて抗力を増やす（降下を深く・速く、接地後は脚の荷重を増やしてブレーキを効かせる）' : 'スポイラー格納：揚力と抗力は通常へ', 2400);
     }
   }
   // the 3D cockpit's controls: FL.view3d hands over what a click or a wheel notch on a knob, key or lever asked for, in
@@ -472,6 +480,7 @@
     ];
     if (!A.gear.fixed) rows.push(['G', '脚', s.gearPos > 0.98 ? 'DOWN ●●●' : s.gearPos < 0.02 ? 'UP' : '作動中', '', !s.gearDown && o.agl < 400 && s.thr < 0.3 && !s.onGround ? 'bad' : '']);
     if (A.propCtrl) rows.push([', / .', 'プロペラ', `設定 ${o.govRpm || ''} rpm（いま ${Math.round(o.rpm || 0)} rpm・MAN IN ${o.manIn ? o.manIn.toFixed(1) : '—'}）`, meter(s.prop == null ? 1 : s.prop), '']);
+    if (A.jet) rows.push(['\\', '逆噴射', s.rev ? '展開中' : '格納', '', s.rev ? 'warn' : ''], ['N', 'スポイラー', s.spoiler ? '展開中' : '格納', '', s.spoiler ? 'warn' : '']);
     rows.push(['B', 'ブレーキ', s.brake ? 'ON' : '—', '', s.brake ? 'warn' : '']);
     const mini = S.prefs.strip === 'mini';
     const keep = mini ? ['スロットル', 'フラップ', '脚', 'トリム'] : null;
@@ -498,6 +507,8 @@
     ['V（Shift+V）', 'フラップを下げる（Shift+V で上げる）', '揚力と抗力が増える。遅く・深い角度で降りられる。白い帯（Vfe 以下）でだけ使う', /V＝/, ['V']],
     ['G', '脚の上げ下げ（Seminole）', '上げると抗力が減って上昇・加速しやすい。着陸前に必ず下げる（GUMPS）', /G＝/, ['G']],
     ['B / Space', 'ブレーキ（押している間）', '地上で減速・停止。短距離着陸・離陸中止で強く', /B \/ Space/, ['B']],
+    ['\\', '逆噴射（リバーサー）の展開 / 格納（ジェット）', '接地後、推力を前方へ向けて強く減速する。効くのは脚に荷重が乗っている間だけ（離陸滑走中は展開しない）', /^$/, []],
+    ['N', 'スポイラーの展開 / 格納（ジェット）', '揚力を捨て抗力を増やす：降下を深くする速度ブレーキ、接地後は荷重を増やしてブレーキを効かせる', /^$/, []],
     ['[ / ]', '左 / 右のプロペラをフェザー（双発）', '止まったエンジンのプロペラの抗力を減らす。必ず Identify → Verify の後で（生きている側を止めない）', /\[＝/, ['[', ']']],
     ['Z / X', 'ラダートリム 左 / 右', '片発などでラダーを踏み続ける力を消す', /Z \/ X/, ['Z', 'X']],
     ['Enter', 'チェックリストの次の項目', '点検項目を 1 つずつ確認する（声に出して読むつもりで）', /Enter/, ['Enter']],

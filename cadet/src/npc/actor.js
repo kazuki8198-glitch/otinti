@@ -13,12 +13,15 @@
 // The look is fictional: a white short-sleeved pilot shirt with navy epaulettes (3 gold bars), a navy tie, a lanyard
 // ID card, a small SHOYO wing badge and a name plate, navy trousers, black shoes. opts.look changes it for the
 // academy's other people (M5): the bars (0–4: a cadet 1, the chief instructor 4, none for the staff), the tie, the
-// badge, the lanyard, the name on the plate (tag: Latin letters; none, no plate), the hair (short, crop, long — tied
-// back in a tail —, bun), glasses; opts.colors the shirt, the trousers, the hair, the skin.
+// badge, the lanyard, the name on the plate (tag: Latin letters; none, no plate), the hair (ten styles of sculpted
+// locks: short, neat, slick, crop, centre, mop, bob, long, bun, tail), the face (base / fem proportions), glasses;
+// opts.colors the shirt, the trousers, the hair, the skin. The shading is cel (see tuneActorShader): soft shadow
+// bands and a rim light over the baked occlusion, and the iris carries a run-time canvas texture of its detail.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { actorModel } from './actor-model.js';
+import { faceDesignFor, FACE_BOX } from './face-design.js';
 
 const DEG = Math.PI / 180, TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -57,23 +60,390 @@ const CLASSES = {
   tie: [0.5, 0], trousers: [0.86, 0], leather: [0.4, 0], shoe: [0.24, 0], rubber: [0.9, 0], gold: [0.32, 0.85], silver: [0.26, 0.9], plastic: [0.32, 0],
 };
 const CLASS_IDS = Object.keys(CLASSES);
+// cel shading (Q2): the standard material with its diffuse response pushed through a soft 3-band ramp (hue kept:
+// both direct and indirect light are scaled by the same factor), plus a view-dependent rim light. Injected into
+// lights_fragment_begin / before opaque_fragment — chunks the indoor shading (render/indoor.js, which rewrites
+// lights_pars_begin and lights_fragment_maps) never touches, so the two compose. The class palette moves to the
+// uv1 attribute (the palette texture's channel), leaving uv free for the one textured part (the iris, below).
+function tuneActorShader(mat) {
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <lights_fragment_begin>', `#include <lights_fragment_begin>
+      { // the ramp: quantize the diffuse luminance into soft bands, scale both lights by the same factor
+        vec3 cdD = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+        float cdL = dot( cdD, vec3( 0.333333 ) );
+        float cdB = cdL * 3.0;
+        float cdQ = ( floor( cdB ) + smoothstep( 0.3, 0.7, fract( cdB ) ) ) / 3.0;
+        float cdT = mix( cdL, cdQ * 0.92 + 0.05, 0.88 );
+        float cdK = cdL > 1e-5 ? cdT / cdL : 1.0;
+        reflectedLight.directDiffuse *= cdK;
+        reflectedLight.indirectDiffuse *= cdK;
+      }`)
+      .replace('#include <opaque_fragment>', `{ // the rim: a cool edge light where the surface turns away
+        vec3 cdNv = normalize( vNormal );
+        vec3 cdVv = normalize( vViewPosition );
+        float cdFr = pow( 1.0 - clamp( dot( cdNv, cdVv ), 0.0, 1.0 ), 3.0 );
+        float cdLit = clamp( dot( reflectedLight.directDiffuse + reflectedLight.indirectDiffuse, vec3( 0.3333 ) ) * 1.6, 0.0, 1.0 );
+        outgoingLight += cdFr * vec3( 0.30, 0.33, 0.38 ) * ( 0.35 + 0.65 * cdLit ) * 0.55;
+      }
+      #include <opaque_fragment>`);
+  };
+  mat.customProgramCacheKey = () => 'actor-cel1';
+  return mat;
+}
 let MAT = null;
 export function actorMaterial() {
   if (MAT) return MAT;
   const n = CLASS_IDS.length, data = new Uint8Array(n * 4);
   CLASS_IDS.forEach((k, i) => { const [r, m] = CLASSES[k]; data.set([255, Math.round(r * 255), Math.round(m * 255), 255], i * 4); });
   const t = new THREE.DataTexture(data, n, 1, THREE.RGBAFormat);
-  t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; t.channel = 1;   // (read through uv1)
   MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 1, roughnessMap: t, metalnessMap: t });
   MAT.name = 'actor';
-  return MAT;
+  return tuneActorShader(MAT);
 }
 // the mouth (the one part with a morph target) has a material of its own: one shared with the meshes that have none
 // would make three.js switch the shader program back and forth every frame
 let MOUTH_MAT = null;
 function mouthMaterial() {
-  if (!MOUTH_MAT) { MOUTH_MAT = actorMaterial().clone(); MOUTH_MAT.name = 'actor-mouth'; }   // (the same palette texture)
+  if (!MOUTH_MAT) { MOUTH_MAT = tuneActorShader(actorMaterial().clone()); MOUTH_MAT.name = 'actor-mouth'; }   // (the same palette texture)
   return MOUTH_MAT;
+}
+// the iris texture (Q1): the fine detail of the eye — the limbus ring, the radial striations, the bright
+// collarette, the lid's shadow at the top, the painted highlight — drawn once into a canvas, the way the G1000
+// screens and the label atlas are drawn at run time, so the single HTML grows by nothing. It multiplies the
+// person's iris colour (the vertex colour) and the baked gradient; the geometry catchlights stay white on top.
+// In Node (the tests) there is no canvas: the material then just has no map (the baked gradient carries it).
+function irisTexture() {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+  const S = 256, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const x = cv.getContext('2d'); if (!x) return null;
+  // (the UVs are planar over 2.35 eye radii: the pupil's edge falls at 0.22 of the canvas radius, the iris' at 0.51)
+  const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0.0, '#4a4a4a'); g.addColorStop(0.20, '#7a7a7a'); g.addColorStop(0.26, '#ffffff');
+  g.addColorStop(0.40, '#d2d2d2'); g.addColorStop(0.485, '#8a8a8a'); g.addColorStop(0.53, '#2c2c2c'); g.addColorStop(1.0, '#2c2c2c');
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  x.lineWidth = 1;
+  for (let i = 0; i < 110; i++) {   // the striations: fine radial fibres, alternating light and dark
+    const a = rnd() * Math.PI * 2, r0 = S * (0.085 + rnd() * 0.03), r1 = S * (0.20 + rnd() * 0.045);
+    x.strokeStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
+    x.beginPath(); x.moveTo(S / 2 + Math.cos(a) * r0, S / 2 + Math.sin(a) * r0); x.lineTo(S / 2 + Math.cos(a) * r1, S / 2 + Math.sin(a) * r1); x.stroke();
+  }
+  const top = x.createLinearGradient(0, 0, 0, S * 0.52);   // the upper lid's shadow over the iris
+  top.addColorStop(0, 'rgba(0,0,0,0.42)'); top.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = top; x.fillRect(0, 0, S, S * 0.52);
+  const bot = x.createLinearGradient(0, S * 0.62, 0, S);   // light gathered at the bottom
+  bot.addColorStop(0, 'rgba(255,255,255,0)'); bot.addColorStop(1, 'rgba(255,255,255,0.20)');
+  x.fillStyle = bot; x.fillRect(0, S * 0.62, S, S * 0.38);
+  x.fillStyle = 'rgba(255,255,255,0.85)';                  // under the main catchlight disc (which is geometry)
+  x.beginPath(); x.arc(S * 0.37, S * 0.36, S * 0.045, 0, Math.PI * 2); x.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  return tex;
+}
+let IRIS_MAT = null;
+function irisMaterial() {
+  if (!IRIS_MAT) {
+    IRIS_MAT = tuneActorShader(actorMaterial().clone()); IRIS_MAT.name = 'actor-iris';
+    const tex = irisTexture(); if (tex) IRIS_MAT.map = tex;
+  }
+  return IRIS_MAT;
+}
+
+// ---------------------------------------------------------------- the drawn face (the craft pass)
+// The method change (docs/charcraft/DESIGN.md): the head's geometry is a smooth base and the face is
+// DRAWN — lash lines, brows, the nose mark, blush in one run-time canvas texture, the mouth in a second
+// (four shapes blended by the talk/expression state), and the face's shadow shaped by an SDF light map
+// sampled with the light's direction in the head's own frame (the anime face-shadow method). All three
+// are generated per person from their design sheet (npc/face-design.js) at run time, so the HTML grows
+// by nothing. They ride on the head's own material (the head skin carries the face UVs from the model;
+// every other part of the head is parked off the drawing). On a person's own meshes the geometry brows
+// and the geometry mouth step aside for the drawing; the crowd (far, and its near range) keeps the
+// baked face, brows and mouth geometry included. In Node there is no canvas: neutral 1×1 textures keep
+// the shader the same and the geometry face stays.
+// the sun's direction in the world (towards the sun), for the face shadow: main.js keeps it current
+const ACTOR_SUN = new THREE.Vector3(0.35, 0.8, 0.52).normalize();
+export function setActorLightDir(v) { if (v && Number.isFinite(v.x + v.y + v.z) && (v.x || v.y || v.z)) ACTOR_SUN.copy(v).normalize(); }
+// the face variants' eye openings, as tools/actor's FACES has them (the drawing follows the model's)
+const FACE_VARIANTS = { base: { almw: 1.0, almh: 1.0 }, fem: { almw: 0.96, almh: 1.12 } };
+const ALM = { w: 0.0132, h: 0.0090, tilt: 0.06 };         // the eye opening (half sizes), as the model's
+const MOUTH_RECT = { x0: -0.032, x1: 0.032, y0: 1.530, y1: 1.566 };   // the mouth atlas' box in face space
+const css = (hex, a = 1) => `rgba(${(hex >> 16) & 255},${(hex >> 8) & 255},${hex & 255},${a})`;
+const mixHex = (a, b, t) => [0, 1, 2].map(i => Math.round(lerp((a >> (16 - 8 * i)) & 255, (b >> (16 - 8 * i)) & 255, t)));
+const cssMix = (a, b, t, al = 1) => { const c = mixHex(a, b, t); return `rgba(${c[0]},${c[1]},${c[2]},${al})`; };
+
+function faceTextures(C) {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+  const d = faceDesignFor(C.look), v = FACE_VARIANTS[C.look.face === 'fem' ? 'fem' : 'base'];
+  const key = [C.look.tag || '', C.look.face || '', C.hair, C.lip, C.skin, C.iris].join('|');
+  if (faceTextures.cache.has(key)) return faceTextures.cache.get(key);
+  const S = 1024, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const x2 = cv.getContext('2d'); if (!x2) return null;
+  const FX = (x) => (x - FACE_BOX.x0) / (FACE_BOX.x1 - FACE_BOX.x0) * S, FY = (y) => (1 - (y - FACE_BOX.y0) / (FACE_BOX.y1 - FACE_BOX.y0)) * S;
+  const PX = S / (FACE_BOX.x1 - FACE_BOX.x0), PY = S / (FACE_BOX.y1 - FACE_BOX.y0);   // pixels per metre, per axis
+  const lashCol = mixHex(C.hair, 0x090605, 0.3), browCol = mixHex(C.hair, 0x000000, 0.32);
+  const path = (pts) => { x2.beginPath(); pts.forEach(([px, py], i) => (i ? x2.lineTo(px, py) : x2.moveTo(px, py))); x2.closePath(); };
+  // a filled band along a curve of [x, y, halfWidth] (metres): the drawing's lines, exact under the
+  // texture's uneven scale because they are shapes, not strokes
+  const band = (curve, col, alpha) => {
+    const L = [], R = [];
+    for (let i = 0; i < curve.length; i++) {
+      const [cx, cy, w] = curve[i], p = curve[Math.max(0, i - 1)], n = curve[Math.min(curve.length - 1, i + 1)];
+      let tx = n[0] - p[0], ty = n[1] - p[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+      L.push([FX(cx - ty * w), FY(cy + tx * w)]); R.push([FX(cx + ty * w), FY(cy - tx * w)]);
+    }
+    x2.fillStyle = col; x2.globalAlpha = alpha; path([...L, ...R.reverse()]); x2.fill(); x2.globalAlpha = 1;
+  };
+  const ellipse = (cx, cy, rx, ry, col, alpha) => { x2.fillStyle = col; x2.globalAlpha = alpha; x2.beginPath(); x2.ellipse(FX(cx), FY(cy), rx * PX, ry * PY, 0, 0, TAU); x2.fill(); x2.globalAlpha = 1; };
+  // ---- the skin's warmth and form, under everything (polish round 9): the drawn face used to be
+  // strokes on the bare skin colour, and at conversational distance it read as a flat white mask —
+  // the reference faces carry their modelling IN the drawing: a warm bloom over the mid-face, a
+  // deeper warm shade where the face turns away at the temples and the jaw, a touch under the chin.
+  // All soft, all low-alpha: form, not makeup.
+  {
+    const warm = (cx, cy, r, col, a0) => {
+      const g = x2.createRadialGradient(FX(cx), FY(cy), 1, FX(cx), FY(cy), r * PX);
+      g.addColorStop(0, col.replace('A', a0)); g.addColorStop(1, col.replace('A', '0'));
+      x2.fillStyle = g; x2.save(); x2.translate(FX(cx), FY(cy)); x2.scale(1, (r * 0.78 * PY) / (r * PX)); x2.translate(-FX(cx), -FY(cy));
+      x2.beginPath(); x2.arc(FX(cx), FY(cy), r * PX, 0, TAU); x2.fill(); x2.restore();
+    };
+    warm(0, 1.598, 0.082, 'rgba(236,158,124,A)', 0.13);                       // the mid-face bloom
+    for (const s of [-1, 1]) warm(s * 0.066, 1.612, 0.034, 'rgba(166,102,80,A)', 0.10);   // the turn at the temples
+    warm(0, 1.512, 0.052, 'rgba(160,96,76,A)', 0.09);                          // under the jaw
+  }
+  // ---- the eyes: the lash line on the opening's upper edge (a wing at the outer corner), a lighter line
+  // under it, the double-eyelid crease above, a wash of shadow over the lid
+  for (const s of [-1, 1]) {
+    const w = ALM.w * v.almw * d.eye, h = ALM.h * v.almh * d.eye, cx = s * EYE.x, cy0 = EYE.y + 0.0004;
+    const edge = (lx) => { const hh = h * (1 - 0.18 * (lx / w) ** 2); return cy0 + ALM.tilt * lx + hh * Math.sqrt(Math.max(0, 1 - (lx / w) ** 2)); };   // the opening's upper edge
+    // the wash first (under everything): a soft colour over the lid
+    if (d.wash > 0.01) {
+      const g = x2.createRadialGradient(FX(cx), FY(cy0 + 0.008), 2, FX(cx), FY(cy0 + 0.008), w * 1.6 * PX);
+      g.addColorStop(0, `rgba(199,132,120,${0.85 * d.wash})`); g.addColorStop(1, 'rgba(199,132,120,0)');
+      x2.fillStyle = g; x2.save(); x2.translate(FX(cx), FY(cy0 + 0.008)); x2.scale(1, (h * 1.1 * PY) / (w * 1.6 * PX)); x2.translate(-FX(cx), -FY(cy0 + 0.008));
+      x2.beginPath(); x2.arc(FX(cx), FY(cy0 + 0.008), w * 1.6 * PX, 0, TAU); x2.fill(); x2.restore();
+    }
+    // the crease (a second, fainter almond above the first)
+    if (d.crease > 0.02) {
+      const cr = [];
+      for (let i = 0; i <= 16; i++) { const lx = lerp(-w * 0.92, w * 0.98, i / 16); cr.push([cx + s * lx, edge(lx) + 0.0036 + 0.0010 * (lx / w) ** 2, 0.00062]); }
+      band(cr, cssMix(C.skin, 0x8a5a48, 0.55), 0.50 * d.crease);
+    }
+    // the lash line itself: thin at the inner corner, full at the outer third, out to a winged point.
+    // (Polish round 9: heavier — 2.1 → 2.6 mm at full weight — with a soft shadow band above it, the
+    // lash's own shade on the lid, so the line has a body and not just an edge.)
+    const sh = [];
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20, lx = lerp(-w, w * 1.24, t);
+      let y = edge(Math.min(lx, w)); if (lx > w) y += (lx - w) * (ALM.tilt + 0.35 * d.tilt) + d.tilt * h * 0.35 * ((lx - w) / (0.24 * w)) ** 2;
+      sh.push([cx + s * lx, y + 0.0016, 0.0017 * d.lash * (0.3 + 0.7 * smooth(0, 0.45, t))]);
+    }
+    band(sh, cssMix(C.skin, 0x6e4638, 0.6), 0.38);
+    const lc = [];
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20, lx = lerp(-w, w * 1.24, t);
+      let y = edge(Math.min(lx, w)); if (lx > w) y += (lx - w) * (ALM.tilt + 0.35 * d.tilt) + d.tilt * h * 0.35 * ((lx - w) / (0.24 * w)) ** 2;
+      const bw = 0.0026 * d.lash * (0.22 + 0.78 * smooth(0, 0.45, t)) * (1 - 0.85 * smooth(0.86, 1, t)) + 0.00012;
+      lc.push([cx + s * lx, y, bw]);
+    }
+    band(lc, `rgba(${lashCol[0]},${lashCol[1]},${lashCol[2]},1)`, 1.0);
+    // under the eye: a shorter, lighter line
+    const uc = [];
+    for (let i = 0; i <= 14; i++) { const lx = lerp(-w * 0.72, w * 0.9, i / 14); uc.push([cx + s * lx, cy0 + ALM.tilt * lx - h * (1 - 0.18 * (lx / w) ** 2) * Math.sqrt(Math.max(0, 1 - (lx / w) ** 2)), 0.00085 * d.lash]); }
+    band(uc, `rgba(${lashCol[0]},${lashCol[1]},${lashCol[2]},1)`, 0.55);
+  }
+  // ---- the brows: a tapered shape on the brow line (thickness, arch and drop from the sheet)
+  for (const s of [-1, 1]) {
+    const B = d.brow, xIn = 0.0115, xOut = 0.0525 * B.len;
+    const centre = [];
+    for (let i = 0; i <= 18; i++) {
+      const t = i / 18, xx = lerp(xIn, xOut, t);
+      const yy = 1.6478 + B.tiltIn * (1 - smooth(0, 0.35, t)) + B.arch * 0.0042 * Math.sin(Math.PI * Math.pow(t, 0.85)) + B.drop * t * t;
+      const ww = B.thick * 1.18 * lerp(0.0033, 0.00085, Math.pow(t, 0.75)) * (1 + 0.18 * Math.sin(Math.PI * t));
+      centre.push([s * xx, yy, ww / 2]);
+    }
+    band(centre.map(([cx, cy, w]) => [cx, cy, w * 1.6]), `rgba(${browCol[0]},${browCol[1]},${browCol[2]},1)`, 0.30);   // the soft edge
+    band(centre, `rgba(${browCol[0]},${browCol[1]},${browCol[2]},1)`, 1.0);
+  }
+  // ---- the nose: a mark, not a ridge — a short tip line and the shade under it (round 9: the mark
+  // carries more weight, and the wings get their own small shade, so the nose reads at 1.5 m)
+  ellipse(0, EYE.y - 0.0525, 0.0048, 0.0018, cssMix(C.skin, 0x7a4636, 0.6), 0.30 * d.nose);
+  for (const s of [-1, 1]) ellipse(s * 0.0072, EYE.y - 0.0502, 0.0022, 0.0013, cssMix(C.skin, 0x7a4636, 0.55), 0.24 * d.nose);
+  x2.save(); x2.translate(FX(0.0016), FY(EYE.y - 0.0458)); x2.rotate(0.9); x2.fillStyle = cssMix(C.skin, 0x6e3d2e, 0.65);
+  x2.globalAlpha = 0.75 * d.nose; x2.beginPath(); x2.ellipse(0, 0, 0.0030 * PX * d.nose, 0.0010 * PY, 0, 0, TAU); x2.fill(); x2.restore(); x2.globalAlpha = 1;
+  // ---- the blush (round 9: a third stronger and a touch wider — at sheet strength it vanished
+  // entirely under the game's light)
+  if (d.blush > 0.01) for (const s of [-1, 1]) {
+    const bl = Math.min(0.5, d.blush * 1.35);
+    const g = x2.createRadialGradient(FX(s * 0.043), FY(1.5835), 1, FX(s * 0.043), FY(1.5835), 0.019 * PX);
+    g.addColorStop(0, `rgba(233,128,112,${bl})`); g.addColorStop(0.55, `rgba(233,128,112,${bl * 0.45})`); g.addColorStop(1, 'rgba(233,128,112,0)');
+    x2.fillStyle = g; x2.save(); x2.translate(FX(s * 0.043), FY(1.5835)); x2.scale(1, (0.0105 * PY) / (0.019 * PX)); x2.translate(-FX(s * 0.043), -FY(1.5835));
+    x2.beginPath(); x2.arc(FX(s * 0.043), FY(1.5835), 0.019 * PX, 0, TAU); x2.fill(); x2.restore();
+  }
+  const face = new THREE.CanvasTexture(cv); face.colorSpace = THREE.SRGBColorSpace; face.anisotropy = 4;
+  // ---- the mouth atlas: four shapes in a 2×2 grid (closed, open / smile, frown), drawn in the mouth
+  // rect's own space; the shader blends them by the talk and expression state
+  const MW = 512, MH = 256, mc = document.createElement('canvas'); mc.width = MW * 2; mc.height = MH * 2;
+  const m2 = mc.getContext('2d'); if (!m2) return null;
+  const bend = (x) => 0.0022 * (x / 0.021) ** 2, lineCol = cssMix(C.lip, 0x4a2020, 0.58);
+  const cell = (col, row, draw) => {
+    const MX = (x) => col * MW + (x - MOUTH_RECT.x0) / (MOUTH_RECT.x1 - MOUTH_RECT.x0) * MW;
+    const MY = (y) => row * MH + (1 - (y - MOUTH_RECT.y0) / (MOUTH_RECT.y1 - MOUTH_RECT.y0)) * MH;
+    const MPX = MW / (MOUTH_RECT.x1 - MOUTH_RECT.x0), MPY = MH / (MOUTH_RECT.y1 - MOUTH_RECT.y0);
+    const mband = (curve, colr, alpha) => {
+      const L = [], R = [];
+      for (let i = 0; i < curve.length; i++) {
+        const [cx, cy, w] = curve[i], p = curve[Math.max(0, i - 1)], n = curve[Math.min(curve.length - 1, i + 1)];
+        let tx = n[0] - p[0], ty = n[1] - p[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+        L.push([MX(cx - ty * w), MY(cy + tx * w)]); R.push([MX(cx + ty * w), MY(cy - tx * w)]);
+      }
+      m2.fillStyle = colr; m2.globalAlpha = alpha; m2.beginPath();
+      [...L, ...R.reverse()].forEach(([px, py], i) => (i ? m2.lineTo(px, py) : m2.moveTo(px, py))); m2.closePath(); m2.fill(); m2.globalAlpha = 1;
+    };
+    draw({ MX, MY, MPX, MPY, mband });
+  };
+  cell(0, 0, ({ MX, MY, MPX, MPY, mband }) => {          // closed: the line, and the lower lip's light
+    const hw = 0.0204 * d.mouthW, c = [];
+    for (let i = 0; i <= 16; i++) { const xx = lerp(-hw, hw, i / 16); c.push([xx, MOUTH.y + bend(xx), 0.00078]); }
+    mband(c, lineCol, 0.97);
+    m2.fillStyle = css(C.lip, 0.34); m2.beginPath(); m2.ellipse(MX(0), MY(MOUTH.y - 0.0036), 0.0095 * MPX, 0.0021 * MPY, 0, 0, TAU); m2.fill();
+  });
+  cell(1, 0, ({ MX, MY, MPX, MPY }) => {                 // open: the dark inside, teeth above, the tongue
+    const hw = 0.0165 * d.mouthW, cy = MOUTH.y - 0.0062, hh = 0.0068;
+    m2.save(); m2.beginPath(); m2.ellipse(MX(0), MY(cy), hw * MPX, hh * MPY, 0, 0, TAU); m2.clip();
+    m2.fillStyle = css(C.mouth); m2.fillRect(MX(-hw), MY(cy + hh), hw * 2 * MPX, hh * 2 * MPY);
+    m2.fillStyle = 'rgba(242,237,228,0.96)'; m2.fillRect(MX(-hw), MY(cy + hh), hw * 2 * MPX, hh * 0.72 * MPY);   // the teeth
+    m2.fillStyle = 'rgba(90,60,50,0.18)'; for (const gx of [-0.33, 0, 0.33]) m2.fillRect(MX(gx * hw) - 1, MY(cy + hh), 2, hh * 0.72 * MPY);
+    m2.fillStyle = 'rgba(156,74,66,0.95)'; m2.beginPath(); m2.ellipse(MX(0), MY(cy - hh * 0.52), hw * 0.58 * MPX, hh * 0.46 * MPY, 0, 0, TAU); m2.fill();
+    m2.restore();
+  });
+  cell(0, 1, ({ mband }) => {                            // smile: wider, the corners up, a hint of teeth
+    const hw = 0.0230 * d.mouthW, c = [];
+    for (let i = 0; i <= 16; i++) { const xx = lerp(-hw, hw, i / 16); c.push([xx, MOUTH.y + bend(xx) + 0.0042 * (xx / 0.023) ** 2, 0.00085]); }
+    mband(c, lineCol, 0.95);
+  });
+  cell(1, 1, ({ mband }) => {                            // frown: narrower, the corners down
+    const hw = 0.0190 * d.mouthW, c = [];
+    for (let i = 0; i <= 16; i++) { const xx = lerp(-hw, hw, i / 16); c.push([xx, MOUTH.y + bend(xx) * 0.8 - 0.0036 * (xx / 0.019) ** 2, 0.00075]); }
+    mband(c, lineCol, 0.92);
+  });
+  const mouth = new THREE.CanvasTexture(mc); mouth.colorSpace = THREE.SRGBColorSpace; mouth.anisotropy = 4;
+  const out = { face, mouth, sdf: sdfTexture(d, C.look.face === 'fem' ? 'fem' : 'base') };
+  faceTextures.cache.set(key, out);
+  return out;
+}
+faceTextures.cache = new Map();
+// the face's SDF light map (256², generated once per design): R the light azimuth (0 ahead…1 behind) at
+// which a texel falls into shadow, from a STYLISED height field (the smooth base of actor.js's faceZ, a
+// designed nose ridge, the eyes flattened so they stay lit); G the fringe band under the hairline; B the
+// face region's mask. The shader mirrors the UV for a light from the other side, so the field is stored
+// for the texel itself and the mirror does the rest.
+function sdfTexture(d, face) {
+  const key = [face, d.fringe, d.sdfNose, d.eye].join('|');
+  if (sdfTexture.cache.has(key)) return sdfTexture.cache.get(key);
+  const S = 176, v = FACE_VARIANTS[face];
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const x2 = cv.getContext('2d'); if (!x2) return null;
+  const img = x2.createImageData(S, S), dat = img.data;
+  const X = (i) => FACE_BOX.x0 + (i + 0.5) / S * (FACE_BOX.x1 - FACE_BOX.x0), Y = (j) => FACE_BOX.y1 - (j + 0.5) / S * (FACE_BOX.y1 - FACE_BOX.y0);
+  const noseH = (x, y) => {
+    const ny = (y - (EYE.y - 0.056)) / 0.058;
+    if (ny <= 0 || ny >= 1) return 0;
+    const prof = Math.pow(Math.sin(Math.PI * Math.pow(ny, 0.75)), 1.3);
+    return 0.016 * d.sdfNose * prof * Math.exp(-((x / 0.0072) ** 2)) + 0.0035 * Math.exp(-((x / 0.005) ** 2) - (((y - (EYE.y - 0.049)) / 0.0045) ** 2));
+  };
+  // the field is SMOOTH ANALYTIC SHAPES ONLY — a dome for the face's oval, one soft brow bump, the
+  // designed nose. The first build derived it from the skin's full relief (faceZ), whose every groove
+  // (the eye sockets, the lips) would throw its own shadow band under a side light; the real method's
+  // maps are painted with a few large shapes, and this is that, in equations. (The dark cups and lines
+  // the round-6 close-ups actually showed turned out to be the drawn face itself, landed upside down
+  // by the glTF V flip — see build_actor.py's set_uv_face. The smooth field stays: it is the safer map.)
+  const H = (x, y) => {
+    const ex = x / 0.078, ey = (y - 1.615) / 0.145;
+    const dome = Math.pow(Math.max(0, 1 - ex * ex - ey * ey), 0.65) * 0.05;
+    const brow = 0.0022 * Math.exp(-(((y - (EYE.y + 0.024)) / 0.007) ** 2)) * Math.exp(-((Math.abs(x) / 0.052) ** 4));
+    return dome + brow + noseH(x, y);
+  };
+  const alm = (x, y, s) => {
+    const w = ALM.w * v.almw, h = ALM.h * v.almh, dx = (x - s * EYE.x) * s, yc = EYE.y + 0.0004 + ALM.tilt * dx;
+    const hh = h * (1 - 0.18 * (dx / w) ** 2); return (dx / w) ** 2 + ((y - yc) / hh) ** 2;
+  };
+  const e = 0.0016;
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const x = X(i), y = Y(j), o = (j * S + i) * 4;
+    const gx = (H(x + e, y) - H(x - e, y)) / (2 * e), gy = (H(x, y + e) - H(x, y - e)) / (2 * e);
+    const il = 1 / Math.hypot(gx, gy, 1), phi = Math.atan2(-gx * il, il) * 180 / Math.PI;   // the normal's azimuth
+    let A = clamp((90 + phi) / 180, 0.03, 0.97);
+    A = 0.5 + (A - 0.5) * 1.0;   // (polish round 11: the 0.85 softening came off — at the game's sun angles the terminator washed out to nothing; the field is smooth analytic shapes, so full contrast cannot band)
+    for (const s of [-1, 1]) { const a = alm(x, y, s); if (a < 2.4) A = lerp(A, 0.52, 0.7 * smooth(2.4, 1.0, a)); }
+    const fBot = 1.702 - 0.040 * d.fringe;
+    const G = smooth(fBot - 0.004, fBot + 0.008, y) * smooth(0.085, 0.062, Math.abs(x));
+    const B = smooth(1.06, 0.80, (x / 0.082) ** 2 + ((y - 1.610) / 0.150) ** 2);
+    dat[o] = A * 255; dat[o + 1] = G * 255; dat[o + 2] = B * 255; dat[o + 3] = 255;
+  }
+  x2.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.anisotropy = 4;
+  sdfTexture.cache.set(key, tex);
+  return tex;
+}
+sdfTexture.cache = new Map();
+// the head's material: the cel material plus the drawn face. Per person (their textures and the
+// per-frame uniforms are their own); in Node, neutral textures keep the same shader and no drawing.
+function tuneFaceShader(mat, tex, U) {
+  tuneActorShader(mat);
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh) => {
+    prev(sh);
+    sh.uniforms.uFaceTex = { value: tex.face }; sh.uniforms.uMouthTex = { value: tex.mouth }; sh.uniforms.uSdfTex = { value: tex.sdf };
+    sh.uniforms.uLightHead = U.uLightHead; sh.uniforms.uMouthW = U.uMouthW;
+    sh.fragmentShader = `uniform sampler2D uFaceTex; uniform sampler2D uMouthTex; uniform sampler2D uSdfTex;
+uniform vec3 uLightHead; uniform vec4 uMouthW;
+vec4 cdMouthCell( vec2 uv, vec2 cell ) { vec4 t = texture2D( uMouthTex, cell + uv * 0.5 ); return vec4( t.rgb * t.a, t.a ); }
+` + sh.fragmentShader
+      .replace('#include <map_fragment>', '')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+      { // the drawn face over the skin, and the mouth from its atlas (blended by the talk / expression state)
+        vec4 cdFace = texture2D( uFaceTex, vMapUv );
+        diffuseColor.rgb = mix( diffuseColor.rgb, cdFace.rgb, cdFace.a );
+        vec2 cdMuv = vec2( ( vMapUv.x - ${(MOUTH_RECT.x0 - FACE_BOX.x0) / (FACE_BOX.x1 - FACE_BOX.x0)}) / ${((MOUTH_RECT.x1 - MOUTH_RECT.x0) / (FACE_BOX.x1 - FACE_BOX.x0))},
+                           ( vMapUv.y - ${(MOUTH_RECT.y0 - FACE_BOX.y0) / (FACE_BOX.y1 - FACE_BOX.y0)}) / ${((MOUTH_RECT.y1 - MOUTH_RECT.y0) / (FACE_BOX.y1 - FACE_BOX.y0))} );
+        if ( all( greaterThanEqual( cdMuv, vec2( 0.0 ) ) ) && all( lessThanEqual( cdMuv, vec2( 1.0 ) ) ) ) {
+          vec4 cdAcc = cdMouthCell( cdMuv, vec2( 0.0, 0.5 ) ) * uMouthW.x + cdMouthCell( cdMuv, vec2( 0.5, 0.5 ) ) * uMouthW.y
+                     + cdMouthCell( cdMuv, vec2( 0.0, 0.0 ) ) * uMouthW.z + cdMouthCell( cdMuv, vec2( 0.5, 0.0 ) ) * uMouthW.w;
+          if ( cdAcc.a > 0.001 ) diffuseColor.rgb = mix( diffuseColor.rgb, cdAcc.rgb / cdAcc.a, clamp( cdAcc.a, 0.0, 1.0 ) );
+        }
+      }`)
+      .replace('#include <lights_fragment_maps>', `#include <lights_fragment_maps>
+      { // the face's SDF shadow: the light in the head's own frame against the stored azimuth, mirrored
+        vec3 cdL = normalize( uLightHead );
+        vec4 cdSdf = texture2D( uSdfTex, vec2( cdL.x < 0.0 ? 1.0 - vMapUv.x : vMapUv.x, vMapUv.y ) );
+        float cdAz = abs( atan( cdL.x, cdL.z ) ) / 3.14159265;
+        float cdSh = smoothstep( cdSdf.r - 0.035, cdSdf.r + 0.035, cdAz ) * smoothstep( 0.10, 0.45, length( cdL.xz ) );   // (polish round 11: a narrower terminator, ±0.06 read as a general dimming)
+        float cdFr = cdSdf.g * smoothstep( 0.30, 0.72, cdL.y ) * smoothstep( -0.05, 0.35, cdL.z );
+        float cdAmt = clamp( cdSh + cdFr * ( 1.0 - cdSh ), 0.0, 1.0 ) * cdSdf.b;
+        reflectedLight.directDiffuse *= mix( vec3( 1.0 ), vec3( 0.74, 0.64, 0.68 ), cdAmt );   // (polish round 11: deeper, cooler tints — the shadow must read as a SHAPE on the cheek at PM, not a blush of light)
+        reflectedLight.indirectDiffuse *= mix( vec3( 1.0 ), vec3( 0.84, 0.78, 0.80 ), cdAmt );
+      }`);
+  };
+  mat.customProgramCacheKey = () => 'actor-face1';
+  return mat;
+}
+let FACE_FALLBACK = null;
+function neutralFaceTextures() {
+  if (!FACE_FALLBACK) {
+    const mk = (r, g, b, a) => { const t = new THREE.DataTexture(new Uint8Array([r, g, b, a]), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; return t; };
+    FACE_FALLBACK = { face: mk(0, 0, 0, 0), mouth: mk(0, 0, 0, 0), sdf: mk(255, 0, 0, 255) };
+  }
+  return FACE_FALLBACK;
+}
+function makeFaceMaterial(C) {
+  const tex = faceTextures(C), drawn = !!tex;
+  const U = { uLightHead: { value: new THREE.Vector3(0.3, 0.75, 0.6).normalize() }, uMouthW: { value: new THREE.Vector4(1, 0, 0, 0) } };
+  const mat = tuneFaceShader(actorMaterial().clone(), tex || neutralFaceTextures(), U);
+  mat.name = 'actor-face';
+  mat.map = (tex || neutralFaceTextures()).face;   // (the map's only job: vMapUv — map_fragment itself is replaced away)
+  return { mat, U, drawn };
 }
 const uOf = (cls) => (CLASS_IDS.indexOf(cls) + 0.5) / CLASS_IDS.length;
 
@@ -133,13 +503,18 @@ class Part {
   constructor(colors) { this.geos = []; this.C = colors; }
   // (shade: a factor per vertex and channel, linear — the model's baked occlusion and tints)
   add(geo, col, cls, shade = null) {
-    for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal') geo.deleteAttribute(k);
+    // (uv is kept when the model brings one — only the iris parts do — everything else is dropped)
+    for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') geo.deleteAttribute(k);
     if (!geo.attributes.normal) geo.computeVertexNormals();
     if (!geo.index) geo.setIndex([...Array(geo.attributes.position.count).keys()]);
     const n = geo.attributes.position.count, c = _c.set(typeof col === 'string' ? this.C[col] : col), cv = new Float32Array(n * 3), uv = new Float32Array(n * 2), u = uOf(cls);
     for (let i = 0; i < n; i++) { cv[i * 3] = c.r; cv[i * 3 + 1] = c.g; cv[i * 3 + 2] = c.b; uv[i * 2] = u; uv[i * 2 + 1] = 0.5; }
     if (shade) for (let i = 0; i < n * 3; i++) cv[i] *= shade[i];
-    geo.setAttribute('color', new THREE.BufferAttribute(cv, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setAttribute('color', new THREE.BufferAttribute(cv, 3));
+    // the class palette is read through uv1 (the material's palette texture has channel 1); uv itself is the
+    // model's own where it has one and the palette point elsewhere, so every geometry carries the same set
+    geo.setAttribute('uv1', new THREE.BufferAttribute(uv, 2));
+    if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.BufferAttribute(uv.slice(), 2));
     geo.clearGroups(); this.geos.push(geo); return geo;
   }
   build(origin = null) {
@@ -169,21 +544,36 @@ const MOUTH = { y: 1.548 }; MOUTH.z = faceZ(0, MOUTH.y);
 // the model's meshes of one part whose variant the look shows, added to a Part (its colour times the baked shading)
 // (the biggest first: the part's main surface, the skin or the shirt, leads its geometry)
 function addModel(Pt, part, shows, lod = 'far') {
-  const list = [...actorModel(lod).values()].filter(m => m.part === part && shows(m.variant)).sort((a, b) => b.index.length - a.index.length);
+  const list = [...actorModel(lod).values()].filter(m => m.part === part && shows(m.variant, m)).sort((a, b) => b.index.length - a.index.length);
   for (const m of list) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(m.position.slice(), 3));
     if (m.normal) g.setAttribute('normal', new THREE.BufferAttribute(m.normal.slice(), 3));
+    if (m.uv) g.setAttribute('uv', new THREE.BufferAttribute(m.uv.slice(), 2));
     g.setIndex(new THREE.BufferAttribute(m.index.slice(), 1));
-    if (m.morph) g.morphAttributes.position = [new THREE.BufferAttribute(m.morph.slice(), 3)];
+    if (m.morphs) g.morphAttributes.position = m.morphs.map(t => new THREE.BufferAttribute(t.slice(), 3));
+    else if (m.morph) g.morphAttributes.position = [new THREE.BufferAttribute(m.morph.slice(), 3)];
     Pt.add(g, m.key.startsWith('x') ? parseInt(m.key.slice(1), 16) : m.key, m.cls, m.shade);
   }
 }
-const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun'].includes(LK.hair) ? LK.hair : 'short');
+const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun', 'neat', 'slick', 'centre', 'mop', 'bob', 'tail'].includes(LK.hair) ? LK.hair : 'short');
 function buildHead(C, lod) {
-  const H = new Part(C), LK = C.look || {}, hair = hairOf(LK);
-  addModel(H, 'head', (v) => v === 'base' || v === hair || (v === 'glasses' && !!LK.glasses), lod);
+  const H = new Part(C), LK = C.look || {}, hair = hairOf(LK), face = LK.face === 'fem' ? 'fem' : 'base';
+  // the face variant supplies the skin and the eyeballs; the rest of the head is the shared base (the brows
+  // are their own part since the craft pass — buildBrows). The skin is added FIRST, on its own call: the
+  // merged head's first vertex is a skin vertex (the colour checks read it), and since the craft pass the
+  // hair outweighs the skin, so the size order in addModel no longer puts it first by itself.
+  addModel(H, 'head', (v, m) => v === face && m.key === 'skin', lod);
+  addModel(H, 'head', (v, m) => (v === face && m.key === 'eye') ||
+    (v === 'base' && m.key !== 'skin' && m.key !== 'eye') || v === hair || (v === 'glasses' && !!LK.glasses), lod);
   return H.build(P.head);
+}
+// the brows apart from the head: on a person's own meshes the DRAWN brow (the face texture) replaces
+// them, but the crowd draws the same parts, so they cannot stay merged into the head
+function buildBrows(C, lod) {
+  const B = new Part(C), face = (C.look || {}).face === 'fem' ? 'fem' : 'base';
+  addModel(B, 'brows', (v) => v === face, lod);
+  return B.build(P.head);
 }
 // the upper lids: one mesh for both eyes, turned about the line through the eyes' centres (blinks, follows the gaze)
 function buildLids(C, lod) { const L = new Part(C); addModel(L, 'lids', (v) => v === 'base', lod); return L.build([0, EYE.y, EYE.z]); }
@@ -258,7 +648,7 @@ function nameLetters(text) {
 // bars, the wing badge, the lanyard and ID card, the name plate (with look.tag: the name)
 function buildTorso(C, lod) {
   const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) }, bars = Math.min(4, Math.max(0, LK.bars | 0));
-  const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
+  const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'tieclip' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
     (v === 'badge' && LK.badge) || (v === 'lanyard' && LK.lanyard) || (v === 'nametag' && !!LK.tag);
   addModel(T, 'torso', shows, lod);
   const letters = LK.tag ? nameLetters(LK.tag) : null;
@@ -620,11 +1010,18 @@ export function createActor(opts = {}) {
   // detail of the parts that have one is kept for the crowd (far: mesh → its far geometry)
   const far = new Map(), withFar = (m, farGeo) => { far.set(m, farGeo); return m; };
   const torsoMesh = withFar(mesh('torso', buildTorso(C, 'near'), chest), buildTorso(C, 'far'));
-  mesh('hips', buildHips(C), hips); mesh('neck', buildNeck(C), neck); withFar(mesh('head', buildHead(C, 'near'), head), buildHead(C, 'far'));
+  mesh('hips', buildHips(C), hips); mesh('neck', buildNeck(C), neck);
+  // the head carries the drawn face on the person's own meshes (its own material — the iris precedent);
+  // the brows stand apart so the drawing can replace them here while the crowd keeps the geometry
+  const faceRig = makeFaceMaterial(C), faceQ = new THREE.Quaternion();
+  const headMesh = withFar(mesh('head', buildHead(C, 'near'), head), buildHead(C, 'far'));
+  headMesh.material = faceRig.mat;
+  const brows = withFar(mesh('brows', buildBrows(C, 'near'), head, false), buildBrows(C, 'far'));
   const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C, 'near'), mouthPivot, false);
   mouth.material = mouthMaterial(); far.set(mouth, buildMouth(C, 'far'));
+  if (faceRig.drawn) { mouth.visible = false; brows.visible = false; }   // the drawing carries the mouth and the brows on the own meshes (the crowd keeps the geometry — applyDraw)
   const lids = bone('lids', head, [0, EYE.y, EYE.z]); withFar(mesh('lids', buildLids(C, 'near'), lids, false), buildLids(C, 'far'));
-  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); withFar(mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s, 'near'), e, false), buildIris(C, s, 'far')); return e; });
+  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); const im = withFar(mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s, 'near'), e, false), buildIris(C, s, 'far')); im.material = irisMaterial(); return e; });
   const arm = {}, leg = {};
   for (const s of [1, -1]) {
     const L = s > 0 ? 'L' : 'R';
@@ -659,6 +1056,7 @@ export function createActor(opts = {}) {
   function applyDraw() {
     const own = !inCrowd || seat.on;
     for (const m of meshes) m.visible = own;
+    if (own && faceRig.drawn) { mouth.visible = false; brows.visible = false; }
     view.on = !own;
     if (own) return;
     mouth.visible = S[MO] > 0.01; view.mouth = mouth.visible;
@@ -697,6 +1095,10 @@ export function createActor(opts = {}) {
   const HY = 0, HP = 2, EY = 4, EP = 6, MO = 8, TN = 10;
   const G = new Float64Array(CH.length), F = new Float64Array(CH.length);
   let time = 0, gDef = null, gName = null, gT = 0, fadeT = 1;
+  // expressions (Q3): the mouth's smile / frown morph targets, eased towards the asked-for expression (a held
+  // one, or a pulse from a gesture); exprCur is what the morphs show this frame
+  let exprName = null, exprUntil = -1; const exprCur = { smile: 0, frown: 0 };
+  function setExpression(name, secs = 0) { exprName = name === 'smile' || name === 'frown' ? name : null; exprUntil = secs > 0 ? time + secs : Infinity; }
   // walking (Phase 2): walkGoal 0..1 (1 ≈ a natural 1.25 m/s, set by setWalk), walkAmt eases towards it, walkPhase
   // runs the cycle (a full cycle — two steps — per ~1.3 m). The ankles are driven on the cycle and the leg IK does
   // the rest; the arms swing against the legs, the hips bob twice a cycle.
@@ -1119,8 +1521,22 @@ export function createActor(opts = {}) {
     lids.rotation.x = -lerp(lidOpen, -27 * DEG, close);
     spring(S, MO, mouthT, 42, dt);
     const m = clamp(S[MO], 0, 1); mouth.morphTargetInfluences[0] = m;
+    // the expression morphs (targets 1 and 2, when the model has them): eased, so the face changes over ~0.3 s
+    const exprOn = exprName && time <= exprUntil ? exprName : null, ek = 1 - Math.exp(-dt * 6);
+    exprCur.smile += ((exprOn === 'smile' ? 1 : 0) - exprCur.smile) * ek;
+    exprCur.frown += ((exprOn === 'frown' ? 1 : 0) - exprCur.frown) * ek;
+    if (mouth.morphTargetInfluences.length > 2) { mouth.morphTargetInfluences[1] = exprCur.smile; mouth.morphTargetInfluences[2] = exprCur.frown; }
+    // the drawn face's per-frame state: the light in the head's frame (for the SDF shadow) and the mouth
+    // atlas' blend weights — the same numbers the geometry mouth's morphs follow, so the two agree
+    if (faceRig.drawn) {
+      head.getWorldQuaternion(faceQ).invert();
+      faceRig.U.uLightHead.value.copy(ACTOR_SUN).applyQuaternion(faceQ).normalize();
+      const mx = Math.max(exprCur.smile, exprCur.frown), wO = m * (1 - 0.5 * mx), wS = exprCur.smile * (1 - m), wF = exprCur.frown * (1 - m);
+      faceRig.U.uMouthW.value.set(clamp(1 - wO - wS - wF, 0, 1), wO, wS, wF);
+    }
 
     state.headYaw = Y; state.headPitch = Pt; state.eyeYaw = S[EY]; state.eyePitch = S[EP]; state.blink = close; state.mouth = m; state.gesture = gName; state.walk = walkAmt; state.crouch = cro;
+    state.expression = exprCur.smile > 0.4 ? 'smile' : exprCur.frown > 0.4 ? 'frown' : null;
     if (inCrowd) applyDraw();
   }
 
@@ -1139,8 +1555,15 @@ export function createActor(opts = {}) {
     crowd: { join() { inCrowd = true; applyDraw(); }, parts: crowdParts, view },
     // the geometry the crowd draws for one of its meshes far from the eye (its own, if it has no far detail)
     farGeometry: (m) => (m === arm.L.hm ? arm.L.relaxedFar : m === arm.R.hm ? arm.R.relaxedFar : far.get(m) || m.geometry),
-    // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
-    gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
+    // plays once and goes back to idle; returns its length in seconds (0 for an unknown name). Gestures carry
+    // their expression with them (Q3): a wave smiles, a shrug is troubled, a nod smiles briefly
+    gesture(name) {
+      const r = GESTURE_NAMES.includes(name) ? startGesture(name) : 0;
+      if (r > 0) { if (name === 'wave') setExpression('smile', 2.2); else if (name === 'shrug') setExpression('frown', 1.4); else if (name === 'nod') setExpression('smile', 0.9); }
+      return r;
+    },
+    // hold an expression ('smile' / 'frown') until cleared with null, or pulse it for `secs`
+    setExpression(name, secs = 0) { setExpression(name, secs); },
     // a point in the world (kept in the room's frame from now on: see pointTarget above)
     pointAt(target) {
       if (!(target && Number.isFinite(target.x + target.y + target.z))) { hasPoint = false; return; }
@@ -1155,6 +1578,7 @@ export function createActor(opts = {}) {
       ik.s, ik.t, ik.w, ik.f, ik.e, ik.d, ik.x, ik.y, ik.z, ik.m, ik.qa, ik.qb, ik.y0, ik.f0, ik.qs],
     dispose() {
       for (const m of meshes) m.geometry.dispose();
+      faceRig.mat.dispose();   // (its textures are cached and shared between people — they stay)
       for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); leg[L].stand.dispose(); if (leg[L].seated) leg[L].seated.dispose(); }
     },
   };

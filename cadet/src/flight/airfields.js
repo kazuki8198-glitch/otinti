@@ -33,4 +33,45 @@ export function airfields(P) {
     { ...STRIP_LABEF },
   ];
 }
-export const airfieldById = (P, id) => airfields(P).find(a => a.id === id) || null;
+
+// ------------------------------------------------------------------ the line (airline) airfields
+// The first-officer phase's route network (docs/first-officer-design.md S3): Haneda as the base and
+// the four destinations, placed on the world's compressed map (the route table's distances / block
+// times / fuel are the real numbers, kept separately in flight/line.js's ROUTES — these coordinates
+// only decide where the strips are drawn and flown to). Same flat shape as the fields above
+// ({ id, name, n, e, trueHdg, len, wid, elevFt, controlled, surface }) plus the runway designator.
+// These are NOT added to airfields(P) above: the training world's list is unchanged.
+export const LINE_AIRFIELDS = [
+  { id: 'HND', name: '羽田（東京国際）', n: -120000, e: 60000, rwy: '34', trueHdg: 340, len: 3000, wid: 60, elevFt: 21, controlled: true, surface: 'paved', pattern: null },
+  { id: 'KMQ', name: '小松', n: -60000, e: -120000, rwy: '06', trueHdg: 60, len: 2500, wid: 60, elevFt: 36, controlled: true, surface: 'paved', pattern: null },
+  { id: 'CTS', name: '新千歳', n: 150000, e: 20000, rwy: '01', trueHdg: 10, len: 3000, wid: 60, elevFt: 70, controlled: true, surface: 'paved', pattern: null },
+  { id: 'FUK', name: '福岡', n: -30000, e: -160000, rwy: '16', trueHdg: 160, len: 2800, wid: 60, elevFt: 30, controlled: true, surface: 'paved', pattern: null },
+  { id: 'OKA', name: '那覇', n: -190000, e: -190000, rwy: '18', trueHdg: 180, len: 3000, wid: 45, elevFt: 12, controlled: true, surface: 'paved', pattern: null },
+];
+export const LINE_AIRFIELD_IDS = LINE_AIRFIELDS.map(a => a.id);
+// a line airfield by id ('HND' …), or null
+export const lineAirfieldById = (id) => LINE_AIRFIELDS.find(a => a.id === id) || null;
+
+// a position in a field's runway frame (the stripFrame of flight/divert.js, generalised to any
+// field): along = metres from the field's centre, + in the landing direction (trueHdg);
+// cross = metres to the right of the landing direction. pos is { n, e }.
+export function stripFrameFor(field, pos) {
+  const h = field.trueHdg * Math.PI / 180, dn = pos.n - field.n, de = pos.e - field.e;
+  return { along: dn * Math.cos(h) + de * Math.sin(h), cross: -dn * Math.sin(h) + de * Math.cos(h) };
+}
+// is the position over the field's runway rectangle (with `padM` of slack across, as divert's onStrip)?
+export function onRunway(field, pos, padM = 12) {
+  const f = stripFrameFor(field, pos);
+  return Math.abs(f.along) <= field.len / 2 && Math.abs(f.cross) <= field.wid / 2 + padM;
+}
+
+// airfieldById(P, id): the training fields as before, and now the line fields too (a line id is
+// found whether or not P knows it). The one-argument form airfieldById(id) searches both lists'
+// static halves (the line fields and LABEF; LABRW needs the physics, so it needs the two-arg form).
+export function airfieldById(P, id) {
+  if (typeof P === 'string' && id == null) { id = P; P = null; }
+  const line = lineAirfieldById(id);
+  if (line) return line;
+  if (P) return airfields(P).find(a => a.id === id) || null;
+  return id === STRIP_LABEF.id ? { ...STRIP_LABEF } : null;
+}

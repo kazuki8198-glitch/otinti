@@ -1,6 +1,6 @@
 // CADET — cockpit tests (node --test): the flown Archer's cabin (src/aircraft/cockpit.js, src/aircraft/g1000.js), without a
 // browser (the canvases are fakes that take every 2D call).
-//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 6 MB of textures; the screens are unlit (their
+//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 29 MB of textures; the screens are unlit (their
 //    material not tone mapped: CADET's OutputPass still tone maps the whole image), never mipmapped;
 //  - the view from the left seat: the PFD ahead and below, the MFD to its right, the whole of both displays in sight
 //    (the bezels' lips hide nothing), the glareshield ~12–15° below the eye with the cowling over it, the roof ~0.2 m
@@ -57,16 +57,16 @@ test('cockpit: builds within budget', () => {
   assert.equal(calls, cp.meshes.length, 'every drawn mesh is listed');
   assert.ok(cp.triangles <= 40000, `${cp.triangles} triangles`);
   assert.equal(count, cp.triangles);
-  assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 6e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
+  assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 29e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
     'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card', 'cockpit-rockers']) assert.ok(names.has(n), n);
-  // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
+  // the screens: unlit, the material not tone mapped, 2048 × 1280, never mipmapped
   for (const k of ['pfd', 'mfd']) {
     const m = cp.screens[k].material;
     assert.ok(m.isMeshBasicMaterial && m.toneMapped === false, `${k}: unlit`);
     const tx = m.map;
-    assert.equal(tx.image.width, 1024); assert.equal(tx.image.height, 640);
+    assert.equal(tx.image.width, 2048); assert.equal(tx.image.height, 1280);
     assert.equal(tx.generateMipmaps, false); assert.equal(tx.minFilter, THREE.LinearFilter); assert.equal(tx.colorSpace, THREE.SRGBColorSpace);
     assert.equal(cp.screens[k].castShadow, false);
   }
@@ -489,7 +489,7 @@ test('cockpit: the standby airspeed dial is scaled to the type (the Seminole\'s 
     const glass = createGlass(FL, (w, h) => { const c = recCanvas(w, h); made.push(c); return c; });
     glass.drawStandby({ ias: 100, pitch: 0, bank: 0 }, 3000, 29.92, false, V);
     glass.dispose();
-    return made.find(c => c.width === 512).texts;
+    return made.find(c => c.width === 1024).texts;   // (the standby canvas, doubled with the screens in the graphics A1 raise)
   };
   assert.ok(standbyTexts(AC('pa44').v).includes('200'), 'the Seminole dial is numbered to 200');
   assert.ok(!standbyTexts(AC('pa28').v).includes('200'), 'the Archer dial is not');

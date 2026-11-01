@@ -415,15 +415,42 @@ def disc_on_wing(x, f, r, col, n=None, h=0.008):
     y, z = surface_y(x, f, True)
     return cyl((x, y - 0.004, z), (x, y + h, z), r, r * 0.92, n, col)
 
+def fuel_cap(x, f):
+    # the tank's cap, as the walk-around looks at it (B4): a rim standing proud of the skin, the centre a step
+    # higher, the flip lever across it. From any distance the plain disc was enough, and far keeps it.
+    if not NEAR: return disc_on_wing(x, f, 0.05, DARKMETAL)
+    y, z = surface_y(x, f, True)
+    p = Piece()
+    p.add(cyl((x, y - 0.004, z), (x, y + 0.003, z), 0.052, 0.050, 26, DARKMETAL))
+    p.add(cyl((x, y - 0.004, z), (x, y + 0.0065, z), 0.040, 0.040, 26, DARKMETAL))
+    p.add(box((x, y + 0.0075, z), (0.011, 0.0025, 0.05), DARKMETAL))
+    return p
+
+def mast_blade(cx, ySkin, zc, col):
+    # the pitot mast (B4): a blade tapered in thickness and chord from the skin down to the tube's line, where
+    # before there was a plain box; three sections keep the taper smooth-shaded rather than stepped
+    def ring(y, w, c):
+        return [(cx - w / 2, y, zc - c / 2), (cx + w / 2, y, zc - c / 2), (cx + w / 2, y, zc + c / 2), (cx - w / 2, y, zc + c / 2)]
+    rows = [ring(ySkin + 0.012, 0.024, 0.13), ring(ySkin - 0.055, 0.019, 0.108), ring(ySkin - 0.115, 0.014, 0.088)]
+    p = Piece(); base = p.grid(rows, lambda i, j: col, closed=True)
+    p.fan([base + j for j in range(4)], (cx, ySkin + 0.012, zc), col)
+    p.fan([base + 8 + j for j in range(4)], (cx, ySkin - 0.115, zc), col, flip=True)
+    return p
+
 smallR = Piece()
 smallR.add(patch_on_wing(0.62, 1.12, 0.06, 0.62, RUBBER, nx=6 if NEAR else 1, nf=8 if NEAR else 2))                                    # the wing walk
-smallR.add(disc_on_wing(3.2, (-0.55 - wchord(3.2)[0]) / wchord(3.2)[1], 0.05, DARKMETAL))     # the fuel cap
+smallR.add(fuel_cap(3.2, (-0.55 - wchord(3.2)[0]) / wchord(3.2)[1]))     # the fuel cap
 smallL = Piece()
-smallL.add(disc_on_wing(3.2, (-0.55 - wchord(3.2)[0]) / wchord(3.2)[1], 0.05, DARKMETAL))
+smallL.add(fuel_cap(3.2, (-0.55 - wchord(3.2)[0]) / wchord(3.2)[1]))
+# the tanks' sump drains under the wings (the right one is the walk-around's sample point), in smallR so the
+# mirror gives the left wing its own: a collar on the skin and the valve's short stub below it
+dx_ = 2.3; dy_, dz_ = surface_y(dx_, (-0.25 - wchord(dx_)[0]) / wchord(dx_)[1], False)
+smallR.add(cyl((dx_, dy_ + 0.004, dz_), (dx_, dy_ - 0.004, dz_), 0.011, 0.011, 12 if NEAR else 8, DARKMETAL))
+smallR.add(cyl((dx_, dy_ - 0.002, dz_), (dx_, dy_ - 0.02, dz_), 0.006, 0.005, 10 if NEAR else 8, DARKMETAL))
 # the pitot mast under the left wing (x −3.6), the tube forward of the leading edge
 yb_, zb_ = surface_y(3.6, 0.32, False)
-smallL.add(box((3.6, yb_ - 0.06, zb_), (0.012, 0.12, 0.10), METAL))
-smallL.add(cyl((3.6, yb_ - 0.115, zb_ + 0.04), (3.6, yb_ - 0.115, zb_ - 0.42), 0.011, 0.011, 10, METAL))
+smallL.add(mast_blade(3.6, yb_, zb_, METAL) if NEAR else box((3.6, yb_ - 0.06, zb_), (0.012, 0.12, 0.10), METAL))
+smallL.add(cyl((3.6, yb_ - 0.115, zb_ + 0.04), (3.6, yb_ - 0.115, zb_ - 0.42), 0.011, 0.011, 18 if NEAR else 10, METAL))
 # the stall-warning vane on the left leading edge (x −3.3)
 le_, c_, yc_, t_ = wchord(3.3)
 smallL.add(box((3.3, yc_ - 0.01, le_ - 0.012), (0.03, 0.006, 0.03), METAL))
@@ -501,8 +528,9 @@ fin.add(dorsal())
 # ================================================================ the gear (fixed, with wheel fairings)
 GR = S['gear']; WR = GR['wheelR']
 def wheel(c, width=0.15):
-    # a tyre (a rounded torus section) and the hub
-    c = Vector(c); n = Q['round']; m = max(6, Q['round'] // 3) if NEAR else 3
+    # a tyre (a rounded torus section) and the hub; near carries more of both than the general roundness (B4:
+    # the walk-around stands half a metre from these), far keeps the counts it had
+    c = Vector(c); n = Q['round'] + (8 if NEAR else 0); m = max(6, n // 3) if NEAR else 3
     p = Piece(); rows = []
     for i in range(m + 1):
         a = math.pi * i / m                       # round the tyre's cross-section, from the inner side to the outer
@@ -531,6 +559,7 @@ def fairing(c, L=1.08, Wd=0.28, H=0.50, back=0.58, drop=0.165):
     p.fan([last + j for j in range(n)], (c.x, sum(v.y for v in rows[-1]) / n, z1), WHITE, flip=True)
     return p
 
+STRUT_N = max(8, Q['round'] // 2) + (6 if NEAR else 0)     # the gear legs', pistons' roundness (B4)
 def main_gear(x):
     ax = Vector((x, GR['mains'][0][1], GR['mains'][0][2]))
     p = Piece()
@@ -538,10 +567,10 @@ def main_gear(x):
     p.add(fairing(ax))
     top_y, _ = surface_y(abs(x), 0.47, False)
     # the oleo strut: the cylinder from the wing, the chrome piston, the torque links, the brake line
-    p.add(cyl((x, top_y + 0.04, ax.z), (x, ax.y + 0.33, ax.z), 0.045, 0.045, max(8, Q['round'] // 2), WHITE))
-    p.add(cyl((x, ax.y + 0.34, ax.z), (x, ax.y + 0.2, ax.z), 0.03, 0.03, max(8, Q['round'] // 2), METAL))
+    p.add(cyl((x, top_y + 0.04, ax.z), (x, ax.y + 0.33, ax.z), 0.045, 0.045, STRUT_N, WHITE))
+    p.add(cyl((x, ax.y + 0.34, ax.z), (x, ax.y + 0.2, ax.z), 0.03, 0.03, STRUT_N, METAL))
     p.add(box((x, ax.y + 0.30, ax.z - 0.06), (0.02, 0.12, 0.03), DARKMETAL))
-    p.add(cyl((x - math.copysign(0.05, x) * 0, ax.y + 0.17, ax.z), (x, ax.y + 0.12, ax.z), 0.05, 0.05, max(8, Q['round'] // 2), WHITE, cap0=True))
+    p.add(cyl((x - math.copysign(0.05, x) * 0, ax.y + 0.17, ax.z), (x, ax.y + 0.12, ax.z), 0.05, 0.05, STRUT_N, WHITE, cap0=True))
     return p
 
 def nose_gear():
@@ -549,8 +578,8 @@ def nose_gear():
     p = Piece()
     p.add(wheel(ax, width=0.13))
     p.add(fairing(ax, L=0.95, Wd=0.25, H=0.46, back=0.56, drop=0.16))
-    p.add(cyl((0, -0.38, ax.z - 0.05), (0, ax.y + 0.33, ax.z), 0.042, 0.042, max(8, Q['round'] // 2), WHITE))
-    p.add(cyl((0, ax.y + 0.34, ax.z), (0, ax.y + 0.17, ax.z), 0.028, 0.028, max(8, Q['round'] // 2), METAL))
+    p.add(cyl((0, -0.38, ax.z - 0.05), (0, ax.y + 0.33, ax.z), 0.042, 0.042, STRUT_N, WHITE))
+    p.add(cyl((0, ax.y + 0.34, ax.z), (0, ax.y + 0.17, ax.z), 0.028, 0.028, STRUT_N, METAL))
     p.add(box((0, -0.62, ax.z - 0.09), (0.16, 0.03, 0.05), DARKMETAL))          # the steering arms
     p.add(box((0, ax.y + 0.29, ax.z - 0.06), (0.02, 0.10, 0.03), DARKMETAL))    # the torque link
     return p

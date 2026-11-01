@@ -53,7 +53,6 @@ import { INTRO_CARDS } from './content/dialog/intro.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
-import { randomFailureFor, preflightJudgeBase } from './aircraft/failures.js';
 import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, CLASS_FTD, SOLO_TRUST, dateText, dateOf, dayOfYear, activeRunway, weatherAt, passedAt, groundPassed, noteGround, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk } from './career/career.js';
 import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
@@ -94,7 +93,7 @@ import { withEnglish, CHECK_EN, WHO_EN } from './content/dialog/en.js';
 import { buildHaneda, OFFSET as HANEDA_OFFSET, EYE as HANEDA_EYE, CAPTAIN as HANEDA_SEAT } from './epilogue/haneda.js';
 import { epilogueDialogs, CAPTAIN } from './content/dialog/epilogue.js';
 import { departurePose, DEPARTURE_CUES } from './epilogue/departure.js';
-import { seatFromBody } from './npc/actor.js';
+import { seatFromBody, setActorLightDir } from './npc/actor.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -248,7 +247,7 @@ async function boot() {
   let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
     const st = sky.setTime(hours, dayOfYear(career.day));   // (the sun for the career's own date: the days drift from April to the autumn)
-    pipe.setHaze({ sunDir: st.dir, el: st.el });
+    pipe.setHaze({ sunDir: st.dir, el: st.el }); setActorLightDir(st.dir);   // (the faces' SDF shadow reads the same sun)
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn); dorm.setNight(st.lightsOn);
     $('#time').value = String(hours);
     const hh = Math.floor(hours), mm = Math.round((hours - hh) * 60);
@@ -343,18 +342,19 @@ async function boot() {
     dayItem = { day: career.day, it: flightItem() };
     setTodayType((planOf(flightItem()) || {}).aircraft || 'pa28');
     const w = career.weather(prog()), pm = career.slot === 'pm';
-    // (M7 → next-wave item 4) the day's random failure, seeded by the career's own seed and the
-    // day (aircraft/failures.js — a pure, testable roll): on a normal flight day only (never a
-    // test / checkride / XC / solo day, never a chapter's first lesson), with probability 0.20
-    // one of the day-fault kinds (mag / carb / pitot / static / elec / pump, and gear on the
-    // twin). A carb day still asks for a humid day, as the M7 hash did: without the moisture
-    // the roll's carb is no fault at all. forceFault (the tests' hook) overrides the roll.
-    const it0 = flightItem();
-    const firstLesson = !!(it0 && STAGE[career.chapter] && it0.id === (STAGE[career.chapter] || { lessons: [] }).lessons[0]);
-    const rf = forceFault != null ? null : randomFailureFor({ seed: career.state.seed, day: career.day, kind: ['ch3', 'ch4', 'ch5', 'ch6'].includes(career.chapter) && it0 ? it0.kind : '', aircraft: todayType, lessonId: it0 ? it0.id : '', firstLesson });
-    const rolled = rf && rf.kind === 'carb' && (w.tempC - w.dewC) > 4 ? null : rf;
-    const fault = forceFault != null ? (forceFault && forceFault !== 'elec' ? forceFault : null) : rolled && rolled.kind !== 'elec' ? rolled.kind : null;
-    const elecFault = forceFault != null ? forceFault === 'elec' : !!(rolled && rolled.kind === 'elec');
+    // (M7) now and then a later chapter's ordinary Archer day has a fault: the run-up finds a bad magneto (one hash
+    // in six), or — on a humid day, a different hash — carburettor ice waits in flight, announced only by the rpm
+    const it0 = flightItem(), h = (career.state.seed * 13 + career.day * 7) >>> 0;
+    const magDay = it0 && it0.kind === 'flight' && ['ch3', 'ch4'].includes(career.chapter) && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
+    const pitotDay = it0 && it0.kind === 'flight' && career.chapter === 'ch4' && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
+    const gearDay = it0 && it0.kind === 'flight' && ['ch5', 'ch6'].includes(career.chapter) && todayType === 'pa44' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
+    const fault = forceFault != null ? forceFault : magDay && h % 6 === 4 ? 'mag' : magDay && h % 6 === 2 && (w.tempC - w.dewC) <= 4 ? 'carb' : pitotDay && h % 6 === 0 ? 'pitot' : gearDay && h % 6 === 3 ? 'gear' : null;
+    // the alternator-failure day: from chapter 3 on, either type, never the chapter's first lesson and never
+    // together with the day's other faults (h2's day term is ×11: a ×7 term would vanish mod 7)
+    const h2 = (career.state.seed * 29 + career.day * 11) >>> 0;
+    const elecFault = forceFault === 'elec' ? true
+      : forceFault != null || fault ? false
+      : !!(it0 && it0.kind === 'flight' && ['ch3', 'ch4', 'ch5', 'ch6'].includes(career.chapter) && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0] && h2 % 7 === 3);
     today = createDay(FL, { fault, elecFault, seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
       weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud', runway: activeRunway(w), qnh: w.qnh } });
     // the other trainers in the pattern today (flight/traffic.js): seeded like the fault; the morning's TEM
@@ -1435,7 +1435,7 @@ async function boot() {
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
     sky.setWeather({ overcast });
     const st = sky.setTime(hours, dayOfYear(career.day));
-    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey }); setActorLightDir(st.dir);
     precipNow = precipFor(w.kind, slot); pipe.setPrecip(precipNow);
     window.__cadetPrecip = { k: precipNow, wet: precipNow >= 0.3, kind: w.kind };
     // (B3.3) the day's CB stands from the morning on a storm day, out west; fly-mode reads it through the ctx
@@ -1579,11 +1579,6 @@ async function boot() {
   // when the cadet flew tired (the fatigue before this flight's own +15); a lesson's first-ever try is counted
   function applyFlightGrowth(sum) {
     if (!sum || !sum.lessons) return;
-    // (item 4) the walk-around's defects the cadet found are judged through the career's
-    // existing growth (career.grow's own formula and repeat factor — no new plumbing):
-    // preflightJudgeBase is only the base (0.5 a defect, at most 1.0 a day)
-    const pj = preflightJudgeBase(sum.walk ? sum.walk.found : 0);
-    if (pj > 0) career.grow('judge', pj, `preflight:${career.day}`);
     const tired = career.tired(), p = prog();
     for (const l of sum.lessons) {
       if (!l.done) continue;

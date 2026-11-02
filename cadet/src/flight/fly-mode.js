@@ -975,7 +975,7 @@ export function createFlyMode(ctx) {
     if (flight.s && !frameOpt.paused) {
       const s = flight.s, cb = ctx.cb ? ctx.cb() : null;
       let k = 0;
-      if (cb) { const [cn, ce] = CB_CENTRE, [n, e] = P.ne(s); k = cbEffect(cb, n - cn, e - ce, s.agl || 0); }
+      if (cb) { const [cn, ce] = CB_CENTRE, { n, e } = P.ne(s); k = cbEffect(cb, n - cn, e - ce, s.agl || 0); }
       if (s.wind) {
         if (k > 0) { if (s._cbBase == null) s._cbBase = s.wind.gust; s.wind.gust = s._cbBase + k * 4; if ((s.agl || 0) > 3) s.vel[1] -= 5.5 * k * dt * rateNow; }
         else if (s._cbBase != null) { s.wind.gust = s._cbBase; s._cbBase = null; }
@@ -1158,7 +1158,7 @@ export function createFlyMode(ctx) {
     if (audio.traffic) {
       let near = null;
       if (traffic.poses && flight.s) {
-        const [pn, pe] = P.ne(flight.s), hdg = P.attitude(flight.s).hdg * Math.PI / 180;
+        const { n: pn, e: pe } = P.ne(flight.s), hdg = P.attitude(flight.s).hdg * Math.PI / 180;
         for (const p of traffic.poses) {
           const dn = p.n - pn, de = p.e - pe, d = Math.hypot(dn, de);
           if (!near || d < near.d) near = { d, rel: Math.atan2(de, dn) - hdg };

@@ -19,6 +19,7 @@
 import { createWalkaround } from '../aircraft/walkaround.js';
 import { CHECKLISTS as CHECKLISTS_ARCHER } from '../content/checklists-archer.js';
 import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../content/checklists-seminole.js';
+import { CHECKLISTS_JET } from '../content/checklists-jet.js';
 import { dayRadio, setCall, ctafRadio } from '../content/dialog/atc.js';
 import { createAtc } from '../dialog/atc.js';
 import { HOLD, HOLD_STOP, A1 } from '../flight/taxi.js';
@@ -66,9 +67,12 @@ const GROUND_IN = ['exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief
 // down (e2, e3, c1: FLIGHT LAB flies the forced landing to the end)
 const START_OF = { runway: 'runway', area: 'area', away: 'area', final: 'pattern', downwind: 'pattern', ils: 'pattern' };
 const END_OF = { t1: 'air', t4: 'air', x3: 'air', t2: 'stopped', t3: 'stopped', e1: 'stopped', x1: 'stopped', x2: 'stopped', e2: 'failed', e3: 'failed', e4: 'failed', c1: 'failed',
-  m1: 'air', m4: 'air', e6: 'air', m5: 'stopped', r1: 'stopped', cx2: 'stopped' };   // (e4/e6 from item 2; cx2 from item 6: cx1/cx3 end in the air and cf1 in the area by the fallback)
+  m1: 'air', m4: 'air', e6: 'air', m5: 'stopped', r1: 'stopped', cx2: 'stopped', cf2: 'stopped',
+  // (first-officer S1) the jet lessons: j1 ends climbing away, j4 and the type-rating check j5 end stopped
+  // on the runway; j2 and j3 end in the area by the fallback (their own starts)
+  j1: 'air', j4: 'stopped', j5: 'stopped' };   // (e4/e6 from item 2; cx2 from item 6: cx1/cx3 end in the air and cf1 in the area by the fallback; cf2 from the CFI expansion: the lesson itself lands and stops, like cx2)
 // the lessons that give their own take-off clearance (FLIGHT LAB's ATC step); before the others the tower gives it
-const OWN_TAKEOFF = new Set(['t1', 'c1', 'cx1']);   // (cx1 carries its own clearance readback, like t1)
+const OWN_TAKEOFF = new Set(['t1', 'c1', 'cx1', 'j1']);   // (cx1 carries its own clearance readback, like t1; j1 the jet's own, like t1)
 // the twin's lessons (M6): the Seminole takes off in m1 (or m4, whose engine fails after it) and lands in m5
 const lessonOf = (FL, id) => FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === id);
 export const startKind = (FL, id) => START_OF[(lessonOf(FL, id) || {}).setup?.at] || 'area';
@@ -91,6 +95,15 @@ export function planFor(FL, id, { solo = false, check = null, xcVariant = null }
     // the go-around lesson and the CFI ride sit between them (both end in the air / the area)
     const lessons = id === 'cx1' || id === 'cx2' ? ['cx1', 'cx2'] : ['cx1', id, 'cx2'];
     return { main: id, solo: false, lessons, aircraft: 'pa28r' };
+  }
+  if (aircraftOf(FL, [id]) === 'b737') {
+    // (first-officer S1) the jet's day, in the pa28r branch's shape: up with j1 (its own take-off), down
+    // with j4 (the approach, the go-around and the landing) — j4's own day is just the two of them; a
+    // runway-start lesson pairs with j4; an area lesson sits between j1 and j4
+    if (id === 'j4') lessons = ['j1', 'j4'];
+    else if (k === 'runway') lessons = [id, 'j4'];
+    else lessons = ['j1', id, 'j4'];
+    return { main: id, solo: false, lessons, aircraft: 'b737' };
   }
   if (aircraftOf(FL, [id]) === 'pa44') {
     // the twin: up with m1 (m4 is its own take-off), down with m5
@@ -157,7 +170,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   // the 'ctaf' step like any other sequence)
   if (PLAN.ctaf) { const c = ctafRadio(); Object.assign(radio.exchanges, c.exchanges); radio.sequences.ctaf = c.sequences.ctaf; }
   const atc = createAtc(radio, { seed });
-  const AIRCRAFT = PLAN.aircraft || 'pa28', CHECKLISTS = AIRCRAFT === 'pa44' ? CHECKLISTS_SEMINOLE : CHECKLISTS_ARCHER;
+  const AIRCRAFT = PLAN.aircraft || 'pa28', CHECKLISTS = AIRCRAFT === 'pa44' ? CHECKLISTS_SEMINOLE : AIRCRAFT === 'b737' ? CHECKLISTS_JET : CHECKLISTS_ARCHER;   // (first-officer S1: a jet day runs the jet's ground checklists; its run-up carries no magneto fault — the career's fault seeding keeps jet days clear of 'mag' and its kin)
   const walk = createWalkaround({ seed, anomalies, aircraft: AIRCRAFT });
   const st = {
     phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },

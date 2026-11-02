@@ -11,8 +11,15 @@
 # Coordinates are the game's (metres, y up, the face towards +z, feet at y = 0): the glTF is written without the
 # exporter's z-up conversion. Mesh names: part.variant.colour.class (npc/actor-model.js reads them):
 #   part     the bone it goes on (head, lids, irisL, mouth, torso, …), the vertices in the bind pose (not the bone's frame)
-#   variant  base (always), or what opts.look picks: hair-short / hair-crop / hair-long / hair-bun, glasses, tie, notie,
-#            badge, lanyard, bars, bar1 … bar4 (shown when bars ≥ k), nametag
+#   variant  base (always), or what opts.look picks: hair-short / hair-neat / hair-slick / hair-crop / hair-centre /
+#            hair-mop / hair-bob / hair-long / hair-bun / hair-tail, glasses, tie, notie, tieclip (near only),
+#            badge, lanyard, bars, bar1 … bar4 (shown when bars ≥ k), nametag; the face itself comes in two variants
+#            (base / fem: jaw, eye and nose proportions — the skin, the eyeballs and the brows carry the variant's name)
+# Character quality pass (Q1): anime proportions (a tall almond eye, a gradient iris with painted detail — the iris
+# meshes carry UVs and the game draws the fine detail into a canvas texture at run time, the way the G1000 screens
+# are drawn), sculpted hair clumps (locks) over the shell with a baked highlight band, ten distinct hairstyles, and
+# mouth shape keys for expressions (open / smile / frown). near may use up to 80,000 triangles a person (only the
+# instructor and one or two others are ever near); far stays at 8,000 for the crowd.
 #   colour   a key of actor.js COLORS (the person's colour), or xRRGGBB
 #   class    a material class of actor.js CLASSES (roughness / metalness)
 import bpy, bmesh, json, math, sys, os
@@ -26,10 +33,10 @@ PREVIEW = argv[2] if len(argv) > 2 and argv[2] != '-' else None
 # the detail: 'far' (everyone, within the budget of a person in a crowd: 8,000 triangles) or 'near' (the few people
 # close to the eye, and the instructor in the cockpit): the same shapes, more of their triangles kept
 LOD = argv[3] if len(argv) > 3 else 'far'
-D = {'far': dict(skin=790, ear=76, hair={'short': 670, 'crop': 500, 'long': 530, 'bun': 600}, tail=140, bun=150, shirt=580,
-                 brow=9, ball=(14, 10), lid=(7, 11), iris=14, mouth=(12, 4), teeth=8, glass=12, collar=18, knot=8, cord=(0,)),
-     'near': dict(skin=2600, ear=260, hair={'short': 1900, 'crop': 1300, 'long': 1500, 'bun': 1700}, tail=420, bun=400, shirt=1900,
-                  brow=16, ball=(22, 16), lid=(10, 17), iris=24, mouth=(20, 6), teeth=12, glass=20, collar=30, knot=12, cord=(0, 0.5))}[LOD]
+D = {'far': dict(skin=620, ear=56, hair={'short': 470, 'crop': 420, 'long': 300, 'bun': 470}, tail=100, bun=110, shirt=470,
+                 brow=9, ball=(14, 10), lid=(6, 10), iris=14, mouth=(12, 4), teeth=8, glass=10, collar=18, knot=8, cord=(0,)),
+     'near': dict(skin=6000, ear=420, hair={'short': 3400, 'crop': 1500, 'long': 3600, 'bun': 3200}, tail=600, bun=600, shirt=3400,
+                  brow=16, ball=(22, 16), lid=(12, 21), iris=40, mouth=(24, 7), teeth=14, glass=20, collar=30, knot=12, cord=(0, 0.5))}[LOD]
 HD, EYE, MOUTH, P = A['HD'], A['EYE'], A['MOUTH'], A['P']
 TAU, DEG = math.tau, math.pi / 180
 
@@ -127,8 +134,12 @@ def loft(name, rings, cap0=None, cap1=None, closed=True):
     return mesh_obj(name, verts, faces)
 
 # ---------------------------------------------------------------- the head's shape (the same as actor.js headPt / faceZ)
+# the face variants (Q1): the same head with its proportions nudged — fem: a narrower jaw, a taller eye, a smaller
+# nose. The eye centres, the mouth and every anchor stay where they are, so actor.js needs no new pivots.
+FACES = {'base': dict(jaw=0.85, almw=1.0, almh=1.0, nose=1.0), 'fem': dict(jaw=0.5, almw=0.96, almh=1.12, nose=0.8)}
+F = dict(FACES['base'])
 def head_pt(ux, uy, uz):
-    W = HD['w'] - HD['jaw'] * smooth(-0.15, -0.9, uy)
+    W = HD['w'] - HD['jaw'] * F['jaw'] * smooth(-0.15, -0.9, uy)
     y = HD['cy'] + uy * (HD['ryU'] if uy >= 0 else HD['ryL']) + 0.026 * smooth(-0.5, -1, uy) * smooth(0.5, -0.6, uz)
     back = HD['dB'] * (1 - 0.42 * smooth(-0.1, -0.75, uy))
     z = HD['cz'] + (math.pow(uz, 0.8) * HD['dF'] if uz >= 0 else -math.pow(-uz, 0.9) * back) + HD['chin'] * smooth(-0.25, -1, uy)
@@ -136,18 +147,21 @@ def head_pt(ux, uy, uz):
 
 def face_z(x, y):
     uy = (y - HD['cy']) / (HD['ryU'] if y >= HD['cy'] else HD['ryL'])
-    ux = x / (HD['w'] - HD['jaw'] * smooth(-0.15, -0.9, uy))
+    ux = x / (HD['w'] - HD['jaw'] * F['jaw'] * smooth(-0.15, -0.9, uy))
     return HD['cz'] + math.pow(max(1 - ux * ux - uy * uy, 0), 0.4) * HD['dF'] + HD['chin'] * smooth(-0.25, -1, uy)
 
 ER, EX, EY, EZ = EYE['r'], EYE['x'], EYE['y'], EYE['z']
 MOUTH_C = MOUTH['y']                                       # the line between the lips
-# the eye's opening: an almond round each eye (half width, half height; the outer corner 1 mm higher)
-ALM = dict(w=0.0118, h=0.0056, tilt=0.06)
+# the eye's opening: an almond round each eye (half width, half height; the outer corner 1 mm higher). Anime
+# proportions (Q1): the opening is much taller than a real eye (18 mm on a 24 mm ball) — the iris fills it, which
+# is what reads as "drawn" rather than "modelled". The face variant scales it (F).
+ALM = dict(w=0.0132, h=0.0090, tilt=0.06)
 def almond(x, y, s):
     dx = (x - s * EX) * s; yc = EY + 0.0004 + ALM['tilt'] * dx
+    w, h = ALM['w'] * F['almw'], ALM['h'] * F['almh']
     # (fuller over the iris, pointed at the corners)
-    hh = ALM['h'] * (1 - 0.18 * (dx / ALM['w']) ** 2)
-    return (dx / ALM['w']) ** 2 + ((y - yc) / hh) ** 2
+    hh = h * (1 - 0.18 * (dx / w) ** 2)
+    return (dx / w) ** 2 + ((y - yc) / hh) ** 2
 
 def ball_z(x, y, s, extra=0.0):
     dx, dy = x - s * EX, y - EY; q = (ER + extra) ** 2 - dx * dx - dy * dy
@@ -191,7 +205,7 @@ def nose(x, y):
     if dy > NOSE[0][0] or dy < NOSE[-1][0]: return 0.0
     h, w = interp(list(reversed(NOSE)), dy)
     u = abs(x) / max(w, 1e-4)
-    return max(h, 0) * max(0.0, 1 - u * u) ** 1.5
+    return max(h, 0) * F['nose'] * max(0.0, 1 - u * u) ** 1.5
 def relief(x, y):
     lift, w = profile_lift(y)
     d = lift * math.exp(-(x / w) ** 2) + nose(x, y)
@@ -370,6 +384,270 @@ def hair_tie(name, c, r, axis_tilt):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(-math.pi / 2 + axis_tilt, 3, 'X'))
     bmesh.ops.translate(bm, verts=bm.verts, vec=Vector(c)); return bm_obj(name, bm)
 
+# ---------------------------------------------------------------- the hair shell's surface
+# The locks' curves are rooted on the shell: a point in the direction (azimuth, angle from the crown),
+# lifted off the head, and the outward normal there.
+C_HEAD = Vector((0, HD['cy'], HD['cz']))
+def surf_dir(az, th, off=0.0165):
+    d = Vector((math.sin(math.radians(th)) * math.sin(math.radians(az)), math.cos(math.radians(th)), math.sin(math.radians(th)) * math.cos(math.radians(az))))
+    base = head_pt(d.x, d.y, d.z); n = (base - C_HEAD).normalized()
+    return base + n * off, n
+
+# ---------------------------------------------------------------- hair locks, placed (the craft pass)
+# The method change (docs/charcraft/DESIGN.md): a lock is no longer walked over the shell by a formula and
+# left where it falls — it is lofted along a designed curve. The curve is a Catmull-Rom through control
+# points: the first follow the head's surface (so the root sits in the shell), then the curve may leave the
+# surface and hang (long hair, a bob's sides), bow forward (the locks that frame a face) or sweep back over
+# the crown. The HAIR DESIGN table below is the design sheet: per style, per layer — how many locks, where
+# they root (azimuth / polar angle on the shell), how long, how wide, which way they drift. The two proof
+# styles carry full sheets (short: 早瀬, 43 locks; long: 朝日, 42 + the tail); the rest are built from the
+# same layers at their own counts. far takes a subset (every other fringe/back lock) at a coarser section:
+# the crowd's 8,000-triangle budget is spent on the silhouette, not on lock tips it cannot see.
+def _hash(i, k=0):
+    # a deterministic 0…1 from integers (the same values every build: the tips' length jitter is designed,
+    # not rolled)
+    v = math.sin(i * 127.1 + k * 311.7) * 43758.5453
+    return v - math.floor(v)
+
+def lock_curve(name, cps, w0, flat=0.45, groove=3, phase=0.0, nrm0=None, rings=None, seg=None, taper=(0.62, 0.30)):
+    # a tapered clump along a curve through cps (Vectors): parallel-transport frames from the root's
+    # outward normal, the Q1 silhouette (nearly parallel sides, then a quick taper to a fine point)
+    if seg is None: seg = 8 if LOD == 'near' else 4
+    if rings is None: rings = 7 if LOD == 'near' else 2
+    cr = []
+    P = [cps[0] * 2 - cps[1]] + list(cps) + [cps[-1] * 2 - cps[-2]]
+    for k in range(len(cps) - 1):
+        p0, p1, p2, p3 = P[k], P[k + 1], P[k + 2], P[k + 3]
+        steps = max(2, round(rings * 1.6 / (len(cps) - 1)))
+        for j in range(steps):
+            t = j / steps; t2, t3 = t * t, t * t * t
+            cr.append(0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
+    cr.append(cps[-1])
+    # resample to rings + 1 points at even parameter steps (the control spans are near enough even)
+    idx = [round(i * (len(cr) - 1) / rings) for i in range(rings + 1)]
+    pts = [cr[i] for i in idx]
+    out, sd = [], None
+    for j, c in enumerate(pts):
+        t = j / rings
+        tan = (pts[min(j + 1, rings)] - pts[max(j - 1, 0)]).normalized()
+        if sd is None:
+            n0 = nrm0 if nrm0 is not None else Vector((0, 0, 1))
+            sd = (n0 - tan * n0.dot(tan))
+            sd = sd.normalized() if sd.length > 0.3 else Vector((1, 0, 0)).cross(tan).normalized()
+        else:
+            sd = sd - tan * sd.dot(tan)
+            if sd.length < 0.3: sd = Vector((1, 0, 0)).cross(tan).normalized()
+            else: sd = sd.normalized()
+        nr = tan.cross(sd).normalized()          # (in the surface's tangent plane, across the lock)
+        # (round 1 of the craft iteration: the taper holds to 55 % of the length and ends at 0.22, not
+        # 0.13 — the first build's locks tapered from 35 % to needles and read as spikes and fangs.
+        # Round 3: the fringe tapers later and less (0.68 → 0.30): a short lock that narrows over its
+        # last half is an icicle; the mass must hold and only the tip articulate.
+        # Polish round 10: THE SECTION'S AXES WERE SWAPPED. sd is the surface NORMAL transported
+        # along the curve, yet it carried the lock's full width, and nr — which lies in the tangent
+        # plane — carried only the flattened thickness. A lock rooted on the forehead or the crown
+        # therefore stood with its width along the normal: it presented its thin edge to the world
+        # and read as a blade — the instructor's crown of spikes, 朝日's fringe of hanging tags.
+        # Now the width runs along nr (across the surface, the way a ribbon of hair lies) and the
+        # thickness along sd (off the surface): a plump lens lying on the head, edge-on nowhere.)
+        w = w0 * (1 - (1 - taper[1]) * smooth(taper[0], 1.0, t)) * (1 + 0.10 * math.sin(math.pi * min(1, t * 1.15)))
+        ring = []
+        for i in range(seg):
+            a = i / seg * TAU; g = 1 - 0.13 * (0.5 + 0.5 * math.cos(a * groove + phase))
+            ring.append(tuple(c + nr * (math.cos(a) * w * g) + sd * (math.sin(a) * w * flat * g)))
+        out.append(ring)
+    tip = pts[-1] + (pts[-1] - pts[-2]).normalized() * 0.005
+    return loft(name, out, cap1=tip - pts[-1])
+
+def surf_pt(az, th, off):
+    # just the point of surf_dir (a lock curve's control points live on the shell)
+    return surf_dir(az, th, off)[0]
+
+def hang_pts(root_az, root_th, side, target_y, bow=0.0, out0=0.0165, sway=0.0, inward=0.05):
+    # control points for a lock that leaves the head and hangs: two on the surface (root, and past the ear),
+    # then free points stepping down to target_y, bowing forward by `bow` at mid-length and settling back,
+    # drifting sideways by sway (azimuth degrees at the tip) and inward toward the neck by `inward`
+    # (a framing lock that keeps the head's width all the way down floats beside the jaw — round 4).
+    # Returns (points, root normal).
+    p0, n0 = surf_dir(root_az, root_th, out0)
+    p1 = surf_pt(root_az + sway * 0.3, root_th + 26, 0.011)
+    pts = [p0, p1]
+    y, k = p1.y, 0
+    while y > target_y and k < 6:
+        k += 1; f = k / 6
+        y = max(target_y, y - 0.055)
+        x = p1.x * (1 - inward * f) + math.sin(math.radians(sway)) * 0.09 * f * side
+        z = p1.z + bow * math.sin(math.pi * min(1, f * 1.15)) + 0.004 * f
+        pts.append(Vector((x, y, z)))
+    return pts, n0
+
+# the design sheets (docs/charcraft/DESIGN.md has the summary and the reasoning). Per style:
+#   fringe { n, az (half-spread), len [min, max] (polar degrees), w, sweep (azimuth drift over the row),
+#            lenJit } — across the forehead, rooted on the hairline
+#   top    { mode 'swept'|'parted'|None, n, span } — swept: from the hairline back over the crown;
+#            parted: from the parting line flowing out and down the crown's sides
+#   side   { n, az, th, len (polar degrees, on the surface), w, hang (a y to hang to, or None), bow }
+#   back   [ { n, az0, az1, len or hang, w } … ] — layers, outer first, rooted at th0
+#   nape   { n, len, w } — short locks under the back hairline
+HAIR_DESIGN = {
+  'short': dict(     # 早瀬 (the instructor): a side parting at az +38°, everything swept to his left
+    fringe=dict(n=13, az=46, len=(17, 23), w=0.0145, sweep=6, lenJit=0.16),
+    top=dict(mode='swept', n=7, span=34, w=0.0145),
+    side=dict(n=3, az=63, th=55, len=31, w=0.0135, hang=None, bow=0.0),
+    back=[dict(n=7, az0=118, az1=242, th0=58, len=27, w=0.0155, farStep=3), dict(n=6, az0=128, az1=232, th0=66, len=21, w=0.0145), dict(n=5, az0=140, az1=220, th0=74, len=16, w=0.0135)],
+    nape=dict(n=3, len=12, w=0.012)),
+  'long': dict(      # 朝日: a centre parting, the face framed by long locks, layered length behind
+    fringe=dict(n=12, az=44, len=(16, 20), w=0.0155, sweep=4, lenJit=0.08, part=True, farStep=3),
+    top=dict(mode='parted', n=5, span=30, w=0.015),
+    side=dict(n=5, az=60, th=50, len=0, w=0.020, hang=1.345, bow=0.008, step=7.0, thStep=3.5, inward=0.06, hangSteps=[0, 0.028, 0.052, 0.078, 0.10], flat=0.50),
+    back=[dict(n=8, az0=122, az1=238, th0=60, len=0, hang=1.375, w=0.027, farStep=3), dict(n=6, az0=132, az1=228, th0=68, len=0, hang=1.445, w=0.025, farStep=3), dict(n=5, az0=142, az1=218, th0=78, len=30, w=0.015)],
+    nape=dict(n=4, len=15, w=0.012)),
+  'neat': dict(      # 真壁: tight, swept straight back
+    fringe=dict(n=5, az=34, len=(10, 13), w=0.013, sweep=2, lenJit=0.1),
+    top=dict(mode='swept', n=8, span=36, w=0.015),
+    side=dict(n=2, az=64, th=56, len=24, w=0.012, hang=None, bow=0.0),
+    back=[dict(n=6, az0=125, az1=235, th0=58, len=23, w=0.014), dict(n=5, az0=138, az1=222, th0=68, len=17, w=0.013)],
+    nape=dict(n=0, len=0, w=0.012)),
+  'slick': dict(     # 黒田: slicked back, no fringe at all
+    fringe=None,
+    top=dict(mode='swept', n=9, span=42, w=0.0155),
+    side=dict(n=2, az=64, th=56, len=25, w=0.012, hang=None, bow=0.0),
+    back=[dict(n=6, az0=125, az1=235, th0=57, len=24, w=0.014), dict(n=5, az0=138, az1=222, th0=67, len=18, w=0.013)],
+    nape=dict(n=0, len=0, w=0.012)),
+  'crop': dict(      # 大城: a close cut — short locks all over, none long
+    fringe=dict(n=8, az=42, len=(11, 15), w=0.0135, sweep=2, lenJit=0.15),
+    top=dict(mode='swept', n=6, span=20, w=0.013),
+    side=dict(n=2, az=63, th=55, len=15, w=0.0125, hang=None, bow=0.0),
+    back=[dict(n=5, az0=124, az1=236, th0=58, len=15, w=0.0135), dict(n=4, az0=140, az1=220, th0=68, len=11, w=0.0125)],
+    nape=dict(n=0, len=0, w=0.012)),
+  'centre': dict(    # 桐生: a centre parting, the fringe falling either way, longer sides
+    fringe=dict(n=11, az=44, len=(21, 27), w=0.0145, sweep=-10, lenJit=0.1, part=True),
+    top=None,
+    side=dict(n=3, az=60, th=54, len=45, w=0.013, hang=None, bow=0.0),
+    back=[dict(n=6, az0=124, az1=236, th0=58, len=27, w=0.014), dict(n=5, az0=138, az1=222, th0=68, len=20, w=0.013)],
+    nape=dict(n=3, len=12, w=0.012)),
+  'mop': dict(       # 森: a full straight fringe, a shaggy back
+    fringe=dict(n=12, az=46, len=(27, 32), w=0.0155, sweep=0, lenJit=0.09),
+    top=None,
+    side=dict(n=3, az=61, th=54, len=39, w=0.0135, hang=None, bow=0.0),
+    back=[dict(n=7, az0=120, az1=240, th0=60, len=33, w=0.015), dict(n=6, az0=132, az1=228, th0=70, len=26, w=0.014)],
+    nape=dict(n=0, len=0, w=0.012)),
+  'bob': dict(       # 佐伯: a bob — the sides and the back end on one line at the chin
+    fringe=dict(n=10, az=42, len=(16, 21), w=0.0155, sweep=0, lenJit=0.07, part=True),
+    top=dict(mode='parted', n=4, span=26, w=0.015),
+    side=dict(n=4, az=56, th=52, len=0, w=0.020, hang=1.475, bow=0.006, inward=0.10, flat=0.46),
+    back=[dict(n=7, az0=124, az1=236, th0=62, len=0, hang=1.475, w=0.024), dict(n=6, az0=134, az1=226, th0=72, len=34, w=0.015)],
+    nape=dict(n=0, len=0, w=0.012)),
+  'bun': dict(       # ミラー: swept up to the bun, wisps at the ears
+    fringe=dict(n=8, az=40, len=(19, 23), w=0.015, sweep=5, lenJit=0.12),
+    top=dict(mode='swept', n=5, span=30, w=0.014),
+    side=dict(n=2, az=68, th=60, len=33, w=0.0105, hang=None, bow=0.0),
+    back=[dict(n=4, az0=132, az1=228, th0=62, len=22, w=0.013)],
+    nape=dict(n=3, len=12, w=0.011)),
+  'tail': dict(      # 高嶺: swept back into a low tail
+    fringe=None,
+    top=dict(mode='swept', n=8, span=36, w=0.015),
+    side=dict(n=3, az=66, th=58, len=31, w=0.013, hang=None, bow=0.0),
+    back=[dict(n=5, az0=130, az1=230, th0=60, len=24, w=0.0135)],
+    nape=dict(n=2, len=11, w=0.011)),
+}
+
+def design_locks(st):
+    # the style's locks from its sheet: a list of (object, isFarKept) — far keeps the silhouette locks
+    # (the sides and the top in full, the fringe and back layers every other one)
+    D = HAIR_DESIGN[st]; out = []
+    far = LOD == 'far'
+    def keep(layer, i, n):
+        return not far or layer in ('side', 'top') or n <= 3 or i % 2 == 0
+    fr = D.get('fringe')
+    if fr:
+        for i in range(fr['n']):
+            if not keep('fringe', i, fr['n']): continue
+            if far and fr.get('farStep') and i % fr['farStep']: continue   # (a fringe may thin out harder at far, like a back layer)
+            f = i / (fr['n'] - 1) if fr['n'] > 1 else 0.5
+            az = lerp(-fr['az'], fr['az'], f)
+            # a parted fringe is shortest AT the parting and longest toward the temples (round 2: the
+            # first build peaked at the centre, which put the longest spike dead centre of the forehead)
+            lf = abs(2 * f - 1) if fr.get('part') else 0.5 + 0.5 * math.sin(f * math.pi)
+            ln = lerp(fr['len'][0], fr['len'][1], lf) * (1 + ( _hash(i, 1) - 0.5) * 2 * fr['lenJit'])
+            drift = fr['sweep'] * (f - 0.18)          # (the sweep grows across the row: a side parting's flow)
+            th0 = hairline(az) + 1.5
+            cps = [surf_pt(az, th0, 0.0165), surf_pt(az + drift * 0.45, th0 + ln * 0.55, 0.0125),
+                   surf_pt(az + drift, th0 + ln, 0.0055) + Vector((0, -0.0035, 0.0022))]
+            out.append(lock_curve(f'{st}f{i}', cps, fr['w'], flat=0.38, phase=i * 1.7, nrm0=surf_dir(az, th0)[1], taper=(0.72, 0.38)))   # (polish round 11: fuller fringe tips — at 0.30 the hem separated into tags with skin between the points)
+    tp = D.get('top')
+    if tp and tp.get('mode') == 'swept':
+        for i in range(tp['n']):
+            if not keep('top', i, tp['n']): continue
+            if far and i % 2: continue   # (the swept top thins at far too — the craft fringes and sides grew until a short cut with bars and glasses broke the crowd's 8,000)
+            f = i / (tp['n'] - 1) if tp['n'] > 1 else 0.5
+            az = lerp(-34, 34, f); th0 = hairline(az) + 2.5
+            cps = [surf_pt(az, th0, 0.0165), surf_pt(az * 1.06, th0 - tp['span'] * 0.55, 0.0145), surf_pt(az * 1.1, th0 - tp['span'], 0.0105)]
+            out.append(lock_curve(f'{st}t{i}', cps, tp['w'], flat=0.38, phase=i * 1.3, nrm0=surf_dir(az, th0)[1]))
+    elif tp and tp.get('mode') == 'parted':
+        for i in range(tp['n']):
+            if not keep('top', i, tp['n']): continue
+            if far and i % 2: continue   # (the parted top thins at far: the parting reads from the shell there)
+            for s in (-1, 1):
+                th0 = 14 + i * 6          # (the roots run along the parting, front to back)
+                cps = [surf_pt(s * 2, th0, 0.0165), surf_pt(s * 16, th0 + tp['span'] * 0.4, 0.014), surf_pt(s * 30, th0 + tp['span'], 0.009)]
+                out.append(lock_curve(f'{st}p{i}{s}', cps, tp['w'], flat=0.36, phase=i * 2.1 + s, nrm0=surf_dir(s * 2, th0)[1]))
+    sd = D.get('side')
+    if sd:
+        for s in (-1, 1):
+            for i in range(sd['n']):
+                if not keep('side', i, sd['n']): continue
+                az = s * (sd['az'] + (i - (sd['n'] - 1) / 2) * sd.get('step', 5.5)); th = sd['th'] + i * sd.get('thStep', 4)
+                if far and sd.get('hang') and i % 2: continue   # (hanging sides thin out at far too: their tips are under the crowd's resolution, and the long back needed the room)
+                if far and not sd.get('hang') and sd['n'] > 2 and i % 2: continue   # (surface sides of 3+ thin at far as well, for the same budget)
+                if sd.get('hang'):
+                    # the front framing lock (i = 0) falls longest and bows forward of the shoulder
+                    # line, the rest stepping shorter toward the ear (hangSteps, round 4; before, an
+                    # even row at one length, floating at the head's width beside the jaw)
+                    hangY = sd['hang'] + (sd['hangSteps'][i] if sd.get('hangSteps') else (i % 2) * 0.012 - (0.02 if i == 0 else 0))
+                    cps, n0 = hang_pts(az, th, s, hangY, bow=sd.get('bow', 0.0) + (0.012 if i == 0 else 0), sway=(i - 1) * 2.0, inward=sd.get('inward', 0.05))
+                    out.append(lock_curve(f'{st}s{s}{i}', cps, sd['w'], flat=sd.get('flat', 0.32), phase=i * 1.9 + s, nrm0=n0, rings=10 if LOD == 'near' else 2, taper=(0.70, 0.40)))   # (polish round 11: hanging locks keep their mass to 70 % and end at 0.40 — at the old default the hems thinned to pencils)
+                else:
+                    ln = sd['len'] * (1 - 0.08 * i)
+                    cps = [surf_pt(az, th, 0.016), surf_pt(az + s * 2, th + ln * 0.55, 0.012), surf_pt(az + s * 4, th + ln, 0.005) + Vector((0, -0.003, 0.001))]
+                    out.append(lock_curve(f'{st}s{s}{i}', cps, sd['w'], flat=0.32, phase=i * 1.9 + s, nrm0=surf_dir(az, th)[1]))
+    for li, layer in enumerate(D.get('back') or []):
+        for i in range(layer['n']):
+            if not keep('back', i, layer['n']): continue
+            f = i / (layer['n'] - 1) if layer['n'] > 1 else 0.5
+            az = lerp(layer['az0'], layer['az1'], f)
+            if far and layer.get('farStep') and i % layer['farStep']: continue   # (a layer may thin out harder at far: the longest back layer, whose tips the crowd cannot resolve)
+            if layer.get('hang'):
+                cps, n0 = hang_pts(az, layer['th0'], 1 if az > 180 else -1, layer['hang'] + (i % 2) * 0.01, bow=0.0, sway=(f - 0.5) * 6)
+                out.append(lock_curve(f'{st}b{li}{i}', cps, layer['w'], flat=0.36, phase=i * 2.3 + li, nrm0=n0, rings=10 if LOD == 'near' else 2, taper=(0.70, 0.40)))
+            else:
+                ln = layer['len'] * (0.92 + 0.16 * _hash(i, 7 + li))
+                cps = [surf_pt(az, layer['th0'], 0.016), surf_pt(az, layer['th0'] + ln * 0.55, 0.012), surf_pt(az, layer['th0'] + ln, 0.005) + Vector((0, -0.003, -0.001))]
+                out.append(lock_curve(f'{st}b{li}{i}', cps, layer['w'], flat=0.36, phase=i * 2.3 + li, nrm0=surf_dir(az, layer['th0'])[1]))
+    np_ = D.get('nape')
+    if np_ and np_['n'] and not far:
+        for i in range(np_['n']):
+            if not keep('back', i, np_['n']): continue
+            az = lerp(150, 210, i / (np_['n'] - 1) if np_['n'] > 1 else 0.5); th0 = hairline(az) - 4
+            cps = [surf_pt(az, th0, 0.014), surf_pt(az, th0 + np_['len'], 0.006)]
+            out.append(lock_curve(f'{st}n{i}', cps, np_['w'], flat=0.40, phase=i * 2.9, nrm0=surf_dir(az, th0)[1]))
+    return out
+
+def style_locks(st):
+    return design_locks(st)
+# which shell each style wears (the locks carry the difference)
+HAIR_SHELL = {'short': 'short', 'neat': 'short', 'slick': 'short', 'centre': 'short', 'mop': 'short', 'crop': 'crop',
+              'bob': 'long', 'long': 'long', 'bun': 'bun', 'tail': 'long'}
+HAIR_STYLES = tuple(HAIR_SHELL)
+
+def hair_tint(p):
+    # the angel ring: a bright band where the hair turns over the crown ( polar angle ~42°), the rest a shade
+    # darker so the band reads in the shading; the tips below the jaw a touch lighter again
+    d = Vector(p) - C_HEAD; th = math.degrees(math.acos(clamp(d.normalized().y, -1, 1)))
+    f = 0.80 + 0.20 * math.exp(-(((th - 42) / 13) ** 2))
+    if p[1] < 1.52: f = min(1.0, f * 1.05)
+    return (f, f, f)
+
 def ear(name, s):
     # a flattened shape with its rim (the helix) standing out and the bowl (the concha) pressed in, the lobe below;
     # tilted back a little, its back standing off the head (as actor.js put the old ones)
@@ -416,12 +694,60 @@ def eyeball(name, s):
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < EZ - 0.25 * ER or almond(v.co.x, v.co.y, s) > 2.6], context='VERTS')
     return bm_obj(name, bm)
 
+def set_uv_planar(ob, scale):
+    # UVs as a projection from the front (the eye's own frame: u/v across the ball) — the game's iris texture is
+    # drawn in this space. Every iris part gets them, so the merged eye geometry has one attribute set.
+    me = ob.data; layer = me.uv_layers.new(name='UVMap')
+    for loop in me.loops:
+        v = me.vertices[loop.vertex_index].co
+        layer.data[loop.index].uv = (0.5 + v.x / scale, 0.5 + v.y / scale)
+    return ob
+
+# the drawn face's UVs (the craft pass: docs/charcraft/DESIGN.md): the skin carries a planar projection of
+# the face box (x −0.092…0.092, y 1.462…1.762 → 0…1) — the space npc/face-design.js draws in and the game's
+# face texture is sampled by. A vertex is only given a real UV where it is the face's front (outward and
+# forwards); everywhere else — and on every other head part, via set_uv_off — the UV is parked at (−1, −1),
+# a corner of both face textures that stays empty / neutral, so hair, glasses and eyeballs never sample the
+# drawing. The same box is FACE_BOX in src/npc/face-design.js: keep them together.
+FACE_BOX = (-0.092, 0.092, 1.462, 1.762)
+def set_uv_face(ob):
+    me = ob.data; layer = me.uv_layers.new(name='UVMap')
+    x0, x1, y0, y1 = FACE_BOX
+    for loop in me.loops:
+        v = me.vertices[loop.vertex_index]; p, n = v.co, v.normal
+        # the glTF exporter flips V (it stores 1 − v), so the value written here is pre-flipped: in the
+        # game the skin's v is (y − y0) / (y1 − y0), 0 at the chin, 1 at the hairline, as npc/face-design.js
+        # has it. (The first craft build wrote it straight and the drawn face landed upside down on the
+        # face — the lash lines under the eyes, the brows across the nose.) The gate is wide — nearly the
+        # whole front of the head carries the planar UV — because a parked vertex next to a mapped one
+        # smears the drawing across the triangle between them (the sockets and the jaw showed it).
+        layer.data[loop.index].uv = ((p.x - x0) / (x1 - x0), (y1 - p.y) / (y1 - y0)) if p.z > -0.005 and n.z > 0.02 else (-1.0, -1.0)
+    return ob
+
+def set_uv_off(ob):
+    me = ob.data; layer = me.uv_layers.new(name='UVMap')
+    for loop in me.loops: layer.data[loop.index].uv = (-1.0, -1.0)
+    return ob
+
+def spark_disc(L, cx, cy, r):
+    # a highlight disc on the ball, facing out along the ball's normal there (the big catchlight, upper inner; a
+    # small one lower outer). Geometry, not texture: it stays white whatever the person's iris colour is.
+    z = math.sqrt(max((ER * 1.021) ** 2 - cx * cx - cy * cy, 1e-8))
+    n = Vector((cx, cy, z)).normalized(); t1 = Vector((0, 1, 0)).cross(n).normalized() if abs(n.y) < 0.9 else Vector((1, 0, 0))
+    t2 = n.cross(t1); c = Vector((cx, cy, z)); seg = 8
+    verts = [tuple(c)] + [tuple(c + t1 * (math.cos(i / seg * TAU) * r) + t2 * (math.sin(i / seg * TAU) * r)) for i in range(seg)]
+    faces = [(0, 1 + i, 1 + (i + 1) % seg) for i in range(seg)]
+    return orient_out(mesh_obj(f'iris{L}.base.eye.iris', verts, faces), Vector((0, 0, 0)))
+
 def iris_parts(L):
-    # on the front of the eyeball: the iris (a dark ring at its edge, the limbus), the pupil; in the eye bone's frame
-    # (the eye's centre at 0), as actor.js turns it
+    # on the front of the eyeball, in the eye bone's frame (the eye's centre at 0), as actor.js turns it: the lash
+    # ring at the iris' edge, the iris itself (wide — the anime eye is mostly iris — in three rings so the baked
+    # gradient survives decimation-free: it is never decimated), the pupil, and two catchlight discs. The fine
+    # detail (striations, the limbus, the painted highlight) rides in the run-time canvas texture on these UVs;
+    # the baked vertex gradient is what the crowd — one shared material, no texture — shows instead.
     out, seg = [], D['iris']
     def at(th, ph, r): th = math.radians(th); return (math.sin(th) * math.cos(ph) * ER * r, math.sin(th) * math.sin(ph) * ER * r, math.cos(th) * ER * r)
-    for key, a0, a1, r, rings in (('lash', 29, 36, 1.010, 1), ('iris', 14.5, 29.5, 1.013, 2), ('pupil', 0, 15, 1.018, 1)):
+    for key, a0, a1, r, rings in (('lash', 36, 42, 1.008, 1), ('iris', 12.5, 36.5, 1.013, 3), ('pupil', 0, 14.5, 1.018, 1)):
         verts, faces = [], []
         for j in range(rings + 1):
             for i in range(seg): verts.append(at(lerp(a0, a1, j / rings), i / seg * TAU, r))
@@ -430,8 +756,24 @@ def iris_parts(L):
                 a, b = j * seg + i, j * seg + (i + 1) % seg; faces.append((a, b, b + seg, a + seg))
         if a0 == 0:                                          # (the pupil: a fan round its middle)
             verts = [(0, 0, ER * r)] + verts[seg:]; faces = [(0, 1 + i, 1 + (i + 1) % seg) for i in range(seg)]
-        out.append(orient_out(mesh_obj(f'iris{L}.base.{key}.iris', verts, faces), Vector((0, 0, 0))))
+        out.append(set_uv_planar(orient_out(mesh_obj(f'iris{L}.base.{key}.iris', verts, faces), Vector((0, 0, 0))), 2.35 * ER))
+    out.append(set_uv_planar(spark_disc(L, -0.0036, 0.0042, 0.0021), 2.35 * ER))
+    out.append(set_uv_planar(spark_disc(L, 0.0038, -0.0034, 0.0011), 2.35 * ER))
     return out
+
+def iris_tint(key):
+    # the iris' baked gradient (what the crowd sees; the near texture multiplies the same shape in finer detail):
+    # dark at the limbus (the outer edge), bright at the collarette (the pupil's edge), darker at the top where
+    # the lid shadows it, lighter at the bottom
+    if key == 'lash': return lambda p: (0.45, 0.45, 0.45)
+    if key != 'iris': return None
+    def t(p):
+        r = math.hypot(p[0], p[1])
+        f = lerp(1.0, 0.55, smooth(-0.002, 0.008, p[1]))        # darker towards the top (the lid's shadow)
+        f *= 1 - 0.45 * smooth(0.0058, 0.0067, r)               # the limbus at the edge (r ≈ 0.0067 there)
+        f *= 0.75 + 0.25 * (1 - smooth(0.0032, 0.0050, r))      # bright at the collarette, by the pupil
+        return (min(1.0, f),) * 3
+    return t
 
 def orient_out(ob, centre):
     # faces turned to face away from centre
@@ -463,6 +805,18 @@ def lids(name):
             for i in range(NI - 1):
                 a = j * NI + i; faces.append((a, a + 1, a + NI + 1, a + NI))
         obs.append(mesh_obj(f'lid{s}', verts, faces))
+        # the lash line (Q1): a dark band sculpted along the lid's edge — it turns with the lid, so the line stays
+        # on the eye's rim open or blinking (a texture could not follow it). Shaded dark in build_head (lash_tint).
+        brows2 = []
+        for th, rr in ((82, 1.106), (97, 1.045)):
+            row = []
+            for i in range(NI):
+                ph = math.radians(lerp(-78, 78, i / (NI - 1))); thr = math.radians(th)
+                row.append((s * EX + rr * ER * math.sin(thr) * math.sin(ph), rr * ER * math.cos(thr), rr * ER * math.sin(thr) * math.cos(ph)))
+            brows2.append(row)
+        verts = [v for r in brows2 for v in r]; faces = []
+        for i in range(NI - 1): faces.append((i, i + 1, NI + i + 1, NI + i))
+        obs.append(orient_out(mesh_obj(f'lash{s}', verts, faces), Vector((s * EX, 0, 0))))
     ob = join(obs, name)
     bm = bmesh.new(); bm.from_mesh(ob.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-7); bm.to_mesh(ob.data); bm.free()
     me = ob.data; flip = sum(1 if p.normal.dot(p.center - Vector((math.copysign(EX, p.center.x), 0, 0))) < 0 else -1 for p in me.polygons)
@@ -477,34 +831,49 @@ def mouth_parts(surf):
         p, n = surf.front(x, y)
         return (p + n * dz) if p else Vector((x, y, face_z(x, y) + dz))
     parts = []
-    def sheet(name, nx, ny, closed, opened):
-        # a grid (u, v in −1…1) whose points closed(u, v) / opened(u, v) give (x, y, dz above the skin)
-        base, key = [], []
-        for j in range(ny + 1):
-            for i in range(nx + 1):
-                u, v = -1 + 2 * i / nx, -1 + 2 * j / ny
-                base.append(on(*closed(u, v))); key.append(on(*opened(u, v)))
+    def sheet(name, nx, ny, keys):
+        # a grid (u, v in −1…1); keys: [(shape key name, fn)] — the first is the basis ('closed'), the rest become
+        # morph targets in order: open, smile, frown (actor.js drives all three). Every mouth sheet carries all
+        # three so the merged mouth geometry has one target count.
+        grids = []
+        for kname, fn in keys:
+            g = []
+            for j in range(ny + 1):
+                for i in range(nx + 1):
+                    u, v = -1 + 2 * i / nx, -1 + 2 * j / ny
+                    g.append(on(*fn(u, v)))
+            grids.append(g)
         faces = [(j * (nx + 1) + i, j * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i) for j in range(ny) for i in range(nx)]
-        ob = mesh_obj(name, base, faces)
-        ob.shape_key_add(name='closed'); k = ob.shape_key_add(name='open'); k.value = 0.0   # (Blender makes a new key at 1)
-        for idx, p in enumerate(key): k.data[idx].co = p
+        ob = mesh_obj(name, grids[0], faces)
+        ob.shape_key_add(name=keys[0][0])
+        for (kname, fn), g in zip(keys[1:], grids[1:]):
+            k = ob.shape_key_add(name=kname); k.value = 0.0   # (Blender makes a new key at 1)
+            for idx, p in enumerate(g): k.data[idx].co = p
         return ob
     lens = lambda u, v: math.sqrt(max(0, 1 - u * u)) * v           # (an ellipse's outline: v from −1 to 1)
-    # the opening: a sliver when closed, an oval when open (the inside a little behind the lips)
-    parts.append(sheet('mouth.base.mouth.mouth', *D['mouth'],
-        lambda u, v: (u * 0.0232, MOUTH_C + bend(u * 0.0232) + v * 0.0011 * (0.4 + 0.6 * math.sqrt(max(0, 1 - u * u))), 0.0007),
-        lambda u, v: (u * 0.0185, MOUTH_C - 0.0062 + bend(u * 0.0185) * 0.6 + lens(u, v) * 0.0068 * (1 - 0.15 * u * u), -0.0015 + 0.0012 * (1 - u * u))))
-    # the upper teeth: hidden in the line when closed, a band under the upper lip when open
-    parts.append(sheet('mouth.base.xe9e4da.eye', D['teeth'], 1,
-        lambda u, v: (u * 0.012, MOUTH_C + bend(u * 0.012) + 0.0002 * v, -0.0028),
-        lambda u, v: (u * 0.0125, MOUTH_C - 0.0012 + bend(u * 0.0125) * 0.6 + 0.0011 * v - 0.0008 * u * u, -0.0006 + 0.0006 * (1 - u * u))))
-    # the lower lip: a soft roll under the line, down with the jaw when open
-    def lip(drop):
+    closed = lambda u, v: (u * 0.0204, MOUTH_C + bend(u * 0.0204) + v * 0.0011 * (0.4 + 0.6 * math.sqrt(max(0, 1 - u * u))), 0.0007)
+    # the opening: a sliver when closed, an oval when open (the inside a little behind the lips); the smile wider
+    # with its corners up, the frown narrower with its corners down (expressions, Q3)
+    parts.append(sheet('mouth.base.mouth.mouth', *D['mouth'], [
+        ('closed', closed),
+        ('open', lambda u, v: (u * 0.0165, MOUTH_C - 0.0062 + bend(u * 0.0165) * 0.6 + lens(u, v) * 0.0068 * (1 - 0.15 * u * u), -0.0015 + 0.0012 * (1 - u * u))),
+        ('smile', lambda u, v: (u * 0.0230, MOUTH_C + bend(u * 0.0230) + 0.0042 * u * u + v * 0.0013 * (0.4 + 0.6 * math.sqrt(max(0, 1 - u * u))), 0.0007)),
+        ('frown', lambda u, v: (u * 0.0190, MOUTH_C + bend(u * 0.0190) * 0.8 - 0.0036 * u * u + v * 0.001 * (0.4 + 0.6 * math.sqrt(max(0, 1 - u * u))), 0.0007))]))
+    # the upper teeth: hidden in the line when closed, a band under the upper lip when open (the expressions keep
+    # them hidden: the same points as closed)
+    teeth_closed = lambda u, v: (u * 0.0106, MOUTH_C + bend(u * 0.012) + 0.0002 * v, -0.0028)
+    parts.append(sheet('mouth.base.xe9e4da.eye', D['teeth'], 1, [
+        ('closed', teeth_closed),
+        ('open', lambda u, v: (u * 0.0110, MOUTH_C - 0.0012 + bend(u * 0.0110) * 0.6 + 0.0011 * v - 0.0008 * u * u, -0.0006 + 0.0006 * (1 - u * u))),
+        ('smile', teeth_closed), ('frown', teeth_closed)]))
+    # the lower lip: a soft roll under the line, down with the jaw when open; its corners follow the expression
+    def lip(drop, corner=0.0):
         def f(u, v):
-            w = math.sqrt(max(0, 1 - u * u)); x = u * 0.0172
-            return (x, MOUTH_C - 0.0004 - 0.0056 * (1 - v) / 2 * (0.55 + 0.45 * w) + bend(x) * 0.6 - drop, 0.0029 * w ** 0.7 * math.sin(math.pi * (v + 1) / 2) ** 0.6 - 0.0003)
+            w = math.sqrt(max(0, 1 - u * u)); x = u * 0.0152
+            return (x, MOUTH_C - 0.0004 - 0.0056 * (1 - v) / 2 * (0.55 + 0.45 * w) + bend(x) * 0.6 - drop + corner * u * u, 0.0029 * w ** 0.7 * math.sin(math.pi * (v + 1) / 2) ** 0.6 - 0.0003)
         return f
-    parts.append(sheet('mouth.base.lip.skin', *D['mouth'], lip(0), lip(0.0098)))
+    parts.append(sheet('mouth.base.lip.skin', *D['mouth'], [
+        ('closed', lip(0)), ('open', lip(0.0098)), ('smile', lip(0.0008, 0.0028)), ('frown', lip(0.0004, -0.0022))]))
     return parts
 
 # ---------------------------------------------------------------- shading: ambient occlusion and tints, as the vertex colour
@@ -619,43 +988,64 @@ def lash_tint(p):
     y = p[1]; k = smooth(0.0042, 0.0012, y); return lerp(1, LASH_T[0], k), lerp(1, LASH_T[1], k), lerp(1, LASH_T[2], k)
 
 def build_head():
-    dense = head_skin_full(); surf = Surface(dense)
-    earsD = [ear(f'earD{s}', s) for s in (-1, 1)]
-    browsD = [brow(f'brow{s}', s, surf) for s in (-1, 1)]
-    hairs = {st: hair_shell(f'hairD-{st}', st) for st in ('short', 'crop', 'long', 'bun')}
+    global F
+    out = []
+    # the face variants: skin (+ears), eyeballs and brows per variant (their surfaces differ); everything else —
+    # hair, glasses, lids, irises, mouth — is shared and built on the base face (the anchors are the same)
+    base = {}
+    for face, fp in FACES.items():
+        F = dict(fp)
+        dense = head_skin_full(); surf = Surface(dense)
+        earsD = [ear(f'earD{face}{s}', s) for s in (-1, 1)]
+        browsD = [brow(f'brow{face}{s}', s, surf) for s in (-1, 1)]
+        balls = [eyeball(f'ball{face}{s}', s) for s in (-1, 1)]
+        occ_face = occluder([dense] + earsD + browsD + balls)
+        # the skin: decimated to its share, shaded like the dense one, ears joined
+        skin = decimate(copy_obj(dense, 'skin' + face), D['skin'], use_symmetry=True, symmetry_axis='X'); transfer_normals(skin, dense)
+        ears = []
+        for e in earsD:
+            lo = decimate(copy_obj(e, e.name + 'L'), D['ear']); transfer_normals(lo, e); ears.append(lo)
+        # (gently: the game's own ambient occlusion (GTAO) adds to it)
+        for o in [skin] + ears: shade(o, occ_face, reach=0.018, strength=0.32, floor=0.72, tint=skin_tint)
+        sk = join([skin] + ears, 'h' + face); set_uv_face(sk)
+        out.append(to_export(sk, f'head.{face}.skin.skin'))
+        for b in balls: shade(b, occ_face, reach=0.008, strength=0.35, floor=0.7)
+        bl = join(balls, 'b' + face); set_uv_off(bl)
+        out.append(to_export(bl, f'head.{face}.eye.eye'))
+        # (the brows are their own part now: on a person's own meshes the drawn face (npc/actor.js) replaces
+        # them, so actor.js must be able to leave them out; in the crowd they stay, as the baked face)
+        for b in browsD: shade(b, occ_face, reach=0.01, strength=0.4)
+        bw = join(browsD, 'w' + face); set_uv_off(bw)
+        out.append(to_export(bw, f'brows.{face}.hair.brow'))
+        if face == 'base': base = dict(dense=dense, surf=surf, earsD=earsD)
+    F = dict(FACES['base'])
+    dense, surf = base['dense'], base['surf']
+    shells = {sh: hair_shell(f'hairD-{sh}', sh) for sh in ('short', 'crop', 'long', 'bun')}
     tail, bun = hair_tail('tailD'), hair_bun('bunD')
-    balls = [eyeball(f'ball{s}', s) for s in (-1, 1)]
-    occ_face = occluder([dense] + earsD + browsD + [hairs['short']] + balls)
-    # the skin: decimated to its share, shaded like the dense one, ears joined
-    skin = decimate(copy_obj(dense, 'skin'), D['skin'], use_symmetry=True, symmetry_axis='X'); transfer_normals(skin, dense)
-    ears = []
-    for e in earsD:
-        lo = decimate(copy_obj(e, e.name + 'L'), D['ear']); transfer_normals(lo, e); ears.append(lo)
-    # (gently: the game's own ambient occlusion (GTAO) adds to it)
-    for o in [skin] + ears: shade(o, occ_face, reach=0.018, strength=0.32, floor=0.72, tint=skin_tint)
-    out = [to_export(join([skin] + ears, 'h'), 'head.base.skin.skin')]
-    for b in balls: shade(b, occ_face, reach=0.008, strength=0.35, floor=0.7)
-    out.append(to_export(join(balls, 'b'), 'head.base.eye.eye'))
-    for b in browsD: shade(b, occ_face, reach=0.01, strength=0.4)
-    out.append(to_export(join(browsD, 'w'), 'head.base.hair.brow'))
-    for st, d in hairs.items():
-        occ = occluder([d, dense] + earsD + ([tail] if st == 'long' else [bun] if st == 'bun' else []))
-        lo = decimate(copy_obj(d, 'hair-' + st), D['hair'][st], use_symmetry=(st == 'crop'), symmetry_axis='X')
-        transfer_normals(lo, d); shade(lo, occ, reach=0.02, strength=0.55)
+    for st in HAIR_STYLES:
+        sh = HAIR_SHELL[st]; d = shells[sh]
+        occ = occluder([d, dense] + base['earsD'] + ([tail] if st in ('long', 'tail') else [bun] if st == 'bun' else []))
+        lo = decimate(copy_obj(d, 'hair-' + st), D['hair'][sh], use_symmetry=(sh == 'crop'), symmetry_axis='X')
+        transfer_normals(lo, d); shade(lo, occ, reach=0.02, strength=0.55, tint=hair_tint)
         parts = [lo]
-        if st == 'long':
-            t = decimate(copy_obj(tail, 'tail'), D['tail']); transfer_normals(t, tail); shade(t, occ, reach=0.02, strength=0.7); parts.append(t)
+        for lk in style_locks(st): shade(lk, occ, reach=0.02, strength=0.5, tint=hair_tint); parts.append(lk)
+        if st in ('long', 'tail'):
+            t = decimate(copy_obj(tail, 'tail' + st), D['tail']); transfer_normals(t, tail); shade(t, occ, reach=0.02, strength=0.7, tint=hair_tint); parts.append(t)
         if st == 'bun':
-            b = decimate(copy_obj(bun, 'bun'), D['bun']); transfer_normals(b, bun); shade(b, occ, reach=0.02, strength=0.7); parts.append(b)
-        out.append(to_export(join(parts, 'hj'), f'head.hair-{st}.hair.hair'))
-        tie = hair_tie('tie', (0, 1.655, -0.112), 0.0128, -0.5) if st == 'long' else hair_tie('tie', (0, 1.627, -0.106), 0.017, 0.35) if st == 'bun' else None
-        if tie: out.append(to_export(tie, f'head.hair-{st}.x22252c.plastic'))
-    g = glasses(surf); out.append(to_export(g, 'head.glasses.x2b2f36.plastic'))
+            b = decimate(copy_obj(bun, 'bun'), D['bun']); transfer_normals(b, bun); shade(b, occ, reach=0.02, strength=0.7, tint=hair_tint); parts.append(b)
+        hj = join(parts, 'hj' + st); set_uv_off(hj)
+        out.append(to_export(hj, f'head.hair-{st}.hair.hair'))
+        tie = hair_tie('tie', (0, 1.655, -0.112), 0.0128, -0.5) if st in ('long', 'tail') else hair_tie('tie', (0, 1.627, -0.106), 0.017, 0.35) if st == 'bun' else None
+        if tie: set_uv_off(tie); out.append(to_export(tie, f'head.hair-{st}.x22252c.plastic'))
+    g = glasses(surf); set_uv_off(g); out.append(to_export(g, 'head.glasses.x2b2f36.plastic'))
     # the parts that move: no occlusion baked (it would move with them), the lash line and lips tinted
     L = lids('lidsJ'); shade(L, None, tint=lash_tint); L.data.transform(Matrix.Translation((0, EY, EZ)))
     out.append(to_export(L, 'lids.base.lid.skin'))
     for nm, side in (('irisL', 1), ('irisR', -1)):
-        for o in iris_parts(nm[-1]): o.data.transform(Matrix.Translation((side * EX, EY, EZ))); out.append(to_export(o, o.name))
+        for o in iris_parts(nm[-1]):
+            tint = iris_tint(o.name.split('.')[2])
+            if tint: shade(o, None, tint=tint)
+            o.data.transform(Matrix.Translation((side * EX, EY, EZ))); out.append(to_export(o, o.name))
     for o in mouth_parts(surf): out.append(to_export(o, o.name))
     return out, dense
 
@@ -910,6 +1300,12 @@ def build_torso():
     out.append(to_export(clip, 'torso.base.silver.silver'))
     out.append(to_export(join(pbtn, 'pb'), 'torso.notie.button.plastic'))
     shade(tie_ob, occ_all, reach=0.02, strength=0.7); out.append(to_export(tie_ob, 'torso.tie.tie.tie'))
+    if LOD == 'near':
+        # a tie clip across the blade (Q3: near-only uniform detail — the far model does not carry it)
+        p, n = surf_point(surf, 0, 1.325, 0.006)
+        bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1); bmesh.ops.scale(bm, vec=(0.021, 0.004, 0.0018), verts=bm.verts)
+        q = Vector((0, 0, 1)).rotation_difference(n); bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=q.to_matrix())
+        bmesh.ops.translate(bm, verts=bm.verts, vec=p); out.append(to_export(bm_obj('tieclip', bm), 'torso.tieclip.silver.silver'))
     for o in straps: shade(o, occ_notie, reach=0.02, strength=0.5)
     out.append(to_export(join(straps, 'st'), 'torso.bars.navy.cloth'))
     out.append(to_export(join(sbtn, 'sb'), 'torso.bars.gold.gold'))
@@ -928,7 +1324,7 @@ def export(path):
     for ob in COL.objects: ob.select_set(True)
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True, export_yup=False, export_apply=True,
-        export_materials='NONE', export_vertex_color='ACTIVE', export_active_vertex_color_when_no_material=True, export_texcoords=False, export_normals=True,
+        export_materials='NONE', export_vertex_color='ACTIVE', export_active_vertex_color_when_no_material=True, export_texcoords=True, export_normals=True,
         export_morph=True, export_morph_normal=False, export_animations=False, export_skins=False, export_extras=False, export_tangents=False)
 
 PREVIEW_COLORS = {'skin': 0xd8a688, 'lid': 0xcf9a7c, 'lash': 0x3a2a24, 'lip': 0xb7766a, 'mouth': 0x5e2a2a, 'hair': 0x2a221e, 'eye': 0xf0ece5, 'iris': 0x4b3326,
@@ -945,15 +1341,36 @@ if PREVIEW:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import preview
     # (the lids as they are open: turned up about their pivot, as actor.js does)
     lo = COL.objects['lids.base.lid.skin']; lo.matrix_world = Matrix.Translation((0, EY, EZ)) @ Matrix.Rotation(-21 * DEG, 4, 'X') @ Matrix.Translation((0, -EY, -EZ))
-    def view(variant, fname, cam, tgt, lens=100):
-        objs = [o for o in COL.objects if o.name.split('.')[1] in ('base', variant) or (variant == 'hair-bun' and o.name.split('.')[1] == 'glasses')]
-        preview.render(objs, os.path.join(PREVIEW, fname), PREVIEW_COLORS, PREVIEW_CLASSES, cam, tgt, lens=lens)
+    def view(variant, fname, cam, tgt, lens=100, face='base'):
+        # what actor.js shows: the face variant's skin / eyeballs / brows, the shared base parts, the hairstyle
+        def ok(o):
+            p = o.name.split('.')
+            if len(p) < 4: return False
+            if p[1] == variant or p[1] == 'glasses' and variant == 'hair-bun': return True
+            if p[2] in ('skin', 'eye') or p[3] == 'brow': return p[1] == face
+            return p[1] == 'base'
+        preview.render([o for o in COL.objects if ok(o)], os.path.join(PREVIEW, fname), PREVIEW_COLORS, PREVIEW_CLASSES, cam, tgt, lens=lens)
     view('hair-short', 'h-front.png', (0.0, 1.62, 0.62), (0, 1.615, 0.03))
     view('hair-short', 'h-34.png', (0.38, 1.66, 0.44), (0, 1.615, 0.0))
     view('hair-short', 'h-side.png', (0.62, 1.62, 0.0), (0, 1.615, 0.0))
     view('hair-long', 'h-back.png', (-0.3, 1.66, -0.55), (0, 1.6, -0.02))
     view('hair-bun', 'h-bun.png', (-0.38, 1.64, 0.42), (0, 1.615, 0.0))
     view('hair-crop', 'h-crop.png', (0.25, 1.66, 0.55), (0, 1.615, 0.0))
+    # the character pass (Q1): the new styles and the fem face, close enough to judge the eyes and the locks
+    view('hair-neat', 'h-neat.png', (0.34, 1.66, 0.46), (0, 1.615, 0.0))
+    view('hair-slick', 'h-slick.png', (0.36, 1.68, 0.42), (0, 1.615, 0.0))
+    view('hair-centre', 'h-centre.png', (0.0, 1.62, 0.6), (0, 1.615, 0.03))
+    view('hair-mop', 'h-mop.png', (0.05, 1.62, 0.58), (0, 1.615, 0.03))
+    view('hair-bob', 'f-bob.png', (0.0, 1.62, 0.55), (0, 1.615, 0.03), face='fem')
+    view('hair-bob', 'f-face.png', (0.03, 1.63, 0.34), (0, 1.618, 0.05), lens=135, face='fem')
+    view('hair-short', 'h-face.png', (0.03, 1.63, 0.34), (0, 1.618, 0.05), lens=135)
+    view('hair-tail', 'h-tail.png', (-0.32, 1.66, -0.5), (0, 1.6, -0.02), face='fem')
+    # the craft pass: the two proof characters — 朝日 (fem, long: the face, the framing locks, the length
+    # behind) and the instructor's short from the front three-quarter (h-34 above serves)
+    view('hair-long', 'f-long-front.png', (0.0, 1.62, 0.58), (0, 1.60, 0.03), face='fem')
+    view('hair-long', 'f-long-34.png', (0.36, 1.64, 0.46), (0, 1.585, 0.0), face='fem')
+    view('hair-long', 'f-long-face.png', (0.03, 1.63, 0.34), (0, 1.618, 0.05), lens=135, face='fem')
+    view('hair-long', 'f-long-back.png', (-0.34, 1.62, -0.62), (0, 1.55, -0.02), face='fem')
     def tview(fname, cam, tgt, lens=50, variants=('hair-short', 'tie', 'bars', 'bar1', 'bar2', 'bar3', 'badge', 'nametag', 'lanyard')):
         objs = [o for o in COL.objects if o.name.split('.')[1] in ('base',) + tuple(variants) and not o.name.startswith('anchor')]
         preview.render(objs, os.path.join(PREVIEW, fname), PREVIEW_COLORS, PREVIEW_CLASSES, cam, tgt, lens=lens)

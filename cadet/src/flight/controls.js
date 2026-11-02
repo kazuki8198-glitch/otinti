@@ -13,6 +13,7 @@ const KEY_ACTS = {
   KeyV: ['flaps', 'flapsUp'], KeyR: [null, 'thrFull'], KeyF: [null, 'thrIdle'], KeyG: ['gear', 'gear'], KeyT: ['trim', 'trimReset'],
   KeyL: ['level', 'level'], KeyU: ['autoRud', 'autoRud'], BracketLeft: ['feather0', 'restart0'], BracketRight: ['feather1', 'restart1'],
   KeyZ: ['rtrimL', 'rtrimL'], KeyX: ['rtrimR', 'rtrimR'],
+  Backslash: ['reverser', 'reverser'], KeyN: ['spoiler', 'spoiler'],   // (the jet's controls, as in FLIGHT LAB's app: \ toggles the reversers, N the spoilers — B is the brake, so the spoiler needed its own key)
 };
 export const actionForKey = (code, shift) => { const a = KEY_ACTS[code]; return a ? a[shift ? 1 : 0] : null; };
 // CADET's defaults (they differ from FLIGHT LAB's app on purpose): low stick sensitivity, but the keyboard
@@ -40,9 +41,13 @@ export function actionForKeyBound(code, shift, binds) {
 // as permanent alternates for pitch / roll / brake, as they always were)
 export const HELD0 = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', rudL: 'KeyQ', rudR: 'KeyE', thrUp: 'KeyR', thrDn: 'KeyF', brake: 'KeyB' };
 // the gamepad axis map (prefs.padMap): which axis (and which pad, −1 = any) drives what, inverted or not,
-// with its own dead zone where given. null = FLIGHT LAB's standard mapping, exactly: the left stick is the
-// yoke (axes 1/0), the right stick's x the rudder (2), its y the trim (3, a wider dead zone), the triggers
-// the throttle, a button the brake — and no toe brakes
+// with its own dead zone where given. An entry may instead name its device (id: matched against the
+// gamepad's own id string) — a yoke, a quadrant and a set of pedals keep their roles when the browser
+// enumerates them in a different order after a reconnect, where a bare pad number would silently hand
+// the pedals' axes to the yoke. A named device that is not connected reads as no axis at all.
+// null = FLIGHT LAB's standard mapping, exactly: the left stick is the yoke (axes 1/0), the right stick's
+// x the rudder (2), its y the trim (3, a wider dead zone), the triggers the throttle, a button the brake —
+// and no toe brakes
 export const PADMAP0 = {
   pitch: { axis: 1, inv: false, pad: -1 }, roll: { axis: 0, inv: false, pad: -1 },
   yaw: { axis: 2, inv: false, pad: -1 }, trim: { axis: 3, inv: false, pad: -1, dz: 0.2 },
@@ -55,7 +60,9 @@ export function padMapOf(prefs) {
     const e = src[k];
     if (e === null) { m[k] = null; continue; }
     if (e && typeof e === 'object' && Number.isInteger(e.axis) && e.axis >= 0 && e.axis <= 15)
-      m[k] = { axis: e.axis, inv: !!e.inv, pad: Number.isInteger(e.pad) ? e.pad : -1, ...(typeof e.dz === 'number' ? { dz: e.dz } : {}) };
+      m[k] = { axis: e.axis, inv: !!e.inv, pad: Number.isInteger(e.pad) ? e.pad : -1,
+        ...(typeof e.id === 'string' && e.id.length >= 1 && e.id.length <= 80 ? { id: e.id } : {}),
+        ...(typeof e.dz === 'number' ? { dz: e.dz } : {}) };
   }
   return m;
 }
@@ -191,6 +198,14 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
     } else if (a === 'rtrimL' || a === 'rtrimR') {
       st.rTrim = clamp(st.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       return say(`ラダートリム ${st.rTrim === 0 ? '中立' : `${st.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(st.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`);
+    } else if (a === 'reverser') {
+      if (!A.jet) return say('逆噴射（リバーサー）はジェット機の装置です。プロペラ機にはありません');
+      s.rev = s.rev ? 0 : 1;
+      return say(s.rev ? '逆噴射（リバーサー）展開：推力を前方へ向けて減速する（効くのは接地して脚に荷重が乗っている間だけ。60 kt 以下で絞られ 25 kt で止まる）' : '逆噴射（リバーサー）格納：推力は通常へ');
+    } else if (a === 'spoiler') {
+      if (!A.jet) return say('スポイラーはジェット機の装置です（教材モデル）。プロペラ機にはありません');
+      s.spoiler = s.spoiler ? 0 : 1;
+      return say(s.spoiler ? 'スポイラー展開：翼の揚力を捨てて抗力を増やす（降下を深く・速く、接地後は脚の荷重を増やしてブレーキを効かせる）' : 'スポイラー格納：揚力と抗力は通常へ');
     }
     // CADET's cockpit: one notch of the trim wheel (as the gamepad's D-pad), of the throttle, and the parking brake
     else if (a === 'trimStep') {
@@ -236,10 +251,14 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
     if (L.check && E[0]) st.padOut.push({ type: 'checklist' });
     if (L.atc) { if (E[2]) st.padOut.push({ type: 'atc', i: 0 }); else if (E[1]) st.padOut.push({ type: 'atc', i: 1 }); else if (E[3]) st.padOut.push({ type: 'atc', i: 2 }); }
     const MAP = padMapOf(st.prefs), baseDz = typeof st.prefs.padDz === 'number' ? st.prefs.padDz : 0.12;
-    // one mapped axis: its raw value (before the dead zone) from its pad, or null when that pad is not there
+    // one mapped axis: its raw value (before the dead zone) from its pad, or null when that pad is not there.
+    // An entry that names its device (id) reads that device wherever it sits in the enumeration — and
+    // nothing when it is unplugged, rather than falling through to another device's same-numbered axis
     const raw = (e) => {
       if (!e) return null;
-      const tryP = e.pad >= 0 ? [pads[e.pad]] : pads;
+      let tryP;
+      if (e.id) { const want = String(e.id).toLowerCase(), hit = pads.find(p => String(p.id || '').toLowerCase().includes(want)); tryP = hit ? [hit] : []; }
+      else tryP = e.pad >= 0 ? [pads[e.pad]] : pads;
       for (const p of tryP) { if (p && p.axes && e.axis < p.axes.length) { const v = p.axes[e.axis]; return (e.inv ? -v : v) || 0; } }
       return null;
     };

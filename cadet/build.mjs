@@ -34,7 +34,7 @@ function assetsScript() {
     const ext = path.extname(f); if (!MIME[ext]) continue;
     map['tex/' + path.basename(f, ext)] = `data:${MIME[ext]};base64,` + fs.readFileSync(path.join(TEX, f)).toString('base64');
   }
-  for (const f of ['actor', 'actor-near', 'archer', 'archer-far', 'seminole', 'seminole-far', 'jet737']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
+  for (const f of ['actor', 'actor-near', 'archer', 'archer-far', 'seminole', 'seminole-far', 'jet737', 'cockpit']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
   return `globalThis.CADET_ASSETS = ${JSON.stringify(map)};`;
 }
 

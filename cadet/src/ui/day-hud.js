@@ -77,6 +77,7 @@ const CSS = `
 #fhud .dh-why { margin-top: 4px; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; color: #e8f0fa; background: rgba(95, 212, 255, .12); border-left: 3px solid #5fd4ff; }
 `;
 import { landingHistory, landingStats, sparkline } from '../flight/analysis.js';
+import { panelGeometry } from '../flight/profile.js';
 const WHO = { ATIS: 'ATIS', GND: 'GND', TWR: 'TWR', DEP: 'DEP', APP: 'APP', P: 'あなた' };
 const STATION = { ATIS: 'LAB ATIS', GND: 'LAB Ground', TWR: 'LAB Tower', DEP: 'LAB Departure', APP: 'LAB Approach', OPS: '操作（COM1・高度計・トランスポンダー）' };
 
@@ -195,7 +196,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   const fmtH = (h) => h.toFixed(1);
   // entries (career/logbook.js), totals; opts { fresh: the index just written (its signature is written in),
   // onClose, exports: [{ label, onClick }] — extra footer buttons (the last flight's CSV / GPX, when kept) }
-  function showLogbook(entries, totals, { fresh = -1, onClose = null, exports: exps = [] } = {}) {
+  function showLogbook(entries, totals, { fresh = -1, onClose = null, exports: exps = [], profile = null } = {}) {
     bookClose = onClose;
     book.textContent = '';
     const page = make('section', 'dh-page');
@@ -228,6 +229,43 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
         make('p', '', `着陸 ${hs.n} 回：接地位置 平均 ${hs.alongMean} m（目標点 300 m・ばらつき σ ${hs.alongSd} m・接地帯内 ${hs.inZonePct}%）／沈下 平均 ${hs.sinkMean} fpm（最大 ${hs.sinkMax}）／センターライン偏差 平均 ${hs.crossAbsMean} m／フロート 平均 ${hs.floatMean} m${hs.gateStablePct == null ? '' : `／500 ft ゲート STABLE ${hs.gateStablePct}%`}`),
         make('p', '', `接地位置の推移 ${sparkline(hist.map(x => x.along))}　沈下の推移 ${sparkline(hist.map(x => x.sink), { invert: true })}　センターラインの推移 ${sparkline(hist.map(x => Math.abs(x.cross || 0)), { invert: true })}`));
     }
+    // (game-quality wave, item 5) the last flight drawn: its altitude and speed over time, and the last
+    // landing's final half minute against the ground — the analysis' numbers as a shape. The geometry
+    // is flight/profile.js'; here it is only stroked onto a canvas (drawn after the page is in the
+    // document, and skipped silently where a canvas has no 2d context, as in a DOM shim)
+    let profSec = null;
+    const drawJobs = [];
+    if (profile && (profile.series || profile.td)) {
+      profSec = make('section', 'dh-ana');
+      put(profSec, make('h3', '', '直前の飛行のプロファイル（記録から）'));
+      const draw = (cv, geo, labels, markX = null) => {
+        const g2 = cv.getContext && cv.getContext('2d');
+        if (!g2) return;
+        const W = cv.width, H = cv.height;
+        g2.clearRect(0, 0, W, H);
+        g2.strokeStyle = 'rgba(120,130,140,.35)'; g2.lineWidth = 1;
+        g2.strokeRect(0.5, 0.5, W - 1, H - 1);
+        const line = (pts, color) => { if (!pts.length) return; g2.strokeStyle = color; g2.beginPath(); pts.forEach(([x, y], i) => i ? g2.lineTo(x, y) : g2.moveTo(x, y)); g2.stroke(); };
+        line(geo.a.pts, '#7fd4ff'); line(geo.b.pts, '#ffd47f');
+        if (markX != null) { g2.strokeStyle = 'rgba(255,120,120,.7)'; g2.beginPath(); g2.moveTo(markX, 4); g2.lineTo(markX, H - 4); g2.stroke(); }
+        g2.fillStyle = '#aebac4'; g2.font = '10px sans-serif';
+        g2.fillText(labels[0], 6, 12); g2.fillText(labels[1], 6, 24);
+      };
+      if (profile.series) {
+        const cv = make('canvas'); cv.width = 560; cv.height = 110; cv.style.width = '100%';
+        put(profSec, make('p', '', `高度（青）と速度（黄）の推移 ― ${profile.series.dur} 秒の飛行`), cv);
+        drawJobs.push(() => draw(cv, panelGeometry(profile.series.alt, profile.series.ias, cv.width, cv.height),
+          [`高度 ${Math.min(...profile.series.alt)}〜${Math.max(...profile.series.alt)} ft`, `速度 ${Math.min(...profile.series.ias)}〜${Math.max(...profile.series.ias)} kt`]));
+      }
+      if (profile.td) {
+        const cv = make('canvas'); cv.width = 560; cv.height = 110; cv.style.width = '100%';
+        put(profSec, make('p', '', `接地プロファイル（赤線が接地） ― 接地 ${profile.td.sinkFpm} fpm・接地位置 ${profile.td.along} m${profile.td.gateDt != null ? `・500 ft ゲートは接地の ${Math.abs(profile.td.gateDt)} 秒前` : ''}`), cv);
+        const zi = profile.td.dt.indexOf(0);
+        drawJobs.push(() => draw(cv, panelGeometry(profile.td.agl, profile.td.ias, cv.width, cv.height),
+          [`対地高度 0〜${Math.max(...profile.td.agl)} ft`, `速度 ${Math.min(...profile.td.ias)}〜${Math.max(...profile.td.ias)} kt`],
+          zi > 0 ? 4 + zi / (profile.td.dt.length - 1) * (cv.width - 8) : null));
+      }
+    }
     const btn = Object.assign(make('button', '', '閉じる'), { type: 'button' });
     btn.addEventListener('click', () => hideLogbook());
     const foot = put(make('footer'), make('span', '', '飛行時間は 1/10 時間（6 分）単位。訓練所の記録です。'));
@@ -237,7 +275,8 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
       put(foot, b);
     }
     put(foot, btn);
-    put(page, head, tbl); if (anaSec) put(page, anaSec); put(page, foot); put(book, page);
+    put(page, head, tbl); if (anaSec) put(page, anaSec); if (profSec) put(page, profSec); put(page, foot); put(book, page);
+    for (const j of drawJobs) j();
     book.hidden = false;
     setTimeout(() => btn.focus(), 0);
   }

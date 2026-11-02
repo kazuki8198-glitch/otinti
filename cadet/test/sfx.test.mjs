@@ -357,6 +357,75 @@ test('sfx (M7): the gear pump while the wheels travel; the radio hiss for a tran
   assert.doesNotThrow(() => a.setVolumes({ engine: NaN, amb: 5 }));
 });
 
+test('sfx: the engine state is heard — roughness scatters the speed, thins the firings and roughens the crackle', () => {
+  const { a, ctx } = fresh();
+  const g = engineGraph(a, ctx, O({ rpm: 2300, rough: 0 }));
+  const wander = g.nodes.find(n => n.kind === 'gain' && n.outs.includes(g.cyc.detune));
+  const smooth = wander.gain.target;
+  step(ctx); a.engine(O({ rpm: 2300, rough: 0.85 }));
+  assert.ok(wander.gain.target > smooth + 150, `the speed's wander grows with roughness (${smooth} → ${wander.gain.target} cents)`);
+  // the misfire thinning: over a few seconds of rough running the exhaust's level drops out and comes back
+  const seen = new Set();
+  for (let i = 0; i < 300; i++) { step(ctx, 0.03); a.engine(O({ rpm: 2300, rough: 0.9 })); seen.add(+g.exGain.gain.target.toFixed(4)); }
+  const vals = [...seen];
+  assert.ok(Math.min(...vals) < 0.45 * Math.max(...vals), `whole firings drop out (levels ${Math.min(...vals)}…${Math.max(...vals)})`);
+  // and smooth again: a steady level, no dropouts
+  const seen2 = new Set();
+  for (let i = 0; i < 60; i++) { step(ctx, 0.03); a.engine(O({ rpm: 2300, rough: 0 })); seen2.add(+g.exGain.gain.target.toFixed(4)); }
+  assert.equal(seen2.size, 1, 'a healthy engine holds one level');
+  // a twin hears each engine's own roughness on its own side
+  const t = fresh(); const tg = engineGraph(t.a, t.ctx, O({ engines: [{ rpm: 2300, rough: 0 }, { rpm: 2300, rough: 0.9 }] }));
+  assert.ok(tg.nodes.filter(n => n.kind === 'gain' && n.outs.some(o => o instanceof Param)).length >= 2, 'per-voice scatter gains exist');
+});
+
+test('sfx: rain is heard on the airframe in flight and on the ground at rest, scaled by precipitation and speed', () => {
+  const { a, ctx } = fresh();
+  const g = engineGraph(a, ctx, O({ rain: 0, ias: 100 }));
+  const rainBP = g.nodes.find(n => n.kind === 'biquad' && n.type === 'bandpass' && n.frequency.value === 1100);
+  assert.ok(rainBP, 'the rain band exists in the engine build');
+  const rainG = [...below(rainBP)].find(n => n.kind === 'gain');
+  assert.equal(rainG.gain.target, 0, 'dry air: no rain');
+  step(ctx); a.engine(O({ rain: 1, ias: 20 }));
+  const slow = rainG.gain.target;
+  assert.ok(slow > 0.005, `a patter at taxi speed (${slow})`);
+  step(ctx); a.engine(O({ rain: 1, ias: 110 }));
+  assert.ok(rainG.gain.target > slow * 1.8, `louder at speed (${slow} → ${rainG.gain.target})`);
+  assert.ok(rainBP.frequency.target > 2400, `the band climbs with speed (${rainBP.frequency.target} Hz)`);
+  assert.ok(rainG.gain.target < 0.09, 'never loud enough to sit on the radio or the horn');
+  step(ctx); a.engine(O({ rain: 0.4, ias: 110 }));
+  const part = rainG.gain.target;
+  step(ctx); a.engine(O({ rain: 0, ias: 110 }));
+  assert.equal(rainG.gain.target, 0); assert.ok(part > 0, 'part precipitation is part rain');
+  // on the ground, on foot (the engine stopped, as leaving the aircraft stops it): the ambience's rain,
+  // muffled indoors; while the engine graph lives the airframe's own rain replaces it
+  a.engine(null);
+  const targets = () => ctx.nodes.filter(n => n.kind === 'gain').map(n => n.gain.target);
+  const rise = (from, to) => Math.max(...to.map((v, i) => v - (from[i] || 0)));
+  a.setAmbience({ rain: 0, indoor: 0 });
+  const dryOut = targets();
+  a.setAmbience({ rain: 1, indoor: 0 });
+  const wetOut = rise(dryOut, targets());
+  assert.ok(wetOut > 0.04, `a gain rises for the rain on the ground (${wetOut})`);
+  a.setAmbience({ rain: 0, indoor: 1 });   // (the room's own sounds settle into this baseline)
+  const dryIn = targets();
+  a.setAmbience({ rain: 1, indoor: 1 });
+  assert.ok(rise(dryIn, targets()) < wetOut * 0.5, 'through the walls it is quieter');
+  assert.doesNotThrow(() => a.setAmbience({ rain: NaN }));
+});
+
+test('sfx: the electric flaps whir while they travel, and are silent at rest', () => {
+  const { a, ctx } = fresh();
+  const g = engineGraph(a, ctx, O({ flapMoving: false }));
+  const motor = g.nodes.find(n => n.kind === 'osc' && n.type === 'sawtooth' && n.frequency.value === 165);
+  assert.ok(motor, 'the flap motor exists (and is not the propeller or the gear pump)');
+  const mg = [...below(motor)].find(n => n.kind === 'gain');
+  assert.equal(mg.gain.target, 0);
+  step(ctx); a.engine(O({ flapMoving: true }));
+  assert.ok(mg.gain.target > 0.004 && mg.gain.target < 0.02, `the whir, kept under the engine (${mg.gain.target})`);
+  step(ctx); a.engine(O({ flapMoving: false }));
+  assert.equal(mg.gain.target, 0, 'silent once the surfaces arrive');
+});
+
 test('sfx: the ident keys the aid in Morse at 1020 Hz on the radio bus; the AP warble sounds', () => {
   const { a, ctx } = fresh();
   const master = masterOf(ctx);

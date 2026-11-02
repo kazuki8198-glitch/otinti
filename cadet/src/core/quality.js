@@ -1,10 +1,10 @@
 // CADET — core/quality.js : graphics presets, the GPU guess for the first start, and dynamic resolution
 // (the render scale moves between a preset's limits to keep the frame time near the target).
 export const PRESETS = {
-  low:    { id: 'low',    label: '低',   maxDpr: 0.85, minDpr: 0.5,  msaa: 0, ao: false, aoHalf: true,  bloom: false, shadow: 1024, shadowRadius: 2, shadowHalf: 60,  treeNear: 450,  aniso: 4,  groundDetail: 0 },
-  medium: { id: 'medium', label: '中',   maxDpr: 1.0,  minDpr: 0.6,  msaa: 4, ao: false, aoHalf: true,  bloom: true,  shadow: 2048, shadowRadius: 3, shadowHalf: 80,  treeNear: 800,  aniso: 8,  groundDetail: 1 },
-  high:   { id: 'high',   label: '高',   maxDpr: 1.25, minDpr: 0.7,  msaa: 4, ao: true,  aoHalf: true,  bloom: true,  shadow: 4096, shadowRadius: 3, shadowHalf: 100, treeNear: 1200, aniso: 16, groundDetail: 1 },
-  ultra:  { id: 'ultra',  label: '最高', maxDpr: 2.0,  minDpr: 0.75, msaa: 4, ao: true,  aoHalf: false, bloom: true,  shadow: 4096, shadowRadius: 4, shadowHalf: 120, treeNear: 1700, aniso: 16, groundDetail: 1 },
+  low:    { id: 'low',    label: '低',   maxDpr: 0.85, minDpr: 0.5,  msaa: 0, ao: false, aoHalf: true,  bloom: false, shadow: 1024, shadowRadius: 2, shadowHalf: 60,  treeNear: 450,  aniso: 4,  groundDetail: 0, cockpitDetail: 0, paintDetail: 0, glassRain: 0, glowDetail: 0, cloudDetail: 0 },
+  medium: { id: 'medium', label: '中',   maxDpr: 1.0,  minDpr: 0.6,  msaa: 4, ao: false, aoHalf: true,  bloom: true,  shadow: 2048, shadowRadius: 3, shadowHalf: 80,  treeNear: 800,  aniso: 8,  groundDetail: 1, cockpitDetail: 0.4, paintDetail: 0.5, glassRain: 0.5, glowDetail: 0.5, cloudDetail: 0.5 },
+  high:   { id: 'high',   label: '高',   maxDpr: 1.25, minDpr: 0.7,  msaa: 4, ao: true,  aoHalf: true,  bloom: true,  shadow: 4096, shadowRadius: 3, shadowHalf: 100, treeNear: 1200, aniso: 16, groundDetail: 1, cockpitDetail: 1, paintDetail: 1, glassRain: 1, glowDetail: 1, cloudDetail: 1 },
+  ultra:  { id: 'ultra',  label: '最高', maxDpr: 2.0,  minDpr: 0.75, msaa: 4, ao: true,  aoHalf: false, bloom: true,  shadow: 4096, shadowRadius: 4, shadowHalf: 120, treeNear: 1700, aniso: 16, groundDetail: 1, cockpitDetail: 1, paintDetail: 1, glassRain: 1, glowDetail: 1, cloudDetail: 1 },
 };
 export const ORDER = ['low', 'medium', 'high', 'ultra'];
 const KEY = 'cadet.quality';

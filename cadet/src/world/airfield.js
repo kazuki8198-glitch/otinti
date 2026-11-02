@@ -45,10 +45,10 @@ export function buildAirfield(L, FL, { quality }) {
   const num36 = numeralTexture('36'), num18 = numeralTexture('18');
   const numAspect = num36.image.width / num36.image.height;
   const mats = {
-    asphalt: pavementMaterial('asphalt', { num36, num18, numAspect, LEN, HW }),
-    concrete: pavementMaterial('concrete', { LEN, HW }),
-    walk: pavementMaterial('walk', { LEN, HW }),
-    lot: pavementMaterial('lot', { LEN, HW }),
+    asphalt: pavementMaterial('asphalt', { num36, num18, numAspect, LEN, HW, detail: quality.groundDetail }),
+    concrete: pavementMaterial('concrete', { LEN, HW, detail: quality.groundDetail }),
+    walk: pavementMaterial('walk', { LEN, HW, detail: quality.groundDetail }),
+    lot: pavementMaterial('lot', { LEN, HW, detail: quality.groundDetail }),
   };
   const MAT_OF = { rwy: 'asphalt', twy: 'asphalt', apron: 'concrete', walk: 'walk', lot: 'lot' };
   const quads = { asphalt: [], concrete: [], walk: [], lot: [] };
@@ -103,6 +103,7 @@ function pavementMaterial(kind, o) {
     tC: { value: tex(kind === 'walk' ? 'concrete2_c' : TEXC + '_c') }, tN: { value: tex(TEXC + '_n') }, tR: { value: tex(TEXC + '_r') },
     tNum36: { value: o.num36 || null }, tNum18: { value: o.num18 || null }, uNumAspect: { value: o.numAspect || 1 },
     uLen: { value: o.LEN }, uHW: { value: o.HW },
+    uDetail: { value: o.detail ?? 1 },          // the groundDetail preset's share: the close-up detail below rides on it (0 on low = the plain look)
   };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
@@ -113,7 +114,7 @@ function pavementMaterial(kind, o) {
       .replace('#include <common>', `#include <common>
         varying vec2 vRf; varying vec3 vPW;
         uniform mat4 modelMatrix;            // (three.js sets it; declared here so the fragment stage can use it)
-        uniform sampler2D tC, tN, tR, tNum36, tNum18; uniform float uNumAspect, uLen, uHW;
+        uniform sampler2D tC, tN, tR, tNum36, tNum18; uniform float uNumAspect, uLen, uHW, uDetail;
         ${NOISE}
         ${PAINT}
         float pRough; vec3 pNrm;
@@ -127,6 +128,13 @@ function pavementMaterial(kind, o) {
         float rr = cdTexNoTile(tR, uv, 0.23).r;
         vec3 base = c.rgb;
         float macro = cdFbm(p * 0.035);
+        // close-up grain (graphics plan C1), all of it groundDetail-gated: fine aggregate in the albedo and the
+        // normal, inside walking distance only — at uDetail 0 (the low preset) every term below is exactly 0
+        float patchK = 0.0;                                            // tar-patch coverage (asphalt), read again for the roughness
+        float slabRK = 0.0;                                            // per-slab roughness offset (concrete), ditto
+        float nearD = (1.0 - smoothstep(8.0, 34.0, dist)) * uDetail;
+        base *= 1.0 + (cdNoise(p * 13.0) * 0.6 + cdNoise(p * 47.0) * 0.4 - 0.5) * 0.10 * nearD;
+        nt.xy += (vec2(cdNoise(p * 29.0), cdNoise(p * 29.0 + 8.0)) - 0.5) * 0.5 * nearD;
         ${isA ? /* glsl */`
           base *= mix(0.78, 1.12, macro) * vec3(1.0, 1.0, 1.02);
           float rubber = 0.0;
@@ -142,11 +150,17 @@ function pavementMaterial(kind, o) {
           float ck = abs(cdNoise(cp) - 0.5), cw = max(fwidth(ck), 1e-4);
           float crack = clamp((0.006 - ck) / cw + 0.5, 0.0, 1.0) * min(1.0, 0.012 / cw) * smoothstep(0.5, 0.7, cdNoise(p * 0.012 + 9.0));
           base *= 1.0 - 0.5 * crack;
+          // tar-patch repairs: a hashed few of the large cells have been resurfaced darker and smoother
+          vec2 pcell = p / vec2(11.0, 7.0); vec2 pci = floor(pcell); vec2 pfr = fract(pcell);
+          float pIn = smoothstep(0.03, 0.10, pfr.x) * smoothstep(0.97, 0.90, pfr.x) * smoothstep(0.04, 0.13, pfr.y) * smoothstep(0.96, 0.87, pfr.y);
+          patchK = step(0.80, cdHash12(pci + 4.0)) * pIn * (1.0 - smoothstep(60.0, 180.0, dist)) * uDetail;
+          base *= 1.0 - 0.17 * patchK;
           vec2 paint = ${kind === 'lot' ? 'paintLot(p)' : 'paintAsphalt(p)'};
         ` : /* glsl */`
           // concrete slabs (5 m on the apron, 1.5 m on walkways), a shade per slab, dark joints
           float SL = ${kind === 'walk' ? '1.5' : '5.0'};
           vec2 slab = floor(p / SL);
+          slabRK = (cdHash12(slab + 7.0) - 0.5) * 0.16 * uDetail;   // slabs also weather unevenly in roughness, not just in shade
           base *= mix(0.8, 1.08, cdHash12(slab)) * mix(0.84, 1.06, macro) ${kind === 'walk' ? '* 1.12' : '* 0.9'};
           float joint = lines(p, SL, 0.018);
           float grime = lines(p, SL, 0.09) * 0.5 + lines(p, SL, 0.3) * 0.25;      // dirt gathers along the joints
@@ -161,13 +175,16 @@ function pavementMaterial(kind, o) {
           float rubber = 0.0;
         `}
         float wear = 0.80 + 0.2 * cdNoise(p * 2.3) * cdNoise(p * 0.37);
-        paint *= wear;
+        // chipped paint at walking distance (graphics plan C1, groundDetail-gated): the flakes come out of the
+        // coverage only — the markings' shapes, positions and meanings never move
+        float chip = smoothstep(0.60, 0.78, cdNoise(p * 9.0) * 0.6 + cdNoise(p * 27.0) * 0.4) * (1.0 - smoothstep(15.0, 60.0, dist)) * uDetail;
+        paint *= wear * (1.0 - 0.35 * chip);
         vec3 white = vec3(0.80), yellow = vec3(0.82, 0.55, 0.06);
         base = mix(base, white * mix(0.9, 1.0, c.r * 2.0), paint.x);
         base = mix(base, yellow * mix(0.9, 1.0, c.r * 2.0), paint.y);
         diffuseColor.rgb *= base;
         float pc = max(paint.x, paint.y);
-        pRough = mix(mix(0.55, 1.0, rr) - 0.12 * rubber, 0.62, pc);
+        pRough = mix(mix(0.55, 1.0, rr) - 0.12 * rubber - 0.10 * patchK + slabRK, 0.62, pc);
         float nk = (1.0 - smoothstep(20.0, 140.0, dist)) * (1.0 - 0.7 * pc);
         pNrm = normalize(vec3(nt.x * nk, 1.0, -nt.y * nk));
       `)

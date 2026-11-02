@@ -11,6 +11,7 @@
 import { loadTextures, setAnisotropy } from '../../cadet/src/render/textures.js';
 import { buildGround } from '../../cadet/src/world/ground.js';
 import { buildAirfield, STANDS } from '../../cadet/src/world/airfield.js';
+import { buildClouds } from '../../cadet/src/world/clouds.js';
 import { buildBuildings } from '../../cadet/src/world/buildings.js';
 import { buildVegetation } from '../../cadet/src/world/vegetation.js';
 import { buildLandmarks } from '../../cadet/src/world/landmarks.js';
@@ -27,7 +28,7 @@ const SPOTS = [[0, 'pa28'], [2, 'pa28'], [3, 'pa28'], [5, 'pa28'], [8, 'pa28'], 
 const pause = () => new Promise(r => setTimeout(r, 0));
 
 export function createWorld(FL, L, scene, preset) {
-  const w = { landmarks: null, veg: null, ground: null, airfield: null, buildings: null, academy: null, parked: [], ms: {} };
+  const w = { landmarks: null, veg: null, ground: null, airfield: null, clouds: null, buildings: null, academy: null, parked: [], ms: {} };
   const timed = (k, fn) => { const t0 = performance.now(), v = fn(); w.ms[k] = Math.round(performance.now() - t0); return v; };
   w.landmarks = timed('landmarks', () => buildLandmarks(L, FL).group); scene.add(w.landmarks);
   w.veg = timed('vegetation', () => buildVegetation(L, FL, { quality: preset })); scene.add(w.veg.group);
@@ -44,6 +45,7 @@ export function createWorld(FL, L, scene, preset) {
     w.ground = timed('ground', () => buildGround(L, FL, { quality: preset }));
     onGround(w.ground); scene.add(w.ground.group);
     w.airfield = timed('airfield', () => buildAirfield(L, FL, { quality: preset })); scene.add(w.airfield.group);
+    w.clouds = timed('clouds', () => buildClouds(L, FL, { quality: preset })); scene.add(w.clouds.group);
     await pause(); if (gone()) return false;
     w.buildings = timed('buildings', () => buildBuildings(L, {})); w.buildings.setNight(lightsOn); scene.add(w.buildings.group);
     await pause(); if (gone()) return false;
@@ -74,12 +76,13 @@ export function createWorld(FL, L, scene, preset) {
     return true;
   };
   // everything outside the aircraft (hidden under the hood)
-  w.outside = () => [w.landmarks, w.veg.group, w.ground && w.ground.group, w.airfield && w.airfield.group, w.buildings && w.buildings.group,
+  w.outside = () => [w.landmarks, w.veg.group, w.ground && w.ground.group, w.airfield && w.airfield.group, w.clouds && w.clouds.group, w.buildings && w.buildings.group,
     w.academy && w.academy.group, ...w.parked.map(a => a.root)].filter(Boolean);
-  // per frame: the water, the windsock, the PAPI, the runway lights, the trees round the camera
-  w.update = (t, camWorld, wind, lightsOn) => {
+  // per frame: the water, the windsock, the PAPI, the runway lights, the trees round the camera, the cumulus
+  w.update = (t, camWorld, wind, lightsOn, sky) => {
     if (w.ground) w.ground.update(t);
     if (w.airfield) w.airfield.update(t, { cameraWorld: camWorld, windFromDeg: wind.fromDeg, windKt: wind.kt, lightsOn });
+    if (w.clouds && sky) w.clouds.update(t, camWorld, sky);
     w.veg.update(t, camWorld);
   };
   return w;

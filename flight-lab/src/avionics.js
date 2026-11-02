@@ -345,12 +345,43 @@
   }
   const jp = 'system-ui, "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif';
   function box(g, x, y, w, h, fill = C.box, stroke = C.line, lw = 1.5) { g.fillStyle = fill; g.fillRect(fin(x), fin(y), fin(w), fin(h)); if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.strokeRect(fin(x), fin(y), fin(w), fin(h)); } }
+
+  // the landing gear (a retractable gear's: the Seminole's G1000, POH VB-2636 Fig 7-13) in a box w wide at (x, y): its
+  // title over three symbols — solid green circles: down and locked; hollow white circles: up; crosshatched white squares:
+  // in transit; solid red circles under a red title: the position unknown (no reading) — from the physics' gear position
+  // (0 up … 1 down). Its height: GEAR_BOX_H
+  const GEAR_BOX_H = 34;
+  function gearBox(g, x, y, w, gearPos) {
+    const known = Number.isFinite(gearPos), down = known && gearPos >= 0.999, up = known && gearPos <= 0.001, r = 5.5;
+    box(g, x, y, w, GEAR_BOX_H, '#000', C.line, 1);
+    if (!known) { box(g, x + w * 0.12, y + 3, w * 0.76, 12, C.white, null); txt(g, 'LANDING GEAR', x + w / 2, y + 9.5, 10, C.red, 'center', 700); }
+    else txt(g, 'LANDING GEAR', x + w / 2, y + 9.5, 10, C.white, 'center', 700);
+    for (let i = 0; i < 3; i++) {
+      const cx = x + w * (0.25 + 0.25 * i), cy = y + 24;
+      if (down || !known) { g.fillStyle = known ? C.green : C.red; g.beginPath(); g.arc(fin(cx), fin(cy), r, 0, Math.PI * 2); g.fill(); }
+      else if (up) { g.strokeStyle = C.white; g.lineWidth = 1.5; g.beginPath(); g.arc(fin(cx), fin(cy), r, 0, Math.PI * 2); g.stroke(); }
+      else {
+        g.strokeStyle = C.white; g.lineWidth = 1.2;
+        g.save(); g.beginPath(); g.rect(fin(cx - r), fin(cy - r), r * 2, r * 2); g.clip();
+        g.beginPath(); for (let k = -2; k <= 2; k++) { g.moveTo(fin(cx - r + k * r * 0.7), fin(cy + r)); g.lineTo(fin(cx + r + k * r * 0.7), fin(cy - r)); } g.stroke();
+        g.restore(); g.strokeRect(fin(cx - r), fin(cy - r), r * 2, r * 2);
+      }
+    }
+  }
   function line(g, x1, y1, x2, y2, col = C.white, lw = 2) { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(fin(x1), fin(y1)); g.lineTo(fin(x2), fin(y2)); g.stroke(); }
   function poly(g, pts, fill, stroke, lw = 1.5) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(fin(x), fin(y)) : g.moveTo(fin(x), fin(y)))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } }
 
   // ---------------------------------------------------------------- PFD (left screen)
   // d: { o (physics outputs), av, nav, varW, qnh, engine: { running }, hood }
+  // the drawing is laid out in a canonical 640-wide frame — every letter size and line weight in it is tuned for
+  // that frame — so a caller with a wider frame (CADET's glass, at a logical 1280 × 800 since its displays were
+  // raised to the real units' density) is scaled up whole: the same picture at twice the drawing density, its
+  // proportions unchanged. FLIGHT LAB's own callers all pass 640 and take the direct path.
   function drawPFD(g, W, H, d) {
+    if (W !== 640) { const S = W / 640; g.save(); g.scale(S, S); drawPFDFrame(g, 640, H / S, d); g.restore(); return; }
+    drawPFDFrame(g, W, H, d);
+  }
+  function drawPFDFrame(g, W, H, d) {
     const o = d.o, av = d.av, nav = d.nav;
     const pitch = fin(o.pitch), bank = fin(o.bank), ias = Math.max(0, fin(o.ias)), vsi = fin(o.vsi);
     const altInd = indicatedAlt(fin(o.altTrue), fin(d.qnh, 29.92), av.baro);
@@ -418,6 +449,8 @@
     poly(g, [[tx + 4, cy - 15], [tx + tw - 6, cy - 15], [tx + tw + 4, cy], [tx + tw - 6, cy + 15], [tx + 4, cy + 15]], '#000', C.white, 2);
     txt(g, ias < 20 ? '---' : Math.round(ias), tx + tw * 0.45, cy, 22, o.stallWarn ? C.red : C.white, 'center', 700);
     box(g, tx, ty0 + th, tw, 22, '#000', C.line); txt(g, `TAS ${Math.round(fin(o.tas))}KT`, tx + tw / 2, ty0 + th + 11, 12);
+    // the Mach number, small, under the TAS (the jet's world: below M 0.4 it is not shown — the pistons never reach it)
+    if (fin(o.mach) >= 0.4) { box(g, tx, ty0 + th + 24, tw, 20, '#000', C.line); txt(g, `M ${fin(o.mach).toFixed(2)}`, tx + tw / 2, ty0 + th + 34, 12, C.cyan); }
     // --- the altitude tape (right), selected altitude, baro ---
     const ax = W * 0.75, aw = W * 0.12, fpp = th / 600;          // 600 ft on the tape
     box(g, ax, ty0, aw, th, 'rgba(0,0,0,0.55)', C.line);
@@ -549,14 +582,14 @@
     txt(g, `${Math.round(altInd / 20) * 20}`, sx + 96, sy + 72, 14); txt(g, 'FT', sx + 96, sy + 86, 9, C.grey);
     // --- the engine status (this teaching layout shows it on the PFD too) ---
     const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], run = engs.some(e => e.run), allRun = engs.every(e => e.run);
-    const ey = H - 136;
+    const ey = H - 136, jetP = !!o.jet, n1Of = i => (o.n1s && o.n1s[i] != null ? fin(o.n1s[i]) : fin(engs[i] && engs[i].rpm) / 52);
     if (engs.length === 1) {
       box(g, 8, ey, 128, 40, '#05070a', run ? C.line : C.red);
       txt(g, run ? 'ENG RUN' : 'ENG STOP', 14, ey + 12, 13, run ? C.green : C.red, 'left', 700);
-      txt(g, `${Math.round(fin(engs[0].rpm))} RPM`, 14, ey + 30, 13, C.white, 'left');
+      txt(g, jetP ? `N1 ${Math.round(n1Of(0))} %` : `${Math.round(fin(engs[0].rpm))} RPM`, 14, ey + 30, 13, C.white, 'left');
     } else {
       box(g, 8, ey, 150, 40, '#05070a', allRun ? C.line : C.red);
-      engs.forEach((e, i) => { const x = 14 + i * 72; txt(g, `${i ? 'R' : 'L'} ${e.run ? 'RUN' : e.feather ? 'FTHR' : 'STOP'}`, x, ey + 12, 12, e.run ? C.green : C.red, 'left', 700); txt(g, `${Math.round(fin(e.rpm))}`, x, ey + 30, 12, C.white, 'left'); });
+      engs.forEach((e, i) => { const x = 14 + i * 72; txt(g, `${i ? 'R' : 'L'} ${e.run ? 'RUN' : e.feather ? 'FTHR' : 'STOP'}`, x, ey + 12, 12, e.run ? C.green : C.red, 'left', 700); txt(g, jetP ? `N1 ${Math.round(n1Of(i))}%` : `${Math.round(fin(e.rpm))}`, x, ey + 30, 12, C.white, 'left'); });
     }
     // --- alerts ---
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
@@ -580,6 +613,9 @@
       if (!alerts.length) txt(g, 'NO ALERTS — 警告はありません', cx, 96, 13, C.green, 'center', 700, jp);
       alerts.forEach((a, i) => { const warn = a.tier === 'WARN'; txt(g, `${warn ? '■ WARNING' : '■ CAUTION'}  ${a.text}`, cx - 184, 92 + i * 26, 13, warn ? C.red : C.yellow, 'left', 700, jp); });
     }
+    // (the twin with its MFD dark — AVION MASTER OFF: the G1000 shows the engine page's landing gear on the PFD, as its
+    // reversionary display; the glass sets d.gearRev) — under the engine box at the lower left
+    if (d.gearRev) gearBox(g, 8, ey + 46, 112, o.gearPos);
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();
@@ -587,6 +623,10 @@
 
   // ---------------------------------------------------------------- MFD (right screen): engine strip + MAP / FPL
   function drawMFD(g, W, H, d) {
+    if (W !== 640) { const S = W / 640; g.save(); g.scale(S, S); drawMFDFrame(g, 640, H / S, d); g.restore(); return; }
+    drawMFDFrame(g, W, H, d);
+  }
+  function drawMFDFrame(g, W, H, d) {
     const o = d.o, av = d.av, nav = d.nav;
     g.save();
     g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
@@ -594,15 +634,16 @@
     const ew = W * 0.2;
     box(g, 0, 0, ew, H, '#05070a', C.line);
     txt(g, 'ENGINE', ew / 2, 14, 13, C.white, 'center', 700);
-    // RPM arc
-    const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], twin = engs.length > 1, cap = d.fuelCap || 24;
+    // RPM arc — the jet's is an N1 arc instead (the fan's % is the thrust gauge; the physics hands it over as o.n1s)
+    const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], twin = engs.length > 1, cap = d.fuelCap || 24, jet = !!o.jet;
     g.lineWidth = twin ? 5 : 7;
     engs.forEach((e, i) => {
-      const rx = twin ? ew * (0.27 + 0.46 * i) : ew / 2, ry = 70, rr = ew * (twin ? 0.19 : 0.34), rpm = clamp(fin(e.rpm), 0, 2800);
-      const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / 2800) * -DEG, (210 - 240 * b / 2800) * -DEG, false); g.stroke(); };
-      arc(500, 2700, C.green); arc(2700, 2800, C.red);
-      const ta = (210 - 240 * rpm / 2800) * -DEG; line(g, rx, ry, rx + Math.cos(ta) * (rr - 4), ry + Math.sin(ta) * (rr - 4), e.run ? C.white : C.red, 3);
-      txt(g, Math.round(rpm), rx, ry + 22, twin ? 13 : 16, e.run ? C.white : C.red, 'center', 700); txt(g, twin ? (i ? 'R RPM' : 'L RPM') : 'RPM', rx, ry + 38, 11, C.grey);
+      const rx = twin ? ew * (0.27 + 0.46 * i) : ew / 2, ry = 70, rr = ew * (twin ? 0.19 : 0.34);
+      const full = jet ? 110 : 2800, val = jet ? clamp((o.n1s && o.n1s[i] != null ? fin(o.n1s[i]) : fin(e.rpm) / 52), 0, 110) : clamp(fin(e.rpm), 0, 2800);
+      const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / full) * -DEG, (210 - 240 * b / full) * -DEG, false); g.stroke(); };
+      if (jet) { arc(20, 100, C.green); arc(100, 110, C.red); } else { arc(500, 2700, C.green); arc(2700, 2800, C.red); }
+      const ta = (210 - 240 * val / full) * -DEG; line(g, rx, ry, rx + Math.cos(ta) * (rr - 4), ry + Math.sin(ta) * (rr - 4), e.run ? C.white : C.red, 3);
+      txt(g, jet ? Math.round(val) : Math.round(val), rx, ry + 22, twin ? 13 : 16, e.run ? C.white : C.red, 'center', 700); txt(g, jet ? (twin ? (i ? 'R N1 %' : 'L N1 %') : 'N1 %') : (twin ? (i ? 'R RPM' : 'L RPM') : 'RPM'), rx, ry + 38, 11, C.grey);
     });
     const run = engs.some(e => e.run);
     // the engine's own gauges, all from the models now: the oil (per engine: the twin reads L/R) and the bus from
@@ -612,7 +653,15 @@
     const egts = o.egts && o.egts.length ? o.egts : [o.egt || 0], manIns = o.manIns && o.manIns.length ? o.manIns : [o.manIn || 0];
     const oilP = o.oilP || [], oilT = o.oilT || [];
     const pair = (a, fmt) => (a.length > 1 ? `${fmt(a[0])}/${fmt(a[1])}` : a.length ? fmt(a[0]) : '—');
-    const rows = [
+    const rows = jet ? [
+      // the jet's strip: N1 (the thrust), the turbine temperature in °C and the fuel flow lead; no manifold
+      // pressure, no % power — a turbine is not read that way. The oil and the bus are the same models'.
+      ['N1 %', pair(o.n1s && o.n1s.length ? o.n1s : [o.n1 || 0], v => `${Math.round(fin(v))}`), Math.max(fin((o.n1s || [])[0]), fin((o.n1s || [])[1] || 0)) / 104, ''],
+      ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / 1800, ''],
+      ['EGT °C', pair(egts, v => `${Math.round(fin(v))}`), Math.max(fin(egts[0]), fin(egts[1] || 0)) / 1100, ''],
+      ['OIL PSI', pair(oilP, v => `${Math.round(fin(v))}`), null, oilP.length ? '' : '未実装'],
+      ['OIL °F', pair(oilT, v => `${Math.round(fin(v))}`), null, oilT.length ? '' : '未実装'],
+    ] : [
       ['出力 PWR', run ? `${fin(o.powerPct)} %` : '0 %', run ? fin(o.powerPct) / 100 : 0, '教材モデルの出力'],
       ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / (twin ? 24 : 12), ''],
       ...((twin || o.govRpm != null) ? [['MAN IN', pair(manIns, v => fin(v).toFixed(1)), Math.max(fin(manIns[0]), fin(manIns[1] || 0)) / 30, '']] : []),
@@ -624,13 +673,15 @@
       ['VOLTS', o.volts == null ? '—' : fin(o.volts).toFixed(1), null, o.volts == null ? '未実装' : '', o.volts != null && fin(o.volts) < 11.5 ? C.red : o.volts != null && fin(o.volts) < 12.2 ? C.yellow : null],
       ['AMPS', o.amps == null ? '—' : `${fin(o.amps) > 0 ? '+' : ''}${Math.round(fin(o.amps))}`, null, o.amps == null ? '未実装' : '', o.amps != null && fin(o.amps) < 0 ? C.yellow : null],
     ];
-    let y = 124; const dy = Math.max(26, Math.min(38, (H - 150) / rows.length));
+    // (a twin: the landing gear box at the strip's foot, the rows closer to make room for it)
+    let y = 124; const dy = twin ? Math.max(21, Math.min(38, (H - 156 - GEAR_BOX_H) / rows.length)) : Math.max(26, Math.min(38, (H - 150) / rows.length));
     for (const [lab, val, frac, note, vcol] of rows) {
       txt(g, lab, 8, y, 11, C.grey, 'left', 600, jp); txt(g, val, ew - 8, y, 13, val === '—' ? C.grey : vcol || C.white, 'right', 700);
       if (frac != null) { box(g, 8, y + 9, ew - 16, 6, '#1b222b', null); g.fillStyle = C.green; g.fillRect(8, y + 9, (ew - 16) * clamp(frac, 0, 1), 6); }
       else txt(g, note, ew - 8, y + 12, 9, C.grey, 'right', 500, jp);
       y += dy;
     }
+    if (twin) gearBox(g, 6, Math.min(y - dy + 20, H - 24 - GEAR_BOX_H), ew - 12, o.gearPos);
     txt(g, '— = 未実装（架空値は出しません）', ew / 2, H - 12, 9, C.grey, 'center', 500, jp);
     // --- the page area ---
     const px = ew, pw = W - ew;
@@ -787,7 +838,16 @@
     } else {
       // no per-cylinder model (yet): the honest per-engine numbers, and '—' where there are none
       const egts = o.egts && o.egts.length ? o.egts : [o.egt || 0], manIns = o.manIns && o.manIns.length ? o.manIns : [o.manIn || 0];
-      const rows = [
+      const rows = o.jet ? [
+        // a turbine has no cylinders to draw bars for: its own numbers, N1 / EGT (°C) / FF per engine
+        ['N1 %', (o.n1s && o.n1s.length ? o.n1s : [o.n1 || 0]).map(v => `${Math.round(fin(v))}`).join(' / ')],
+        ['EGT °C', egts.map(v => `${Math.round(fin(v))}`).join(' / ')],
+        ['FFLOW GPH', fin(o.fuelFlow).toFixed(1)],
+        ['OIL PSI', (o.oilP || []).length ? (o.oilP || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
+        ['OIL °F', (o.oilT || []).length ? (o.oilT || []).map(v => `${Math.round(fin(v))}`).join(' / ') : '—'],
+        ['REV', o.rev ? '展開中' : '格納'],
+        ['SPOILER', o.spoiler ? '展開中' : '格納'],
+      ] : [
         ['RPM', engs.map(e => `${Math.round(fin(e.rpm))}`).join(' / ')],
         ['EGT °F', egts.map(v => `${Math.round(fin(v))}`).join(' / ')],
         ...((engs.length > 1 || o.govRpm != null) ? [['MAN IN', manIns.map(v => fin(v).toFixed(1)).join(' / ')]] : []),

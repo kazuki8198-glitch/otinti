@@ -379,7 +379,7 @@ test('syllabus: the lessons follow the published course order, each says what, w
   assert.deepEqual(SY.STAGES.map(s => s.phase).slice(0, 6), ['p1', 'p2', 'p3', 'p4', 'p5', 'p6']);   // (next-wave item 6: a seventh stage, the complex/CFI endorsement, rides on the p6 phase)
   for (const l of L) {
     assert.ok(l.title && l.goal && l.why && l.std && Array.isArray(l.brief) && l.brief.length >= 1, `${l.id} brief`);
-    assert.ok(['pa28', 'pa44', 'pa28r'].includes(l.aircraft), `${l.id} aircraft`);
+    assert.ok(['pa28', 'pa44', 'pa28r', 'b737'].includes(l.aircraft), `${l.id} aircraft`);
     assert.ok(l.steps.length >= 1 && l.steps.every(S => S.say || S.checklist || S.atc || S.name), `${l.id} steps`);
     assert.ok(l.steps.some(S => S.keys), `${l.id}: at least one step says which keys to use`);
     for (const b of l.book || []) assert.ok(BK.findSection(b), `${l.id} book ${b}`);
@@ -929,13 +929,33 @@ test('complex: gear up climbs much better than gear down (measured at Vy, full p
   assert.ok(down > 150, `gear down still climbs (${Math.round(down)} fpm)`);
 });
 
-test('complex + CFI: the endorsement lessons and the CFI prototype pass with the scripted pilot', () => {
-  for (const id of ['cx1', 'cx2', 'cx3', 'cf1']) {
-    const L = runLesson(FL, id, 'intro', 900);
+test('complex + CFI: the endorsement lessons and the CFI lessons pass with the scripted pilot', () => {
+  for (const id of ['cx1', 'cx2', 'cx3', 'cf1', 'cf2', 'cf3']) {
+    const L = runLesson(FL, id, 'intro', 1200);
     assert.ok(L.done, `${id} finishes`);
     assert.ok(L.passed, `${id} passes (grade ${L.grade}): ${L.results.flatMap(r => r.rows.filter(x => !x.pass).map(x => `${r.step}/${x.name}=${x.val}`)).join('; ')}`);
   }
   // the CFI trainee really made its seeded mistake (the deviation was recorded, not scripted into the grade)
   const L = runLesson(FL, 'cf1', 'intro', 900);
   assert.ok(L.cfiDev >= 40, `the trainee's deviation was measured (${L.cfiDev} ft)`);
+});
+
+test('CFI expansion (game-quality item 4): the trainee\'s landing habit reproduces, and the right instruction measurably fixes it', () => {
+  const L = runLesson(FL, 'cf2', 'intro', 1200);
+  assert.ok(L.done && L.passed, `cf2 passes (${L.grade})`);
+  // the bot picks the correct diagnosis, so the second approach is the corrected one
+  if (L.cfiKind === 0) {
+    assert.ok(L.cfiSink >= 500, `the early-flare drop-in reproduced in the first approach (sink ${L.cfiSink} fpm)`);
+    assert.ok(L.cfi2Sink <= 320, `after the specific instruction the drop-in is gone (sink ${L.cfi2Sink} fpm)`);
+  } else {
+    assert.ok(L.cfiFloat >= 460, `the fast approach floated in the first approach (${L.cfiFloat} m)`);
+    assert.ok(L.cfi2Float <= 380, `after the specific instruction the float shrank (${L.cfi2Float} m)`);
+  }
+});
+
+test('CFI expansion (game-quality item 4): in straight and level the noticing question teaches, measurably', () => {
+  const L = runLesson(FL, 'cf3', 'intro', 1200);
+  assert.ok(L.done && L.passed, `cf3 passes (${L.grade})`);
+  assert.ok(L.cfiScore1 >= 45, `the trainee's habit showed in segment 1 (score ${L.cfiScore1})`);
+  assert.ok(L.cfiScore2 <= L.cfiScore1 * 0.85, `segment 2 improved after the instruction (score ${L.cfiScore1} → ${L.cfiScore2})`);
 });

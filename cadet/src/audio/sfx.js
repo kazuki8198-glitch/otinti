@@ -26,7 +26,7 @@ export function createAudio() {
   const vols = { engine: 1, amb: 1, radio: 1 };
   const next = { bird: 6, plane: 35 };
   let tNow = 0;
-  const mix = { indoor: 0, wind: 0.5, airborne: false };
+  const mix = { indoor: 0, wind: 0.5, airborne: false, rain: 0 };
 
   function unlock() {
     if (!AC) return;
@@ -104,7 +104,12 @@ export function createAudio() {
     const hvac = src(true), hlp = ctx.createBiquadFilter(), hg = ctx.createGain();
     hlp.type = 'lowpass'; hlp.frequency.value = 220; hvac.connect(hlp).connect(hg).connect(out); hg.gain.value = 0; hvac.start(0, 0.7);
     const hum = ctx.createOscillator(), humg = ctx.createGain(); hum.frequency.value = 120; hum.connect(humg).connect(out); humg.gain.value = 0; hum.start();
-    amb = { out, wg, wlp, hg, humg };
+    // the rain on the ground (roofs, the apron, the trees): a broad hiss through a low-pass, heard through the
+    // walls indoors; in the aircraft the airframe's own rain is the engine bus's (engine()), not this one
+    const rn = src(true), rlp = ctx.createBiquadFilter(), rg = ctx.createGain();
+    rlp.type = 'lowpass'; rlp.frequency.value = 1500; rlp.Q.value = 0.3;
+    rn.connect(rlp).connect(rg).connect(out); rg.gain.value = 0; rn.start(0, 1.3);
+    amb = { out, wg, wlp, hg, humg, rg };
     apply();
   }
   // airborne: the gusts in the trees fade (the airflow comes with the engine); in the aircraft (its engine sound
@@ -115,6 +120,7 @@ export function createAudio() {
     amb.wg.gain.setTargetAtTime(((1 - inn) * (0.04 + 0.1 * mix.wind) + inn * 0.004) * (1 - 0.85 * air), t, air ? 2 : 0.6);
     amb.hg.gain.setTargetAtTime(inn * 0.05 * room, t, 0.6);
     amb.humg.gain.setTargetAtTime(inn * 0.0025 * room, t, 0.6);
+    if (amb.rg) amb.rg.gain.setTargetAtTime(cl(mix.rain) * 0.05 * (1 - 0.8 * inn) * (eng ? 0 : 1), t, 0.8);
   }
   function bird() {
     const t0 = ctx.currentTime, n = 2 + Math.floor(Math.random() * 4), base = 2800 + Math.random() * 1800, pan = Math.random() * 1.6 - 0.8;
@@ -237,9 +243,17 @@ export function createAudio() {
       // (the Seminole's gear: an electric hydraulic pump whining while the wheels travel, about 6 s)
       const gm = osc('sawtooth'), gmLP = filt('lowpass', 900, 1.5), gmG = gain();
       gm.frequency.value = 410; gm.connect(gmLP).connect(gmG).connect(bus);
+      // the flaps' electric motor (the twin's; the Archer's are a hand lever — a click, not this): a lower,
+      // slower whir than the gear pump's, only while the surfaces travel
+      const fm = osc('sawtooth'), fmLP = filt('lowpass', 650, 1.5), fmG = gain();
+      fm.frequency.value = 165; fm.connect(fmLP).connect(fmG).connect(bus);
+      // the rain striking the airframe: noise through a band that climbs with speed (a patter at taxi speed,
+      // a hiss at cruise), its level with the day's precipitation and the speed together
+      const rnBP = filt('bandpass', 1100, 0.45), rnG = gain();
+      nz2.connect(rnBP).connect(rnG).connect(bus);
       for (const x of srcs) { if (x.buffer) x.start(t, Math.random() * 1.9); else x.start(t); }
       bus.gain.setTargetAtTime(1, t, 0.15);
-      eng = { n, nodes, srcs, voices, last: new Map(), inside: true, bus, mixG, lp1, lp2, boom, wG, wBP, rG, hG, gm, gmG, ...voices[0] };
+      eng = { n, nodes, srcs, voices, last: new Map(), inside: true, bus, mixG, lp1, lp2, boom, wG, wBP, rG, hG, gm, gmG, fm, fmG, rnG, rnBP, ...voices[0] };
       apply();
       return true;
     } catch (e) { engBroken = true; eng = null; return false; }
@@ -278,7 +292,8 @@ export function createAudio() {
   }
   // o: { rpm, thr 0..1, ias kt, onGround, stall, inside (the cockpit view; default true), running (false while the
   // start is under way: only starter()'s sound then; default true), engines (a twin: [{ rpm, running, rough }, …]
-  // each), rough 0..1 (the single engine's), gearMoving } every frame; null: fade out and let the nodes go
+  // each), rough 0..1 (the single engine's), gearMoving, flapMoving (the electric flaps travelling), rain 0..1
+  // (the day's precipitation) } every frame; null: fade out and let the nodes go
   function engine(o) {
     if (!o) { stopEngine(); return; }
     const n = Array.isArray(o.engines) && o.engines.length > 1 ? o.engines.length : 1;
@@ -297,6 +312,12 @@ export function createAudio() {
     glide(e.rG.gain, o.onGround ? Math.min(1, ias / 30) * (inside ? 0.1 : 0.06) : 0, 0.08);
     glide(e.hG.gain, o.stall ? (inside ? 0.028 : 0.018) : 0, 0.015);
     glide(e.gmG.gain, o.gearMoving ? (inside ? 0.012 : 0.006) : 0, 0.12);
+    glide(e.fmG.gain, o.flapMoving ? (inside ? 0.009 : 0.004) : 0, 0.1);
+    // the rain on the airframe: nothing in dry air; at speed it all but drowns the patter in hiss, kept low
+    // enough never to sit on the radio or the horn
+    const rn = cl(+o.rain || 0), rsp = Math.min(ias / 110, 1.25);
+    glide(e.rnG.gain, rn * (0.012 + 0.05 * rsp * rsp) * (inside ? 1 : 0.6), 0.35);
+    glide(e.rnBP.frequency, 1000 + 1900 * rsp, 0.35);
   }
   function stopEngine() {
     if (!eng) return;
@@ -498,9 +519,10 @@ export function createAudio() {
       vols.engine = cl(+engine || 0); vols.amb = cl(+amb || 0); vols.radio = cl(+rv || 0);
       if (ok()) { const t = ctx.currentTime; engOut.gain.setTargetAtTime(vols.engine, t, 0.05); ambOut.gain.setTargetAtTime(vols.amb, t, 0.05); radOut.gain.setTargetAtTime(vols.radio, t, 0.05); }
     },
-    // indoor 0..1 (the cockpit: 0.6), wind 0..1, airborne (above ≈30 m: nothing of the ground)
-    setAmbience({ indoor = mix.indoor, wind = mix.wind, airborne = mix.airborne } = {}) {
-      mix.indoor = cl(+indoor || 0); mix.wind = cl(+wind || 0); mix.airborne = !!airborne;
+    // indoor 0..1 (the cockpit: 0.6), wind 0..1, airborne (above ≈30 m: nothing of the ground),
+    // rain 0..1 (the day's precipitation, heard on the ground; in the aircraft engine()'s rain takes over)
+    setAmbience({ indoor = mix.indoor, wind = mix.wind, airborne = mix.airborne, rain = mix.rain } = {}) {
+      mix.indoor = cl(+indoor || 0); mix.wind = cl(+wind || 0); mix.airborne = !!airborne; mix.rain = cl(+rain || 0);
       if (ok()) apply();
     },
     get ready() { return ok(); },

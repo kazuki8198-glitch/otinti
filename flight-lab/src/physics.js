@@ -153,6 +153,34 @@
       v: { s0: 53, s1: 58, rotate: 65, x: 78, y: 90, climb: 100, glide: 79, glideLand: 72, appr: 75, apprShort: 70, ga: 78, va: 125, fe: 103, lo: 107, le: 129, no: 146, ne: 183, xwind: 17,
         apprFlaps: 3, apprThr: 0.3, cruise: 125, cruiseThr: 0.75, toFlaps: 0 },
     },
+    {
+      // (first-officer phase S2) the 737-class twin jet: a teaching model of the 737-800. There is no propeller:
+      // A.jet switches the powerplant in step / rpmFor / steadyState to the spool-and-N1 model (see those places),
+      // the propeller's moments are zeroed in deriveAircraft, and the mixture / magneto / carburettor paths never
+      // run. Flaps are the teaching four detents UP / 5 / 15 / 40 on the shared FLAP_DEG travel (flapF 0, ⅓, ⅔, 1).
+      // The reference mass (48,000 kg) is the standard training load of the WB table below, as with the pistons.
+      // Speeds are 48 t values (derive scales the stall speeds with √weight); cruise 300 is a KIAS yardstick —
+      // at FL350 the jet cruises at M 0.78 ≈ 250 KIAS ≈ 450 KTAS. The engines' T0 is a teaching derate
+      // (138 kN of the type's 242.8 kN): at the model's light 48 t reference the full rating would climb at
+      // ≈ 6,800 fpm, far off the design memo's target table; the derate is what brings the takeoff rolls,
+      // the initial climb (2,600–3,400 fpm) and the 62 t roll onto that table together (measured, S2).
+      id: 'b737', name: 'Boeing 737-800 型（教材モデル）', short: '737', kind: '低翼の双発ジェット旅客機', engines1: 2, twin: true, counterRotating: true, jet: true,
+      desc: 'CFM56 級のターボファン 2 基（静止推力合計 242.8 kN）、引き込み脚。プロペラ機とは出力の出方が違う：レバーを動かしてから推力が出るまで数秒の遅れ（スプール）があり、計器は回転数ではなく N1（%）・EGT（°C）・燃料流量で読む。逆噴射（リバーサー）とスポイラーは着陸の道具。',
+      fuse: [[-19, 0.9, 1.2, -0.3], [-17, 1.8, 1.85, -0.85], [-10, 1.88, 1.88, -0.95], [5, 1.88, 1.88, -0.95], [12, 1.8, 1.8, -0.8], [16, 1.3, 1.5, -0.2], [18.8, 0.35, 0.6, 0.55]],
+      wing: { y: -1.1, dih: 6, rootX: 0.7, tipX: 17.9, rootLE: -3.0, rootC: 6.2, tipLE: 3.6, tipC: 1.7, t0: 0.15, t1: 0.10, hinge: 0.75, flap: [0.8, 9.5], ail: [10.5, 16.5] },
+      hstab: { y: 1.2, span: 7.0, rootLE: 14.5, tipLE: 16.5, te: 18.6, hinge: 16.8, t: 0.09 },
+      vstab: { y0: 1.0, y1: 6.2, rootLE: 13.0, topLE: 16.8, te: 18.8, hinge: 17.4, t: 0.1 },
+      engines: [{ type: 'wing', x: 5.9, y: -1.9, z: -4.6, r: 1.0, blades: 0 }],
+      gear: { fixed: false, wheelR: 0.55, nose: [0, -3.6, -14.5], mains: [[2.35, -3.6, 1.8]] },
+      eye: [-0.7, 1.1, -17.5], flapLabels: ['UP', '5', '15', '40'], fuelCap: 2600,   // per tank, US gal (the model's two tanks stand in for the type's three)
+      phys: {
+        mass: 48000, S: 124.6, b: 35.8, c: 3.48, L: 37.6, CL0: 0.30, CLa: 5.0, aStall: 0.33, CD0: 0.020, K: 0.042, CDgear: 0.020,
+        Cm0: 0.01, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+        flapCL: 0.75, flapStall: 0.05, flapCD: 0.055, engine: { type: 'jet', T0: 138000, ffK: 0.70 }, maxG: 3.8, rollRate: 40, pitchRate: 8,
+      },
+      v: { s0: 97, s1: 109, rotate: 128, x: 135, y: 150, climb: 170, glide: 150, appr: 138, ga: 135, va: 270, fe: 230, no: 340, ne: 340, xwind: 33,
+        apprFlaps: 3, apprThr: 0.25, cruise: 300, cruiseThr: 0.78, toFlaps: 1, descMax: 320 },
+    },
   ];
 
   // ---------------------------------------------------------------- geometry helpers
@@ -252,10 +280,10 @@
         a += p.side * E.gdi * sb;                                   // effective dihedral
         if (o.hgt) { const h = Math.max(o.hgt(p), 0.3) / P.b; ge = (16 * h * h) / (1 + 16 * h * h); }
         slope = P.CLa * (1 + 0.06 * (1 - ge));
-        cl0 = P.CL0 + (p.flap ? P.flapCL * o.flapF * E.flapK : 0);
+        cl0 = P.CL0 + (p.flap ? P.flapCL * o.flapF * E.flapK : 0) - 0.30 * (o.spoiler || 0);   // (the spoilers dump the wing's lift: o.spoiler is the jet's s.spoiler, absent (0) in every tuning run and on the pistons)
         dcl = p.ail ? E.ka * o.ail * p.ail : 0;
         aS = aS0 + 0.03 * p.span01;                                 // washout: the root stalls first, the ailerons keep working
-        cdi = P.K * ge;
+        cdi = P.K * ge + 0.02 * (o.spoiler || 0);
       } else if (p.kind === 1) { a += E.it - eps; slope = E.at; dcl = E.ke * o.elev; aS = 0.32; cdi = 0.09; }
       else { slope = E.af; dcl = E.kr * o.rud; aS = 0.36; cdi = 0.09; }
       const over = Math.max(a - aS, -aS - 0.06 - a);
@@ -327,13 +355,14 @@
     pr.fin = A.counterRotating ? 0 : Tc * (pr.a0 + pr.a1 * ac) / qc;
     if (A.counterRotating) { pr.a0 = 0; pr.a1 = 0; }          // (counter-rotating propellers: the left-turning tendencies cancel)
     pr.Ip = 2.5 * Eng.P / 92000 / (A.engines1 || 1); pr.tq = A.counterRotating ? 0 : 0.12 * Math.min(1, 92000 / Eng.P);
+    if (A.jet) { pr.a0 = 0; pr.a1 = 0; pr.fin = 0; pr.Ip = 0; pr.tq = 0; }   // (a jet has no propeller: no slipstream, P-factor, torque or disc inertia — and Eng.P does not exist)
     const thrC = A.v.cruiseThr || 0.65, omC = rpmFor(A, thrC, Vc) * Math.PI / 30;
     const ac2 = { ...P, I, prop: pr, Cnda: P.Cnda ?? -0.1 * P.Clda, Cnp: P.Cnp ?? -0.04, Clr: P.Clr ?? 0.06 };
     ac2.el = buildElements(A, ac2);
     // rigging (wing and aileron rig): at cruise power and speed the engine torque and the roll of the fin's side
     // forces (the slipstream on the fin, the fin offset) cancel, so the airplane flies straight hands off at cruise
     const finRollC = -ac2.el.finYZ * (-Tc * pr.a0 + pr.fin * qc);
-    pr.rig = ((0.04 + 0.96 * thrC) * Eng.P / 0.85 / omC * pr.tq - finRollC) / qc;
+    pr.rig = A.jet ? 0 : ((0.04 + 0.96 * thrC) * Eng.P / 0.85 / omC * pr.tq - finRollC) / qc;
     return { AC: ac2, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard, TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m } };
   }
 
@@ -347,6 +376,10 @@
   }
   // fixed-pitch propeller rpm (grows with power and airspeed); constant-speed: held near the governor's setting
   function rpmFor(A, thr, u, pw = 1, dead = false, propLev = null) {
+    // (the jet: the "rpm" the instruments quote is the fan's — the target N1 for the lever (20 + 84·thr^1.15 %)
+    // at 100 % ≒ 5,200 rpm. The spool's lag itself lives in step's e.n1; this is the steady aim, as the
+    // piston branches are. A dead jet windmills faintly with the airflow.)
+    if (A && A.jet) return dead ? clamp(6 * u, 0, 900) : (20 + 84 * Math.pow(clamp(thr, 0, 1), 1.15)) / 100 * 5200;
     if (dead) return clamp(14 * u, 0, 1300);
     // (next-wave item 6) a propeller the pilot governs (A.propCtrl: the Arrow): the lever names the rpm the
     // governor holds (propGov, full forward = the top) whenever the manifold pressure is enough to govern
@@ -405,6 +438,9 @@
     const cl0 = P.CL0 + P.flapCL * flapF, pw = Math.max(0, 1.132 * atm.sigma - 0.132), ne = o.oei ? 0.5 : 1;
     const thrust = thr => {
       if (thr === 'dead') return -0.026 * q * P.S * (P.mass / 1050) ** 0.3;
+      // (the jet: the steady thrust of the target N1 at this density and Mach — the same law step flies,
+      // without the spool's lag. ne already halves it for the one-engine case.)
+      if (A.jet) { const n1T = 20 + 84 * Math.pow(clamp(thr, 0, 1), 1.15); const fracJ = Math.pow(clamp((n1T - 20) / 84, 0, 1), 1.55); return ne * fracJ * P.engine.T0 * Math.pow(atm.sigma, 0.85) * (1 - 0.10 * (V / atm.a)) - (o.oei ? 0.004 * q * P.S : 0); }
       return ne * (propThrust(P, thr, V, pw, 1) - (1 - thr) * 2.5 * V * P.mass / 1000) - (o.oei ? 0.004 * q * P.S : 0);
     };
     const forces = gm => { const CL = n * W * Math.cos(gm) / (q * P.S), a = (CL - cl0) / P.CLa, CD = P.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (P.flapCD ?? 1) + (P.CDgear || 0) * gear + P.K * CL * CL; return { a, D: CD * q * P.S }; };
@@ -534,6 +570,10 @@
     pa28: { mtowLb: 2550, fwdIn: 82, aftIn: 93, emptyArm: 85.5, frontArm: 80.5, rearArm: 118.1, bagArm: 142.8, bagMaxKg: 90, fuelArm: 95, tabsGal: 17 },
     pa44: { mtowLb: 3800, fwdIn: 84, aftIn: 94, emptyArm: 89, frontArm: 84, rearArm: 118.9, bagArm: 142, bagMaxKg: 90, fuelArm: 95.7, tabsGal: 40 },
     pa28r: { mtowLb: 2750, fwdIn: 84, aftIn: 93, emptyArm: 86, frontArm: 80.5, rearArm: 118.1, bagArm: 142.8, bagMaxKg: 90, fuelArm: 95, tabsGal: 25 },
+    // the 737's arms are the type's loading-graph neighbourhood (datum at the nose, inches; the CG band a
+    // teaching simplification of the MAC envelope). The standard load (front 2, fuel 80 %) comes to the
+    // reference 48,000 kg by the empty-weight construction, as with the pistons; 'half' stands in for tabs.
+    b737: { mtowLb: 174200, fwdIn: 640, aftIn: 690, emptyArm: 655, frontArm: 470, rearArm: 700, bagArm: 760, bagMaxKg: 2000, fuelArm: 655, tabsGal: 1300 },
   };
   // the standard training load (what every lesson has flown with until now)
   const stdLoading = () => ({ fuel: 'std', front: 2, rear: 0, bagKg: 0 });
@@ -587,6 +627,7 @@
     const s = {
       t: 0, pos: [0, GROUND_M + 1.4, 0], vel: [0, 0, 0], q: [0, 0, 0, 1], w: [0, 0, 0],
       thr: 0, prop: 1, elev: 0, ail: 0, rud: 0, trim: 0, trimTgt: null, brake: false, pIn: 0, rIn: 0, flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1,
+      rev: 0, spoiler: 0,   // (the jet's controls, 0..1: the thrust reversers and the spoilers / speedbrake. Present on every state so the keys can write them; the piston models never read them and fly exactly as before)
       rpm: 0, propAng: 0, onGround: false, mainContact: false, airTime: 0, crashed: false, crashReason: '',
       alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, vs: 0, contacts: [],
       keyHold: true, pTgt: null, pRate: 0, dead: false,
@@ -610,7 +651,7 @@
     Object.assign(s, { A, AC: d.AC, WHEELS: d.WHEELS, WHEEL_BOTTOM: d.WHEEL_BOTTOM, HARDPTS: d.HARDPTS, TAILSKID: d.TAILSKID });
     s.contacts = d.WHEELS.map(() => false);
     s.fuel = [A.fuelCap * 0.8, A.fuelCap * 0.8];
-    s.eng = Array.from({ length: A.engines1 || 1 }, (_, i) => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, egt: 70, carbIce: 0, feed: i ? 1 : 0, feedOk: true, mixK: 1, powK: 1, rough: 0, manIn: 0, ff: 0, ffK: 1, shaftW: 0, lev: 1, iceNoted: false, oilP: 0, oilT: null, magBad: null, pumpFail: false, fuelPress: 0, pressT: 0, oilQ: (A.fuelCap > 30 ? 8 : 7), cyl: null }));
+    s.eng = Array.from({ length: A.engines1 || 1 }, (_, i) => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0, n1: 20, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, egt: 70, carbIce: 0, feed: i ? 1 : 0, feedOk: true, mixK: 1, powK: 1, rough: 0, manIn: 0, ff: 0, ffK: 1, shaftW: 0, lev: 1, iceNoted: false, oilP: 0, oilT: null, magBad: null, pumpFail: false, fuelPress: 0, pressT: 0, oilQ: (A.fuelCap > 30 ? 8 : 7), cyl: null }));
     s.gearDown = true; s.gearPos = 1;
     return s;
   }
@@ -699,6 +740,42 @@
     s.eng.forEach((e, i) => {
       const th = thrOf(e), P1 = Eng.P / nE;
       let Ti;
+      if (A.jet) {
+        // --- the turbofan (the 737 class): the lever aims at an N1, the spool lags seconds behind it, and the
+        // thrust follows the N1 it has actually reached — the go-around's "push, wait, then it comes" is the
+        // lesson. No mixture strength, no magnetos, no carburettor, no cylinder temperatures: e.egt here is
+        // the turbine temperature in °C. A failed engine makes no thrust and only windmills (a small drag).
+        const oatC = atm.T - 273.15;
+        if (!e.run) {
+          Ti = -0.004 * qd * AC.S * (AC.mass / 1050 / nE) ** 0.3;          // windmilling fan drag (the feather's counterpart)
+          e.mixK = 0; e.powK = 0; e.rough = 0; e.ff = 0; e.shaftW = 0; e.manIn = 0; e.ffK = Eng.ffK ?? 1;
+          const n1W = e.failed ? 0 : clamp(ua * 0.2, 0, 10);
+          e.n1 = (e.n1 ?? 20) + (n1W - (e.n1 ?? 20)) * Math.min(1, dt / 3);
+          e.egt = (e.egt == null ? oatC : e.egt) + (oatC - (e.egt == null ? oatC : e.egt)) * Math.min(1, dt / 6);
+        } else {
+          const n1Tgt = 20 + 84 * Math.pow(clamp(th, 0, 1), 1.15);
+          const tau = 2.0 + 3.8 * (1 - clamp(e.n1 ?? 20, 0, 100) / 100);   // slow off idle (≈ 5–6 s), quicker at high N1 (≈ 2 s)
+          e.n1 = (e.n1 ?? 20) + (n1Tgt - (e.n1 ?? 20)) * Math.min(1, dt / tau);
+          const mach = V / atm.a;
+          let frac = Math.pow(clamp((e.n1 - 20) / 84, 0, 1), 1.55);
+          Ti = frac * (Eng.T0 / nE) * Math.pow(atm.sigma, 0.85) * (1 - 0.10 * mach);
+          // the reversers: ground only (the main gear loaded), independent of the throttle — they throw the
+          // fan's air forward for −38 % of the static thrust, faded out between 60 kt and 25 kt so the
+          // engines do not swallow their own exhaust at walking pace
+          if ((s.mainContact || s.onGround) && (s.rev || 0) > 0) {
+            const fade = smoothstep(25, 60, ua * KT);
+            Ti = Ti * (1 - s.rev) - 0.38 * (Eng.T0 / nE) * s.rev * fade;
+          }
+          e.shaftW = Ti * Math.max(ua, 25) / 0.82;                        // (so the shared fuel-flow law below reads a jet's burn: ffK sizes it to ≈ 330 gal/h an engine in the cruise)
+          e.ffK = Eng.ffK ?? 1;
+          e.mixK = 1; e.powK = 1; e.rough = 0; e.manIn = 0;
+          const egtT = Math.min(420 + 5.6 * e.n1, 1050);
+          e.egt = (e.egt == null ? egtT : e.egt) + (egtT - (e.egt == null ? egtT : e.egt)) * Math.min(1, dt / 3);
+        }
+        e.T = Ti; T += Ti;
+        if (nE === 2) Tasym += (i === 1 ? 1 : -1) * Ti * xe;
+        return;
+      }
       if (!e.run) {
         Ti = -(e.feather ? 0.003 : 0.026 / nE) * qd * AC.S * (AC.mass / 1050 / nE) ** 0.3;          // windmilling (or feathered) propeller drag
         e.mixK = 0; e.powK = 0; e.rough = 0; e.ff = 0; e.shaftW = 0; e.manIn = pAmbIn;
@@ -805,14 +882,14 @@
       + (s.wind.gust ?? 1) * (s.wind.kt / KT) * 0.0005 * Math.exp(-Math.max(agl, 0) / 20);
     const gW = perlin(s.t * 0.9, 23.1) * gA / (AC.b / 2), gT = perlin(s.t * 0.7, 41.9) * gA * 0.2;
     const ae = aeroElements(EL, AC, vb, s.w, rho, {
-      flapF, elev: elevEff, ail: s.ail, rud: rudEff, dq: 240 * runShare * Math.sqrt(AC.mass / 1000),
+      flapF, elev: elevEff, ail: s.ail, rud: rudEff, spoiler: s.spoiler || 0, dq: 240 * runShare * Math.sqrt(AC.mass / 1000),
       stH: s._stH && s._stH.length === EL.pcs.length ? s._stH : (s._stH = new Float32Array(EL.pcs.length)), dt,
       hgt: pc => hCG + pc.r[0] * upB[0] + pc.r[1] * upB[1] + pc.r[2] * upB[2],
       gust: pc => { const gg = pc.kind === 0 ? gW * pc.r[0] : pc.kind === 1 ? gT : 0; return [upB[0] * gg, upB[1] * gg, upB[2] * gg]; },
     });
     const stallW = ae.stallW;
     const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
-    const CDp = AC.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (AC.flapCD ?? 1) + AC.CDgear * s.gearPos + 0.6 * beta * beta;
+    const CDp = AC.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (AC.flapCD ?? 1) + AC.CDgear * s.gearPos + 0.6 * beta * beta + 0.045 * (s.spoiler || 0);   // (the spoiler's parasite share; s.spoiler is 0 on everything but the jet with them up)
     F[0] += ae.F[0] + qd * AC.S * EL.dCY * beta; F[1] += ae.F[1]; F[2] += ae.F[2];
     if (V > 0.3) { const k = qd * AC.S * CDp / V; F[0] -= vb[0] * k; F[1] -= vb[1] * k; F[2] -= vb[2] * k; }
     { const ln = Math.hypot(vb[1], vb[2]) || 1, qs = Math.max(qd * AC.S, 1e-6);
@@ -903,7 +980,7 @@
     s.agl = agl; s.vs = s.vel[1];
     // engine rpm, fuel
     let rpmSum = 0;
-    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw * (0.3 + 0.7 * (e.powK == null ? 1 : e.powK)), false, s.prop) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });   // a fixed-pitch prop turns slower on a weak mixture or an iced carburettor (a governed one holds its rpm and shows it in the manifold pressure instead)
+    s.eng.forEach(e => { const rt = A.jet ? (e.n1 || 0) * 52 : e.run ? rpmFor(A, thrOf(e), u, pw * (0.3 + 0.7 * (e.powK == null ? 1 : e.powK)), false, s.prop) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });   // a fixed-pitch prop turns slower on a weak mixture or an iced carburettor (a governed one holds its rpm and shows it in the manifold pressure instead); a jet's "rpm" is its fan, following the spooled N1 (100 % = 5,200 rpm)
     s.rpm = rpmSum / nE;
     s.propAng = (s.propAng + s.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
     // fuel: each running engine burns its own flow — its shaft power at BSFC, metered by its mixture — out of the
@@ -931,8 +1008,8 @@
       // per-cylinder exhaust and head temperatures (the ENGINE page's bars): four cylinders a fixed spread
       // apart, the third the hottest; the heads lag the power by minutes, and cool fast in a fast descent
       // with the power off (shock cooling), slowly on the ground
-      if (!e.cyl) e.cyl = [0, 1, 2, 3].map(() => ({ egt: e.egt || 70, cht: oatF }));
-      { const egtSp = [0.96, 1.0, 1.07, 1.03], chtSp = [0.97, 1.0, 1.06, 1.02];
+      if (!e.cyl && !A.jet) e.cyl = [0, 1, 2, 3].map(() => ({ egt: e.egt || 70, cht: oatF }));   // (a jet has no cylinders: e.cyl stays null and the block below is skipped)
+      if (e.cyl) { const egtSp = [0.96, 1.0, 1.07, 1.03], chtSp = [0.97, 1.0, 1.06, 1.02];
         e.cyl.forEach((c, ci) => {
           c.egt += ((e.egt || 70) * egtSp[ci] - c.egt) * Math.min(1, dt / 2.5);
           const chtT = oatF + (e.run ? (215 + 195 * clamp(thrOf(e), 0, 1)) * chtSp[ci] : 0);
@@ -1033,6 +1110,12 @@
     const pwD = Math.max(0, 1.132 * atm.sigma - 0.132);
     o.powerPct = engineRunning(s) ? Math.round(s.eng.reduce((a, e) => a + (e.run ? (0.04 + 0.96 * (e.thr != null ? e.thr : s.thr)) * pwD * (e.mixK == null ? 1 : e.mixK) : 0), 0) / s.eng.length * 100) : 0;
     o.egts = s.eng.map(e => Math.round(e.egt || 0)); o.egt = o.egts[0];
+    // the jet's instruments (o.jet marks the type; on a piston these read the defaults and nothing shows them):
+    // the mean and per-engine N1 %, the Mach number, and the reverser / spoiler positions. A jet's o.egts are
+    // °C, not °F — the avionics branch on o.jet to label them.
+    o.jet = !!A.jet; o.n1s = s.eng.map(e => Math.round((e.n1 || 0) * 10) / 10); o.n1 = o.n1s.length ? Math.round(o.n1s.reduce((a, b) => a + b, 0) / o.n1s.length * 10) / 10 : 0;
+    o.mach = atm.a > 0 ? Math.round(V / atm.a * 1000) / 1000 : 0;
+    o.rev = s.rev || 0; o.spoiler = s.spoiler || 0;
     o.manIns = s.eng.map(e => Math.round((e.manIn || 0) * 10) / 10); o.manIn = o.manIns[0];
     o.rough = Math.max(0, ...s.eng.map(e => e.rough || 0));
     o.carbIce = Math.max(0, ...s.eng.map(e => e.carbIce || 0));
@@ -1069,6 +1152,7 @@
     s.events = []; s.td = null; s.tailTouch = false; s.firstWheel = -1; s.gLoad = 1; s.pTgt = null; s.pHI = 0; s.gI = 0; s.bI = 0;
     s.trimHold = 0; s.trimTgt = null; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null; s._stH = null; s.prop = 1;
     s.eng.forEach((e, i) => Object.assign(e, { failed: false, feather: false, cut: false, thr: null, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, carbIce: 0, iceNoted: false, magBad: null, pumpFail: false, pressT: 0 }));
+    s.rev = 0; s.spoiler = 0;   // (a new flight never begins with the reversers out or the spoilers up)
     s.pitotIce = 0; s.staticBlocked = false; s._iasFrz = null; s._altFrz = null; s.gearFault = false; s.gearEmerg = false; s.gearEmergT = 0;
     s._mixCmd = s.mix; s._selCmd = s.fuelSel;   // the reset engines are in the running configuration above; the shared controls command them again when they next move
   }
@@ -1101,6 +1185,9 @@
     s.thr = thr;
     s.airTime = 10; s.onGround = false; s.mainContact = false; s.contacts = s.WHEELS.map(() => false);
     s.rpm = rpmFor(A, thr, v); for (const en of s.eng) en.rpm = s.rpm;
+    // (a jet placed in the air is already spooled to the placed power — an engine that has been running
+    // at this setting, not one lit a second ago: N1 and EGT start at their steady values for the lever)
+    if (A.jet) for (const en of s.eng) { en.n1 = 20 + 84 * Math.pow(clamp(thr, 0, 1), 1.15); en.egt = Math.min(420 + 5.6 * en.n1, 1050); }
     s.pTgt = attitude(s).pitch;
     derive(s);
     return s;

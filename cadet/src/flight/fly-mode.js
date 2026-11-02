@@ -96,9 +96,10 @@ export function createFlyMode(ctx) {
   // (M6) the twin's days fly the Seminole: its own flown model; the cockpit moves into whichever is today's
   // (ctx.aircraft()) and shows that type's own parts (the Seminole's quadrant, gear selector and nose: cockpit.setType)
   const A44 = P.AIRCRAFT.find(a => a.id === 'pa44');
-  const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, A44, { reg: 'N452SY' }) };
+  const A737 = P.AIRCRAFT.find(a => a.id === 'b737');
+  const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, A44, { reg: 'N452SY' }), ...(A737 ? { b737: liveAircraft(FL, A737, { reg: 'JA737S' }) } : {}) };
   let live = lives.pa28, liveId = 'pa28';
-  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44 });
+  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44, quality: ctx.quality });
   live.root.add(cockpit.root);
   for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
   const todayType = () => (ctx.aircraft ? ctx.aircraft() : 'pa28') || 'pa28';
@@ -108,7 +109,9 @@ export function createFlyMode(ctx) {
     live = lives[id]; liveId = id;
     for (const c of [...was.root.children]) if (c === cockpit.root || c.name === 'cockpit-guide' || (crew && c === crew.root)) live.root.add(c);
     was.root.visible = false; live.root.visible = vis;
-    cockpit.setType(id);
+    // (the cockpit's own variants are the Archer's and the Seminole's: the 737 flies with the
+    // Archer's cockpit, per the type-rating design's honest limit — docs/first-officer-design.md)
+    cockpit.setType(id === 'pa44' ? 'pa44' : 'pa28');
   }
   const seat = seatFromBody(cockpit.instructorSeat, cockpit.instructorSeat.yaw ?? Math.PI);
   // the engine and the electrics behind the switches
@@ -157,6 +160,7 @@ export function createFlyMode(ctx) {
 
   // ---- state
   let active = false, phase = 'off';          // 'board' (talking in the seat) | 'ground' | 'lesson' | 'debrief' | 'leaving'
+  let lineSes = null;                          // (first-officer phase) a line duty session (flight/line.js is driven by the game through ctx.onLineTick)
   let carbDay = 0;                            // a humid day's carburettor-ice risk (set by beginDay; 0 = it cannot form)
   let faultKind = null;                       // the day's fault kind (mag / carb / pitot / gear / pump / static), applied to the physics each frame
   // (next-wave item 4) the preflight effects the day captured at boarded() (aircraft/failures.js:
@@ -404,6 +408,7 @@ export function createFlyMode(ctx) {
       if (crew) { if (crew.setSeated) crew.setSeated(null); ctx.instructorHome(crew.root, crew); }
       rpmVisual = null;
       if (dayMode.active) { if (ctx.onDayOver) ctx.onDayOver(dayMode.day); dayMode.end(); }
+      if (lineSes) { lineSes = null; if (ctx.onLineEnd) ctx.onLineEnd(); }
       if (audio.crank) audio.crank(false);
       if (audio.engine) audio.engine(null);
       if (audio.traffic) audio.traffic(null);
@@ -493,7 +498,7 @@ export function createFlyMode(ctx) {
     if (active) return false;
     active = true; phase = 'board';
     fade(() => {
-      useAircraft(cfg.aircraft === 'pa44' ? 'pa44' : 'pa28');
+      useAircraft(lives[cfg.aircraft] ? cfg.aircraft : 'pa28');
       const wind = cfg.wind || { rel: 10, kt: 5, gust: 0.5 };
       const ramp = cfg.start === 'ramp';
       if (ramp) {
@@ -519,7 +524,7 @@ export function createFlyMode(ctx) {
         if (entry && (entry.atMin != null || entry.atAltFt != null) && !(entry.atMin === 0 && entry.atAltFt == null)) failSched = [entry];
         else applyFail(cfg.fail);
       } else if (cfg.seed != null) {
-        const rf = randomFailureFor({ seed: cfg.seed, day: 1, kind: 'free', mode: 'free', aircraft: cfg.aircraft === 'pa44' ? 'pa44' : 'pa28' });
+        const rf = randomFailureFor({ seed: cfg.seed, day: 1, kind: 'free', mode: 'free', aircraft: lives[cfg.aircraft] ? cfg.aircraft : 'pa28' });
         const entry = scheduleOf(rf);
         if (entry) failSched = [entry];
       }
@@ -532,6 +537,71 @@ export function createFlyMode(ctx) {
       input.requestLock();
     }, cfg.instant);
     return true;
+  }
+  // (first-officer phase) a line duty in the 737: the game (main.js) owns the duty machine
+  // (flight/line.js) and the decisions; this session only flies the jet — from the departure field's
+  // runway at line weight for a PF leg, or already at cruise for a PM leg (the captain flies; the
+  // first officer monitors). Observations stream to ctx.onLineTick about four times a second; the
+  // game answers with lineReposition (the cruise compression, a divert's new destination) and ends
+  // the duty by leaving, as with any session.
+  // cfg: { field: {n, e, trueHdg, lenM}, role: 'PF'|'PM', mass, fuelGal (per tank), cruise: {n, e, altFt, hdgTrue, kt}, crew, title, instant, wind }
+  function startLineSession(cfg = {}) {
+    if (active || !lives.b737) return false;
+    active = true; phase = 'board';
+    fade(() => {
+      useAircraft('b737');
+      const wind = cfg.wind || { rel: 10, kt: 5, gust: 0.5 };
+      flight.startFree('rwy', 'b737', { autoRud: settings.get('autoRud'), wind });
+      const s = flight.s, F = cfg.field;
+      if (cfg.mass) P.setAircraft(s, 'b737', cfg.mass);
+      if (cfg.fuelGal) s.fuel = [cfg.fuelGal, cfg.fuelGal];
+      if (cfg.role === 'PM' && cfg.cruise) P.placeInAir(s, cfg.cruise.n, cfg.cruise.e, cfg.cruise.altFt, cfg.cruise.hdgTrue, cfg.cruise.kt, 0, 0);
+      else if (F) P.placeOnRunway(s, F, 80);
+      P.derive(s);
+      systems.setRunning(s); systems.adopt(s);
+      parked().visible = false; ctx.todayColliders(false);
+      live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
+      seatCrew(cfg.crew || null);
+      preflightFx = []; failSched = []; failElapsed = 0; carbDay = 0; systems.setFault(null); systems.setElecFault(false);
+      yaw = 0; pitch = HOME_PITCH; setFocus(null, true); zoomFov = null;
+      ctx.onEnter();
+      placeNow();
+      if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle(cfg.title || '路線運航', 'H でキーの一覧'); if (fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
+      phase = 'ground';
+      lineSes = { t: 0, acc: 0 };
+      recorder.start({ title: cfg.title || '路線運航', aircraft: 'b737', startISO: new Date().toISOString() });
+      input.requestLock();
+    }, cfg.instant);
+    return true;
+  }
+  // the game moves the jet (the cruise compression, or a PM leg's descent): a fresh placing in the
+  // air, trimmed at the given speed — the duty machine (flight/line.js) decided where to
+  function lineReposition({ n, e, altFt, hdgTrue, kt, gamma = 0, flaps = 0 }) {
+    if (!lineSes || !flight.s) return false;
+    P.placeInAir(flight.s, n, e, altFt, hdgTrue, kt, gamma, flaps);
+    P.derive(flight.s);
+    systems.adopt(flight.s);
+    placeNow();
+    return true;
+  }
+  // the game puts the jet on a runway (a PM leg's captain landing, after the compression hops)
+  function linePlaceOnRunway(field, along = 300) {
+    if (!lineSes || !flight.s || !field) return false;
+    P.placeOnRunway(flight.s, field, along);
+    P.derive(flight.s);
+    systems.adopt(flight.s);
+    placeNow();
+    return true;
+  }
+  // the line session's observation stream (the raw flight state; the game adds the distance to the
+  // duty's current destination — it changes on a divert — and feeds its duty machine)
+  function lineTick(dt) {
+    if (!lineSes || !flight.s) return;
+    lineSes.t += dt; lineSes.acc += dt;
+    if (lineSes.acc < 0.25) return;
+    lineSes.acc = 0;
+    const s = flight.s, o = s.out || {};
+    if (ctx.onLineTick) ctx.onLineTick({ t: lineSes.t, altFt: s.pos[1] / P.FT, ias: Math.round(o.ias || 0), mach: o.mach || 0, vsFpm: Math.round(s.vs || 0), onGround: !!s.onGround, stopped: !!s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 0.5, crashed: !!s.crashed, n: -s.pos[2], e: s.pos[0] });
   }
   // the instructor starts the engine (a free flight): everything on as for the flight, primed, the throttle cracked,
   // the key to START; the systems turn it over until it catches
@@ -773,6 +843,7 @@ export function createFlyMode(ctx) {
     if (!flight.L) return true;
     const s = flight.s;
     if (dayMode.active) return dayMode.day.phase === 'done' || s.crashed;
+    if (lineSes) return true;          // (a line duty can be left — the duty is then abandoned, unrecorded)
     if (!flight.free) return !!flight.L.done;
     return s.crashed || (s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 0.6);
   }
@@ -787,6 +858,7 @@ export function createFlyMode(ctx) {
   const frameOpt = { paused: false }, liveOpt = { dt: 0, rpmVisual: null, lights: lightsOut, inside: true };
   const cockOpt = { s: null, L: null, av: null, parkBrake: false, night: 0 }, insOpt = { lookAt: null, talking: false };
   const engOpt = { rpm: 0, thr: 0, ias: 0, onGround: true, stall: false, inside: true, running: false }, lightsNow = { ...lightsOut };
+  let prevFlapIdx = -1, prevFlapDeg = 0, flapSndT = 0;   // (the flap sounds: the lever's clunk, the motor's whir)
 
   // ---- every frame while flying
   function update(dt, { live: isLive = true, paused = false } = {}) {
@@ -950,6 +1022,7 @@ export function createFlyMode(ctx) {
     }
     if (blend.t > 0) blend.t = Math.max(0, blend.t - dt / 1.2);
     if (dayMode.active) dayMode.update(dt, { stop });
+    if (lineSes) lineTick(dt);
     // the pattern traffic: posed every frame (analytic — no drift), its calls heard when the radio is on
     // the tower and the aircraft is awake (the engine running, or a lesson under way)
     const tp = (ctx.today ? ctx.today() : null)?.traffic;
@@ -1031,6 +1104,15 @@ export function createFlyMode(ctx) {
         for (let k = 0; k < 2; k++) { engOpt.engines[k].rpm = tw[k].rpm; engOpt.engines[k].running = tw[k].eng === 'run' || tw[k].eng === 'stopping'; engOpt.engines[k].rough = Math.max((s.eng[k] && s.eng[k].rough) || 0, o['magRough' + k] || 0); }
         engOpt.gearMoving = s.gearPos > 0.005 && s.gearPos < 0.995;
       } else { engOpt.engines = null; engOpt.gearMoving = false; }
+      // the rain on the airframe (the day's precipitation, as the wet-runway flag reads it), and the flaps:
+      // the twin's electric motor while its surfaces travel; the Archer's flap lever is a hand lever — its
+      // notch is a clunk through click(), never the motor
+      engOpt.rain = ctx.precip ? ctx.precip() : 0;
+      if (Math.abs((s.flapDeg || 0) - prevFlapDeg) > 0.02) flapSndT = 0.25;
+      prevFlapDeg = s.flapDeg || 0; if (flapSndT > 0) flapSndT -= dt;
+      engOpt.flapMoving = todayType() === 'pa44' && flapSndT > 0;
+      if (prevFlapIdx >= 0 && s.flapIdx !== prevFlapIdx && todayType() !== 'pa44' && audio.click) audio.click();
+      prevFlapIdx = s.flapIdx;
       audio.engine(engOpt);
     }
     // the nearest other trainer is heard too: its buzz placed by the bearing from the nose, thinned by the
@@ -1278,6 +1360,8 @@ export function createFlyMode(ctx) {
     }
     // the day's own keys (Enter: the checklist item looked at; Y: leave it to the instructor; 1–3: the radio)
     if (dayMode.active && dayMode.key(e.code)) { e.preventDefault(); return true; }
+    // (first-officer phase) a line duty's questions are answered with the same 1–3 (the game owns them)
+    if (lineSes && /^Digit[1-9]$/.test(e.code) && ctx.onLineKey) { ctx.onLineKey(Number(e.code.slice(5)) - 1); e.preventDefault(); return true; }
     // CADET's own: Shift+B sets or releases the parking brake (FLIGHT LAB has none; B alone is the brakes, held)
     if (e.code === 'KeyB' && e.shiftKey) { applyAct({ type: 'flight', name: 'parkBrake' }); e.preventDefault(); return true; }
     const r = flight.key(e.code, e.shiftKey);
@@ -1331,7 +1415,8 @@ export function createFlyMode(ctx) {
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,
     // the recorder and the replay (the logbook's export reads the recordings; the debrief offers the replay)
-    recorder, startReplay, endReplay, startFreeSession,
+    recorder, startReplay, endReplay, startFreeSession, startLineSession, lineReposition, linePlaceOnRunway,
+    get lineActive() { return !!lineSes; },
     get replaying() { return !!replay; },
     get simRate() { return simRate; }, get activePause() { return activePause; },
     // the head (degrees: yaw + to the left, pitch + up) and looking closer, as the mouse would (for the tests)
@@ -1347,7 +1432,7 @@ export function createFlyMode(ctx) {
     wind() { const w = flight.s ? flight.s.wind : null; return w ? { fromDeg: ((w.fromDeg % 360) + 360) % 360, kt: w.kt } : null; },
     altitude() { return flight.s ? flight.s.out.agl / 3.28084 : 0; },
     // shown during the boot compile, hidden afterwards
-    prepareCompile(on) { live.root.visible = on; lives.pa44.root.visible = on; cockpit.setVisible(on); },
+    prepareCompile(on) { live.root.visible = on; lives.pa44.root.visible = on; if (lives.b737) lives.b737.root.visible = on; cockpit.setVisible(on); },
     status() {
       // the instructor's head in the aircraft's frame (x right, y up, −z forward): in the right seat while flying
       let seatAt = null;

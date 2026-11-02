@@ -11,12 +11,18 @@
   const SC = FL.school, ph = FL.physics;
   const { T_ALT, T_HDG, T_SPD, stepSL, stepTurn } = SC;
   const AR = ph.AIRCRAFT.find(a => a.id === 'pa28').v, SM = ph.AIRCRAFT.find(a => a.id === 'pa44').v, AW = ph.AIRCRAFT.find(a => a.id === 'pa28r').v;
+  // (first-officer S1) the 737-class jet: read its speeds from the aircraft's own v-table whenever the physics
+  // carries it; until that stream lands, fall back to the design memo's numbers so this file still loads and the
+  // structure tests can run (the lessons never hard-code a speed of their own — everything below goes through JT)
+  const JTA = ph.AIRCRAFT.find(a => a.id === 'b737');
+  const JT = JTA ? JTA.v : { rotate: 128, y: 150, cruise: 300, appr: 138, apprFlaps: 3, fe: 230, toFlaps: 1 };
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const KEYS = {
     pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝スロットル減（Shift で一気に全開 / アイドル）',
     trim: 'T＝いまの速度でトリム（手放しで水平）', flaps: 'V＝フラップを 1 段下げる（最後まで行くと UP に戻る）', brake: 'B / Space＝ブレーキ', gear: 'G＝脚の上げ下げ',
     feather: '[＝左のプロペラをフェザー・]＝右のプロペラをフェザー', rtrim: 'Z / X＝ラダートリム 左 / 右（片発で足を楽に）',
     prop: ', ＝プロペラレバーを引く（ガバナー設定を下げる）・. ＝プロペラレバーを前へ（設定を上げる）', manin: 'MFD の MAN IN（マニホールド圧）と RPM の 2 つの計器で出力を確かめる',
+    spoiler: 'スピードブレーキ／スポイラー（トグルで出す／しまう。ブレーキの B とは別）', n1: 'MFD の N1（%）・EGT（℃）・FF（燃料流量）で出力を確かめる',
   };
   const k = (...a) => a.map(x => KEYS[x] || x).join('　');
   const distNm = (L, id) => { const w = FL.avionics.wpt(id); return w ? FL.avionics.neDistNm(ph.ne(L.s), w) : 99; };
@@ -80,6 +86,26 @@
       check: (c, L, st) => { if (c.onGround) st.lastKias = c.kias; },
       result: (L, st) => { const tol = Math.round(5 * L.level.k) + 2; return [{ name: '浮揚速度', val: `${Math.round(st.lastKias || 0)} kt`, std: `${vr} ±${tol} kt`, pass: Math.abs((st.lastKias || 0) - vr) <= tol }]; } };
   }
+  // ---------------------------------------------------------------- (first-officer S1) shared jet steps
+  // re-place the aircraft on the LAB final (the same geometry school.js's place() builds for setup.at 'final'):
+  // a checkride / re-approach device — the instructor's "radar vectors back to final", compressed by the lesson
+  function placeFinal(L, km = 6, flaps = 3, kt = JT.appr) {
+    const R = ph.LAB_RWY, D = km * 1000, [n, e] = ph.rwyToNE(R, 300 - D, 0);
+    const altFt = R.elevFt + Math.tan(3 * Math.PI / 180) * D * ph.FT;
+    ph.placeInAir(L.s, n, e, altFt, R.trueHdg, kt, -3, flaps, null);
+    L.s.gearDown = true; L.s.gearPos = 1;
+    L.hdg0 = 360; L.alt0 = Math.round(altFt);
+    ph.derive(L.s);
+  }
+  // positive rate → gear up (the m1 / cx1 shape, at the jet's speeds)
+  const jetGearUp = (say) => ({ name: '正の上昇・脚上げ', g: { kt: JT.y, pwr: 'full', how: 'climbFull' }, keys: k('gear', 'pitch'), say: say || '正の上昇を確認して脚 UP（G）', until: (c, L) => !c.gearDown || c.aglR > 600, max: 60,
+    result: (L, st) => [{ name: '脚上げ', val: !L.s.gearDown ? `地上 ${Math.round(L.last.aglR)} ft で UP` : '上げていない', std: '地上 500 ft まで', pass: !L.s.gearDown && L.last.aglR <= 600 }] });
+  // accelerate and retract on SPEED (the jet's flap schedule is flown by the speed tape, not by altitude):
+  // F5 stays until the retraction speed, then UP in one step of this textbook's 4-detent flap
+  const jetAccel = (o = {}) => ({ name: '加速とフラップ退避', g: { kt: 220, pwr: 'full', how: 'climbFull', flaps: 0 }, keys: k('pitch', 'flaps'), say: o.say || '加速。170 kt を過ぎたらフラップ UP（Shift+V）。機首の下がりを抑えながら 220 kt へ', tgt: { spd: T_SPD(220, 15) }, gradeWhen: established(220, 15, 4, 40), until: c => c.flaps === 0 && c.kias >= 200 && (!o.toAlt || c.aglR >= o.toAlt), max: 240, grade: true,
+    check: (c, L, st) => { if (st.ret == null && c.flaps === 0) st.ret = c.kias; },
+    result: (L, st) => [{ name: 'フラップ退避の速度', val: st.ret != null ? `${Math.round(st.ret)} kt` : '—', std: '165 kt 以上で UP（フラップ 5 の制限の内側で、失速にも近づかない）', pass: st.ret != null && st.ret >= 160 }],
+    ...(o.onEnd ? { onEnd: o.onEnd } : {}) });
   const stallRecovery = (vMin, extra = {}) => Object.assign({ name: '失速からの回復', keys: k('pitch', 'thr', 'roll', 'rud'),
     g: '目安：W で機首を水平線付近（0〜+5°）まで下げる → R で全開 → A / D で翼を水平。速度が付いたら上昇姿勢（約 +8°）へ。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す',
     say: '回復！ ①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④速度が付いたら上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > vMin && st.t > 2, max: 45, grade: true, tgt: { hdg: T_HDG(20) },
@@ -109,6 +135,102 @@
     if (inWindow) st.sawMistake = true;
   }
   const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+
+  // ---------------------------------------------------------------- (game-quality wave, item 4) the CFI mode, grown from the prototype
+  // One trainee across the CFI lessons — Takahashi — whose habits are on record because earlier lessons
+  // measured them (the profile the design memo asked for). The learning is mechanical, not scripted:
+  // in cf2 and cf3 the trainee flies AGAIN after the player's instruction, and what the second flight
+  // measures depends on which answer the player picked (school.js keeps it in L.atcResult.i). A specific
+  // instruction that names the habit fixes it; a vague one improves it only part way; the numbers below
+  // are the bench measurements the thresholds were set from (headless, the standard lesson wind).
+  const CFI_TRAINEE = { name: '訓練生タカハシ' };
+  const CFI_FLARE = ['フレアが早く、バルーンのあと沈み込んだ（ドロップイン）', '速度が速すぎ、長く浮いて着陸が伸びた'];
+  const CFI_SL_MISTAKES = ['外と計器の往復が遅れ、高度が波打っていた', '小さなバンクに気づかず、針路が流れていた', '姿勢を保つだけで、速度が少しずつ落ちていた'];
+  // put the aircraft back on a 3-degree final, as school.js's place() does for a lesson's setup — the
+  // trainee's second approach, and the instructor's demonstration, start there mid-lesson
+  const toFinal = (L, km = 4) => {
+    const s = L.s, R = ph.LAB_RWY, D = km * 1000, along = 300 - D, [n, e] = ph.rwyToNE(R, along, 0);
+    const altFt = R.elevFt + Math.tan(3 * Math.PI / 180) * D * ph.FT;
+    ph.placeInAir(s, n, e, altFt, R.trueHdg, AR.appr, -3, AR.apprFlaps, null);
+    L.hdg0 = 360; s.ovr = null; s.brake = 0;
+  };
+  // the trainee flies an approach and a landing (cf2): a glidepath PD on the stick and throttle, then a
+  // two-stage flare (a first pitch, then deepening below the knee). mode: 'error' (the seeded habit, full),
+  // 'mild' (the habit after an instruction that did not name it) or 'fixed' (after the right one).
+  //   kind 0 flares early and high with the power already off: balloon, speed bleeding, then a drop-in —
+  //     measured sink 639 fpm (mild 591) against the fixed flare's 256.
+  //   kind 1 flies the final 10 kt fast: the flare is the same, but the float runs out — measured float
+  //     523 m (mild, +6 kt: 397) against the fixed approach's 339.
+  // Measured like everything here: the float from the 50 ft crossing, the sink and place from the
+  // physics' own touchdown record. Once the flare starts it stays started, and on the ground the
+  // trainee brakes (a rollout flown to a stop, as the lesson's step ends there).
+  const CFI_LAW = {
+    fixed: [28, 4.5, 13, 0.55, 28],
+    error0: [50, 5.0, 24, 0.55, 50], mild0: [40, 4.8, 20, 0.55, 40],
+    error1: [28, 4.5, 13, 0.55, 28], mild1: [28, 4.5, 13, 0.55, 28],
+  };
+  function traineeLand(L, c, st, mode) {
+    const s = L.s, kind = Math.abs(L.s.seed || 7) % 2;
+    st.kind = kind;
+    const [fH, stage1, knee, ramp, pOff] = CFI_LAW[mode === 'fixed' ? 'fixed' : mode + kind];
+    const hdgT = 360 + clamp(-c.cross * 0.12, -12, 12);
+    const bankT = clamp(w180(hdgT - c.hdg) * 1.2, -16, 16);
+    let pitchT, thrT;
+    const spdT = kind === 1 && mode !== 'fixed' ? AR.appr + (mode === 'mild' ? 6 : 10) : AR.appr;
+    if (c.aglR > fH && !st.flaring) {
+      const pathFt = Math.max(0, 300 - c.along) * 0.0524 * 3.28084;
+      pitchT = -1 - clamp((c.aglR - pathFt) * 0.05, -5, 3) + clamp((-c.gsK * 5.31 - c.vs) * 0.006, -3, 3);
+      thrT = clamp(0.30 + (spdT - c.kias) * 0.06, 0, 0.8);
+    } else {
+      st.flaring = true;
+      pitchT = c.aglR > knee ? stage1 : Math.min(9.5, stage1 + (knee - c.aglR) * ramp);
+      if (c.vs > -60 && c.aglR > 6) pitchT = Math.min(pitchT, 1.5);          // never balloon away: the descent continues until the flare is low
+      if (kind === 0 && mode !== 'fixed' && c.kias < 62) pitchT = Math.min(pitchT, 4.5);   // the trainee's own save against the drop-in
+      thrT = c.aglR > pOff ? Math.min(0.32, clamp(0.30 + (AR.appr - c.kias) * 0.06, 0, 0.8)) : 0;   // in the flare the power only comes off
+    }
+    if (c.onGround) { pitchT = 0; thrT = 0; s.brake = Math.min(1, (s.brake || 0) + (c.dt || 1 / 60) * 2); }
+    s.ovr = { elev: clamp((pitchT - c.pitch) * 0.16, -0.6, 0.6), ail: clamp((bankT - c.bank) * 0.06, -0.5, 0.5), rud: 0 };
+    s.thr += clamp(thrT - s.thr, -0.012, 0.012);
+    if (!c.onGround && c.aglR <= 50 && st.along50 == null) st.along50 = c.along;
+    const td = s.td;
+    if (td && !st.td && td.t > (st.tdAfter || 0)) { st.td = td; st.sink = Math.round(td.fpm); st.tdPitch = td.pitch; st.along = Math.round(c.along); st.floatM = st.along50 != null ? Math.round(Math.max(0, c.along - st.along50)) : null; }
+  }
+  // the trainee keeps straight and level, badly, in one seeded way (cf3). mode is what the player's
+  // instruction does to the second segment: 'learn' (a question that makes them notice — the habit
+  // fades as they catch it), 'direct' (an instruction — fixed while it is fresh, then it creeps back),
+  // 'none' (nothing reached them — the same segment again). One score reads all three habits: the
+  // altitude deviation, the heading drift at 3 ft a degree, the speed sag at 4 ft a knot.
+  // A segment is scored on what grows IN it: the first seconds are the trainee re-establishing after
+  // the hand-over (the second segment starts from wherever the first one ended), the offsets at 6 s
+  // become the baseline, and only growth past them counts.
+  // Bench scores (first / learn / direct / none): kind 0: 60 / 31 / 41 / 60; kind 1: 69 / 39 / 45 / 69;
+  // kind 2: 81 / 55 / 58 / 81.
+  const cfiScore = st => Math.round((st.maxDev || 0) + (st.maxHdg || 0) * 3 + Math.max(0, 95 - (st.minSpd == null ? 95 : st.minSpd)) * 4);
+  function traineeSL(L, c, st, mode = 'first') {
+    const s = L.s, kind = Math.abs(L.s.seed || 7) % 3;
+    st.kind = kind;
+    const inWindow = st.t > 12 && st.t < 32;
+    let k = inWindow ? 1 : 0;
+    if (mode === 'learn') k = inWindow ? (st.t < 20 ? 1 : 0.25) : 0;
+    else if (mode === 'direct') k = inWindow ? (st.t < 20 ? 0.3 : 1) : 0;
+    let pitchT = 2 + (L.alt0 - c.alt) * 0.008, thrT = 0.62, ail = null;
+    if (kind === 0 && k) { const ph8 = st.t % 8; pitchT = 2 + (L.alt0 - c.alt) * 0.008 + (ph8 < 5 ? -3.2 : 2.6) * k; }   // attention wanders off, then over-corrects
+    if (kind === 1 && k) ail = clamp((-5 * k - c.bank) * 0.05, -0.5, 0.5);                                          // a small bank, unseen, held
+    if (kind === 2 && k) { thrT = 0.62 - 0.13 * k; pitchT = 2; }                                                     // attitude kept, speed left to sag
+    const bankT = clamp(w180(L.hdg0 - c.hdg) * 0.8, -12, 12);
+    s.ovr = { elev: clamp((pitchT - c.pitch) * 0.14, -0.5, 0.5), ail: ail != null ? ail : clamp((bankT - c.bank) * 0.05, -0.5, 0.5), rud: 0 };
+    s.thr += clamp(thrT - s.thr, -0.008, 0.008);
+    if (st.t >= 6 && !st.base) { st.base = { dev: Math.abs(c.alt - L.alt0), hdg: Math.abs(w180(c.hdg - L.hdg0)) }; st.maxDev = 0; st.maxHdg = 0; st.minSpd = 999; }
+    if (st.base) {
+      st.maxDev = Math.max(st.maxDev || 0, Math.abs(c.alt - L.alt0) - st.base.dev);
+      st.maxHdg = Math.max(st.maxHdg || 0, Math.abs(w180(c.hdg - L.hdg0)) - st.base.hdg);
+      st.minSpd = Math.min(st.minSpd == null ? 999 : st.minSpd, c.kias);
+    }
+    if (inWindow) st.sawMistake = true;
+  }
+  // the instructor's own demonstration landing in cf2: the usual landing steps, but the first one
+  // starts by putting the aircraft back on the final (the trainee has just landed it)
+  const demoSteps = () => { const ss = landingSteps(AR.appr); ss[0].onStart = (L, c, st) => toFinal(L, 4); return ss; };
 
   // ---------------------------------------------------------------- the stages
   const STAGES = [
@@ -657,6 +779,141 @@
             { name: '講評：訓練生への言い方', atc: L => ({ msg: '（着陸後の講評。訓練生に最初に言うべきことは？）',
               opts: ['「レベルオフのあと高度がずれたね。昇降率を先に見る癖をつけよう。次はそこだけ練習しよう」（具体的な事実＋次の練習）', '「全体的にダメだった」（総評だけ）', '「センスがないのかも」（人格に触れる）'], ok: 0,
               why: '講評は具体的な事実から、次の練習につなげる。人格ではなく行動を扱うのが、教官の講評の原則。' }) },
+          ] },
+        { id: 'cf2', title: 'CFI：着陸のフレアを指導する', goal: '訓練生の進入に同乗し、フレアの誤りを実測で見抜いて言葉で直させ、最後に自分で見せる', aircraft: 'pa28',
+          why: '着陸の指導は「見て、測って、ひと言で直させる」ことがすべて。訓練生タカハシのフレアには癖があります（シードでどちらか）。あなたは同乗して接地の数字（浮いた距離か、沈下か）を掴み、癖を名指しする指導を選びます。指導が届けば、訓練生の次の着陸は実測で良くなります。（設計メモ：cadet/docs/complex-cfi-design.md）',
+          brief: ['ブリーフィング：訓練生の記録から、今日見るべきものを決める。', '訓練生が着陸します。手は出さず、フレアの開始と接地の数字（フロート／沈下）を見る。', '診断して指導する。訓練生はもう一度着陸する——指導の質は、その接地の数字で分かります。最後に自分で模範の着陸を見せます。'],
+          std: '診断と指導の選択が正しいこと＋訓練生の再着陸が改善すること＋自分の着陸が通常着陸の基準内', setup: { at: 'final', km: 5 }, book: ['ops.landing', 'crm.tem'],
+          steps: [
+            { name: 'ブリーフィング：今日の訓練生', atc: L => ({ msg: '（訓練生タカハシの記録：着陸のフレアに癖が残っている。今日の進入で、教官として接地の前に見るべきものは？）',
+              opts: ['狙点・速度・沈下率：進入の安定とフレアの開始が、接地を決めるから', '無線の言い方だけ', '訓練生の手の動きだけ（計器と外の数字は見ない）'], ok: 0,
+              why: '教官の目は「狙点に合っているか・速度は・沈下は」に置く。接地の質は、接地の瞬間ではなく進入とフレアの開始で決まっている。' }) },
+            { name: '訓練生の進入と着陸（同乗・観察）', observe: true, keys: '操作しない（観察：フレアをいつ始めるか、接地の浮き／沈下の数字を見る）', say: '訓練生が着陸します。手は出さず、フレアの開始と接地がどうなるかを見ていてください', until: c => c.onGround && c.gsK < 3, max: 260,
+              onStart: (L, c, st) => { L.s.opts.autoRud = true; st.tdAfter = L.s.t; st.along50 = null; },
+              check: (c, L, st) => traineeLand(L, c, st, 'error'),
+              onEnd: (L, c, st) => { L.s.ovr = null; L.cfiFloat = st.floatM; L.cfiSink = st.sink; L.cfiAlong = st.along; L.cfiKind = st.kind || 0; },
+              result: (L, st) => [{ name: '訓練生の接地（再現）', val: `フロート ${st.floatM == null ? '—' : st.floatM + ' m'}・沈下 ${st.sink == null ? '—' : st.sink + ' fpm'}・接地位置 ${st.along == null ? '—' : st.along + ' m'}（${CFI_FLARE[st.kind || 0]}）`, std: 'シードの癖が実測に出る', pass: (st.kind || 0) === 0 ? (st.sink || 0) >= 500 : (st.floatM || 0) >= 460 }] },
+            { name: '診断と指導：何をどう直すか', atc: L => ({ msg: `（訓練生の着陸：${CFI_FLARE[L.cfiKind || 0]}。実測はフロート ${L.cfiFloat == null ? '—' : L.cfiFloat + ' m'}・沈下 ${L.cfiSink == null ? '—' : L.cfiSink + ' fpm'} でした。次の進入の前に言うべきことは？）`,
+              opts: [(L.cfiKind || 0) === 0
+                ? '「フレアが早すぎる。滑走路の端を過ぎるまでパワーを残し、地上 25 ft くらいから一段目、13 ft から深く。浮いたら引くのを止めて待つ」（癖と直し方を数字で言う）'
+                : '「速度が 10 kt 速い。狙点と速度を見て、70 kt に合わせてからフレア。速いままでは浮いて伸びる」（癖と直し方を数字で言う）',
+                '「もっと丁寧にやろう」（具体的に言わない）', '（何も言わず、次の進入から自分が替わる）'], ok: 0,
+              why: '指導は「何が・どれだけ・どう直すか」を数字で短く。癖を名指しできた指導だけが、次の着陸を変える。' }) },
+            { name: '訓練生の再着陸：指導は届いたか', observe: true, keys: '操作しない（観察：同じ数字がどう変わるかを見る）', say: '訓練生がもう一度着陸します。指導が届いたかは、接地の数字で分かります', until: c => c.onGround && c.gsK < 3, max: 260,
+              onStart: (L, c, st) => { toFinal(L, 4); L.s.opts.autoRud = true; st.tdAfter = L.s.t; st.along50 = null; },
+              check: (c, L, st) => traineeLand(L, c, st, L.atcResult && L.atcResult.i === 0 ? 'fixed' : 'mild'),
+              onEnd: (L, c, st) => { L.s.ovr = null; L.cfi2Float = st.floatM; L.cfi2Sink = st.sink; L.cfi2Along = st.along; },
+              result: (L, st) => [{ name: '再着陸の接地', val: `フロート ${st.floatM == null ? '—' : st.floatM + ' m'}・沈下 ${st.sink == null ? '—' : st.sink + ' fpm'}（前回 フロート ${L.cfiFloat == null ? '—' : L.cfiFloat + ' m'}・沈下 ${L.cfiSink == null ? '—' : L.cfiSink + ' fpm'}）`, std: (L.cfiKind || 0) === 0 ? '沈下 320 fpm 以下' : 'フロート 380 m 以内', pass: (L.cfiKind || 0) === 0 ? (st.sink || 999) <= 320 : (st.floatM || 9999) <= 380 }] },
+            ...demoSteps(),
+            { name: '講評：訓練生への言い方', atc: L => ({ msg: '（着陸後の講評。訓練生に最初に言うべきことは？）',
+              opts: ['「フレアの開始が変わると、接地の数字がこう変わったね。次はその開始のタイミングだけを練習しよう」（実測の事実＋次の練習）', '「全体的にダメだった」（総評だけ）', '「センスがないのかも」（人格に触れる）'], ok: 0,
+              why: '講評は実測の事実から、次の練習につなげる。数字で見せると、訓練生は自分の変化を信じられる。' }) },
+          ] },
+        { id: 'cf3', title: 'CFI：水平直線の保持を指導する', goal: '訓練生の保持ミスを測り、「気づかせる」指導で直させる——介入は自分の腕の確認', aircraft: 'pa28',
+          why: '直す力より、気づかせる力が教官の本領。この課目では訓練生が水平直線で 1 つの癖を出します（シードでどれか）。指摘の仕方で、訓練生の次の区間が実測で変わります：気づかせる質問は定着し、直接の指示はその場だけ、黙って替われば何も残りません。',
+          brief: ['ブリーフィング：前回までの記録から、今日の観察の順序を決める。', '訓練生が水平直線を飛びます。ずれの種類と大きさを、数字で掴む。', '指導は 1 回だけ。そのあと訓練生がもう一度飛び、指導の効果が数字に出ます。最後に自分で立て直します。'],
+          std: 'ブリーフィング・指導の選択が正しいこと＋第 2 区間のずれが第 1 区間より小さいこと＋介入後の水平飛行（高度 ±100 ft・針路 ±10° を 15 秒）', setup: { at: 'area', kt: 95, hdg: 90 }, book: ['crm.tem'],
+          steps: [
+            { name: 'ブリーフィング：観察の順序', atc: L => ({ msg: '（訓練生タカハシの記録：水平直線の保持に課題が残る。今日の飛行で、教官の目の順序は？）',
+              opts: ['姿勢→高度→姿勢→針路→姿勢→速度のクロスチェック：ずれの種類を切り分けるため', '高度計だけを見続ける', '訓練生の手の動きだけ（計器は見ない）'], ok: 0,
+              why: 'ずれの「種類」は、1 つの計器では分からない。姿勢を中心に目を回すクロスチェックが、診断の速さを決める。' }) },
+            { name: '訓練生の飛行 ①（同乗・観察）', observe: true, keys: '操作しない（観察：高度・針路・速度のずれの種類と大きさを見る）', say: '訓練生が水平直線を飛びます。手は出さず、ずれの種類と大きさを掴んでください', dur: 38,
+              onStart: (L, c, st) => { L.s.opts.autoRud = true; },
+              check: (c, L, st) => traineeSL(L, c, st, 'first'),
+              onEnd: (L, c, st) => { L.s.ovr = null; L.cfiScore1 = cfiScore(st); L.cfiDev = Math.round(st.maxDev || 0); L.cfiHdg = Math.round(st.maxHdg || 0); L.cfiKind = st.kind || 0; },
+              result: (L, st) => [{ name: '訓練生のずれ（再現）', val: `高度 最大 ${Math.round(st.maxDev || 0)} ft・針路 最大 ${Math.round(st.maxHdg || 0)}°・最低速度 ${st.minSpd == null ? '—' : Math.round(st.minSpd) + ' kt'}（${CFI_SL_MISTAKES[st.kind || 0]}）`, std: 'シードの癖が実測に出る', pass: cfiScore(st) >= 45 }] },
+            { name: '指導：どう声をかけるか', atc: L => ({ msg: `（訓練生の飛行：${CFI_SL_MISTAKES[L.cfiKind || 0]}。ずれの大きさは高度 ${L.cfiDev || 0} ft・針路 ${L.cfiHdg || 0}° でした。ここでの声かけは？）`,
+              opts: ['「昇降率と姿勢と、どっちが先に動いたと思う？」（気づかせる質問：自分で見つけさせる）', '「ずれたら機首で直して。次は見ているから」（直接の指示）', '（何も言わず、黙って自分の操縦に替える）'], ok: 0,
+              why: '直し方を言うより「何が起きたか」に気づかせる質問が定着する。直接の指示はその場は直っても戻りやすく、黙って替わると訓練生には何も残らない——次の区間がそれを証明します。' }) },
+            { name: '訓練生の飛行 ②：指導の効果', observe: true, keys: '操作しない（観察：第 1 区間と数字を比べる）', say: '訓練生がもう一度飛びます。指導が届いたかは、ずれの数字で分かります', dur: 34,
+              onStart: (L, c, st) => { L.s.opts.autoRud = true; },
+              check: (c, L, st) => traineeSL(L, c, st, L.atcResult && L.atcResult.i === 0 ? 'learn' : L.atcResult && L.atcResult.i === 1 ? 'direct' : 'none'),
+              onEnd: (L, c, st) => { L.s.ovr = null; L.cfiScore2 = cfiScore(st); },
+              result: (L, st) => [{ name: '指導の効果（第 2 区間）', val: `ずれのスコア ${cfiScore(st)}（第 1 区間 ${L.cfiScore1 == null ? '—' : L.cfiScore1}）`, std: '第 1 区間の 85% 以下', pass: L.cfiScore1 != null && cfiScore(st) <= L.cfiScore1 * 0.85 }] },
+            { name: '介入：自分で立て直す', g: { kt: 95, how: 'level' }, keys: k('pitch', 'roll', 'thr', 'trim'), say: '「I have control」。高度 {alt0} ft・針路 {hdg0}°・95 kt に戻して保つ', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: T_SPD(95) }, hold: 15, max: 120, grade: true, gradeWhen: (c, L, st) => st.t > 4 },
+            { name: '講評：訓練生への言い方', atc: L => ({ msg: '（飛行後の講評。訓練生に最初に言うべきことは？）',
+              opts: ['「今日のずれは自分で見つけられたね。見つけた瞬間に何を見ていたか、覚えておこう」（気づきの事実＋次へのつなぎ）', '「全体的にダメだった」（総評だけ）', '「センスがないのかも」（人格に触れる）'], ok: 0,
+              why: '講評は「自分で気づけた」という事実を残すこと。教官の仕事は、訓練生が 1 人で気づける目を作ることにある。' }) },
+          ] },
+      ] },
+    // ======================================================================= 7
+    { id: 's7', title: '第 7 段階　型式移行（737 級ジェット）', phase: 'p6',
+      desc: '卒業後の副操縦士任用訓練を想定した、737-800 型（教材モデル）への型式移行訓練。ジェットの推力の遅れ（スプール）、速度で決めるフラップスケジュール、高速域と降下計画、片肺の性能の限界、ゴーアラウンドを、離陸から着陸までのプロファイルで学ぶ。数値は教材モデルの値で、実機の AFM・会社の SOP が優先する。',
+      lessons: [
+        { id: 'j1', title: '離陸とフラップスケジュール', goal: 'フラップ 5 で離陸し、正の上昇で脚を上げ、速度に応じてフラップを退避して 3,000 ft へ加速上昇する', aircraft: 'b737',
+          why: 'ジェットの離陸は「速度で外形を変える」手順。フラップ 5 は揚力を稼ぐためのもので、速くなれば抗力の方が大きくなる。退避は高度ではなく速度で決める（遅すぎれば失速に近づき、制限速度を超えればフラップを壊す）。脚上げは正の上昇の確認が条件——沈みながら上げると、脚のドアの抗力でさらに沈む。',
+          brief: [`離陸前点検（ジェット版）→ 管制の離陸許可を復唱。点検の前に<b>フラップ 5（V を 1 回）</b>にしておく。`, `<b>${JT.rotate} kt（Vr）</b>でローテーション。ジェットはプロペラの左偏向がない代わりに、推力の立ち上がりが遅い（スプール）。`, '正の上昇（VSI プラス・高度の増加）を確認して<b>脚 UP（G）</b>。<b>加速高度 1,500 ft</b> までは離陸フラップのまま上昇。', '<b>170 kt を過ぎたらフラップ UP</b>（退避は速度で決める）。加速して地上 3,000 ft へ。'],
+          std: `センターライン ±8 m・浮揚 ${JT.rotate} ±7 kt・地上 500 ft までに脚 UP・フラップ退避 165 kt 以上・上昇速度 ±10〜15 kt`, setup: { at: 'runway' }, book: ['crm.jet', 'perf.tol'],
+          steps: [
+            { name: '離陸前点検', checklist: 'before_takeoff_jet' },
+            { name: '離陸許可の復唱', atc: 'takeoff' },
+            takeoffRoll(JT.rotate),
+            jetGearUp(),
+            { name: '上昇（加速高度まで）', g: { kt: JT.y, pwr: 'full', how: 'climbFull' }, keys: k('pitch', 'trim'), say: `${JT.y} kt で加速高度 1,500 ft まで上昇。フラップは 5 のまま（退避は速度で決める）`, tgt: { spd: T_SPD(JT.y), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 300, until: c => c.aglR >= 1500, max: 240, grade: true },
+            jetAccel(),
+            { name: '3,000 ft へ上昇', g: { kt: 250, pwr: 'full', how: 'climbFull' }, keys: k('pitch', 'trim'), say: '250 kt で地上 3,000 ft まで上昇', tgt: { spd: T_SPD(250), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 1800, until: c => c.aglR >= 3000, max: 240, grade: true },
+          ] },
+        { id: 'j2', title: '高速域と降下計画', goal: '250 → 300 kt の加速と保持、スポイラーを使った降下、3：1 の降下計画と減速のスケジュールを学ぶ', aircraft: 'b737',
+          why: 'ジェットは抗力が小さく「降りながら減速」ができない。降下は早めに計画し（目安 3：1＝1,000 ft につき 3 NM）、速いまま降ろしたいときはスポイラーで抗力を作る。エンジン計器は N1（推力の目安）・EGT（排気温度）・FF（燃料流量）で読み、出力は N1 で管理する。',
+          brief: ['巡航で <b>N1・EGT・FF</b> を読む。出力の目安は回転数ではなく N1（%）。', '<b>250 → 300 kt</b> へ加速して保持。スプールの遅れだけ、操作は先回りする。', '<b>降下計画は 3：1</b>：落とす高度 1,000 ft につき 3 NM。6,000 ft なら TOD は約 18 NM 手前。', 'スポイラーで 250 kt のまま降下率を増やし、最後は <b>200 kt まで減速</b>（フラップ 15 の制限速度の目安）。'],
+          std: '300 kt ±10・高度 ±100 ft を連続保持、スポイラー降下 250 ±10 kt・約 1,800 fpm、減速後のレベルオフ ±150 ft', setup: { at: 'area', altFt: 6000, kt: 250, hdg: 90 }, book: ['crm.jet'],
+          steps: [
+            { name: '巡航：エンジン計器を読む', g: { kt: 250, how: 'level' }, keys: k('pitch', 'thr', 'trim', 'n1'), say: 'MFD のエンジン表示を読む：N1（推力の目安・%）・EGT（排気温度・℃）・FF（燃料流量）。ジェットは N1 で出力を管理する', dur: 12 },
+            { name: '加速（250 → 300 kt）', g: { kt: 300, how: 'level' }, keys: k('thr', 'pitch', 'trim'), say: '300 kt へ加速。推力の立ち上がりは遅い（スプール）ので先回りする。高度 {alt0} ft を保つ', tgt: { alt: T_ALT(), spd: T_SPD(300) }, hold: 15, max: 180, grade: true, gradeWhen: established(300, 10, 4, 45) },
+            { name: '降下計画（3：1 の目安）', atc: () => ({ msg: '（降下計画：いま高度 6,000 ft、空港の標高はほぼ 0 ft。このまま巡航すると、降下を始める目安は空港の何 NM 手前ですか）',
+              opts: ['約 18 NM 手前（落とす高度 6,000 ft × 3 ÷ 1,000）', '約 6 NM 手前（1,000 ft に 1 NM）', '空港の真上まで行ってから急降下する'], ok: 0,
+              why: '目安は「落とす高度 1,000 ft につき 3 NM」。6,000 ft なら約 18 NM です。ジェットは抗力が小さく、降下と減速を同時にこなすのが難しいので、計画が早いほど楽になります。減速の分も見込んで、余裕を持って早めに降ろし始めるのが実務の感覚です。' }),
+              keys: '1〜3 キーで選ぶ', say: '降下開始点（TOD）を計算する' },
+            { name: 'スポイラー降下', g: { kt: 250, fpm: -1800, how: 'rate' }, keys: k('thr', 'pitch', 'spoiler'), say: 'スポイラーを出して、250 kt のまま降下率を増やす（約 1,800 fpm）。高度 {alt0} ft から 4,000 ft 付近まで', tgt: { spd: T_SPD(250), vs: [-1800, 400] }, gradeWhen: (c, L, st) => st.t > 6 && establishedVs(-1800, 400, 4)(c, L, st), until: (c, L) => c.alt <= L.alt0 - 1950, max: 240, grade: true, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100; } },
+            { name: '減速とレベルオフ', g: { kt: 200, how: 'level' }, keys: k('thr', 'pitch', 'trim', 'spoiler'), say: 'スポイラーをしまい、200 kt まで減速して水平に保つ。200 kt はフラップ 15 の制限速度の目安——これより速いままでは F15 は出せない', tgt: { alt: T_ALT(150), spd: T_SPD(200) }, hold: 12, max: 180, grade: true, gradeWhen: (c, L, st) => st.t > 5 },
+          ] },
+        { id: 'j3', title: 'エンジン異常と片肺運航', goal: '片方のエンジンが止まっても方向と速度を保ち、ドリフトダウンの考え方で運航を続ける', aircraft: 'b737',
+          why: 'ジェットの片肺は、双発プロペラ機ほど方向の非対称が大きくない（エンジンが胴体に近い）。本当の問題は性能：推力が半分になると、上昇に使える「余り」がほぼ消え、重い機体は巡航高度を保てない。高度を守ろうとして速度を犠牲にするのが最悪の誤りで、正解は速度を守ったまま緩やかに降りるドリフトダウン。',
+          brief: ['右エンジンが止まります。まず<b>方向と速度</b>。非対称は小さいが、ラダーは要る。', '<b>生きている側の確認</b>：左の N1・EGT が正常に上がること。止まった側と取り違えない（Identify・Verify の考え方は双発と同じ）。', '高度は保てない前提で、<b>ドリフトダウン</b>：片肺の速度を守って緩やかに降り、水平を保てる高度まで下りて最寄りへ。'],
+          std: '片肺で 200 ±10 kt・針路 ±15°、ドリフトダウン 200 ±10 kt・約 400 fpm、低い高度で水平を連続保持', setup: { at: 'area', altFt: 6000, kt: 220, hdg: 90 }, book: ['me.oei', 'crm.jet'],
+          steps: [
+            { name: '巡航', g: { kt: 220, how: 'level' }, keys: k('pitch', 'thr'), say: '巡航中。まもなく右エンジンに異常が出ます', dur: 8 },
+            { name: 'エンジン異常：片肺で飛ぶ', fail: 'engR', g: { kt: 200, pwr: 'dead', how: 'oei' }, keys: k('rud', 'thr', 'pitch', 'n1'), say: '右エンジン異常！ 方向を保つ → 生きている左の N1・EGT が正常か確認 → 200 kt を守り、高度はできるだけ保つ', tgt: { spd: [200, 10], alt: T_ALT(400), hdg: T_HDG(15) }, hold: 20, max: 150, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+            { name: 'ドリフトダウンの判断', atc: () => ({ msg: '（片肺では推力が半分です。この重さでは、いまの高度を保つだけの余剰推力がありません。どうしますか）',
+              opts: ['高度を守るため機首を上げ続け、速度が落ちても高度を保つ', '速度を守り、ゆっくり降りる（ドリフトダウン）を受け入れて、最寄りの空港へ向かう', '止まったエンジンの再始動を、何度も繰り返す'], ok: 1,
+              why: '片肺の輸送機は、重いと巡航高度を保てません。速度を犠牲にして高度を守れば失速に近づきます。正解は、片肺の速度を保ったまま緩やかに降りるドリフトダウンで、水平飛行を保てる高さまで下りて最寄りへ向かうこと。再始動は、手順と時間の余裕があるときだけ試みます。' }),
+              keys: '1〜3 キーで選ぶ', say: '片肺での運航を判断する' },
+            { name: 'ドリフトダウン', g: { kt: 200, fpm: -400, how: 'rate' }, keys: k('pitch', 'thr'), say: '200 kt を守って緩やかに降下（ドリフトダウン）。約 1,000 ft 下へ', tgt: { spd: [200, 10], vs: [-400, 250] }, gradeWhen: (c, L, st) => st.t > 6, until: (c, L) => c.alt <= L.alt0 - 950, max: 240, grade: true, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100; } },
+            { name: '片肺で水平飛行', g: { kt: 200, how: 'level' }, keys: k('pitch', 'thr', 'trim', 'rud'), say: 'この高度なら水平を保てる。200 kt・針路 {hdg0}° を保つ（ここから先は最寄りの空港へ向かう想定）', tgt: { alt: T_ALT(150), spd: [200, 10], hdg: T_HDG(15) }, hold: 15, max: 150, grade: true, gradeWhen: (c, L, st) => st.t > 5 },
+          ] },
+        { id: 'j4', title: '進入・着陸とゴーアラウンド', goal: 'フラップ 15 → 40 と Vref+5 の保持、500 ft でゴーアラウンド、2 回目で着陸する', aircraft: 'b737',
+          why: 'ジェットの進入は「早めに作る」：減速が遅いので、フラップは段階的に（15 → 40）、速度は Vref+5 に早めに落ち着かせる。ゴーアラウンドでは、スロットルを押してから推力が出るまで数秒かかる（スプール遅れ）——その間の沈み込みを姿勢で受け止めるのが、ジェット特有の勘どころ。',
+          brief: [`フラップ 15 で進入し、<b>${JT.appr + 15} kt</b> 前後。次に <b>フラップ 40</b> で <b>${JT.appr} kt（Vref+5）</b> へ。`, '1 回目は<b>地上 500 ft でゴーアラウンド</b>の指示：全開 → フラップ 15 へ → 正の上昇で脚 UP。推力が出るまで数秒、沈んでも慌てない。', '2 回目はそのまま着陸。接地は通常の着陸の基準（重い機体なので接地速度の許容は少し広い）。'],
+          std: `ファイナル ${JT.appr} ±5 kt・ゴーアラウンドは 3 秒以内に全開操作・高度損失 120 ft 以内・脚 UP、接地は着陸の基準`, setup: { at: 'final', km: 6, flaps: 2, kt: JT.appr + 22, gear: true }, book: ['crm.jet', 'ops.landing'],
+          steps: [
+            { name: '着陸前点検', checklist: 'before_landing_jet' },
+            { name: '進入（フラップ 15）', g: { kt: JT.appr + 15, fpm: -800, flaps: 2, how: 'approach' }, keys: k('thr', 'pitch', 'roll'), say: `フラップ 15 で進入。速度は Vref+20 前後（${JT.appr + 15} kt）。ジェットは減速が遅いので、形態も速度も早めに作る`, tgt: { spd: T_SPD(JT.appr + 15, 8), cl: [0, 40] }, gradeWhen: c => c.aglR < 1600, until: c => c.aglR <= 1250, max: 240, grade: true },
+            { name: 'フラップ 40・Vref+5 へ', g: { kt: JT.appr, fpm: -Math.round(JT.appr * 5.3), flaps: 3, how: 'approach' }, keys: k('flaps', 'thr', 'pitch'), say: `フラップ 40（V）。${JT.appr} kt（Vref+5）まで減速して安定させる。500 ft で安定していなければゴーアラウンド`, tgt: { spd: T_SPD(JT.appr, 5), cl: [0, 30], gp: [3, 0.9] }, gradeWhen: c => c.aglR < 1200 && c.aglR > 480, until: c => c.aglR <= 520, max: 240, grade: true },
+            { name: 'ゴーアラウンド（TOGA）', g: { kt: JT.appr + 10, pwr: 'full', flaps: 2, how: 'climbFull' }, keys: k('thr', 'pitch', 'flaps', 'gear'), say: 'ゴーアラウンド！ 全開——ただし推力が出るまで数秒かかる（スプール遅れ）。沈んでも慌てず姿勢を保つ → フラップ 15 へ → 正の上昇で脚 UP', until: c => c.aglR > 1100, max: 180, grade: true, tgt: { spd: [JT.appr + 14, 14] }, gradeWhen: (c, L, st) => st.t > 10,
+              onStart: (L, c, st) => { st.a0 = c.aglR; st.min = c.aglR; st.pwr = null; }, check: (c, L, st) => { st.min = Math.min(st.min, c.aglR); if (st.pwr === null && c.thr > 0.95) st.pwr = st.t; if (c.onGround) st.touched = true; },
+              result: (L, st) => [{ name: 'フルパワーまで', val: st.pwr === null ? '—' : `${st.pwr.toFixed(1)} 秒`, std: '3 秒以内', pass: st.pwr !== null && st.pwr <= 3 },
+                { name: '高度損失', val: `${Math.round(st.a0 - st.min)} ft`, std: '120 ft 以内（スプール遅れの分を含む）', pass: st.a0 - st.min <= 120 * L.level.k && !st.touched },
+                { name: '脚', val: L.s.gearDown ? 'DOWN のまま' : 'UP', std: '正の上昇で UP', pass: !L.s.gearDown }] },
+            { name: '再進入（ファイナルへ）', g: { kt: JT.appr, how: 'approach', flaps: 3 }, keys: k('pitch', 'thr'), say: '管制の誘導でファイナルに戻ります（教材では位置を戻します）。今度は着陸します', dur: 4, onStart: (L) => placeFinal(L, 6, 3, JT.appr) },
+            ...landingSteps(JT.appr, { tdSpdTol: 20 }),
+          ] },
+        { id: 'j5', title: '型式限定チェック', goal: '離陸 → 上昇 → 高速域 → 片肺 → 進入 → 着陸の通しプロファイルを、審査の形で飛ぶ', aircraft: 'b737',
+          why: '型式限定の審査は、個別の操作ではなく「1 回の飛行を通して、安全で安定した運航ができるか」を見る。指示は短く、判断は自分で。基準は各課目と同じ（既存の standards で採点）。',
+          brief: ['通しプロファイル：離陸 → 上昇 → 高速域 → 片肺（短時間）→ 進入 → 着陸。', '教官の指示は最小限。速度・形態・判断は自分で組み立てる。', '基準は j1〜j4 と同じ。1 項目でも基準外なら不合格（審査の流儀）。'],
+          std: 'j1〜j4 の各基準と同じ', setup: { at: 'runway' }, book: ['crm.jet'],
+          steps: [
+            { name: '離陸前点検', checklist: 'before_takeoff_jet' },
+            { name: '離陸許可の復唱', atc: 'takeoff' },
+            takeoffRoll(JT.rotate),
+            jetGearUp('正の上昇。脚 UP'),
+            { name: '上昇', g: { kt: JT.y, pwr: 'full', how: 'climbFull' }, keys: k('pitch'), say: `${JT.y} kt・1,500 ft まで`, tgt: { spd: T_SPD(JT.y), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 300, until: c => c.aglR >= 1500, max: 240, grade: true },
+            jetAccel({ say: '加速。170 kt 過ぎでフラップ UP、そのまま 3,000 ft へ', toAlt: 2900, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100; } }),
+            { name: '高速域', g: { kt: 280, how: 'level' }, keys: k('thr', 'pitch', 'trim'), say: '3,000 ft・280 kt を保つ', tgt: { alt: T_ALT(), spd: T_SPD(280) }, hold: 12, max: 150, grade: true, gradeWhen: (c, L, st) => st.t > 5 },
+            { name: 'エンジン異常（片肺）', fail: 'engR', g: { kt: 210, pwr: 'dead', how: 'oei' }, keys: k('rud', 'thr', 'pitch'), say: '右エンジン故障。方向・速度・生きている側の確認', tgt: { spd: [210, 10], hdg: T_HDG(15) }, hold: 15, max: 150, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+            { name: '復旧（両エンジン）', g: { kt: 230, how: 'level' }, keys: k('thr', 'pitch'), say: '右エンジンは復旧した（審査の想定）。両エンジンで安定させる', dur: 8, onStart: (L) => { L.s.eng.forEach(e => { e.failed = false; e.feather = false; }); } },
+            { name: '進入へ', g: { kt: JT.appr, how: 'approach', flaps: 3 }, keys: k('pitch', 'thr'), say: '降下してファイナルへ（教材では位置を進めます）', dur: 4, onStart: (L) => placeFinal(L, 6, 3, JT.appr) },
+            { name: '着陸前点検', checklist: 'before_landing_jet' },
+            ...landingSteps(JT.appr, { tdSpdTol: 20 }),
           ] },
       ] },
   ];

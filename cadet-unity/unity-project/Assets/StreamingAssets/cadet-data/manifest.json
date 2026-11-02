@@ -1,0 +1,276 @@
+{
+ "tree": "/home/hatch/workspace/cadet-wt-free",
+ "files": {
+  "quiz": {
+   "bytes": 35811,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 506
+  },
+  "syllabus": {
+   "bytes": 148354,
+   "fnMarkers": 471,
+   "cycles": 0,
+   "objects": 957
+  },
+  "textbook-fl": {
+   "bytes": 163398,
+   "fnMarkers": 120,
+   "cycles": 0,
+   "objects": 906
+  },
+  "school-data": {
+   "bytes": 14030,
+   "fnMarkers": 66,
+   "cycles": 0,
+   "objects": 129
+  },
+  "sanford": {
+   "bytes": 6175,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 43
+  },
+  "physics-constants": {
+   "bytes": 7293,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 129
+  },
+  "radio-data": {
+   "bytes": 48918,
+   "fnMarkers": 35,
+   "cycles": 0,
+   "objects": 319
+  },
+  "career-constants": {
+   "bytes": 36313,
+   "fnMarkers": 35,
+   "cycles": 0,
+   "objects": 135
+  },
+  "tem": {
+   "bytes": 9265,
+   "fnMarkers": 18,
+   "cycles": 0,
+   "objects": 31
+  },
+  "school-content": {
+   "bytes": 45020,
+   "fnMarkers": 42,
+   "cycles": 0,
+   "objects": 19
+  },
+  "lecture-summaries": {
+   "bytes": 1277,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 16
+  },
+  "lecture-units": {
+   "bytes": 4718,
+   "fnMarkers": 4,
+   "cycles": 0,
+   "objects": 1
+  },
+  "lecture-notes": {
+   "bytes": 44562,
+   "fnMarkers": 1,
+   "cycles": 0,
+   "objects": 331
+  },
+  "people": {
+   "bytes": 7660,
+   "fnMarkers": 1,
+   "cycles": 0,
+   "objects": 104
+  },
+  "checklists-archer": {
+   "bytes": 6947,
+   "fnMarkers": 74,
+   "cycles": 0,
+   "objects": 56
+  },
+  "checklists-seminole": {
+   "bytes": 7530,
+   "fnMarkers": 78,
+   "cycles": 0,
+   "objects": 59
+  },
+  "checklists-jet": {
+   "bytes": 13751,
+   "fnMarkers": 122,
+   "cycles": 0,
+   "objects": 123
+  },
+  "usable": {
+   "bytes": 2430,
+   "fnMarkers": 3,
+   "cycles": 0,
+   "objects": 9
+  },
+  "walkaround-archer": {
+   "bytes": 6282,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 63
+  },
+  "walkaround-seminole": {
+   "bytes": 6442,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 66
+  },
+  "answer-map": {
+   "bytes": 18114,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 582
+  },
+  "class-talk": {
+   "bytes": 16740,
+   "fnMarkers": 160,
+   "cycles": 0,
+   "objects": 106
+  },
+  "dialog-en": {
+   "bytes": 49310,
+   "fnMarkers": 30,
+   "cycles": 0,
+   "objects": 59
+  },
+  "registrations": {
+   "bytes": 530,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 16
+  },
+  "airfields": {
+   "bytes": 2881,
+   "fnMarkers": 6,
+   "cycles": 0,
+   "objects": 17
+  },
+  "dialog-day1-lines": {
+   "bytes": 6203,
+   "fnMarkers": 4,
+   "cycles": 0,
+   "objects": 5
+  },
+  "dialog-instructor-lines": {
+   "bytes": 8821,
+   "fnMarkers": 5,
+   "cycles": 0,
+   "objects": 3
+  },
+  "dialog-first-officer-lines": {
+   "bytes": 4622,
+   "fnMarkers": 5,
+   "cycles": 0,
+   "objects": 12
+  },
+  "gamebook": {
+   "bytes": 9512,
+   "fnMarkers": 3,
+   "cycles": 0,
+   "objects": 166
+  },
+  "academy-spec": {
+   "bytes": 37536,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 752
+  },
+  "dorm-spec": {
+   "bytes": 11816,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 238
+  },
+  "tower-spec": {
+   "bytes": 4228,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 89
+  },
+  "hangar-spec": {
+   "bytes": 1766,
+   "fnMarkers": 0,
+   "cycles": 0,
+   "objects": 28
+  },
+  "dialog-trees": {
+   "bytes": 98874,
+   "fnMarkers": 2,
+   "cycles": 0,
+   "objects": 1848
+  }
+ },
+ "failures": {},
+ "counts": {
+  "quizBanks": 17,
+  "quizQuestions": 235,
+  "lessons": 55,
+  "lessonIds": [
+   "k1",
+   "k2",
+   "k3",
+   "k4",
+   "k5",
+   "k6",
+   "a1",
+   "a2",
+   "a3",
+   "a4",
+   "a5",
+   "a6",
+   "a7",
+   "a8",
+   "t1",
+   "t2",
+   "t3",
+   "t4",
+   "e1",
+   "e2",
+   "e3",
+   "e4",
+   "c1",
+   "x1",
+   "x2",
+   "x3",
+   "n1",
+   "n2",
+   "n3",
+   "i1",
+   "i2",
+   "i3",
+   "i8",
+   "i4",
+   "i5",
+   "i6",
+   "i7",
+   "m1",
+   "m2",
+   "m3",
+   "m4",
+   "e6",
+   "m5",
+   "r1",
+   "cx1",
+   "cx2",
+   "cx3",
+   "cf1",
+   "cf2",
+   "cf3",
+   "j1",
+   "j2",
+   "j3",
+   "j4",
+   "j5"
+  ],
+  "bookChapters": 27,
+  "bookSections": 120,
+  "dialogTreeObjects": 1848,
+  "people": 10
+ }
+}

@@ -107,19 +107,25 @@ export const TOWER = {
   doorH: 2.15,
 };
 // the stair inside the shaft, as pure geometry (world/tower.js builds it, the tests hold it): five dog-leg
-// flights, each rising the same share of the climb, treads 0.24 m up at most (the walker's step is 0.35), the
-// lanes alternating across the shaft's inside, a landing strip at each end. Flights run along a: even flights in
-// the west lane go north (a down), odd flights in the east lane come back south.
+// flights, each rising the same share of the climb, the lanes alternating across the shaft's inside, a
+// landing strip at each end. Flights run along a: even flights in the west lane go north (a down), odd
+// flights in the east lane come back south. The geometry is the textbook dog-leg — a flight spans exactly
+// the run BETWEEN the two strips and a strip is flat across both lanes — and the risers are capped at
+// 0.175: the shipped stair overlapped each flight's end over a strip instead (run = shaft − one strip),
+// which put the arrival strip over the east flights' last treads (0.2–0.6 m of headroom: unclimbable) and,
+// at the departure end, left the next flight's treads standing in the landing's other lane, where the
+// walker's disc (0.56 m across, step 0.35) could not sidestep into the flight at all. A 4.3 m shaft rising
+// 3.44 m a flight makes this a steep ship's stair; that is the honest price of a walkable one
+// (full-play audit, domain D — test/world-walk.test.mjs walks it end to end).
 export function towerStairs(T = TOWER) {
   const flights = 5, inA0 = T.s0 + T.wall, inA1 = T.s1 - T.wall, inC0 = T.sc0 + T.wall, inC1 = T.sc1 - T.wall;
-  const laneW = (inC1 - inC0 - 0.2) / 2, land = 1.1;                    // the landing strips' depth along a
-  const run = (inA1 - inA0) - land, rise = T.cabFloor / flights, steps = Math.ceil(rise / 0.24);
+  const laneW = (inC1 - inC0 - 0.2) / 2, land = 0.8;                    // the landing strips' depth along a
+  const run = (inA1 - inA0) - 2 * land, rise = T.cabFloor / flights, steps = Math.ceil(rise / 0.175);
   const out = { flights: [], landings: [], inA0, inA1, inC0, inC1, laneW, land, rise, steps, stepRise: rise / steps, tread: run / steps };
   for (let k = 0; k < flights; k++) {
     const west = k % 2 === 0, y0 = rise * k, y1 = rise * (k + 1);
     const c0 = west ? inC0 : inC0 + laneW + 0.2, c1 = c0 + laneW;
-    // a flight's low end sits against its landing strip; even flights start at the south strip, odd at the north
-    const aFrom = west ? inA1 : inA0 + land, aTo = west ? inA0 + land : inA1;
+    const aFrom = west ? inA1 - land : inA0 + land, aTo = west ? inA0 + land : inA1 - land;
     out.flights.push({ k, west, c0, c1, aFrom, aTo, y0, y1 });
     if (k > 0) out.landings.push({ y: y0, a0: west ? inA1 - land : inA0, a1: west ? inA1 : inA0 + land, c0: inC0, c1: inC1 });
   }

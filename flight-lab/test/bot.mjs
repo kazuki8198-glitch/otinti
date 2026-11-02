@@ -7,7 +7,7 @@ export function makeBot(FL) {
   const P = FL.physics, SC = FL.school, DEG = Math.PI / 180, clamp = P.clamp;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const st = { pBase: null, iThr: 0, lastIas: null, lastStep: -1, flare: false };
-  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; st.flareF = false; st.sp = false; st.spDone = false; st.spTurn = 0; st.spPrev = null; }
+  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; st.flareF = false; st.sp = false; st.spDone = false; st.spTurn = 0; st.spPrev = null; st.gP = null; st.flareR = false; st.p0R = null; }
   // the hands: a pitch target (the hold), a bank target (the stick), the rudder
   function pitchTo(s, deg) { s.keyHold = true; s.pTgt = clamp(deg, -20, 22); s.pRate = 0; }
   function bankTo(s, bankT) { const o = s.out, p = -s.w[2] / DEG; s.rIn = clamp(0.045 * (bankT - o.bank) - 0.012 * p, -1, 1); }
@@ -89,7 +89,19 @@ export function makeBot(FL) {
         bankTo(s, 3 * live + clamp(w180((tv('hdg') != null ? hdg : c.rwyHdg && /上昇/.test(name) ? 360 : hdg) - c.hdg) * 0.5, -5, 5));
         return;
       }
-      s.thr = 0; speedPitch(s, c, S.field && c.aglR < 300 ? (L.V.glideLand || 66) : (g.kt || L.V.glide), dt);
+      s.thr = 0;
+      // (the glide: pitch for the glide speed with a law that can actually get there. speedPitch's trim
+      // integrator (0.05 °/s per knot of error) is a cruise law — from a climb attitude it needs most of
+      // the glide to find the glide attitude, the speed sags 10+ kt low the whole way down and the sink
+      // builds past 1,300 fpm. This law walks the base attitude at 0.30 °/s per knot with a stronger
+      // proportional term: the glide is established in seconds and held, as the lesson teaches)
+      const gKt = S.field && c.aglR < 300 ? (L.V.glideLand || 66) : (g.kt || L.V.glide);
+      if (S.field) speedPitch(s, c, gKt, dt);   // (the field approach's S-turns and spiral are flown on the old law: its gentleness is what puts the bot in the field zone — e4)
+      else {
+        if (st.gP == null) st.gP = c.pitch;
+        st.gP = clamp(st.gP + (c.kias - gKt) * 0.30 * dt, -14, 12);
+        pitchTo(s, clamp(st.gP + 0.45 * (c.kias - gKt), -14, 12));
+      }
       const pos = P.ne(s), R = P.LAB_RWY;
       // (a step may name an off-field site (S.field — e4's meadow): glide to it, not the runway. A straight
       // best-glide arrives high, so the height is S-turned away first, as the lesson teaches)
@@ -125,7 +137,14 @@ export function makeBot(FL) {
       const brg = FL.avionics.trueToMag(FL.avionics.neBearing(pos, { n: aim[0], e: aim[1] }), P.MAGVAR_W);
       headTo(s, c, c.along > -1700 && c.aglR < 700 && Math.abs(c.cross) < 600 ? 360 - clamp(c.cross * 0.3, -20, 20) : brg, 30);
       if (c.aglR < 350 && c.along > -1500) s.flapIdx = 2;
-      if (c.aglR < 18) { s.thr = 0; pitchTo(s, 5); }
+      if (c.aglR < 40 || st.flareR) {
+        // the flare, as at the field: idle, the nose up as the ground comes, more if the sink is fast
+        // (the old token flare — pitch to 5° below 18 ft — could not check a glide's sink at all:
+        // the bot arrived at 1,100+ fpm and broke the gear, which a crash gate that read the
+        // post-crash state used to grade as a gentle forced landing)
+        if (!st.flareR) { st.flareR = true; st.p0R = c.pitch; }
+        s.thr = 0; pitchTo(s, clamp(st.p0R + (40 - c.aglR) / 40 * 9 + clamp((-c.vs - 150) * 0.012, 0, 4), -2, 10));
+      }
       return;
     }
     // flight by the guide

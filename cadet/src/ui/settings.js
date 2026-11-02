@@ -1,7 +1,7 @@
 // CADET — ui/settings.js : the player's settings, kept in localStorage ('cadet.settings') when the browser allows it.
 // Every storage access is guarded: a private window, blocked site data or a full quota just means the settings are
 // not remembered. Values are checked and clamped; anything unknown or broken in storage is ignored.
-export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: true, quality: null, volume: 0.8, showPerf: false, walkHold: false, voice: false, textSpeed: 1,
+export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: true, quality: null, volume: 0.8, showPerf: false, walkHold: false, voice: true, textSpeed: 1,
   autoRud: false, pitchHold: false, stickBoost: false, lessonLevel: 'basic', panel2D: false, atcVoice: true, radioJa: true, guide: true,
   volEngine: 1, volAmb: 1, volRadio: 1, subSize: 1, colorAssist: false, firstHelp: true,
   // (platform fixes) subtitles can be turned off; the pad's dead zone and the keyboard hold's speed; the
@@ -10,7 +10,9 @@ export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: tr
   subtitles: true, padDz: 0.12, holdSens: 1, padMap: null, keyBinds: null, heldBinds: null,
   qShadow: null, qAO: null, qBloom: null,
   // (M8) every one off at first: the AI instructor (and its model), the microphone on the radio, the crew in English
-  aiTutor: false, aiModel: 'claude-opus-5-5', micRadio: false, crewEnglish: false, crewEnglishJa: true };
+  aiTutor: false, aiModel: 'claude-opus-5-5', micRadio: false, crewEnglish: false, crewEnglishJa: true,
+  // (full voice) not a player setting: whether the one-time migration of the voice default (see createSettings) has run
+  voiceFullMigrated: false };
 const KEY = 'cadet.settings';
 const RULES = {
   sensitivity: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.2, v)) : undefined),
@@ -21,6 +23,7 @@ const RULES = {
   showPerf: (v) => (typeof v === 'boolean' ? v : undefined),
   walkHold: (v) => (typeof v === 'boolean' ? v : undefined),
   voice: (v) => (typeof v === 'boolean' ? v : undefined),
+  voiceFullMigrated: (v) => (typeof v === 'boolean' ? v : undefined),
   textSpeed: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.5, v)) : undefined),
   quality: (v) => (v === null || (typeof v === 'string' && /^(low|medium|high|ultra)$/.test(v)) ? v : undefined),
   autoRud: (v) => (typeof v === 'boolean' ? v : undefined),
@@ -86,6 +89,14 @@ export function createSettings(defaults = DEFAULTS, storage = (() => { try { ret
     }
   } catch (e) { /* unreadable: keep the defaults */ }
   const save = () => { try { if (storage) storage.setItem(KEY, JSON.stringify(values)); } catch (e) { /* not remembered */ } };
+  // (full voice) voice used to default to false, and stored values load over the defaults — so a stored voice:false
+  // may be nothing but that old default, not a choice; no release ever told the two apart. Choice: treat such a
+  // false as the old default and turn voice back on ONCE, recording it in voiceFullMigrated (saved with the change,
+  // and with any later set()). Once the marker is stored, a voice:false is the player's own and stays off.
+  if ('voiceFullMigrated' in values && !values.voiceFullMigrated) {
+    values.voiceFullMigrated = true;
+    if (values.voice === false) { values.voice = true; save(); }
+  }
   return {
     get: (k) => values[k],
     set(k, v) {

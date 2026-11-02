@@ -19,6 +19,7 @@ const KEPT = [
   [/^［選択］[^ぁ-ゖァ-ヺ]*$/, 'choices that are the book\'s values alone — numbers, units, words in quotes (the pattern masks them)'],
   [/^# 問のうち # 問目。$/, 'a question\'s place in its set, said at each question of a class\'s drill and a chapter\'s checks — where the cadet is, not what the book says'],
   [/^正解です。$/, 'a question answered right, in the classes\' checks and drills and the evenings\' study — the feedback, not the book'],
+  [/^【必須】$/, 'the ANA triage tag said with a section\'s title on its card (content/ana-triage.js) — the syllabus\'s metadata about the section, not the class\'s wording'],
   [/^問題 #。$/, 'a question\'s number in the evening\'s study and a class\'s drill — where the cadet is, not what the book says'],
 ];
 

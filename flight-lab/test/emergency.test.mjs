@@ -33,6 +33,25 @@ test('e4: the bot selects the field, holds best glide and puts it down in the fi
   assert.equal(L.fail.engine !== undefined, true, 'the engine really failed (failNow)');
 });
 
+test('e2: a forced landing is judged on the arrival as flown — a glide held into the ground fails as an accident, a flared one passes', () => {
+  // (regression, full-play audit C-1: school.js's crash gate used to read the derived state AFTER
+  // physics' crash() had zeroed the velocity, so its sink/speed conditions could never fail and a
+  // gear-breaking impact was graded a gentle forced landing, grade S. The gate now reads the last
+  // airborne state. A pilot who never flares arrives at 1,100+ fpm and must fail as 事故…)
+  const noFlare = runLesson(FL, 'e2', 'basic', 1200, (L) => {
+    if (L.fail.engine && L.last && !L.last.onGround) { L.s.keyHold = true; L.s.pTgt = -8; }
+  });
+  assert.ok(noFlare.done && !noFlare.passed, `the unflared arrival fails: ${noFlare.grade}`);
+  assert.ok(noFlare.lastAir && noFlare.lastAir.vs < -800, `the arrival really was hard: ${noFlare.lastAir && Math.round(noFlare.lastAir.vs)} fpm`);
+  const acc = noFlare.results[noFlare.results.length - 1];
+  assert.equal(acc.step, '事故', 'the lesson ends as an accident, not a forced landing');
+  assert.match(acc.rows[0].val, /接地の衝撃/, 'the gear-break reason is the result');
+  // (…and the same lesson flown with a flare — the stock bot — touches down gently and passes)
+  const flared = runLesson(FL, 'e2', 'basic', 1200);
+  assert.ok(flared.done && flared.passed, `the flared arrival passes: ${flared.grade} ${JSON.stringify(flared.results.flatMap(r => r.rows).filter(r => !r.pass))}`);
+  assert.ok(!flared.s.crashed, 'no crash at all when the arrival is flown');
+});
+
 test('i8: AHRS and GPS both fail, and the bot flies compass and timed turns on the standby instruments', () => {
   const L = runLesson(FL, 'i8', 'basic', 1200);
   assert.ok(L.done && L.passed, `i8 passed: ${L.grade} ${L.reason} ${JSON.stringify(L.results.flatMap(r => r.rows).filter(r => !r.pass))}`);

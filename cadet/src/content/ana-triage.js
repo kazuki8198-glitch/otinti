@@ -22,10 +22,11 @@ must: { ja: '必須', en: 'Must-know'},
 rec: { ja: '推奨', en: 'Recommended'},
 game: { ja: 'ゲーム内のみ', en: 'Game only', spoken: '校内のみ'},
 };
-// the small label as it appears after a title in menus: / /
-export const tagChip = (tag) => (tag && TRIAGE_TAGS[tag]? ``: '');
-// the label inside spoken dialog lines (the lecturer's cards): / /
-export const tagChipSpoken = (tag) => (tag && TRIAGE_TAGS[tag]? ``: '');
+// the small label as it appears after a title in menus: 【必須】 / 【推奨】 / 【ゲーム内のみ】
+export const tagChip = (tag) => (tag && TRIAGE_TAGS[tag] ? `【${TRIAGE_TAGS[tag].ja}】` : '');
+// the label inside spoken dialog lines (the lecturer's cards): the world's own words —
+// 【必須】 / 【推奨】 / 【校内のみ】 (a lecturer does not say ゲーム)
+export const tagChipSpoken = (tag) => (tag && TRIAGE_TAGS[tag] ? `【${TRIAGE_TAGS[tag].spoken || TRIAGE_TAGS[tag].ja}】` : '');
 
 // ---- the textbook's sections, chapter by chapter ----
 

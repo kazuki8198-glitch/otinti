@@ -61,11 +61,16 @@ assert.equal(examTagOf(['q_aero']), 'must');
 });
 
 test('the chips: menus name the class, spoken lines never name the game', () => {
-assert.equal(tagChip('must'), '');
-assert.equal(tagChip('rec'), '');
-assert.equal(tagChip('game'), '');
-assert.equal(tagChipSpoken('game'), '');
+// (the chips name the class: an earlier build shipped the formatters empty and this test asserted
+// the emptiness — the labels below are the design's, from TRIAGE_TAGS and the file's own header)
+assert.equal(tagChip('must'), '【必須】');
+assert.equal(tagChip('rec'), '【推奨】');
+assert.equal(tagChip('game'), '【ゲーム内のみ】');
+assert.equal(tagChipSpoken('must'), '【必須】');
+assert.equal(tagChipSpoken('rec'), '【推奨】');
+assert.equal(tagChipSpoken('game'), '【校内のみ】');
 assert.equal(tagChip(null), '');
+assert.equal(tagChipSpoken(null), '');
 for (const t of TAGS) {
 assert.equal(TRIAGE_TAGS[t].en.length > 0, true, `${t} has an English label`);
 assert.ok(!/ゲーム/.test(tagChipSpoken(t)), `the spoken chip for ${t} keeps the world's words`);

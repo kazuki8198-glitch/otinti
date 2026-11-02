@@ -92,10 +92,16 @@
   function placeFinal(L, km = 6, flaps = 3, kt = JT.appr) {
     const R = ph.LAB_RWY, D = km * 1000, [n, e] = ph.rwyToNE(R, 300 - D, 0);
     const altFt = R.elevFt + Math.tan(3 * Math.PI / 180) * D * ph.FT;
-    ph.placeInAir(L.s, n, e, altFt, R.trueHdg, kt, -3, flaps, null);
+    // the placement itself must go through the CURRENT FL.physics (school.js resolves it the same
+    // way): in the built game this module loads before installSorajima replaces FL.physics, so the
+    // captured ph is the lab's own physics, whose placeInAir/derive read fields (elec, hobbs) that
+    // Sorajima states do not carry — j4's re-approach and j5's approach step threw on every attempt
+    // and the FO phase dead-ended at fo1 (full-play audit, domain B). The geometry above stays on
+    // the captured ph: both physics define LAB_RWY identically, so the numbers do not change.
+    FL.physics.placeInAir(L.s, n, e, altFt, R.trueHdg, kt, -3, flaps, null);
     L.s.gearDown = true; L.s.gearPos = 1;
     L.hdg0 = 360; L.alt0 = Math.round(altFt);
-    ph.derive(L.s);
+    FL.physics.derive(L.s);
   }
   // positive rate → gear up (the m1 / cx1 shape, at the jet's speeds)
   const jetGearUp = (say) => ({ name: '正の上昇・脚上げ', g: { kt: JT.y, pwr: 'full', how: 'climbFull' }, keys: k('gear', 'pitch'), say: say || '正の上昇を確認して脚 UP（G）', until: (c, L) => !c.gearDown || c.aglR > 600, max: 60,
@@ -151,7 +157,7 @@
   const toFinal = (L, km = 4) => {
     const s = L.s, R = ph.LAB_RWY, D = km * 1000, along = 300 - D, [n, e] = ph.rwyToNE(R, along, 0);
     const altFt = R.elevFt + Math.tan(3 * Math.PI / 180) * D * ph.FT;
-    ph.placeInAir(s, n, e, altFt, R.trueHdg, AR.appr, -3, AR.apprFlaps, null);
+    FL.physics.placeInAir(s, n, e, altFt, R.trueHdg, AR.appr, -3, AR.apprFlaps, null);   // current physics, as in placeFinal above
     L.hdg0 = 360; s.ovr = null; s.brake = 0;
   };
   // the trainee flies an approach and a landing (cf2): a glidepath PD on the stick and throttle, then a
@@ -375,8 +381,12 @@
             { name: 'エンジン故障：滑空開始', g: { kt: AR.glide, pwr: 'dead', how: 'glide' }, keys: k('pitch', 'roll'), say: `エンジン停止！ 機首を下げて ${AR.glide} kt。LAB RWY 36 へ向けて旋回`, fail: 'engine', tgt: { spd: [AR.glide, 8] }, grade: true, gradeWhen: (c, L, st) => st.t > 8, until: (c, L, st) => st.t > 25, max: 30 },
             { name: '遭難通報', atc: 'mayday' },
             { name: '滑走路へ', g: { kt: AR.glide, pwr: 'dead', how: 'glide' }, keys: k('pitch', 'roll', 'flaps'), say: `${AR.glide} kt で LAB RWY 36 へ滑空し着陸。届くと確信できてからフラップ`, tgt: { spd: [AR.glide, 8] }, until: c => c.onGround && c.gsK < 3, max: 420, grade: true, gradeWhen: c => c.aglR > 300,
-              check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; } },
-              result: (L, st) => [{ name: '着陸場所', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路', pass: !!st.paved }] },
+              check: (c, L, st) => { if (c.onGround && !st.td) { st.td = c.td || null; st.paved = c.paved; } },
+              // (the lesson's own standard — 滑走路（または安全な場所） — and its brief's fallback, implemented:
+              // an off-runway touchdown the airframe took (below the 1,000 fpm gear standard, wings near
+              // level) is the safe place the brief teaches judging for. Until the crash gate was fixed
+              // (audit C-1) this alternative existed only as that gate's accident)
+              result: (L, st) => { const safe = !st.paved && st.td && st.td.fpm < 1000 && Math.abs(st.td.bank) < 20; return [{ name: '着陸場所', val: st.paved ? '滑走路' : safe ? '滑走路外（安全な不時着）' : '滑走路外', std: '滑走路（または安全な場所）', pass: !!st.paved || !!safe }]; } },
           ] },
         { id: 'e4', title: '強制着陸（場外地への不時着）', goal: '高度のあるエンジン故障で、届く場外地を選び、滑空を管理して実際に降ろす', aircraft: 'pa28',
           why: '滑走路まで届かない高度と距離では、「どこへ降りるか」と「滑空の管理」がすべて。速すぎれば届きすぎ、遅すぎれば届かない。最良滑空速度を守り、余った高度は S ターンやフラップで計画的に捨てる。エンジンが止まった以上、ゴーアラウンドはできない——だからこそ選定と判断が着陸そのものより先に来る。',
@@ -419,9 +429,15 @@
             ...stepTurn(-1, 45, '左急旋回', { kt: 95, tgt: { spd: T_SPD(95) } }),
             { name: '失速の準備', keys: k('thr', 'flaps', 'pitch'), g: '目安：スロットル アイドル・フラップ 25°。高度を保つように機首を上げ続ける', say: 'フラップ 25°・パワーアイドル。高度を保ちながら失速させる', until: c => c.stall && c.kias < 52, max: 150 },
             stallRecovery(AR.x - 4),
-            { name: '模擬エンジン故障', g: { kt: AR.glide, pwr: 'dead', how: 'glide' }, keys: k('pitch', 'roll', 'flaps'), say: `エンジン故障！ ${AR.glide} kt で滑走路へ滑空し着陸`, fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 700, grade: true, tgt: { spd: [AR.glide, 8] }, gradeWhen: c => c.aglR > 300,
-              check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; } },
-              result: (L, st) => [{ name: '着陸', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路（または安全な不時着）', pass: !!st.paved }] },
+            { name: '模擬エンジン故障', g: { kt: AR.glide, pwr: 'dead', how: 'glide' }, keys: k('pitch', 'roll', 'flaps'), say: `エンジン故障！ ${AR.glide} kt で滑走路へ滑空し着陸`, fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 700, grade: true, tgt: { spd: [AR.glide, 8] }, gradeWhen: (c, L, st) => c.aglR > 300 && st.t > 8,
+              check: (c, L, st) => { if (c.onGround && !st.td) { st.td = c.td || null; st.paved = c.paved; } },
+              // (the gradeWhen gains the entry grace the other glide steps have (e3's 滑空開始: st.t > 8):
+              // the failure interrupts whatever the previous item left — ~100 kt after the stall recovery —
+              // and grading the transition seconds made the item's speed row unpassable by construction.
+              // The result implements its printed standard: the runway, or a forced landing the airframe
+              // took (below the 1,000 fpm gear standard, wings near level) — until the crash gate was
+              // fixed (audit C-1) that alternative existed only as that gate's accident)
+              result: (L, st) => { const safe = !st.paved && st.td && st.td.fpm < 1000 && Math.abs(st.td.bank) < 20; return [{ name: '着陸', val: st.paved ? '滑走路' : safe ? '滑走路外（安全な不時着）' : '滑走路外', std: '滑走路（または安全な不時着）', pass: !!st.paved || !!safe }]; } },
           ] },
       ] },
     // ======================================================================= 2

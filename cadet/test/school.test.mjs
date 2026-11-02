@@ -222,7 +222,12 @@ test('school: the lecturer\'s notes — her check as a card\'s prediction where 
   // the section, where the cadet reads by choice. Her check stays in the class, as the prediction, on a
   // section whose card would otherwise run long without a choice. Read in full, her introduction and notes
   // are said again, on that way's own nodes (f…); this test's runs are the cards' (c…))
-  const sec2 = sectionsOf(0)[2], base = 'c0s2';
+  // (the pinned section is the one whose card runs long under the placement rule (longest stretch
+  // without a choice > CHECK_AFTER + 20). It was aero.aoa (c0s2) until the ANA triage chips were
+  // restored to the cards' spoken heads (audit E-1): the chips lengthen every head, the checks
+  // land earlier, and aero.aoa's card no longer runs long — aero.left's still does. The rule and
+  // every assertion below are unchanged; the pin follows the rule, not the section)
+  const sec2 = sectionsOf(0)[7], base = 'c0s7';
   const ask2 = { q: '抗力を減らすために、設計でできることは？', opts: ['翼を細長くする', '翼を短く太くする', '表面を粗くする'], ok: 0, why: '細長い翼は誘導抗力が小さいからです。' };
   const withAsk = (id) => (id === sec2.id ? { ask: ask2 } : testNotes(id));
   const d = classDialogs(FL, 0, { notes: withAsk }), N = d.dialogs.class.nodes;

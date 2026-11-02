@@ -37,7 +37,7 @@ const AT = {
   dispatchSeat: { a: 667.0, c: 250.4, face: { a: 667.0, c: 254.0 }, seat: { h: 0.51 }, act: 'type' },   // her desk's chair, at the screen
   apron: { a: 640.2, c: 214.6, face: { a: 636.5, c: 208.0 }, act: 'work' },    // on the apron, by today's aircraft's tail, at work on it
   hangarWork: { a: 566.5, c: 253.5, face: { a: 563.0, c: 258.0 }, act: 'work' },   // (Phase 4) in hangar 2, at work on the aircraft kept there
-  towerCab: { a: 722.6, c: 261.5, y: 17.2, face: { a: 722.6, c: 250.0 }, seat: { h: 0.51 } },   // the tower cab's south-west console (content/tower-spec.js)
+  towerCab: { a: 722.85, c: 261.5, y: 17.2, face: { a: 722.85, c: 250.0 }, seat: { h: 0.51 } },   // the tower cab's south-west console (content/tower-spec.js)
   // (chapter 1's evening there: the same place, turned to the cadet coming from the academy — the Archer behind him)
   apronEvent: { a: 640.2, c: 214.6, face: { a: 641.0, c: 222.0 } },
   chiefRoom: { a: 672.6, c: 270.8, face: { a: 668.0, c: 266.0 } },             // the instructors' room
@@ -47,7 +47,7 @@ const AT = {
   planning: { a: 684.0, c: 268.0, face: { a: 690.0, c: 270.0 } },              // the planning room (the written tests)
   // the lounge's sofas and its study table's chair (furniture of academy-spec's lounge)
   lounge1: { a: 693.0, c: 251.0, face: { a: 695.2, c: 253.0 }, seat: { h: 0.48, z: 0.46 } }, lounge2: { a: 697.5, c: 251.0, face: { a: 695.2, c: 253.0 }, seat: { h: 0.48, z: 0.46 } },
-  lounge3: { a: 691.0, c: 257.5, face: { a: 691.0, c: 258.6 }, seat: { h: 0.51 }, act: 'read' },
+  lounge3: { a: 690.0, c: 257.5, face: { a: 690.0, c: 258.6 }, seat: { h: 0.51 }, act: 'read' },
   // the dormitory's common room (content/dorm-spec.js): where the cadets spend the evening now that the dorm is a place
   dormCommon1: { a: 632.0, c: 383.0, face: { a: 637.6, c: 383.0 }, seat: { h: 0.48, z: 0.46 }, act: 'read' }, dormCommon2: { a: 637.6, c: 383.0, face: { a: 632.0, c: 383.0 }, seat: { h: 0.48, z: 0.46 } },
   dormCommon3: { a: 635.4, c: 387.6, face: { a: 634.0, c: 387.6 }, seat: { h: 0.51 }, act: 'read' },
@@ -94,7 +94,7 @@ export function placeOf(id, slot, chapter, what = []) {
       // in class they sit in briefing room 2's chairs (the row on the table's far side), facing the lecturer
       if (chapter === 'ch1' && has('class')) return { a: 625.2 + PEERS.indexOf(id) * 1.2, c: 255.9, face: { a: 622.3, c: 255.9 }, seat: { h: 0.51 } };
       // at the device they sit in the sim stations' chairs, facing their screens
-      if (chapter === 'ch1' && has('ftd')) return { a: 613.0 + PEERS.indexOf(id) * 5, c: 266.6, face: { a: 613.0 + PEERS.indexOf(id) * 5, c: 268.0 }, seat: { h: 0.51 } };
+      if (chapter === 'ch1' && has('ftd')) return { a: 611.5 + PEERS.indexOf(id) * 5, c: 266.6, face: { a: 611.5 + PEERS.indexOf(id) * 5, c: 268.0 }, seat: { h: 0.51 } };
       // (chapter 1's event with one of them — Sunday's review with 朝日: in the lounge, as the day's word says)
       if (chapter === 'ch1' && what.some(x => x.kind === 'event' && x.who === id)) return AT[`lounge${PEERS.indexOf(id) + 1}`];
       // the rest of the day: one planning at the pilot room's table, one at its map, one studying in the lounge

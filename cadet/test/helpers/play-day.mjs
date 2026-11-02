@@ -20,7 +20,7 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
   const P = FL.physics, R = P.LAB_RWY;
   const day = createDay(FL, { seed, level, anomalies, stand: STAND, plan, fault });
   // ---- the walk-around: every place looked at; anomalies reported (and fixed by the cadet where they can be)
-  const ac = (plan && plan.aircraft) || 'pa28', { POINTS } = KITS[ac];
+  const ac = (plan && plan.aircraft) || 'pa28', { POINTS } = KITS[ac] || KITS.pa28;   // the game's own fallback (walkaround.js): aircraft without a kit (pa28r, b737) walk the Archer's points
   for (const p of POINTS) {
     if (skipWalk.includes(p.id)) continue;
     const card = day.walk.inspect(p.id);

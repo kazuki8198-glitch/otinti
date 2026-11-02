@@ -389,6 +389,9 @@ export function newCareer(seed = 1) {
     drills: { day: 0, n: 0 },
     // (the debrief's main missed item, asked about at the next morning's briefing; null: nothing kept)
     miss: null,
+    // (Wave C: the same miss again — the consecutive-miss streak { key, n }, null: no streak; and, booked when
+    // the streak reaches 3, a remedial ground lesson for the next day { key, label, day, seen }, null: none pending)
+    streak: null, remedial: null,
     // (first-officer S4) the airline record after graduation: hired, the legs flown (sectors), their block
     // minutes, the captains' evaluations (sum / count), the line check ('pass' | 'fail' | null), whether
     // the first-officer phase is done, and the sectors at a failed line check (offered again at +4)
@@ -419,6 +422,9 @@ export function cleanCareer(o) {
     s.aloft = { day: o.aloft.day, surfFrom: clamp(o.aloft.surfFrom, 0, 360), surfKt: clamp(o.aloft.surfKt, 0, 99), from: clamp(o.aloft.from, 0, 360), kt: clamp(o.aloft.kt, 0, 99), altFt: NAV_ALT_FT };
   // (a save from before the miss was kept has none: null, nothing asked)
   if (isObj(o.miss) && typeof o.miss.key === 'string' && MISS_KEY.test(o.miss.key) && typeof o.miss.label === 'string' && o.miss.label.length >= 1 && o.miss.label.length <= 80 && Number.isInteger(o.miss.day) && o.miss.day >= 1 && o.miss.day < 10000) s.miss = { day: o.miss.day, key: o.miss.key, label: o.miss.label };
+  // (Wave C: the streak and the remedial lesson, with the same care as the miss — a save from before them has neither)
+  if (isObj(o.streak) && typeof o.streak.key === 'string' && MISS_KEY.test(o.streak.key) && Number.isInteger(o.streak.n) && o.streak.n >= 1 && o.streak.n < 10000) s.streak = { key: o.streak.key, n: o.streak.n };
+  if (isObj(o.remedial) && typeof o.remedial.key === 'string' && MISS_KEY.test(o.remedial.key) && typeof o.remedial.label === 'string' && o.remedial.label.length >= 1 && o.remedial.label.length <= 80 && Number.isInteger(o.remedial.day) && o.remedial.day >= 1 && o.remedial.day < 10000) s.remedial = { key: o.remedial.key, label: o.remedial.label, day: o.remedial.day, seen: !!o.remedial.seen };
   if (Number.isInteger(o.day) && o.day >= 1 && o.day < 10000) s.day = o.day;
   if (SLOTS.includes(o.slot)) s.slot = o.slot;
   if (CHAPTERS[o.chapter]) s.chapter = o.chapter;
@@ -449,8 +455,10 @@ export function cleanCareer(o) {
   // — the pace they were heard at was not kept)
   if (isObj(o.heard)) { for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v; }
   // (…and their classes in the order before: a class now done when each of its chapters was; a class left midway begun
-  // again — its place was a section of the class before's)
-  else {
+  // again — its place was a section of the class before's. ONLY a v1 save is read this way: a v2 save's classes are
+  // converted by their own order below, and a v3 save's records already stand in today's order — remapping either
+  // by the order before would move or delete classes they finished)
+  else if (o.v === 1) {
     const before = Object.keys(s.done).filter(k => /^(class|lecture):\d+$/.test(k)), chapters = new Map();
     CLASSES_BEFORE.forEach((ids, i) => { const d = s.done[`class:${i}`]; if (d != null) for (const id of ids) chapters.set(id, d); });
     for (const k of before) delete s.done[k];
@@ -575,6 +583,10 @@ function fo2Schedule(state) {
 // where: the room (academy-spec's ids; 'apron' for the aircraft); who: the person it is with
 export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   const day = state.day, out = [];
+  // (Wave C) a remedial ground lesson booked for today goes in the evening, after everything else (it never
+  // displaces a flying item): appended on the flying-day paths below (chapter 2 and the later stages)
+  const remedialItem = state.remedial && state.remedial.day === day ? { slot: 'evening', kind: 'study', id: 'remedial', title: `補習の地上課目（${state.remedial.label}）`, where: 'brief-1', who: 'instructor' } : null;
+  const withRemedial = (arr) => (remedialItem ? [...arr, remedialItem] : arr);
   const W = weather || weatherFor(state.seed, day, dayOpts(state, prog));
   if (isOff(day)) {
     const off = [{ slot: 'am', kind: 'off', title: '休日', where: null, who: null }], w = CH1_EVENTS.find(e => e.id === 'week');
@@ -605,17 +617,17 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     if (cls < 0 && !k && ((!(ex && ex.pass) && (state.examDay || {}).written1 !== state.day) || (ex && ex.pass && today('exam:written1')))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
   }
-  if (STAGE[state.chapter] || state.chapter === 'fo2') return laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+  if (STAGE[state.chapter] || state.chapter === 'fo2') return withRemedial(laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
   // chapter 2: one flight a day (in the morning, or the afternoon when the morning cannot be flown); the tests. A flight
   // already flown today stays today's
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|solo):/.test(k));
   const id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextLesson(prog), ex = state.exams.presolo;
   const flySlot = W.fly.am ? 'am' : W.fly.pm ? 'pm' : null;
   const ground = (slot) => { if (!(ex && ex.pass) && (state.examDay || {}).presolo !== day && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
-  if (state.solo && !(flown && flown[0] === 'solo:solo')) return [{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }];
-  if (flown && flown[0] === 'checkride:c1') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' }];
-  if (flown && flown[0] === 'solo:solo') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' }];
-  if (!flySlot) { out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' }); ground('pm'); return out; }
+  if (state.solo && !(flown && flown[0] === 'solo:solo')) return withRemedial([{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }]);
+  if (flown && flown[0] === 'checkride:c1') return withRemedial([{ slot: W.fly.am ? 'am' : 'pm', kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' }]);
+  if (flown && flown[0] === 'solo:solo') return withRemedial([{ slot: W.fly.am ? 'am' : 'pm', kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' }]);
+  if (!flySlot) { out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' }); ground('pm'); return withRemedial(out); }
   if (id) out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' });
   // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
   // failed, the day is a finishing flight instead and the test comes back tomorrow)
@@ -625,7 +637,7 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   else if (trust >= SOLO_TRUST && judgeOf(state) >= SOLO_JUDGE) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
   else out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
   if (id) ground(flySlot === 'am' ? 'pm' : 'am');
-  return out;
+  return withRemedial(out);
 }
 // chapters 3–6 (M6): a flight a day through the chapter's lessons (the written test on another slot once half are
 // passed); then the test, then the check (the solo cross-country: the navigation log in the morning, the flight in the
@@ -784,8 +796,24 @@ export function createCareer({ store = null, seed } = {}) {
     drillsLeft: () => (st.drills.day === st.day ? Math.max(0, 2 - st.drills.n) : 2),
     // the debrief's main missed item, kept for the next morning's briefing (a later debrief replaces it);
     // asked about once, it is cleared (the game calls clearMiss when the question is answered)
-    noteMiss(key, label) { if (typeof key === 'string' && MISS_KEY.test(key) && typeof label === 'string' && label.length >= 1 && label.length <= 80) { st.miss = { day: st.day, key, label }; save(); } },
+    // (Wave C) a miss of the same item as the current streak grows it (a different item starts it again at 1);
+    // at exactly 3 the remedial ground lesson is booked for tomorrow, unless one for that item is already
+    // pending. → the streak's count (0: the record was refused, as before — the miss itself is not kept either)
+    noteMiss(key, label) {
+      if (!(typeof key === 'string' && MISS_KEY.test(key) && typeof label === 'string' && label.length >= 1 && label.length <= 80)) return st.streak ? st.streak.n : 0;
+      st.miss = { day: st.day, key, label };
+      st.streak = st.streak && st.streak.key === key ? { key, n: st.streak.n + 1 } : { key, n: 1 };
+      if (st.streak.n === 3 && !(st.remedial && st.remedial.key === key)) st.remedial = { key, label, day: st.day + 1, seen: false };
+      save(); return st.streak.n;
+    },
+    // (Wave C) a flying day that ended with no miss breaks the streak (the game calls this at the day's end);
+    // clearMiss does NOT touch the streak or the remedial — the morning's question being answered ends neither
+    breakMissStreak() { if (st.streak) { st.streak = null; save(); } },
     clearMiss() { if (st.miss) { st.miss = null; save(); } },
+    // (Wave C) the chief instructor's word was heard this morning (the 'day' talk's hook 'makabe'), and the
+    // remedial ground lesson was done (its evening study item): the booking is spent
+    seeMakabe() { if (st.remedial) { st.remedial.seen = true; save(); } },
+    doneRemedial() { if (st.remedial) { st.remedial = null; save(); } },
     decision(choice, weather) { const right = choice === weather.decision; st.decisions.push({ day: st.day, choice, right }); applyGrow('judge', right ? 1.8 : 0.5, `decision:${st.day}`); save(); return right; },
     decidedToday: () => st.decisions.find(d => d.day === st.day) || null,
     // the chapter moves on when its gate is open (the game calls it at the end of the work that opens it)

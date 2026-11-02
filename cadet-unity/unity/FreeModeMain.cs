@@ -207,7 +207,11 @@ public class FreeModeMain : MonoBehaviour
         string start = (string)cfg["start"];
         if (Cockpit == null) Cockpit = FindObjectOfType<CockpitMain>();
         if (Cockpit == null) { var go = new GameObject("CockpitMain"); Cockpit = go.AddComponent<CockpitMain>(); }
-        Cockpit.StartParkedSession(type);
+        // original startFreeSession: setCold is applied for the ramp
+        // (cold & dark) start only — every other start keeps the factory
+        // switch state (split BAT/ALT on) and SetRunning below powers
+        // the bus, so the G1000 is alive from the first frame.
+        Cockpit.StartParkedSession(type, start == "ramp");
         var s = Cockpit.S;
         // loading
         var ld = (Dict)cfg["loading"];

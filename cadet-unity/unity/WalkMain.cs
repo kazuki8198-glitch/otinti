@@ -92,7 +92,7 @@ public class WalkMain : MonoBehaviour
 
     public void Build()
     {
-        toonMat = new Material(Shader.Find("Cadet/Toon"));
+        toonMat = new Material(Shader.Find("Cadet/Toon") ?? Shader.Find("Standard"));
         var interiors = LoadData("interiors.json");
         var layout = (Dict)interiors["layout"];
         G = Num(layout["G"]); FY = Num(layout["frameYaw"]);

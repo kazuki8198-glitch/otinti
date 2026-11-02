@@ -49,6 +49,7 @@ public class SliceMain : MonoBehaviour
     public Canvas MainCanvas;
     private Text statusText, guideText, modeText;
     private Camera cam;
+    private bool bootFrameLogged;
     private bool modelFlip = true;            // measured: the archer glb's nose faces -Z of the wrapper (chase shot showed the prop), so flip 180
     private Vector3 camPos;
     private readonly UnityKeySet unityKeys = new UnityKeySet();
@@ -61,8 +62,19 @@ public class SliceMain : MonoBehaviour
         Instance = this;
         KeySource = unityKeys;
         cam = Camera.main;
+        // Stage 19 boot milestones: in a player build these land in
+        // Player.log and pinpoint how far the boot path got (the Stage 17
+        // build reached the user's PC with no title UI and no way to tell
+        // where boot stopped). The shader presence check names the
+        // Always-Included-Shaders failure mode directly.
+        Debug.Log("BOOT_AWAKE shaders Cadet/Toon=" + (Shader.Find("Cadet/Toon") != null)
+            + " Standard=" + (Shader.Find("Standard") != null)
+            + " Unlit/Color=" + (Shader.Find("Unlit/Color") != null)
+            + " Unlit/Texture=" + (Shader.Find("Unlit/Texture") != null));
         BuildWorld();
+        Debug.Log("BOOT_WORLD_OK");
         BuildTitle();
+        Debug.Log("BOOT_TITLE_OK panel=" + (titlePanel != null && titlePanel.activeInHierarchy));
     }
 
     // ------------------------------------------------------------------ world (procedural, slice-grade)
@@ -221,6 +233,7 @@ public class SliceMain : MonoBehaviour
 
     void Update()
     {
+        if (!bootFrameLogged) { bootFrameLogged = true; Debug.Log("BOOT_FIRST_FRAME"); }
         if (!InFlight || S == null) return;
         HandleDiscreteKeys();
         acc += Math.Min(Time.deltaTime, 0.1f);

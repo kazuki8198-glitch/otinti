@@ -128,8 +128,14 @@ public class CockpitMain : MonoBehaviour
         }
     }
 
-    // a parked-aircraft session at the LAB stand, cold — the harness's rig
-    public void StartParkedSession(string type)
+    // a parked-aircraft session at the LAB stand — the harness's rig.
+    // cold=true (the default, every harness caller) applies SetCold;
+    // cold=false keeps the cockpit's factory switch state, which is what
+    // the original startFreeSession does for non-ramp free-mode starts
+    // (Stage 19: cold-for-every-start left the split BAT/ALT off, and
+    // SetRunning never touches them, so the bus — and the G1000 — stayed
+    // dead on airborne starts).
+    public void StartParkedSession(string type, bool cold = true)
     {
         BuildType(type);
         S = Sim.NewState(7, type);
@@ -150,7 +156,7 @@ public class CockpitMain : MonoBehaviour
         Av = Avionics.CreateAvionics();
         Cp.CurS = S; Cp.CurAv = Av;
         Sys = new Systems(Cp.Sw);
-        Sys.SetCold(S);
+        if (cold) Sys.SetCold(S);
         Ctl = new Controls();
         Fl = new LessonState { S = S, Av = Av, Free = true };
         Ap = new Autopilot();

@@ -413,8 +413,10 @@ export function sectionStages(lines) {
   for (const l of lines) {
     const m = /^(c\d+s\d+)(.*)$/.exec(l.node); if (!m) continue;
     const [, base, rest] = m;
-    const st = rest === '' || /^:\d+$/.test(rest) ? '題' : /^:pr(:|$)/.test(rest) ? '予想' : /^:i\d/.test(rest) ? '導入' : /:(tq|fq|rq|tc|ck)(:|$)/.test(rest) ? '確認'
-      : /^:u\d/.test(rest) ? (l.tag === 'key' ? '大切' : '本文') : /^:n\d/.test(rest) ? '補足' : /^:rv(:|$)/.test(rest) ? '答え' : /^:end$/.test(rest) ? '区切り' : null;
+    // (a card's lines: the section's own node its title, its numbered lines the card's — a key point (要) or a
+    // figure (図) or the card's prose (本文), told by the line's tag; the old full reading's :u<n> lines the same)
+    const st = rest === '' ? '題' : /^:pr(:|$)/.test(rest) ? '予想' : /^:i\d/.test(rest) ? '導入' : /:(tq|fq|rq|tc|ck)(:|$)/.test(rest) ? '確認'
+      : /^:u\d/.test(rest) || /^:\d+$/.test(rest) ? (l.tag === 'key' ? '大切' : l.tag === 'fig' ? '図' : '本文') : /^:n\d/.test(rest) ? '補足' : /^:rv(:|$)/.test(rest) ? '答え' : /^:end$/.test(rest) ? '区切り' : null;
     if (!st) continue;
     let cur = out[out.length - 1];
     if (!cur || cur.base !== base || (st === '題' && cur.stages[cur.stages.length - 1] === '区切り')) { cur = { base, stages: [] }; out.push(cur); }

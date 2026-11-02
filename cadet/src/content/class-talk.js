@@ -154,6 +154,10 @@ export const QUIZ_NG = [(x) => `正しくは${x}です。`, (x) => `答えは${x
 export const CHECK_HEAD = [(n, m) => `第 ${n} 章の確認に、${m} 問答えてください。`, (n, m) => `ここで第 ${n} 章から ${m} 問です。`,
   (n, m) => `第 ${n} 章が終わったので、確認の ${m} 問をします。`, (n, m) => `では、第 ${n} 章について ${m} 問。`];
 export const CHECK_NONE = [(n) => `第 ${n} 章はここまでです。`, (n) => `第 ${n} 章は以上です。`];
+// ---- the class's end (the redesign): the day's chapters are done as cards, and five questions close the class —
+// the drill, scored, its score growing the cadet's knowledge (career.js classGrowth). m: how many questions
+export const DRILL_HEAD = [(m) => `最後に、今日の確認ドリルです。${m} 問、今日の要点から出します。`, (m) => `仕上げに確認ドリルを ${m} 問。今日のカードの内容からです。`,
+  (m) => `では最後に、今日のドリル ${m} 問です。`, (m) => `今日の締めくくりに、確認の ${m} 問をどうぞ。`];
 
 // ---- a chapter's start (c: { n, title in quotes }, s: how many sections)
 export const CHAPTER_INTRO = {

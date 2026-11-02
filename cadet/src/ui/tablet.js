@@ -164,6 +164,24 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     put(scr, ul);
   }
   function practice(m) {
+    // (a real written test, sat here without its classes — the redesign: passing chapter 1's exempts the
+    // classes it covers; a fail names the weak banks below, and their practice is the way back)
+    if (act.exam && m.examNow) {
+      put(scr, make('h2', '', '学科試験（本番）'), make('p', 'sub', '授業を受けていなくても受けられます。合格すると、その試験がカバーする座学は修了扱いになります（1 日に 1 回まで）。'));
+      const ec = make('div', 'tb-card');
+      put(ec, make('h3', '', m.examNow.title), btn('受験する', () => { close(); act.exam(m.examNow.id); }));
+      put(scr, ec);
+    }
+    if (m.weak && m.weak.banks && m.weak.banks.length) {
+      put(scr, make('h2', '', '弱い分野'), make('p', 'sub', 'この前の学科試験で 6 割に届かなかった分野です。練習で確かめてから、また受けられます。'));
+      const g = make('div', 'tb-grid');
+      for (const b of m.weak.banks) {
+        const c = put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', `この前の試験で ${b.pct}%`));
+        put(c, btn('練習する', () => { close(); act.practice(b.id); }));
+        put(g, c);
+      }
+      put(scr, g);
+    }
     // (the judgement drill, §4.4: read the morning's weather ten times; the judgement grows, twice a day)
     if (act.drill) {
       put(scr, make('h2', '', '判断ドリル'), make('p', 'sub', '朝の天気（METAR と TAF）を読んで、飛ぶ・午後まで待つ・午前だけ飛ぶ・今日は飛ばない、を選びます（10 問）。ソロに要る判断が、少し育ちます。'));

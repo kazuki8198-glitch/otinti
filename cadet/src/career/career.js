@@ -18,7 +18,7 @@
 // Pure logic: no three.js, no DOM.
 
 export const CAREER_KEY = 'cadet.career';
-export const CAREER_VERSION = 2;
+export const CAREER_VERSION = 3;
 // the cadet's abilities (the growth system): four axes, 0–100, grown by the work itself (see grow())
 export const ABILITIES = ['hand', 'know', 'comm', 'judge'];
 export const ABILITY_NAMES = { hand: '操縦', know: '知識', comm: '交信', judge: '判断' };
@@ -68,9 +68,13 @@ export function lessonGrowth(grade, levelId, lessonId, tired = false) {
 export function ftdGrowth(id) {
   return (id === 'k3' || id === 'k4' || id === 'k5' || id === 'k6') ? [['comm', 2.4], ['hand', 0.6]] : [['know', 1.6], ['hand', 0.6]];
 }
-// (growth design v1 §4.1) a class done: knowledge by the pace it was taken at (full / as needed / 要点だけ)
-export function classGrowth(pace) {
-  return [['know', 6.0 * (pace === 'need' ? 0.7 : pace === 'quick' ? 0.45 : 1.0)]];
+// (growth design v1 §4.1; the redesign) a class done: knowledge by the score of the class's own drill — the five
+// questions at its end (content/school.js's class drill). In the written tests' shape (exam(): a pass grows it
+// most, a fail a little): a good score — 80% and over, the drill's own pass line — grows it by the old full
+// class's 6.0, a poor one by 1.8 (three tenths of it, as the test's 1.2 is of its 4.0). No score said (a class
+// whose drill was not reached): the little one
+export function classGrowth(pct) {
+  return [['know', pct != null && pct >= 80 ? 6.0 : 1.8]];
 }
 export const judgeOf = (state) => (state && state.abilities && Number.isFinite(state.abilities.judge)) ? state.abilities.judge : ABILITY_START.judge;
 // (the briefing's shape, PLAN's ch2 proposal) the debrief's main missed item, kept overnight and asked about at the
@@ -168,10 +172,17 @@ export const ALL_CH2 = [...CH2, 'c1'];
 // the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js).
 // In this order each afternoon's training device lesson comes after the class that teaches it: the numbers and the
 // alphabet (radio2) before k3, the calls of one flight (radio3, radio4) before k4, the scenes' calls, the airports
-// without a tower and the emergencies (radio5) before k5; the weather before Mori asks for help with it
-export const CLASSES = [['aero'], ['sys', 'perf'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['wx', 'radio5'], ['law', 'hf']];
+// without a tower and the emergencies (radio5) before k5. Two chapters are not classes any more (the redesign): the
+// weather (wx) is lived instead — the morning's go / no-go, the judgement drill, the evening's METAR event on the
+// fifth class's day — and how a radio works (radio1) is left to the textbook and to k6's listening, whose kinds
+// ask it only once it has been heard (read, or met in k3–k5's calls). Both stay in the book, and written1 still
+// examines them; passing written1 without the classes is a way through (the exemption: main.js)
+export const CLASSES = [['aero'], ['sys', 'perf'], ['radio2'], ['radio3', 'radio4'], ['radio5'], ['law', 'hf']];
 // (the order before, of the saves without the sections heard: cleanCareer reads their classes by their chapters)
 const CLASSES_BEFORE = [['aero'], ['sys', 'perf'], ['wx'], ['law', 'hf'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
+// (the order of CAREER_VERSION 2's saves, whose classes still read the weather and the radio's workings as lectures:
+// cleanCareer v2 → v3 reads their classes by their chapters, as it does the order before)
+const CLASSES_V2 = [['aero'], ['sys', 'perf'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['wx', 'radio5'], ['law', 'hf']];
 // the training device lesson each class comes before (the same day's afternoon)
 export const CLASS_FTD = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // the training device's lessons by name (FLIGHT LAB's stage 0, as CADET teaches them)
@@ -390,7 +401,7 @@ const SEC_ID = /^[a-z0-9]{1,12}\.[a-z0-9]{1,16}$/, Q_ID = /^[a-z0-9_]{1,12}[#:][
 // a saved state that can be used: this version, the parts of the right kind (a cleaned copy), else null.
 // (a v1 save is read as a migration: everything it kept is kept, the growth system's record starts fresh)
 export function cleanCareer(o) {
-  if (!isObj(o) || (o.v !== CAREER_VERSION && o.v !== 1)) return null;
+  if (!isObj(o) || (o.v !== CAREER_VERSION && o.v !== 1 && o.v !== 2)) return null;
   const s = newCareer(o.seed);
   if (isObj(o.abilities)) for (const a of ABILITIES) if (Number.isFinite(o.abilities[a])) s.abilities[a] = clamp(o.abilities[a], 0, 100);
   if (isObj(o.firstTry)) { if (Number.isInteger(o.firstTry.pass) && o.firstTry.pass >= 0) s.firstTry.pass = Math.min(o.firstTry.pass, 9999); if (Number.isInteger(o.firstTry.total) && o.firstTry.total >= 0) s.firstTry.total = Math.min(o.firstTry.total, 9999); if (s.firstTry.pass > s.firstTry.total) s.firstTry.pass = s.firstTry.total; }
@@ -440,6 +451,22 @@ export function cleanCareer(o) {
     CLASSES.forEach((ids, i) => { if (ids.every(id => chapters.has(id))) s.done[`class:${i}`] = Math.max(...ids.map(id => chapters.get(id))); });
     // (a class of today's no longer a class done — its chapters part of one still to come: today begun again from its
     // morning, so the class comes before its afternoon)
+    const today = (d) => d === s.day;
+    if (s.chapter === 'ch1' && [...chapters.values()].some(today) && !CLASSES.some((_, i) => today(s.done[`class:${i}`]))) s.slot = 'morning';
+  }
+  // (v2 → v3: the classes changed shape — the weather and how a radio works left the lecture frame. A class's
+  // record follows its chapters, as the order-before remap above does: done where every chapter the class has
+  // now was done under the old order — the old second class covered the new second's radio2, the old fourth the
+  // new fourth's radio5, so those stay done. A place left midway is kept only where the class's chapters are
+  // the very same, the section it names being one of the new class's own; the rest begin again — shortly, the
+  // classes being cards and a drill now)
+  if (o.v === 2) {
+    const chapters = new Map(), same = (a, b) => a.length === b.length && a.every((id, k) => id === b[k]);
+    CLASSES_V2.forEach((ids, i) => { const d = s.done[`class:${i}`]; if (d != null) for (const id of ids) chapters.set(id, d); });
+    CLASSES_V2.forEach((ids, i) => { delete s.done[`class:${i}`]; if (!same(ids, CLASSES[i] || [])) delete s.done[`lecture:${i}`]; });
+    CLASSES.forEach((ids, i) => { if (ids.every(id => chapters.has(id))) s.done[`class:${i}`] = Math.max(...ids.map(id => chapters.get(id))); });
+    // (a class taken today under the old order, of which nothing is done today now: the day begun again from its
+    // morning, so the class comes before its afternoon — the order-before remap's own care)
     const today = (d) => d === s.day;
     if (s.chapter === 'ch1' && [...chapters.values()].some(today) && !CLASSES.some((_, i) => today(s.done[`class:${i}`]))) s.slot = 'morning';
   }

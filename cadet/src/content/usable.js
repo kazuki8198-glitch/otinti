@@ -20,11 +20,12 @@ export const TOWER_VISIT = {
 };
 // the usable kinds, by examine-target id (academy-spec.js / dorm-spec.js). 'pc' shows the logbook and the weather
 // (the tablet's own data, in main.js); 'shelf' opens the textbook; 'sim' powers the training device on (its
-// lessons, a free practice flight and the chair-flight practice, in main.js).
+// lessons, a free practice flight and the chair-flight practice, in main.js); 'ffs' powers the full flight
+// simulator on (737 practice, and a line rehearsal for first officers, in main.js).
 export const USABLE = {
   coffee: 'coffee', 'dorm-coffee': 'coffee',
   'shelf-brief-1': 'shelf', 'shelf-lounge': 'shelf', 'shelf-planning': 'shelf', 'shelf-library': 'shelf', 'dorm-shelf': 'shelf',
-  'sim-station': 'sim',
+  'sim-station': 'sim', 'ffs-station': 'ffs',
   'pc-reception': 'pc', 'pc-dispatch': 'pc',
   'locker-pilot': 'locker',
   vending: 'vending', 'dorm-vending': 'vending',

@@ -12,6 +12,7 @@
 //  - the debrief and the logbook at the end.
 // h is fly-mode's handle (what it lends: the flight, the systems, the cockpit, the voice, the fades, the HUDs).
 import { routeOut, routeLineUp, routeIn, routeBack, createTaxiPilot, exitFor } from './taxi.js';
+import { createVoice } from '../ui/voice.js';
 import { PHASE_LINES, ASSIST_LINES, EVENT_LINES, RECOVER_LINE, SOLO_LINES } from '../content/dialog/day1.js';
 import { spoken } from '../content/dialog/atc.js';
 import { createMic, MIC_REASON_JA } from '../ui/mic.js';
@@ -58,20 +59,21 @@ export function createDayMode(h) {
     const [text, ms] = queue.shift();
     const d = ms || Math.min(7000, 1800 + text.length * 70);
     h.say(text, d); lineT = d / 1000 + 0.3;
+    // (full voice) the same line spoken, when the host lends a voice (h.voice(text): the instructor's —
+    // the host picks the engine and the voice; hosts without one, the tests among them, just show the
+    // line as before). Only the instructor's lines come through here: the cadet's own notes
+    // (note() → h.note) are never voiced.
+    if (typeof h.voice === 'function') h.voice(text);
   }
-  // ---- the controllers' voice (the browser's English speech, when the setting is on)
+  // ---- the controllers' voice (through the voice layer, ui/voice.js: the browser's English voice —
+  // VOICEVOX cannot speak English — when the setting is on)
+  let ownLayer = null;
+  const layer = () => h.voiceLayer || (ownLayer ??= createVoice({ settings: h.settings }));
   function speak(en) {
     // the receiver's hiss under the transmission (about as long as it takes to say: some 13 letters a second)
     if (h.audio.radio) h.audio.radio(1.2 + String(en).length / 13); else if (h.audio.squelch) h.audio.squelch();
-    const synth = globalThis.speechSynthesis;
-    if (!synth || h.settings.get('atcVoice') === false || typeof SpeechSynthesisUtterance === 'undefined') return;
-    try {
-      const u = new SpeechSynthesisUtterance(spoken(en));
-      const v = synth.getVoices().find(x => /^en(-|_)US/i.test(x.lang)) || synth.getVoices().find(x => /^en/i.test(x.lang));
-      if (v) u.voice = v;
-      u.lang = 'en-US'; u.rate = 1.05; u.volume = Math.max(0, Math.min(1, (h.settings.get('volume') ?? 0.8) * (h.settings.get('volRadio') ?? 1)));
-      synth.speak(u);
-    } catch (e) { /* no speech here */ }
+    if (h.settings.get('atcVoice') === false) return;
+    layer().sayRadio({ text: spoken(en), volumeScale: h.settings.get('volRadio') ?? 1 });
   }
   const pos = () => { const p = P.ne(flight.s), rc = P.rwyCoords(R, p.n, p.e); return { a: rc.along, c: rc.cross }; };
   const cx = { dt: 0, sw: null, sys: null, s: null, park: false, av: null, rpm: 0, pos: null, v: 0, hdg: 0, onGround: true,

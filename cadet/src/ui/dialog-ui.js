@@ -14,6 +14,8 @@
 // what is heard comes back through setAskText and only fills the field — sending is still the player's own Enter.
 // Works with a mouse, a keyboard or a touch screen, at phone width. The CSS is injected once and scoped under #dlg, so
 // it cannot leak into the game's HUD.
+import { createVoice } from './voice.js';
+
 const CSS = `
 #dlg { position: fixed; inset: 0; z-index: 25; pointer-events: none; font-family: var(--font, system-ui, sans-serif); color: var(--ink, #eef3f8); }
 #dlg [hidden] { display: none !important; }
@@ -195,7 +197,7 @@ function chapterLabel(ch) {
 const sameView = (a, b) => !!a && !!b && a.dialog === b.dialog && a.node === b.node && a.text === b.text && a.name === b.name && a.color === b.color
   && a.choices.length === b.choices.length && a.choices.every((c, k) => c.text === b.choices[k].text && c.i === b.choices[k].i);
 
-export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onKeyPick = () => {}, onBookClose = () => {}, onAsk = () => {}, onMicRequest = () => {}, settings = null } = {}) {
+export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onKeyPick = () => {}, onBookClose = () => {}, onAsk = () => {}, onMicRequest = () => {}, settings = null, voice = null } = {}) {
   const doc = root.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   if (!doc.getElementById('dlg-css')) { const st = doc.createElement('style'); st.id = 'dlg-css'; st.textContent = CSS; doc.head.appendChild(st); }
@@ -256,7 +258,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   let cur = null, gen = 0, actedGen = -1, actedAt = 0;
   let chars = [], at = [], shown = 0, progress = 0, last = 0, typing = false, timer = 0, timerIsRaf = false;
   let buttons = [], sel = -1, choicesAt = 0;
-  let armed = false, bookDown = false, prevFocus = null, spoke = false, downX = 0, downY = 0, moved = false;
+  let armed = false, bookDown = false, prevFocus = null, downX = 0, downY = 0, moved = false;
 
   const speed = () => {
     const v = settings && typeof settings.get === 'function' ? Number(settings.get('textSpeed')) : 1;
@@ -367,29 +369,30 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     onNext();
   }
 
-  // ---- the instructor's voice (settings.voice): the browser's speech synthesis, only with a Japanese voice (M8: an
-  // English one for the crew's English lines)
-  function jaVoice(lang = 'ja') {
-    try {
-      const vs = win.speechSynthesis.getVoices() || [], re = lang === 'en' ? /^en([-_]|$)/i : /^ja([-_]|$)/i;
-      return vs.find(v => re.test(v.lang) && v.localService) || vs.find(v => re.test(v.lang)) || null;
-    } catch (e) { return null; }
-  }
-  function hush() { if (!spoke) return; spoke = false; try { win.speechSynthesis.cancel(); } catch (e) { /* nothing to stop */ } }
+  // ---- the voices (settings.voice; full voice: everyone, the player's lines included, each at their own
+  // pitch and rate — ui/voice-params.js; with VOICEVOX running, in that character's own voice): every line
+  // goes through the one voice layer (ui/voice.js), the host's when it lends one — the game wires a single
+  // layer for all its call sites — and otherwise one made here from the same window and settings. The
+  // narrator stays silent. A new line replaces the one being said (the layer interrupts); a line that
+  // will not be said (the narrator's, one still pending) still silences the old one, as hush() always did.
+  const layer = voice || createVoice({ settings, win });
+  let streamedNode = null;                 // the node whose streamed answer the voice is following
+  function hush() { streamedNode = null; layer.cancel(); }
   function speak(v) {
-    hush();
-    if (!settings || typeof settings.get !== 'function' || !settings.get('voice')) return;
-    if (!v || v.pending || v.speaker === 'player' || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
-    const voice = jaVoice(v.lang === 'en' ? 'en' : 'ja');
-    if (!voice) return;
-    try {
-      const u = new win.SpeechSynthesisUtterance(String(v.text).replace(/\s+/g, ' '));
-      u.voice = voice; u.lang = voice.lang; u.rate = 1.05;
-      const vol = settings.get('volume'); if (typeof vol === 'number') u.volume = Math.min(1, Math.max(0, vol));
-      win.speechSynthesis.speak(u); spoke = true;
-    } catch (e) { /* no voice this time */ }
+    if (!v) return;
+    const on = !!(settings && typeof settings.get === 'function' && settings.get('voice'));
+    const lang = v.lang === 'en' ? 'en' : 'ja';
+    if (v.stream && on && v.speaker !== 'narrator') {
+      // (the AI instructor's answer, as it comes: its sentences are said as they land, the rest at the end)
+      if (v.pending) { streamedNode = v.node; layer.sayStream({ speaker: v.speaker, text: v.text, lang, final: false }); }
+      else if (streamedNode === v.node) { streamedNode = null; layer.sayStream({ speaker: v.speaker, text: v.text, lang, final: true }); }
+      else layer.sayLine({ speaker: v.speaker, text: v.text, lang });
+      return;
+    }
+    streamedNode = null;
+    if (!on || v.pending || v.speaker === 'narrator') { layer.cancel(); return; }
+    layer.sayLine({ speaker: v.speaker, text: v.text, lang });
   }
-  try { if (win.speechSynthesis) win.speechSynthesis.getVoices(); } catch (e) { /* starts loading the voice list */ }
   const offSettings = settings && typeof settings.onChange === 'function' ? settings.onChange((k, v) => { if (k === 'voice' && !v) hush(); if (k === 'subtitles') box.classList.toggle('nosub', v === false); }) : null;
 
   // ---- show / hide the subtitle
@@ -454,7 +457,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       if (!typing) { typing = true; last = now(); progress = Math.max(progress, at[shown] || 0); cue.textContent = ''; cue.classList.remove('wait'); list.hidden = true; }
       paint(); schedule();
     } else if (!typing) finishTyping();
-    if (was.pending && !v.pending) { sr.textContent = `${v.name}：${v.text}`; speak(v); }
+    // (a streamed line feeds the voice as it grows, sentence by sentence; any other line is said when it lands)
+    if (v.stream) { if (!v.pending) sr.textContent = `${v.name}：${v.text}`; speak(v); }
+    else if (was.pending && !v.pending) { sr.textContent = `${v.name}：${v.text}`; speak(v); }
   }
   function showAsk(inp) {
     askRow.hidden = !inp;

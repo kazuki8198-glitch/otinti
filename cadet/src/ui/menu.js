@@ -38,6 +38,8 @@ const CSS = `
 #menu .m-field { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 #menu .m-field input[type=text], #menu .m-field input[type=password] { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 10px;
   border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: var(--ink); }
+#menu .m-field select { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: var(--ink); }
 #menu .m-field button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.08); color: var(--ink); cursor: pointer; }
 #menu .m-field label { font-size: 13px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
 #menu .m-state { grid-column: 1 / -1; font-size: 13px; color: var(--accent); }
@@ -54,7 +56,7 @@ const HELD_ROWS = [['up', 'ピッチ下げ（機首下げ）', 'KeyW'], ['down',
 const ACT_ROWS = [['flaps', 'フラップ 下げる', 'KeyV'], ['flapsUp', 'フラップ 上げる', 'Shift+KeyV'], ['gear', '脚（ギア）', 'KeyG'], ['level', '水平に戻す', 'KeyL'], ['autoRud', '自動ラダー 切替', 'KeyU'], ['trim', 'トリム（速度に合わせる）', 'KeyT'], ['feather0', '左エンジン フェザー', 'BracketLeft'], ['feather1', '右エンジン フェザー', 'BracketRight']];
 const codeName = (c) => AXKEY[c] || String(c || '').replace(/^Key/, '').replace(/^Digit/, '');
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null, onFreeSetup = null, onSimSetup = null }) {
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null, onFreeSetup = null, onSimSetup = null, voice = null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
@@ -63,6 +65,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
   // the free-flight setup's working values (kept while the menu is open; the start hands them over whole)
   const freeCfg = { start: 'ramp', aircraft: 'pa28', hour: 10, wind: 'light', windRel: 40, windKt: 12, loading: 'std', fail: 'none', failWhen: 'now', failMin: 10, failAlt: 2000 };
   let keyMsg = '', keyBad = false;
+  let vvMsg = '', vvBad = false, vvBusy = false;   // the VOICEVOX connection test's word (settings tab)
   let bindMsg = '';                       // the rebind row's note (a duplicate warning included)
   // capture one key for a rebind: the next keydown while the menu is open becomes the binding (Esc cancels —
   // it still closes the menu afterwards, as Esc always does). A key already used by another flight key is
@@ -155,8 +158,15 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')
         + range('subSize', '字幕の大きさ', 0.85, 1.6, 0.05, x => `×${x.toFixed(2)}`, '会話・教官の言葉・案内・お知らせの文字の大きさ')
         + sw('colorAssist', '色の組み合わせ（色覚に配慮）', '良い・悪いを示す緑と赤を、青と橙にします。どちらの色でも ✓ △ ✕ の印が付きます')
-        + sw('voice', '教官の声（読み上げ）', 'ブラウザの音声合成で教官の台詞を読み上げます（日本語の声がある場合）')
+        + sw('voice', '教官の声（読み上げ）', '教官の台詞を読み上げます（声の種類は下の「音声エンジン」で選びます）')
         + sw('atcVoice', '管制官の声（英語の読み上げ）', 'ブラウザの音声合成で管制官の英語を読み上げます（英語の声がある場合）')
+        + `<div class="m-row"><span>音声エンジン</span><span></span><div class="m-field"><select data-engine="voiceEngine" aria-label="音声エンジン">
+          <option value="auto"${v.voiceEngine !== 'browser' && v.voiceEngine !== 'voicevox' ? ' selected' : ''}>自動（VOICEVOX があれば使う）</option>
+          <option value="voicevox"${v.voiceEngine === 'voicevox' ? ' selected' : ''}>VOICEVOX を使う</option>
+          <option value="browser"${v.voiceEngine === 'browser' ? ' selected' : ''}>従来の音声のみ（ブラウザ）</option></select></div>
+          <small>VOICEVOX（無料の音声合成ソフト）を起動しておくと、日本語の台詞をキャラクターの声で読み上げます（早瀬 教官＝ずんだもん、ミラー 講師＝結月ゆかり、真壁 主任教官＝玄野武宏 など、その人の声で）。起動していない・失敗したときは、従来のブラウザ音声で読みます。英語の台詞（管制官と、英語で話す教官）は VOICEVOX では読めないため、いつも従来の英語音声です。</small></div>`
+        + (voice ? `<div class="m-row"><span>VOICEVOX 接続テスト</span><span></span><div class="m-field"><button data-act="voice-test"${vvBusy ? ' disabled' : ''}>接続を確かめる</button></div>
+          ${vvMsg ? `<div class="m-state${vvBad ? ' bad' : ''}">${esc(vvMsg)}</div>` : '<small>VOICEVOX を起動した状態で押すと、つながるかどうかと、入っている話者の数を確かめます。</small>'}</div>` : '')
         + sw('radioJa', '無線の日本語訳', '無線の画面で、英語の下に日本語の意味を出します')
         + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
         + sw('pitchHold', 'ピッチ保持（キーボード）', 'ON：W / S で決めた機首の姿勢を、キーを離しても保ちます。OFF：姿勢はトリムで保つ練習になります')
@@ -271,6 +281,15 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       render(); return;
     }
     if (b.dataset.act === 'key-clear' && ai) { ai.keys.clear(); keyMsg = 'キーを消しました（このブラウザからも）'; keyBad = false; render(); return; }
+    if (b.dataset.act === 'voice-test' && voice && !vvBusy) {
+      vvBusy = true; vvBad = false; vvMsg = '接続を確かめています…'; render();
+      Promise.resolve().then(() => voice.test()).then((r) => {
+        vvBusy = false; vvBad = !(r && r.ok);
+        vvMsg = r && r.ok ? `接続できました：VOICEVOX が起動しています（話者 ${r.count} 人）。日本語の台詞は、担当のキャラクターの声で読み上げます` : 'VOICEVOX が見つかりませんでした。VOICEVOX を起動してから、もう一度押してください（その間も、従来の音声で読み上げます）';
+        if (open) render();
+      }, () => { vvBusy = false; vvBad = true; vvMsg = 'VOICEVOX が見つかりませんでした。VOICEVOX を起動してから、もう一度押してください（その間も、従来の音声で読み上げます）'; if (open) render(); });
+      return;
+    }
     if (b.dataset.act === 'bench' && onBench) { close(false); onBench(); return; }
     if (b.dataset.qadv) {
       const [k, val] = b.dataset.qadv.split(':');
@@ -293,6 +312,11 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
   // (M8) the model's name: kept when it looks like one, else the field goes back to the setting
   el.addEventListener('change', (e) => {
     const k = e.target.dataset && e.target.dataset.text; if (!k) return;
+    if (!settings.set(k, e.target.value)) e.target.value = settings.get(k);
+  });
+  // the voice engine's picker: a plain setting, applied from the next line on
+  el.addEventListener('change', (e) => {
+    const k = e.target.dataset && e.target.dataset.engine; if (!k) return;
     if (!settings.set(k, e.target.value)) e.target.value = settings.get(k);
   });
   // the axis map's editors and the key rebindings (change = a select or a tick; the rebind capture is a click)

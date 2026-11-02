@@ -39,6 +39,7 @@ import { EVENT_LINES } from '../content/dialog/day1.js';
 import { createSystems, RUNNING } from '../aircraft/systems.js';
 import { FOCUS_FRAME, FOCUS_IDS_737, FOCUS_LOOK, FOCUS_T, STBY_OFF, nextFocus, zoomStep, smooth01, lerpAngle } from './panel-view.js';
 import { createDayMode } from './day-mode.js';
+import { createVoice } from '../ui/voice.js';
 import { createTraffic } from './traffic.js';
 import { cbEffect } from './cb.js';
 import { iceStep, iceApply } from './ice.js';
@@ -69,6 +70,9 @@ const FACE_S = 0.8;                     // a talk begins: the head turns to the 
 //   over in the air: main.js's card, then leave) }
 export function createFlyMode(ctx) {
   const { FL, L, scene, camera, sky, input, settings, audio, toast, hud, world } = ctx;
+  // the voice layer the day mode's lines and the controllers go through (ui/voice.js): the host's when it
+  // lends one (the game wires a single layer for every call site), else one made here from the settings
+  const voiceLayer = ctx.voice || createVoice({ settings });
   // who is in the right seat (chosen when boarding): the instructor's actor, or the chief instructor's, or no one
   let crew = ctx.instructor, crewName = ctx.instructorName || '早瀬 教官', crewColor = null, crewId = 'instructor';
   const P = FL.physics, AV = FL.avionics;
@@ -155,6 +159,8 @@ export function createFlyMode(ctx) {
   const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
     get stand() { return { a: ctx.stand.a, c: ctx.stand.c }; },
     say: (t, ms) => say(t, ms), note: (t, ms) => { if (fh) fh.say('メモ', t, ms); else toast(t, ms); },
+    // the day mode's instructor lines are spoken too, and its controllers: through the voice layer
+    voice: (t) => speakLine(t), voiceLayer,
     setGuide: (id) => setGuide(id), startLesson: startDayLesson, talk: (w) => startTalk(w), debrief: startDebrief,
     markDirty: () => { if (cockpit.markDirty) cockpit.markDirty(); } });
 
@@ -910,10 +916,17 @@ export function createFlyMode(ctx) {
       placeNow(); placeCamera(dt);
       return;
     }
-    // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps). The sim rate compresses the cruise
-    // only: below 1,000 ft AGL it is 1× again by itself, and says so once
-    const rateNow = simRate > 1 && flight.s && !flight.s.onGround && flight.s.out && flight.s.out.agl >= 1000 ? simRate : 1;
-    if (simRate > 1 && rateNow === 1 && flight.s && !flight.s.onGround && !rateWasHigh) { rateWasHigh = true; toast('1,000 ft AGL 以下：シムレートは 1× に戻りました', 2400); }
+    // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps). （時間を進める) the sim rate:
+    // free flight, the training devices' sessions and a line sector may run at up to 16× — as
+    // SUBSTEPS of the same fixed-step frame (the step itself is never scaled, so 1× stays
+    // bit-identical and the higher rates stay stable). A scored lesson or check is locked at 1×
+    // (rateFree is false there: the day's flights, the career lessons, the checks), and a line
+    // sector keeps the cruise gate it has always had — the rate bites only at or above 1,000 ft
+    // AGL, and below it the flight is 1× again by itself, and says so once.
+    const rateFree = !!lineSes || !!(flight.free && !dayMode.active && !intro);
+    let rateNow = 1;
+    if (simRate > 1 && rateFree && flight.s) rateNow = lineSes && (flight.s.onGround || !flight.s.out || flight.s.out.agl < 1000) ? 1 : simRate;
+    if (simRate > 1 && rateFree && lineSes && rateNow === 1 && flight.s && !flight.s.onGround && !rateWasHigh) { rateWasHigh = true; toast('1,000 ft AGL 以下：シムレートは 1× に戻りました', 2400); }
     if (rateNow > 1) rateWasHigh = false;
     frameOpt.paused = stop || phase === 'board' || phase === 'leaving' || crashFrozen;
     // the instructor taxiing (I have control); on the introductory flight, his hands on what is his —
@@ -922,7 +935,20 @@ export function createFlyMode(ctx) {
     frameOpt.pilot = taxiPilot || (ap.on || ap.fdOn ? apPilot : null);
     frameOpt.airPilot = !taxiPilot && (ap.on || ap.fdOn);         // (the AP's hook runs in a lesson too; the taxi pilot's does not need it)
     pilotFlying = !!frameOpt.pilot;
-    const res = flight.frame(dt * rateNow, intro ? (stop || !intro.cadetHands ? NO_KEYS : INTRO_KEYS) : keysFor(stop || !!taxiPilot), frameOpt);
+    const frameKeys = intro ? (stop || !intro.cadetHands ? NO_KEYS : INTRO_KEYS) : keysFor(stop || !!taxiPilot);
+    let res;
+    if (rateNow === 1 || frameOpt.paused) {
+      res = flight.frame(dt * rateNow, frameKeys, frameOpt);   // (1×, or a paused frame: exactly the call it has always been)
+    } else {
+      // the rate as substeps: the frame run rateNow times over the same dt, its (shared) result
+      // folded into one — the events and pad presses of every substep, the end of any of them
+      res = { steps: 0, events: [], pad: [], ended: false };
+      for (let i = 0; i < rateNow; i++) {
+        const r = flight.frame(dt, frameKeys, frameOpt);
+        res.steps += r.steps || 0; res.events.push(...r.events); if (r.pad) res.pad.push(...r.pad);
+        if (r.ended) { res.ended = true; break; }
+      }
+    }
     if (flight.s) recorder.push(flight.s, flight.s.t || 0);
     if (flight.s) { flight.s.carbRisk = carbDay;                // the day's humidity, for the physics' carburettor ice
       // the day's other faults, on the physics state (re-applied each frame: a lesson's fresh state starts clean)
@@ -978,8 +1004,10 @@ export function createFlyMode(ctx) {
       const aid = monitoredAid();
       if (aid && audio.ident) identT = audio.ident(aid.id) + 4; else identT = 0.6;
     }
-    // the engine and the electrics (on the flight's clock: the sim rate takes them with it)
-    for (const ev of systems.update(frameOpt.paused ? 0 : dt * rateNow, flight.s)) onSystems(ev);
+    // the engine and the electrics (on the flight's clock: the sim rate takes them with it, in the
+    // same substeps as the frame when the rate is up)
+    if (rateNow === 1 || frameOpt.paused) { for (const ev of systems.update(frameOpt.paused ? 0 : dt * rateNow, flight.s)) onSystems(ev); }
+    else for (let i = 0; i < rateNow; i++) for (const ev of systems.update(dt, flight.s)) onSystems(ev);
     // (item 4) the instructor console's reservations (and a free flight's seeded roll): the
     // clock runs only while the flight does; a reservation fires once, when its time or its
     // altitude is reached
@@ -1094,7 +1122,7 @@ export function createFlyMode(ctx) {
     if ((hudT -= dt) <= 0) {
       hudT = 0.12;
       const st = flight.status();
-      if (fh) { fh.update(st, flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); }
+      if (fh) { fh.update(st, flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); if (fh.setRate) fh.setRate(simRate); }
       if (phase === 'lesson' && !stop) lessonVoice(st);
       // the tower in a lesson (FLIGHT LAB's read-back): heard once, when the voice is on
       if (st && st.atc && st.atc.msg !== lastAtcMsg) { lastAtcMsg = st.atc.msg; if (dayMode.active) dayMode.speak(st.atc.msg.replace(/^[^:]*:\s*"?|"$/g, '')); }
@@ -1204,6 +1232,17 @@ export function createFlyMode(ctx) {
     yaw += (ty - yaw) * k; pitch += (tp - pitch) * k;
   }
   function night() { const el = sky.state.el; return 1 - THREE.MathUtils.smoothstep(el, -4, 6); }
+
+  // speaking a line aloud (the voice layer, ui/voice.js, when the voice setting is on): the instructor's
+  // own character voice when VOICEVOX is running, else the browser's at his pitch and rate
+  // (ui/voice-params.js); a crew-English line (English over Japanese, split by a newline) is spoken in
+  // English. No voice on this machine: nothing said, nothing waited for.
+  function speakLine(text) {
+    if (settings.get('voice') === false) return;
+    const en = settings.get('crewEnglish') && String(text).includes('\n');
+    const said = en ? String(text).split('\n')[0] : String(text);
+    voiceLayer.sayLine({ speaker: 'instructor', text: said, lang: en ? 'en' : 'ja', interrupt: false });
+  }
 
   // ---- what the instructor says in a lesson: each step's instruction, the hints (not too often)
   function say(text, ms = 5200) {
@@ -1344,7 +1383,17 @@ export function createFlyMode(ctx) {
       return false;
     }
     if (talkOn || debriefShown || fading) return false;
-    if (e.code === 'F7') { e.preventDefault(); simRate = simRate === 1 ? 2 : simRate === 2 ? 4 : 1; toast(`シムレート ${simRate}×${simRate > 1 ? '（1,000 ft AGL 未満では 1×）' : ''}`, 1800); return true; }
+    if (e.code === 'F7') {
+      e.preventDefault();
+      // （時間を進める) the rate belongs to free flight, the devices and the line — a scored lesson
+      // or check will not take it (the fairness invariants: nothing about a grade may run faster)
+      if (!(lineSes || (flight.free && !dayMode.active && !intro))) { toast('シムレートは自由飛行・訓練装置・路線運航だけです（採点される課目では 1× に固定）', 2400); return true; }
+      const RATES = [1, 2, 4, 8, 16], i = Math.max(0, RATES.indexOf(simRate));
+      simRate = e.shiftKey ? RATES[Math.max(0, i - 1)] : RATES[(i + 1) % RATES.length];
+      if (fh && fh.setRate) fh.setRate(simRate);
+      toast(`シムレート ${simRate}×${simRate > 1 && lineSes ? '（路線では 1,000 ft AGL 未満は 1×）' : ''}`, 1800);
+      return true;
+    }
     if (e.code === 'F8') { e.preventDefault(); activePause = !activePause; toast(activePause ? 'アクティブポーズ：物理は止まっています（F8 で再開）' : '再開', 1800); return true; }
     if (e.code === 'KeyP') { if (recorder.last() && !recorder.recording()) { startReplay(true); return true; } return false; }
     if (e.code === 'KeyC') {

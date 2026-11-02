@@ -90,6 +90,8 @@ const CSS = `
 #fhud .fh-num b { font: 700 16px/1.25 var(--fh-mono); font-variant-numeric: tabular-nums; }
 #fhud .fh-num em { font-style: normal; font-size: 10.5px; color: var(--ink-dim, #a9b7c6); margin-left: 2px; }
 #fhud .fh-where { font-size: 12px; color: #cfe0f2; margin-bottom: 5px; }
+#fhud .fh-rate { font-size: 12px; font-weight: 700; color: #cfe0f2; margin-bottom: 5px; }
+#fhud .fh-rate.fast { color: var(--fh-amber, #ffb547); }
 
 /* ---- the control strip */
 #fhud .fh-strip { position: relative; width: 300px; max-width: calc(100vw - 28px); padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
@@ -459,6 +461,7 @@ const FLY_KEYS = [
   ['Z / X', 'ラダートリム 左 / 右', '踏み続ける力を消す', ['Z', 'X']],
   ['U', '自動ラダー ON / OFF', 'OFF では自分で踏む（Q / E）', ['U']],
   ['L', '水平に戻す', '自由飛行だけ。数秒で水平に戻る', ['L'], 'free'],
+  ['F7（Shift+F7）', 'シムレート（時間を進める）', '自由飛行・訓練装置・路線運航だけ：×2 → ×4 → ×8 → ×16 と進み、Shift+F7 で戻る。物理は細かいステップのまま進むので、速くても飛行は変わらない。路線では 1,000 ft AGL 未満は 1×。採点されるレッスンとチェックでは 1× に固定', ['F7'], 'free'],
   ['Enter', 'チェックリストの次の項目', '1 項目ずつ確認する', ['Enter']],
   ['1 / 2 / 3', '管制への応答', '滑走路・高度・針路の数字を含めて復唱', ['1', '2', '3']],
 ];
@@ -540,6 +543,15 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   };
   const fIas = num('速度', 'IAS', 'kt'), fAlt = num('高度', 'ALT', 'ft'), fHdg = num('針路', 'HDG', '°'), fVs = num('昇降率', 'VS', 'fpm');
   const fWhere = make('div', 'fh-where');
+  // （時間を進める) the sim rate, always in sight on the free panel (free flight, the devices, a
+  // line sector): F7 steps it up, Shift+F7 back; a scored lesson never shows this panel at all
+  const fRate = make('div', 'fh-rate', null, 'シムレート ×1（F7）');
+  let rateShown = 1;
+  function setRate(r) {
+    if (r === rateShown) return; rateShown = r;
+    fRate.textContent = `シムレート ×${r}（F7）`;
+    fRate.classList.toggle('fast', r > 1);
+  }
   const fKeys = make('div', 'fh-keys');
   // (the keys under the free panel: all of them, or a flight's own — the introductory flight's, the yoke only)
   const FREE_KEYS = [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['I'], '計器に寄る'], [['Tab'], '計器拡大'], [['H'], 'キー一覧']];
@@ -548,7 +560,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     for (const [k, w] of list || FREE_KEYS) put(fKeys, put(kbds(make('span', k[0] === 'H' ? 'fh-kc help' : 'fh-kc'), k), make('span', '', null, w)));
   }
   setFreeKeys();
-  put(free, fHead, nums, fWhere, fKeys);
+  put(free, fHead, nums, fWhere, fRate, fKeys);
   free.hidden = true;
 
   // the control strip: six tiles and the warnings above them
@@ -983,7 +995,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   }
 
   return {
-    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, blitPanel2D, setHood, setCompact, setFreeTitle, setFreeKeys, setStrip,
+    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, blitPanel2D, setHood, setCompact, setFreeTitle, setFreeKeys, setStrip, setRate,
     onChecklistClick(fn) { onCheck = typeof fn === 'function' ? fn : null; },
     onAtcClick(fn) { onAtc = typeof fn === 'function' ? fn : null; },
     destroy,

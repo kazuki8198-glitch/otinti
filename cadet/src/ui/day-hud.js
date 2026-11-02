@@ -70,6 +70,16 @@ const CSS = `
 .dh-page footer button:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
 @media (max-width: 760px) { .dh-page { padding: 14px; } .dh-page table { font-size: 11px; } .dh-page th:nth-child(3), .dh-page td:nth-child(3), .dh-page th:nth-child(4), .dh-page td:nth-child(4) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .dh-sig.write span { animation: none; clip-path: none; } }
+/* the practice flight's door, on the walk HUD (bottom right, clear of the prompt and the guide): the one
+   visible way into free mode outside the pause menu — it opens that menu at its free tab, so the setup
+   and the session are the menu's own, not a second copy */
+#hud .dh-practice { position: fixed; right: 16px; bottom: 18px; z-index: 24; display: grid; gap: 1px; padding: 11px 18px 10px; border: 0; border-radius: 14px; cursor: pointer; text-align: left;
+  font: inherit; color: var(--accent-ink, #04121c); background: var(--accent, #5cc8ff); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+#hud .dh-practice[hidden] { display: none; }
+#hud .dh-practice .dh-practice-t { font-size: 15.5px; font-weight: 800; letter-spacing: .03em; }
+#hud .dh-practice small { font-size: 11.5px; font-weight: 600; opacity: .75; }
+#hud .dh-practice:hover { filter: brightness(1.1); }
+#hud .dh-practice:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
 /* (k4, the chair flight in the training device room: the radio and the task panel alone, the flight's own hidden) */
 #fhud.k4 > :not(.fh-left):not(.fh-right), #fhud.k4 .fh-left > :not(.dh-task), #fhud.k4 .fh-right > :not(.dh-radio) { display: none !important; }
 #fhud .fh-ao button.script { box-shadow: inset 0 0 0 2px #f2b632; }
@@ -113,6 +123,19 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   let onRadioPick = null, onCheckClick = null;
   rOpts.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && onRadioPick) onRadioPick(+b.dataset.k); });
   check.addEventListener('click', () => { if (onCheckClick) onCheckClick(); });
+
+  // ---- the practice flight's door: a button on the walk HUD, shown by the game while walking (nobody
+  // could find free mode inside the pause menu). It holds no setup of its own: the click is the game's,
+  // and the game opens the pause menu at its フリーモード tab — the same flow, the same callbacks.
+  const prac = make('button', 'dh-practice'); prac.type = 'button'; prac.hidden = true;
+  prac.setAttribute('aria-label', '練習飛行（フリーモード）を開く');
+  prac.title = '記録に残らない自由練習：好きな機体・開始位置・天候で飛べます';
+  put(prac, make('span', 'dh-practice-t', '✈ 練習飛行（フリーモード）'), make('small', '', '記録に残らない自由練習'));
+  let onPractice = null;
+  prac.addEventListener('click', () => { if (onPractice) onPractice(); });
+  const hudRoot = doc.getElementById('hud');
+  if (hudRoot) hudRoot.appendChild(prac); else if (doc.body) doc.body.appendChild(prac);
+  function setPractice(on) { prac.hidden = !on; }
 
   // t: { n, of, title, text, keys: [[key, what]…], flow: [{ lesson, done, cur }…] } | null
   function setTask(t) {
@@ -284,8 +307,10 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   book.addEventListener('keydown', (e) => { if (e.code === 'Escape' || e.code === 'Enter') { e.preventDefault(); e.stopPropagation(); hideLogbook(); } });
 
   return {
-    setTask, setChecklist, setRadio, setMic, showLogbook, hideLogbook,
+    setTask, setChecklist, setRadio, setMic, showLogbook, hideLogbook, setPractice,
     onRadioPick(fn) { onRadioPick = fn; }, onChecklistClick(fn) { onCheckClick = fn; },
+    onPractice(fn) { onPractice = fn; },
+    get practiceShown() { return !prac.hidden; },
     get logbookOpen() { return !book.hidden; },
     hideAll() { setTask(null); setChecklist(null); setRadio(null); setMic(null); },
   };

@@ -334,6 +334,7 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
       if (f.type === 'whiteboard') opts.draw = drawWhiteboard(it ? it.title_ja : '本日のブリーフィング', it ? it.text_ja : '');
       else if (f.type === 'flight_status_board') opts.draw = drawStatusBoard(it ? it.title_ja : '本日のフライト', it ? it.text_ja : '');
       else if (f.type === 'wall_screen') opts.draw = drawScreen(it ? it.title_ja : NAMES.academy.ja, it ? it.text_ja : '', { mono: !!(it && /METAR|TAF/.test(it.text_ja)) });
+      else if (f.type === 'ffs_screen') opts.draw = drawScreen('フルフライトシミュレーター', 'FULL FLIGHT SIMULATOR — BOEING 737', {});   // (its own screen: the device faces are drawn on it by main.js)
       else if (f.type === 'bulletin_board') opts.draw = drawBulletin(it ? it.title_ja : 'お知らせ', it ? it.text_ja : '');
       else if (f.type === 'map_wall') { opts.draw = drawAreaMap(FL, L); opts.key = 'area-map'; }      // one texture for every copy
       else if (f.type === 'sign_board' && it) opts.text = { title: it.title_ja, lines: [] };
@@ -341,7 +342,7 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
       if (f.note) opts.note = f.note;
       const piece = kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, y: (r.floorY || 0) + (f.yOff || 0), opts });
       // the boards and screens can be drawn on again later (the instructor shows a figure)
-      if ((f.type === 'whiteboard' || f.type === 'wall_screen') && piece.faces[0]) {
+      if ((f.type === 'whiteboard' || f.type === 'wall_screen' || f.type === 'ffs_screen') && piece.faces[0]) {
         const mat = piece.faces[0][0], key = r.id + ':' + f.type;
         if (!surfaces.has(key)) surfaces.set(key, { mat, a: f.a, c: f.c, rot: f.rot || 0, y: f.type === 'whiteboard' ? 1.45 : 1.6, draw: opts.draw || null });
       }

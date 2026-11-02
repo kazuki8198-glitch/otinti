@@ -68,9 +68,13 @@ export function academySpec(FL) {
       furniture: [
         ...rows('sim_station', 611.5, 626.5, 268.0, 268.0, 5.0, 1, 0),
         ...rows('office_chair', 611.5, 626.5, 266.6, 266.6, 5.0, 1, 180),
-        ...rows('sim_station', 611.5, 626.5, 274.4, 274.4, 5.0, 1, 0),
+        ...rows('sim_station', 611.5, 621.5, 274.4, 274.4, 5.0, 1, 0),
         ...rows('office_chair', 611.5, 626.5, 273.0, 273.0, 5.0, 1, 180),
+        // the full flight simulator stands at the room's east end of the second row, where the
+        // fourth training device stood: an enclosed 737 unit with its own seat and its own screen
+        { type: 'ffs_station', a: 626.5, c: 274.4, rot: 0 },
         { type: 'wall_screen', a: 629.94, c: 270.6, rot: 270 },
+        { type: 'ffs_screen', a: 629.94, c: 274.6, rot: 270 },
         { type: 'headset_rack', a: 609.0, c: 270.6, rot: 90 },
         { type: 'plant', a: 629.2, c: 276.8, rot: 0 },
         { type: 'paper_stack', a: 616.5, c: 268.3, rot: 350, yOff: 0.76 }, { type: 'cup', a: 621.8, c: 274.1, rot: 0, yOff: 0.76 },
@@ -314,6 +318,8 @@ export function academySpec(FL) {
       text_ja: `目的：${n2.goal || ''}\n風を読んで針路を決める（風下に流される分だけ風上に向ける）\n時間＝距離 ÷ 対地速度。途中で行き先が変わったら、新しい針路・距離・時間を見積もり直す。` },
     { id: 'sim-station', room: 'sim', a: 616.5, c: 268.0, y: 1.1, prompt_ja: '訓練装置を使う', title_ja: '訓練装置（FTD 風の練習席）',
       text_ja: 'G1000 型の画面と操縦輪・スロットルの練習席。電源を入れると装置が使えます。\n装置の課目（第 0 段階の地上学科 k1〜k6）は席で受けられます——今日の予定の課目は本番として記録され、それ以外は練習になります。\n飛行練習（フリーフライト）では装置の中で実際に飛べます。交信のチェアフライト（k4）の練習（ステージ 1〜3、記録はされません）もここで。' },
+    { id: 'ffs-station', room: 'sim', a: 626.5, c: 273.2, y: 1.1, prompt_ja: 'FFS を使う', title_ja: 'フルフライトシミュレーター（FFS）',
+      text_ja: '本物の運航乗務員が訓練するのと同じ、737 のフルフライトシミュレーターです。電源を入れると、737 の操縦席で自由に練習できます。\n卒業して副操縦士になれば、実運航（羽田―小松）のリハーサルもここでできます（どちらも訓練の記録には数えません）。' },
     { id: 'status-board', room: 'lobby', a: 646.2, c: 268.5, y: 2.6, prompt_ja: '今日のフライトを見る', title_ja: '本日のフライト（LAB 飛行場）',
       text_ja: today.map(r => `${r[0]}  ${r[1]}  ${r[2]}  ${r[3]}  ${r[4]}`).join('\n') },
     { id: 'plaque', room: 'lobby', a: 663.8, c: 259.6, y: 1.7, prompt_ja: '銘板を読む', title_ja: '翔洋航空 フライトアカデミー',

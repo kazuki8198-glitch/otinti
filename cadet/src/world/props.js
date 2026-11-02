@@ -92,6 +92,29 @@ const pfd = (seed = 0) => (g, w, h) => {
   g.fillStyle = '#f2b632'; g.fillRect(w * 0.4, h * 0.49, w * 0.07, h * 0.02); g.fillRect(w * 0.53, h * 0.49, w * 0.07, h * 0.02);
   g.fillStyle = '#000'; g.fillRect(0, h * 0.86, w, h * 0.14); g.fillStyle = '#9ef0c9'; g.font = `600 ${Math.round(h * 0.06)}px monospace`; g.fillText('HDG 090   ALT 3000   GS 100KT', w * 0.05, h * 0.94);
 };
+const jetFace = (seed = 0) => (g, w, h) => {
+  // a jet's display unit (the full flight simulator's screens): an attitude display with speed and
+  // altitude tapes, a navigation page, or an engine page — the FFS's own look, not the G1000's
+  if (seed % 3 === 2) {
+    g.fillStyle = '#05080c'; g.fillRect(0, 0, w, h);
+    for (const [cx, label, v] of [[0.3, 'N1', '58.2'], [0.7, 'EGT', '612']]) {
+      g.strokeStyle = '#3a4a55'; g.lineWidth = Math.max(2, h * 0.02); g.beginPath(); g.arc(w * cx, h * 0.52, w * 0.16, Math.PI * 0.75, Math.PI * 2.25); g.stroke();
+      g.strokeStyle = '#3ddc74'; g.beginPath(); g.arc(w * cx, h * 0.52, w * 0.16, Math.PI * 0.75, Math.PI * 1.45); g.stroke();
+      g.fillStyle = '#3ddc74'; g.font = `700 ${Math.round(h * 0.11)}px monospace`; g.textAlign = 'center'; g.fillText(v, w * cx, h * 0.6);
+      g.fillStyle = '#cfe0f2'; g.font = `600 ${Math.round(h * 0.06)}px monospace`; g.fillText(label, w * cx, h * 0.32);
+    }
+    g.fillStyle = '#9ef0c9'; g.font = `600 ${Math.round(h * 0.055)}px monospace`; g.textAlign = 'left'; g.fillText('737  FFS', w * 0.05, h * 0.12);
+    return;
+  }
+  const b = ((seed * 5) % 7 - 3) * 0.02;
+  g.save(); g.translate(w / 2, h / 2); g.rotate(b);
+  g.fillStyle = '#2d77c4'; g.fillRect(-w, -h * 2, w * 2, h * 2); g.fillStyle = '#7a4f2b'; g.fillRect(-w, 0, w * 2, h * 2);
+  g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(-w, 0); g.lineTo(w, 0); g.stroke(); g.restore();
+  g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(w * 0.06, h * 0.18, w * 0.11, h * 0.64); g.fillRect(w * 0.8, h * 0.18, w * 0.13, h * 0.64);
+  g.fillStyle = '#3ddc74'; g.font = `700 ${Math.round(h * 0.07)}px monospace`; g.fillText('250', w * 0.07, h * 0.52); g.fillText('10000', w * 0.8, h * 0.52);
+  g.fillStyle = '#f2b632'; g.fillRect(w * 0.4, h * 0.49, w * 0.07, h * 0.02); g.fillRect(w * 0.53, h * 0.49, w * 0.07, h * 0.02);
+  g.fillStyle = '#000'; g.fillRect(0, h * 0.86, w, h * 0.14); g.fillStyle = '#9ef0c9'; g.font = `600 ${Math.round(h * 0.06)}px monospace`; g.fillText(seed % 3 === 1 ? 'ND  MAP  20 NM' : 'PFD  HDG 090   FL100', w * 0.05, h * 0.94);
+};
 const clockFace = (g, w, h) => {
   g.fillStyle = '#fbfbf8'; g.beginPath(); g.arc(w / 2, h / 2, w * 0.48, 0, 6.29); g.fill();
   g.strokeStyle = '#222'; g.lineCap = 'round';
@@ -131,7 +154,7 @@ const drinksFace = (g, w, h) => {
 // ---------------------------------------------------------------- the pieces (front towards +Z)
 // (headset_rack is not here: its height is built into the piece, so it must take the floor's y like any other
 // furniture — the wall pieces below draw at opts.y, an absolute height, instead)
-const WALL = new Set(['whiteboard', 'wall_screen', 'flight_status_board', 'bulletin_board', 'map_wall', 'sign_board', 'wall_clock', 'exit_sign']);
+const WALL = new Set(['whiteboard', 'wall_screen', 'ffs_screen', 'flight_status_board', 'bulletin_board', 'map_wall', 'sign_board', 'wall_clock', 'exit_sign']);
 const BUILDERS = {
   desk(P, M) {
     P.rbox(M.oak, 1.4, 0.035, 0.72, 0, 0.74, 0, 0.008);
@@ -411,6 +434,24 @@ const BUILDERS = {
     [M.black, M.navyHard, M.red].forEach((m, i) => P.rbox(m, 0.025, 0.12, 0.025, 0.42 + i * 0.04, 0.89, 0.12, 0.008));   // throttle, propeller, mixture
     P.collide(1.62, 0.82, 1.22);
   },
+  ffs_station(P, M) {
+    // the full flight simulator: an enclosed jet unit where a training device is an open desk — a
+    // shell with sides and a top, a wide console, three big display units (PFD / EICAS / ND), two
+    // yokes and a thrust quadrant. Its own screens carry the jet's faces (jetFace, above).
+    P.rbox(M.charcoal, 2.3, 0.06, 1.1, 0, 0.78, 0, 0.01);
+    for (const x of [-1.1, 1.1]) P.rbox(M.charcoal, 0.05, 1.9, 1.1, x, 0.95, 0, 0.01);          // the shell's sides
+    P.rbox(M.charcoal, 2.3, 0.05, 1.1, 0, 1.92, 0, 0.01);                                      // the shell's top
+    P.rbox(M.charcoal, 2.3, 1.9, 0.05, 0, 0.95, -0.55, 0.01);                                  // the shell's back
+    const mon = (x, seed) => { P.rbox(M.bezel, 0.62, 0.4, 0.03, x, 1.32, -0.5, 0.008); P.face(jetFace(seed), 0.58, 0.37, x, 1.32, -0.483, { emissive: 0.8, px: 256, key: 'ffs' + seed }); };
+    mon(-0.62, 1); mon(0, 2); mon(0.62, 0);
+    for (const sx of [-0.55, 0.55]) {                                                          // the two yokes and their columns
+      P.rbox(M.black, 0.3, 0.03, 0.03, sx, 1.02, -0.18, 0.01); for (const s of [-1, 1]) P.rbox(M.black, 0.03, 0.1, 0.03, sx + s * 0.14, 1.06, -0.18, 0.01);
+      const col = new THREE.CylinderGeometry(0.014, 0.014, 0.3, 8); col.rotateX(Math.PI / 2.6); col.translate(sx, 0.95, -0.32); P.add(M.chrome, col);
+    }
+    P.rbox(M.black, 0.2, 0.12, 0.3, 0, 0.86, -0.05, 0.015);                                    // the thrust quadrant
+    [M.black, M.black].forEach((m, i) => P.rbox(m, 0.025, 0.12, 0.025, -0.035 + i * 0.07, 0.95, -0.05, 0.008));
+    P.collide(2.32, 1.12, 1.95);
+  },
   model_aircraft_stand(P, M, opts) {
     P.rbox(M.white, 0.42, 0.95, 0.42, 0, 0.475, 0, 0.02);
     P.cyl(M.chrome, 0.01, 0.01, 0.22, 0, 1.06, 0, 8);
@@ -449,6 +490,12 @@ const BUILDERS = {
     const y = opts.y ?? 1.6;
     P.rbox(M.bezel, 1.42, 0.82, 0.05, 0, y, 0.035, 0.01);
     P.face(opts.draw || slide('翔洋航空 フライトアカデミー', 'SHOYO FLIGHT ACADEMY'), 1.36, 0.765, 0, y, 0.061, { emissive: 0.9, px: 1024, rough: 0.12 });
+    P.anchors.push({ key: 'screen', x: 0, y, z: 0.06 });
+  },
+  ffs_screen(P, M, opts) {
+    const y = opts.y ?? 1.6;
+    P.rbox(M.bezel, 1.42, 0.82, 0.05, 0, y, 0.035, 0.01);
+    P.face(opts.draw || slide('フルフライトシミュレーター', 'FULL FLIGHT SIMULATOR — BOEING 737'), 1.36, 0.765, 0, y, 0.061, { emissive: 0.9, px: 1024, rough: 0.12 });
     P.anchors.push({ key: 'screen', x: 0, y, z: 0.06 });
   },
   flight_status_board(P, M, opts) {

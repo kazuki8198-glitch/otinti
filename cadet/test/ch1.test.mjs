@@ -1,6 +1,7 @@
 // CADET — chapter 1 as the brief's §7 counts it, with tools/measure-ch1.mjs's own functions (the measure and the tests
-// count the same way), after the ground-school redesign (a class is its sections' cards, their checks, and a drill
-// of five — there is no pace to choose any more): the classes' frame (no wording of the class's own said 8 times
+// count the same way), after the ground-school redesign and the restoration of the format choice (a class is taken
+// as its sections' cards, their checks, and a drill of five, or read in full — the counts here are the cards', the
+// measure's default way; the full way has its own test below): the classes' frame (no wording of the class's own said 8 times
 // or more, but those kept here with their reason), each day's own start and end, the parts of the sections not
 // going the same way three in a row, no long stretch without a choice, the first flight's sections asked about
 // again and again, the review at a class's start, a day within 40 minutes; the first day's introductory flight.
@@ -55,6 +56,18 @@ test('no long stretch without a choice: at most 2 minutes; a day within 40 minut
       assert.ok(d.longestGap <= 120, `seed ${seed} day ${d.day}: ${(d.longestGap / 60).toFixed(2)} min without a choice`);
       assert.ok(d.time <= 40 * 60, `seed ${seed} day ${d.day}: ${(d.time / 60).toFixed(1)} min`);
     }
+  }
+});
+
+test('the classes read in full: no stretch without a choice over 3 minutes (the full way\'s own bound — its checks placed at 120 s of reading, 70 in a section the afternoon or the first flight needs); a section\'s parts not the same way three in a row', async () => {
+  for (const seed of [1, 2, 3]) {
+    const r = await measureCh1({ seed, pace: 'full' });
+    for (const d of r.days) assert.ok(d.longestGap <= 180, `seed ${seed} day ${d.day}: ${(d.longestGap / 60).toFixed(2)} min without a choice`);
+    const all = [];
+    for (const d of r.days) for (const t of d.talks) if (/^class/.test(t.label)) all.push(...sectionStages(t.lines));
+    assert.equal(all.length, 50, 'every section the six classes teach (wx and radio1 left the lecture frame)');
+    for (let k = 2; k < all.length; k++) assert.ok(!(all[k].stages === all[k - 1].stages && all[k].stages === all[k - 2].stages), `seed ${seed}: ${all[k - 2].base}, ${all[k - 1].base}, ${all[k].base} all "${all[k].stages}"`);
+    assert.ok(new Set(all.map(x => x.stages)).size >= 6, `${new Set(all.map(x => x.stages)).size} ways a section goes`);
   }
 });
 

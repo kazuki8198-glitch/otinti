@@ -94,10 +94,12 @@ export function runTalk(L, data, dialogId, { policy = () => null, ctx = {}, stat
     lines.push(line);
     if (v.choices.length) {
       line.decision = isDecision(v, n);
-      const qi = /^q(\d+)$/.exec(v.node), x = qi ? qs[+qi[1]] : null;
+      // (a class's scored questions: its drill (q<k>, of data.questions) or, read in full, its chapters'
+      // (cq<k>, of data.chapterQuestions) — the same shape either way)
+      const qi = /^q(\d+)$/.exec(v.node), ci = /^cq(\d+)$/.exec(v.node), x = qi ? qs[+qi[1]] : ci ? (data.chapterQuestions || [])[+ci[1]] : null;
       let i = policy(v, k, x);
       if (i == null) i = x ? v.choices.findIndex(c => c.text === x.opts[x.ok]) : 0;
-      if (x) line.q = { k: +qi[1], id: questionId(L, x, kind), right: v.choices[i] && v.choices[i].text === x.opts[x.ok] };
+      if (x) line.q = { k: +(qi || ci)[1], id: questionId(L, x, kind), right: v.choices[i] && v.choices[i].text === x.opts[x.ok] };
       // (a question not scored whose answer is kept: the classes' checks and review — hook 'ans' on its choices)
       else if (line.decision) {
         const ch = (n.choices || []).filter(c => !c.if)[i], a = ch && (ch.effects || []).find(e => e.hook === 'ans');
@@ -185,12 +187,12 @@ export function answerHeard(L, id, heard, k1Parts) {
 }
 
 // ---------------------------------------------------------------- chapter 1, day by day
-// pace: 'need' | 'full' | 'quick' (the class's choice, by its label); seed: the career's; skip: the moves skipped when
+// pace: 'full' | 'card' (the classes' format, chosen by its label at the pace node); seed: the career's; skip: the moves skipped when
 // the game offers it (the second time on)
-const PACE_LABEL = { need: /^今日の訓練に要る/, full: /^じっくり/, quick: /^要点だけ/ };
+const PACE_LABEL = { full: /^じっくり/, card: /^カード/ };
 // think: at a 考えてみよう, 'try' (考えてみます: its candidates asked — the default, the first choice) or 'hear' (答えを聞きます);
 // intro: the first day's introductory flight 'fly' (taken, flown by the scripted cadet: introHands) or 'no' (declined)
-export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong = 0, think = 'try', intro = 'fly', introHands = 'cadet' } = {}) {
+export async function measureCh1({ pace = 'card', seed = 1, skip = false, wrong = 0, think = 'try', intro = 'fly', introHands = 'cadet' } = {}) {
   const L = await load(), C = L.career, S = L.school, FL = L.FL;
   const store = (() => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; })();
   const career = C.createCareer({ store, seed });
@@ -355,7 +357,7 @@ export function answerScenes(L, run, secs) {
     for (const l of t.lines) {
       if (!l.decision) continue;
       const tied = new Set();
-      const p = /^(c|r)(\d+)s(\d+):pr$/.exec(l.node);
+      const p = /^(c|f|r)(\d+)s(\d+):pr$/.exec(l.node);
       if (p && cls) { const x = all.find(y => y.k === +p[2] && y.j === +p[3]); if (x) tied.add(x.sec.id); }
       if (l.q) { const a = answerOf(L, l.q.id); if (a) for (const [s] of a) tied.add(s); }
       for (const s of tied) if (out[s]) out[s].push(d.day);
@@ -411,7 +413,7 @@ export function framePatterns(run) {
 export function sectionStages(lines) {
   const out = [];
   for (const l of lines) {
-    const m = /^(c\d+s\d+)(.*)$/.exec(l.node); if (!m) continue;
+    const m = /^([cf]\d+s\d+)(.*)$/.exec(l.node); if (!m) continue;
     const [, base, rest] = m;
     // (a card's lines: the section's own node its title, its numbered lines the card's — a key point (要) or a
     // figure (図) or the card's prose (本文), told by the line's tag; the old full reading's :u<n> lines the same)
@@ -428,7 +430,7 @@ export function sectionStages(lines) {
 // ---------------------------------------------------------------- the whole picture
 export async function measureAll({ seeds = [1], paces = null } = {}) {
   const L = await load();
-  const P = paces || (L.school.PACES ? L.school.PACES : ['full', 'quick']);
+  const P = paces || ['card', 'full'];
   const out = { built: new Date().toISOString().slice(0, 10), paces: {} };
   for (const pace of P) {
     const runs = [];

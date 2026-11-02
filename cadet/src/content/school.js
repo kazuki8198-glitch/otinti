@@ -25,6 +25,7 @@ import { PEOPLE } from './people.js';
 import { EXAMS, CLASSES, CLASS_FTD, PACE_IDS, heardSet, FTD_TITLES, weatherFor } from '../career/career.js';
 import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, NOTE_ANSWERS, EVENT_ANSWERS } from './answer-map.js';
 import { SUMMARIES } from './lecture-summaries.js';
+import { tagOfSection, tagOfBank, tagChipSpoken } from './ana-triage.js';
 import * as TALK from './class-talk.js';
 import { say } from './class-talk.js';
 
@@ -60,15 +61,17 @@ function chain(N, id, lines, then, speaker = 'lecturer', firstMore = {}) {
 // run), end: false leaves the run going on to `then` (the last run ends with q:end, the whole quiz scored); fitTo: a
 // reason too long for that many characters is said over a few lines (q<k>:ok, q<k>:ok:1…); fitQ: a question too long
 // too, its first lines before it (q<k>:p0…, the English to hear said from the first), the node with its choices still
-// q<k> — the links already made to q<k> go to its first line (quizNodes → { entry }: the run's first)
-export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result', label = '', from = 0, to = questions.length, end = true, fitTo = 0, fitQ = false, words = null } = {}) {
+// q<k> — the links already made to q<k> go to its first line (quizNodes → { entry }: the run's first). prefix: the
+// node ids' head ('q' as ever; a class's chapter questions are 'cq', so the drill's q<k> and theirs never meet —
+// the qz_<k> flags are shared by index, and only one of the two sets is ever asked in a sitting)
+export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result', label = '', from = 0, to = questions.length, end = true, fitTo = 0, fitQ = false, words = null, prefix = 'q' } = {}) {
   // (words: the class's own — { head(j, n), ok(j), ng(j, right in quotes) } for the j-th of the run)
   const W = words || { head: (j, n) => `第 ${j + 1} 問（${n} 問中）。`, ok: () => '正解です。', ng: (j, x) => `正しくは${x}です。` };
   const put = (id, text, next, more = {}) => { const l = fitTo ? fit(text, fitTo) : [text]; l.forEach((t, j) => { N[j ? `${id}:${j}` : id] = { speaker, text: t, next: j < l.length - 1 ? `${id}:${j + 1}` : next, tag: 'material', ...(j ? {} : more) }; }); };
-  const parts = {}, entry = (k) => (parts[k] && parts[k].length > 1 ? `q${k}:p0` : `q${k}`);
+  const parts = {}, entry = (k) => (parts[k] && parts[k].length > 1 ? `${prefix}${k}:p0` : `${prefix}${k}`);
   for (let k = from; k < to; k++) { const t = `${label ? label + '　' : ''}${W.head(k - from, to - from)}${questions[k].q}`; parts[k] = fitTo && fitQ ? fit(t, fitTo) : [t]; }
   for (let k = from; k < to; k++) {
-    const x = questions[k], id = `q${k}`, nextQ = k < to - 1 ? entry(k + 1) : end ? 'q:end' : then, P = parts[k];
+    const x = questions[k], id = `${prefix}${k}`, nextQ = k < to - 1 ? entry(k + 1) : end ? `${prefix}:end` : then, P = parts[k];
     const more = x.say ? { hook: { name: 'say', arg: x.say } } : x.pfd != null ? { hook: { name: 'pfd', arg: String(x.pfd) } } : {};
     P.slice(0, -1).forEach((t, j) => { N[`${id}:p${j}`] = { speaker, text: t, ...(j ? {} : more), tag: 'material', next: j < P.length - 2 ? `${id}:p${j + 1}` : id }; });
     // (M8: the questions and their reasons are the course's own words: 'material', said as written in the English mode)
@@ -79,11 +82,12 @@ export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result',
     put(`${id}:ok`, `${W.ok(k - from)}${x.why || ''}`.trim(), nextQ, heard);
     put(`${id}:ng`, `${W.ng(k - from, q(x.opts[x.ok]))}${x.why || ''}`.trim(), nextQ, heard);
   }
-  if (end) N['q:end'] = { speaker, text: (words && words.end) || '以上です。採点しますね。', hook: { name: 'quizEnd', arg: String(questions.length) }, next: then };
+  if (end) N[`${prefix}:end`] = { speaker, text: (words && words.end) || '以上です。採点しますね。', hook: { name: 'quizEnd', arg: String(questions.length) }, next: then };
   // (the links made before to a question now said over lines: to its first)
-  const to1 = (t) => { const m = /^q(\d+)$/.exec(t || ''); return m && parts[+m[1]] && parts[+m[1]].length > 1 ? entry(+m[1]) : t; };
+  const to1 = (t) => { const m = new RegExp(`^${prefix}(\\d+)$`).exec(t || ''); return m && parts[+m[1]] && parts[+m[1]].length > 1 ? entry(+m[1]) : t; };
+  const preNode = new RegExp(`^${prefix}\\d+:p\\d+$`);
   for (const [nid, n] of Object.entries(N)) {
-    if (/^q\d+:p\d+$/.test(nid)) continue;
+    if (preNode.test(nid)) continue;
     if (n.next) n.next = to1(n.next);
     if (n.else) n.else = to1(n.else);
     for (const c of [...(n.choices || []), ...(n.keys || [])]) if (c.next) c.next = to1(c.next);
@@ -98,13 +102,17 @@ const resultNodes = (N, speaker, passText, failText, endText) => {
 };
 
 // ---------------------------------------------------------------- a class (index into CLASS_CHAPTERS)
-// The class reads the day's chapters with the cadet, in the textbook's order, at the pace the cadet chooses:
-//   need  (今日の訓練に要るところ): the sections of the afternoon's training device lesson and of the first flight's
-//         lessons (t1, a1, t3: the book's sections FLIGHT LAB's syllabus gives them) read in full, the rest as in quick;
-//   full  (じっくり): the whole textbook;
-//   quick (要点だけ): each section's key points — every ここが大切 (a short summary where the book has none), its figure
-//         in a line, and every line that answers a question chapter 1 can ask from it (content/answer-map.js: so what
-//         is asked later has been said, whatever the pace).
+// The class reads the day's chapters with the cadet, in the textbook's order, in the format the cadet chooses
+// at its start (the choice restored: the redesign's single way made a choice of the two again):
+//   full  (じっくり): the whole textbook — every section read in full, the lecturer's notes said, two scored
+//         questions after each chapter (the way the classes went before the redesign);
+//   card  (カード＋ドリル): each section's key points (the redesign) — every ここが大切 (a short summary where
+//         the book has none), its figure in a line, and every line that answers a question chapter 1 can ask
+//         from it (content/answer-map.js: so what is asked later has been said, whatever the format) — and
+//         five scored questions at the end, the drill.
+// (The order before had a third way, need — the sections of the afternoon's lesson and of the first flight
+// read in full, the rest as cards — a mixture of the two routes in one sitting; it is not a choice any more.
+// Its sections still shape the full way: their checks come sooner, as they did.)
 // A section read in full is: its page on briefing room 2's screen (hook 'page': the section, or secId#k for its k-th
 // unit of content/lecture-units.js, drawn by world/lecture-screen.js; the whiteboard shows its ここが大切) and the class's
 // place in the course kept (hook 'progress': the section's index in the class, so a class left midway goes on from
@@ -359,7 +367,7 @@ export function noteUnit(us, page) {
 // first — then choose among answers — or hear it); the end ('end': a plain line, R / B / Q for the section again, the
 // textbook, a break). Each says which part of the section it is (stage: 題 予想 導入 本文 大切 確認 補足 答え 区切り).
 // The wording comes from content/class-talk.js, by the section's place in part 1 (g) and the k-th time within it.
-export const DECISION_NODE = /^(q\d+|rv\d+|wu\d+|sq\d+)$|:(pr|tq|rq|fq|tc|ck|eq)$/;
+export const DECISION_NODE = /^(q\d+|cq\d+|rv\d+|wu\d+|sq\d+)$|:(pr|tq|rq|fq|tc|ck|eq)$/;
 const SEC_AT = new WeakMap();
 // a section's place among all of chapter 1's (the classes in order)
 function secAt(FL, id) {
@@ -499,7 +507,9 @@ function quickEntries(sec, o) {
   let n = (o.g || 0) * 3;
   const steps = quickSteps(sec).map(l => (l.tag === 'key' && l.text.startsWith('ここが大切です。') ? { ...l, text: say(TALK.KEY, n++) + l.text.slice('ここが大切です。'.length) }
     : l.text.startsWith('画面の図を見てください。') ? { ...l, text: say(TALK.FIG_ANN, n++) + l.text.slice('画面の図を見てください。'.length) } : l));
-  const head = say(TALK.QUICK_TITLE, o.g || 0)(qq(sec.title)), lines = [{ text: head, m: null }, ...steps], { id } = o;
+  // (the ANA triage, on the card's title line: 【必須】 what a real cadet must know too, 【推奨】 worth knowing,
+  // 【校内のみ】 only this academy's own — content/ana-triage.js; a display only, the class itself unchanged)
+  const head = say(TALK.QUICK_TITLE, o.g || 0)(qq(sec.title)) + tagChipSpoken(tagOfSection(sec.id)), lines = [{ text: head, m: null }, ...steps], { id } = o;
   // (the title and a short first line together, as before: then the k-th line is the k-th step)
   // (not with a prediction: it follows the title alone, before anything of the section is said)
   const merged = !o.pred && steps.length && `${head}${steps[0].text}`.length <= LINE_MAX && !steps[0].hook;
@@ -673,11 +683,14 @@ export function needSections(FL, i, afternoon = CLASS_FTD[i]) {
   return new Set([afternoon, 't1', 'a1', 't3'].filter(Boolean).flatMap(l => book.lessonSections(l).map(s => s.id)).filter(id => mine.has(id)));
 }
 // what main.js (and the tools) give a class from the career: where it was left, what has been heard, how many times it
-// was begun, the pace chosen last, the afternoon's lesson
+// was begun, the format the class itself was begun in (kept with it: a class taken up midway goes on in it, unasked),
+// the format chosen last anywhere (a pace of the order before — 'need', 'quick' — reads as the cards), the
+// afternoon's lesson
 // (afternoon: today's plan's device lesson — another than the class's own after one not passed; null: none)
 export function classOptions(FL, state, i, { attempt, afternoon } = {}) {
   const at = state.done && state.done[`lecture:${i}`], n = attempt ?? ((state.attempts || {})[`class:${i}`] || 0);
-  return { from: Number.isInteger(at) && at > 0 ? at : null, heard: heardOf(FL, state), attempt: n, last: state.lastPace || null, afternoon: afternoon === undefined ? CLASS_FTD[i] : afternoon, review: reviewFor(FL, state, i, { attempt: n }) };
+  const kept = state.classPace && state.classPace[`class:${i}`];
+  return { from: Number.isInteger(at) && at > 0 ? at : null, heard: heardOf(FL, state), attempt: n, pace: kept === 'full' || kept === 'card' ? kept : null, last: state.lastPace === 'full' ? 'full' : state.lastPace ? 'card' : null, afternoon: afternoon === undefined ? CLASS_FTD[i] : afternoon, review: reviewFor(FL, state, i, { attempt: n }) };
 }
 // the questions a class (or the evening's study) begins with: of the classes before it (their answers heard), those
 // answered wrong last time first (the latest first), then one on the first flight's own sections (aero.forces,
@@ -741,7 +754,7 @@ export function sectionMarks(FL, state) {
     const c = book.chapters.find(x => x.id === id) || { n: 0, title: id, sections: [] };
     return { id, n: c.n, title: c.title, sections: c.sections.map(x => {
       const qs = [...pool.filter(y => y.home === x.id), ...(more[x.id] || [])], a = qs.filter(y => ans[y.id]), h = heard.has(x.id);
-      return { id: x.id, title: (book.section(x.id) || x).title, how: h ? (state.heard && state.heard[x.id]) || 'f' : '', mark: !h ? '' : a.some(y => ans[y.id][2] === 0) ? '△' : a.length ? '✓' : '・', asked: a.length };
+      return { id: x.id, title: (book.section(x.id) || x).title, tag: tagOfSection(x.id), how: h ? (state.heard && state.heard[x.id]) || 'f' : '', mark: !h ? '' : a.some(y => ans[y.id][2] === 0) ? '△' : a.length ? '✓' : '・', asked: a.length };
     }) };
   }) }));
 }
@@ -751,7 +764,7 @@ export function written1Readiness(FL, state) {
   const heard = heardOf(FL, state), ans = state.answers || {};
   return EXAMS.written1.banks.map(b => {
     const list = BANK_ANSWERS[b] || [], taught = list.map((x, k) => ({ id: `${b}#${k}`, x })).filter(o => o.x.a && o.x.a.every(([sec]) => heard.has(sec)));
-    return { bank: b, title: ((FL.quiz.BANKS || []).find(x => x.id === b) || { title: b }).title, taught: taught.length, total: list.length, right: taught.filter(o => ans[o.id] && ans[o.id][2] === 1).length };
+    return { bank: b, title: ((FL.quiz.BANKS || []).find(x => x.id === b) || { title: b }).title, tag: tagOfBank(b), taught: taught.length, total: list.length, right: taught.filter(o => ans[o.id] && ans[o.id][2] === 1).length };
   });
 }
 // the questions of a review (reviewFor's: those missed first; the classes done so far), as asked: [{ id, q, opts, ok, why }]
@@ -786,32 +799,46 @@ export function studyDialogs(FL, state, { attempt = 0 } = {}) {
   N['st:bed'] = { speaker: S, text: '（寮に帰って、少し遅くに寝た。）', effects: [{ hook: 'done', arg: 'night' }], end: true };
   return { speakers: SPEAKERS, flags: [], hooks: [...SCHOOL_HOOKS], dialogs: { study: { start: 'st', nodes: N } }, questions: [] };
 }
-// classDialogs(FL, i, { seed, from, notes, attempt, heard, afternoon, review }) → the class's dialog data
+// classDialogs(FL, i, { seed, pace, from, notes, attempt, last, heard, afternoon, review }) → the class's dialog data
 // (dialog 'class'). seed: the career's; attempt: how many times this class was begun before (its questions come
 // in another order); from: the index of the section a class left midway reached (the class goes on from it — no
 // choice to make about it); heard: the sections heard before (a Set; default: those of the classes before this
 // one); afternoon: the day's training device lesson; review: the questions to begin with ({ ids, missed }:
 // classOptions's reviewFor); notes: id → the lecturer's notes (content/lecture-notes; the tests give their own).
-// pace / last are still accepted, and ignored: a caller from before the redesign may pass them.
+// pace: the class's format — 'full' (じっくり: the whole textbook) or 'card' (カード＋ドリル: the redesign's
+// cards and drill); a pace of the order before names its format ('need' and 'quick' → 'card'). last: the format
+// chosen last anywhere (the same names), offered first. No pace and not taken up midway: the class asks at its
+// start (the 'pace' node, after the review) — the hook 'pace' keeps the choice with the career, for this class
+// (so a class left midway goes on in it, unasked) and as the next class's first offer.
 //
-// The class (the redesign): the day's own start (CLASS_DAY: what the day is for, the afternoon's lesson), a
+// The class, in either format: the day's own start (CLASS_DAY: what the day is for, the afternoon's lesson), a
 // review of earlier classes' questions (those missed first), then each chapter in turn — its introduction, and
-// each of its sections as a card (quickEntries: the title, every ここが大切 — a short summary where the book has
-// none — its figures, and every line that answers a question chapter 1 can ask from it, content/answer-map.js);
-// the lecturer's prediction where a section would otherwise run long without a choice, and a check (a question
-// of chapter 1 on what was just said, not scored) where the time since the last choice reaches CHECK_AFTER.
-// At the end, the drill: five questions on the day's chapters, scored (classDrill); its score is what the
-// class's knowledge grows by (career.js classGrowth — a good score grows it most, a poor one a little, as a
-// written test's does). The textbook is never paged through on the way: it stays a book to open (a section's
-// end, B; the tablet's 教科書), and reading one there counts as heard, at its key points ('q') — as a card's
-// hearing does (hook 'heard' at the section's end: secId|q).
+// each of its sections in the format's own way. The sections are the same, the chapters' order the same, and
+// what has left the lecture frame (the weather, how a radio works) stays out of both: the format is the depth,
+// not the syllabus.
+// As cards: a section is its key points (quickEntries: the title, every ここが大切 — a short summary where the
+// book has none — its figures, and every line that answers a question chapter 1 can ask from it); the lecturer's
+// prediction where a section would otherwise run long without a choice, and a check (a question of chapter 1 on
+// what was just said, not scored) where the time since the last choice reaches CHECK_AFTER. At the end, the
+// drill: five questions on the day's chapters, scored (classDrill); its score is what the class's knowledge
+// grows by (career.js classGrowth — a good score grows it most, a poor one a little, as a written test's does).
+// In full: a section is read whole (fullEntries: its page on the screen, her introduction, every unit as it
+// comes, her notes, her check as the prediction where she has one), a check where the stretch without a choice
+// reaches its limit (sooner in a section the afternoon or the first flight needs), and two scored questions
+// after each chapter (classQuestions, the nodes cq<k>: the drill's q<k> are the cards' alone). A class read in
+// full grows the knowledge by the full class's amount itself, whatever those questions scored (main.js grows
+// it by classGrowth(100) for a class kept as 'full'). The textbook is never paged through on the cards' way: it
+// stays a book to open (a section's end, B; the tablet's 教科書), and reading one there counts as heard, at its
+// key points ('q') — as a card's hearing does (hook 'heard' at the section's end: secId|q; in full, secId|f).
+// Both ways are built into the one graph: a section's first card line carries the gate (the flag 'full' steps
+// it aside to the section read whole), so the validator sees both, and a sitting takes one.
 // A section ends with a line of its own (R the section again, B the textbook, Q a break — the class left there,
-// its place the next section; not after the class's last section). A class taken up midway says no score: the
-// drill it did not begin from its start is not the whole class's.
-// (the time since the last choice at which a check is put in: the cards are short, so the quick pace's old limit)
+// its place the next section; not after the class's last section). A class taken up midway says no score:
+// neither the drill nor the chapter questions it did not begin from its start are the whole class's.
+// (the time since the last choice at which a check is put in: the cards are short, so the quick pace's old
+// limit; in full, the old limits — 120, and 70 in a section the afternoon or the first flight needs)
 const CHECK_AFTER = 85;
 export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes = notesFor, attempt = 0, last = null, heard = null, afternoon = CLASS_FTD[i], review = null } = {}) {
-  void pace; void last;
   const book = gameBook(FL), ids = CLASS_CHAPTERS[i], r = rng(seed * 31 + i + attempt * 7919);
   if (!ids) throw new Error(`classDialogs: no class ${i}`);
   const chs = ids.map(id => book.chapters.find(c => c.id === id)).filter(Boolean);
@@ -822,25 +849,33 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     preview: [afternoon ? `午後は訓練装置室で ${afternoon} です。今日の授業のことも、明日からの訓練で使います。` : '今日の授業のことは、明日からの訓練と初飛行で使います。'] };
   const ci0 = CLASS_CHAPTERS.slice(0, i).flat().length;                       // (the class's first chapter's place in part 1)
   const { all, start } = classQuestions(FL, i, { from, heard, r: rng(1) });
+  // (the sitting's format: the one given; taken up midway without one, the format chosen last anywhere; a
+  // fresh class with none given asks at its start and goes on in the one picked there)
+  const fmtOf = (p) => (p === 'full' ? 'full' : p === 'card' || p === 'need' || p === 'quick' ? 'card' : null);
+  const fmt = fmtOf(pace), lastFmt = fmtOf(last) || 'card', effFmt = fmt || (start ? lastFmt : null), askFmt = !start && !fmt;
+  const at = start ? all[start] : null;
   const N = {};
   // ---- each section planned: its card, the checks on the way, the prediction where one is due
   const known = new Set(heard ? [...heard] : sectionsBefore(FL, i)), used = new Set();
   let carried = 30;                    // (the time since the last choice, carried in: the class's own start)
+  const need = needSections(FL, i, afternoon);
+  let gFull = 30, prevStages = null;   // (the full way's own stretch without a choice, carried in the same way; the last full section's shape)
   const longest = (E, g0) => { let g = g0, m = 0; for (const e of E) for (const x of timeline(e)) { g += x.t; if (x.dec) { m = Math.max(m, g); g = 0; } } return Math.max(m, g); };
   const run = (E, g0) => { let g = g0; for (const e of E) for (const x of timeline(e)) { g += x.t; if (x.dec) g = 0; } return g; };
   // (the checks: after the step whose line completes the answer, where the time since the last choice has reached
-  // CHECK_AFTER; a step index → its entry)
+  // CHECK_AFTER — T in full, whose sections are long (a section the afternoon or the first flight needs: sooner);
+  // a step index → its entry)
   // (none of the section's own yet: one from a section heard earlier — this class's latest first — once it is late)
-  const placeChecks = (E, g0, cands, recall, idOf, mine, g7) => {
+  const placeChecks = (E, g0, cands, recall, idOf, mine, g7, T = CHECK_AFTER) => {
     const at = new Map(); let g = g0;
     for (const e of E) {
       for (const x of timeline(e)) { g += x.t; if (x.dec) g = 0; }
-      if (e.step === undefined || !e.brk || at.has(e.step) || g < CHECK_AFTER) continue;
+      if (e.step === undefined || !e.brk || at.has(e.step) || g < T) continue;
       // (of the checks that fit here, the day's own rng picks one — the pool's order alone would ask the same
       // question of every cadet, every day)
       const pick = (list) => { const cs = list.filter(x => !mine.has(x.id)); return cs.length ? cs[Math.floor(rng(seed * 61 + i * 17 + g7 + e.step * 131 + attempt * 3571)() * cs.length)] : null; };
       let c = pick(cands.filter(x => x.after <= e.step));
-      if (!c && g >= CHECK_AFTER + 20) c = pick(recall);
+      if (!c && g >= T + 20) c = pick(recall);
       if (!c) continue;
       const ce = checkEntry(book, rng(seed * 61 + i * 17 + g7 + e.step + attempt * 3571), c, idOf(e.step), g7 + e.step);
       if (!ce) continue;
@@ -881,14 +916,34 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     E.push({ k: 'end', id: `${base}:end`, text: say(TALK.END, g)(qq(sec.title)), effects: [{ hook: 'heard', arg: `${sec.id}|q` }], keys: true, stage: '区切り' });
     carried = run(E, carried);
     for (const e of E) if (e.k === 'ask' && e.qid) used.add(e.qid);
-    plans[idx] = { x, base, E };
+    // (the same section read in full, planned alongside: its checks on the full text's own steps, placed at
+    // the full way's limits (a section the afternoon or the first flight needs: 70, the rest 120 — the order
+    // before's), and its shape — the prediction before or after her introduction, its answer before or after
+    // her notes — turned from the section before's, so no two in a row go the same way. One route is taken in
+    // a sitting; the planning of each keeps to its own stretch, as a sitting of either would meet it)
+    const fbase = `f${x.k}s${x.j}`, stepsF = sectionSteps(sec);
+    const fc = [...sectionChecks(FL, sec, stepsF, known), ...radioChecks(sec, stepsF)].sort((a, b) => a.after - b.after);
+    const makeF = (order, checks) => fullEntries(sec, { base: fbase, g, j: x.j, of: x.of, idx, nt, r: rf(), book, order, ci: ci0 + x.k, checks });
+    const mineF = new Set(used);
+    const atF = placeChecks(makeF(g % 4, null), gFull, fc, recall, (k) => `${fbase}:c${k}:ck`, mineF, g * 7, need.has(sec.id) ? 70 : 120);
+    let EF = null;
+    for (let t = 0; t < 4; t++) { EF = makeF((g + t) % 4, atF); if (!prevStages || stagesOf(EF) !== prevStages) break; }
+    prevStages = stagesOf(EF);
+    for (const id of mineF) used.add(id);
+    for (const e of EF) if (e.k === 'ask' && e.qid) used.add(e.qid);
+    gFull = run(EF, gFull);
+    plans[idx] = { x, base, E, fbase, EF };
   });
-  // ---- the drill: five questions on the day's chapters (drawn after the plans, so a check's question is not
-  // asked again where others are left), scored at the class's end
-  const qs = classDrill(FL, i, { heard, r, avoid: used });
-  // (the 'pr' flag only where a prediction is in the class at all — declared and read, or not declared)
-  const hasPred = plans.some(p => p && p.E.some(e => e.k === 'pred'));
-  const data = () => ({ speakers: SPEAKERS, flags: [...qs.map((_, k) => `qz_${k}`), 'resumed', ...(hasPred ? ['pr'] : [])], hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs });
+  // ---- the scored questions, drawn after the plans (so a check's question is not asked again where others
+  // are left): the full way's two after each chapter (classQuestions), and the cards' drill of five at the end
+  // (classDrill, avoiding the checks' and the chapters' alike)
+  const { qs: cqs, runs } = classQuestions(FL, i, { from, heard, r, avoid: used });
+  const qs = classDrill(FL, i, { heard, r, avoid: new Set([...used, ...cqs.map(x => x.id).filter(Boolean)]) });
+  // (the 'pr' flag only where a prediction is in the class at all — declared and read, or not declared; the
+  // 'full' flag is the gate's, read at every section's first line)
+  const hasPred = plans.some(p => p && (p.E.some(e => e.k === 'pred') || p.EF.some(e => e.k === 'pred')));
+  const nq = Math.max(qs.length, cqs.length);
+  const data = () => ({ speakers: SPEAKERS, flags: [[...Array(nq).keys()].map(k => `qz_${k}`), 'resumed', 'full', ...(hasPred ? ['pr'] : [])].flat(), hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs, chapterQuestions: cqs });
   // ---- the chapters and their sections, then the drill, the score, what the afternoon uses, the goodbye
   // (a chapter's introduction is built only where the class reaches its first section: a chapter taken up
   // midway is entered at its section, not at its head)
@@ -902,10 +957,35 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     const p = plans[idx]; if (!p) return;
     const next = all[idx + 1] || null;
     const after = next ? (next.k !== x.k ? `c${next.k}` : plans[idx + 1].base) : 'drill:lead';
+    // (in full, a chapter's last section goes to its chapter's questions; the class's last, to the last chapter's)
+    const afterF = next && next.k === x.k ? plans[idx + 1].fbase : `c${x.k}:check`;
     emit(N, p.E, after, { rest: next });
+    emit(N, p.EF, afterF, { rest: next });
+    // (the gate: the section's first card line, as it is on the cards' way; in full it steps aside to the
+    // section read whole — whose own first line keeps the place and pages the book, as the card's does here)
+    Object.assign(N[p.base], { if: { not: { flag: 'full' } }, else: p.fbase });
     N[`${p.base}:book`] = { speaker: S, text: `教科書の${qq(x.sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: x.sec.id }, next: `${p.base}:end` };
-    if (next) N[`${p.base}:break`] = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.sec.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
+    N[`${p.fbase}:book`] = { speaker: S, text: `教科書の${qq(x.sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: x.sec.id }, next: `${p.fbase}:end` };
+    if (next) {
+      const brk = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.sec.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
+      N[`${p.base}:break`] = brk; N[`${p.fbase}:break`] = { ...brk };
+    }
   });
+  // ---- the full way's chapter questions: each chapter the class reaches ends with its check (its two
+  // questions, then the next chapter — or, the last's, the score). A class taken up at a chapter's head in
+  // full takes up the chapter before's questions first, as the order before did: its check is built too.
+  const reached = new Set(plans.filter(Boolean).map(p => p.x.k));
+  if (at && at.j === 0 && at.k > 0 && effFmt === 'full') reached.add(at.k - 1);
+  chs.forEach((c, k) => {
+    if (!reached.has(k)) return;
+    const [a, b] = runs[k], nextC = k < chs.length - 1 ? `c${k + 1}` : 'cq:end';
+    const { entry } = quizNodes(N, cqs, { prefix: 'cq', from: a, to: b, end: false, then: nextC, fitTo: LINE_MAX });
+    N[`c${k}:check`] = { speaker: S, text: b > a ? say(TALK.CHECK_HEAD, ci0 + k)(c.n, b - a) : say(TALK.CHECK_NONE, ci0 + k)(c.n), next: b > a ? entry : nextC };
+  });
+  quizNodes(N, cqs, { prefix: 'cq', from: cqs.length, then: 'score' });
+  // (a class taken up midway: no score to say — the questions' end said without the promise of one)
+  Object.assign(N['cq:end'], { if: { not: { flag: 'resumed' } }, else: 'cq:end:r' });
+  N['cq:end:r'] = { speaker: S, text: '今日の問題は以上です。', hook: N['cq:end'].hook, next: 'preview' };
   N['drill:lead'] = { speaker: S, text: say(TALK.DRILL_HEAD, ci0)(qs.length), next: qs.length ? 'q0' : 'score' };
   quizNodes(N, qs, { end: true, then: 'score', fitTo: LINE_MAX, words: { head: (j, n) => say(TALK.QUIZ_HEAD, ci0 * 2 + j)(j + 1, n), ok: (j) => say(TALK.QUIZ_OK, ci0 * 2 + j), ng: (j, x) => say(TALK.QUIZ_NG, ci0 * 2 + j)(x) } });
   // (a class taken up midway: no score to say — the drill's end said without the promise of one)
@@ -916,13 +996,14 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
   N.score = { speaker: S, text: '{quiz.right} / {quiz.n} 問、{quiz.pct}% でした。', if: { not: { flag: 'resumed' } }, else: 'preview', next: 'preview' };
   chain(N, 'preview', day.preview.flatMap(t => fit(t)), 'bye');
   N.bye = { speaker: S, text: day.bye, hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'class' }], end: true };
-  // the start: the day's own lines, the review, then the chapters — or, taken up midway, straight on from its place
+  // the start: the day's own lines, the review, the format's choice where one is to be made, then the
+  // chapters — or, taken up midway, straight on from its place, in the class's own format
   const pool = questionPool(FL), rv = reviewed.map(id => pool.find(x => x.id === id)).filter(Boolean);
-  const at = start ? all[start] : null;
-  const toClass = at ? 'resume' : 'c0';
+  const toClass = at ? 'resume' : askFmt ? 'pace' : 'c0';
   // (a class taken up again: not the day's first greeting, but its own — then the afternoon, as the day's)
   const hello = at ? [`${['続きをやりましょう', 'では、続きです', 'さあ、続きを始めましょう'][i % 3]}。第 ${chs.map(c => c.n).join('・')} 章の授業の途中からです。`, ...day.hello.slice(1)] : day.hello;
-  chain(N, 'hello', hello.flatMap(t => fit(t)), rv.length ? 'rv:lead' : toClass, S, { hook: { name: 'look', arg: 'player' } });
+  // (the format given, not chosen: the gate's flag set from the first line, as a choice would set it)
+  chain(N, 'hello', hello.flatMap(t => fit(t)), rv.length ? 'rv:lead' : toClass, S, { hook: { name: 'look', arg: 'player' }, ...(effFmt === 'full' ? { effects: [{ set: 'full' }] } : {}) });
   if (rv.length) {
     const rrv = rng(seed * 43 + i + attempt * 7919), E = [];
     rv.forEach((x, k) => {
@@ -933,7 +1014,18 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     N['rv:lead'] = { speaker: S, text: day.review || '始める前に、これまでの授業を少し思い出しましょう。', next: 'rv0' };
     emit(N, E, toClass);
   }
-  if (at) N.resume = { speaker: S, text: at.j === 0 ? `では、第 ${chs[at.k].n} 章から続けます。` : 'では、続きから始めます。', effects: [{ set: 'resumed' }], next: at.j === 0 ? `c${at.k}` : `c${at.k}s${at.j}` };
+  if (at) N.resume = { speaker: S, text: effFmt === 'full' && at.j === 0 ? `では、第 ${chs[at.k - 1].n} 章の確認から続けます。` : at.j === 0 ? `では、第 ${chs[at.k].n} 章から続けます。` : 'では、続きから始めます。', effects: [{ set: 'resumed' }],
+    // (a section entered at its card's first line either way: in full the gate there steps aside to the
+    // section read whole, the flag set at the greeting; at a chapter's head in full, the chapter before's
+    // questions come first — the one way in that is not through a section's gate)
+    next: effFmt === 'full' && at.j === 0 ? `c${at.k - 1}:check` : at.j === 0 ? `c${at.k}` : `c${at.k}s${at.j}` };
+  // (the choice, where one is to be made: the day's own question, the last way chosen offered first, each
+  // with its time as the graph now stands; the hook keeps the pick with the career, the flag sets the gate)
+  if (askFmt) {
+    const mins = { full: minutesOf(N, 'c0', { full: true }), card: minutesOf(N, 'c0', {}) };
+    const label = (f) => (f === 'full' ? `じっくり（教科書を全部読む。講師の補足つき、約 ${Math.max(1, Math.round(mins.full))} 分）` : `カード＋ドリル（要点カードと、最後に確認ドリル 5 問、約 ${Math.max(1, Math.round(mins.card))} 分）`);
+    N.pace = { speaker: S, text: day.pace, choices: [lastFmt, lastFmt === 'full' ? 'card' : 'full'].map(f => ({ text: label(f), next: 'c0', effects: [{ hook: 'pace', arg: f }, ...(f === 'full' ? [{ set: 'full' }] : [])] })) };
+  }
   return data();
 }
 // the class's drill (the redesign): five questions on the class's own chapters, asked at its end and scored —
@@ -975,8 +1067,10 @@ export function lecturePage(FL, arg) {
   const fix = (v, key) => (key === 'svg' ? v : typeof v === 'string' ? callFix(inClass(v)) : Array.isArray(v) ? v.map(x => fix(x))
     : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([a, b]) => [a, fix(b, a)])) : v);
   const keys = us.filter(u => u.k === 'key').flatMap(u => u.items);
-  return { id, k, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, title: sec.title, n: us.length, summary: fix(said(sec.summary || '')),
-    unit: k === null ? null : fix(prose(us[k])), board: { title: sec.title, points: fix((keys.length ? keys.map(whole) : sec.keyPoints.map(said)).filter(Boolean)), key: keys.length > 0 } };
+  // (the section's page and its whiteboard carry the ANA triage label too — content/ana-triage.js)
+  const chip = tagChipSpoken(tagOfSection(id));
+  return { id, k, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, title: chip ? `${sec.title} ${chip}` : sec.title, n: us.length, summary: fix(said(sec.summary || '')),
+    unit: k === null ? null : fix(prose(us[k])), board: { title: chip ? `${sec.title} ${chip}` : sec.title, points: fix((keys.length ? keys.map(whole) : sec.keyPoints.map(said)).filter(Boolean)), key: keys.length > 0 } };
 }
 // the textbook overlay's box under a section: the lecturer's introduction and notes on it (none: nothing)
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

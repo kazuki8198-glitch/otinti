@@ -17,6 +17,7 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 import { clearGlassMaterial, tickGlassRain } from '../render/materials.js';
 import { NOISE } from '../render/glsl.js';
 import { createGlass, BEZEL, KNOBS, KEYS, KEY_X, softkeysOf, DYN, dynUV } from './g1000.js';
+import { createBoeingGlass } from './boeing.js';
 import { modelMeshes } from './archer-model.js';
 
 const DEG = Math.PI / 180;
@@ -542,7 +543,7 @@ function textDraw(lines, { weight = 700, align = 'center', font = SANS } = {}) {
 // (M6) variant: while set ('pa28' | 'pa44'), what is added belongs to that type only (its own meshes, shown by setType)
 function makeBuilder() {
   const kit = [], decals = [], glass = [], cowl = [], dynLit = [], unlit = [], moving = new Map();
-  const kitV = { pa28: [], pa44: [] }, decalsV = { pa28: [], pa44: [] }, unlitV = { pa28: [], pa44: [] }, partV = new Map();
+  const kitV = { pa28: [], pa44: [], b737: [] }, decalsV = { pa28: [], pa44: [], b737: [] }, unlitV = { pa28: [], pa44: [], b737: [] }, partV = new Map();
   const surfOf = s => { const c = new THREE.Color(s.c); return [c.r, c.g, c.b, s.r ?? 0.6, s.m ?? 0, s.k ?? 0]; };
   // a part of the cabin's material: surface s; into the static mesh, or a moving part (name); refine: split big faces
   function add(g, s, part = null, refineLen = 0) {
@@ -647,6 +648,8 @@ export function buildCockpit(FL, A, opts = {}) {
   const cur = { s: null, av: null, L: null };                 // the last state update() saw (act() reads it)
   const switches = { master: true, bat: true, alt: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false, mag: 'BOTH', fuelSel: 'L', fuelSelL: 'ON', fuelSelR: 'ON', xfeed: false, mixture: 1, carbHeat: false, propCycleT: 0, propCycled: false };
   const twinA = opts.twin || null;                            // (M6) the Seminole's own parts too: setType('pa44') shows them
+  const boeingA = opts.boeing || null;                        // the 737's own display system too: setType('b737') shows its fascia, DUs, MCP, CDU
+  let boeingGlass = null;                                     // (made in the 737's section below, when boeingA is given)
   // (cockpit migration) the Blender-made shell (assets/model/cockpit.glb: the top band, the seats, the glareshield,
   // the yokes, the side walls), taken into the builder's buckets like everything else; where a group of it is not
   // there (no model: FLIGHT LAB's file, over its size limit), the code shapes below stand in for that group
@@ -654,6 +657,10 @@ export function buildCockpit(FL, A, opts = {}) {
   const flight = (name, arg) => (arg === undefined ? { type: 'flight', name } : { type: 'flight', name, arg });
   const info = text => ({ type: 'info', text });
   const avc = (what, dir = 1, big = false) => ({ type: 'av', what, dir, big });
+  // the circuit breakers, in the panel's own order: [the name on the panel, the key in switches ('cb' + key)]
+  const CB_TABLE = [['PFD', 'PFD'], ['MFD', 'MFD'], ['AHRS', 'AHRS'], ['ADC', 'ADC'], ['GPS/NAV1', 'GPS1'], ['GPS/NAV2', 'GPS2'], ['AUDIO', 'AUDIO'],
+    ['COM1', 'COM1'], ['COM2', 'COM2'], ['XPDR', 'XPDR'], ['ENG', 'ENG'], ['FUEL PUMP', 'FUELPUMP'], ['PITOT', 'PITOT'], ['TURN', 'TURN'],
+    ['NAV LT', 'NAVLT'], ['STROBE', 'STROBE'], ['LDG LT', 'LDGLT'], ['TAXI LT', 'TAXILT'], ['BEACON', 'BEACON'], ['ALT FLD', 'ALTFLD'], ['MASTER', 'MASTER']];
 
   // ============================================================ the shell
   // floor (carpet), firewall, the plate under the panel
@@ -825,8 +832,10 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(knurled(0.0085, 0.008, 24), [cx, cy - 0.080, PZ + 0.022]), S.knob);
     add(at(knurled(0.0055, 0.008, 18), [cx, cy - 0.080, PZ + 0.029]), S.knob);
     label('VOL', [cx, cy - 0.066, PZ + 0.0182], { size: 1.4 });
+    control({ id: 'audio.VOL', label: 'オーディオ 音量', kind: 'knob', cyl: [0.011, 0.014], pos: [cx, cy - 0.080, PZ + 0.024], act: () => info('音量はこの飛行では変えません') });
     add(at(rbox(0.03, 0.007, 0.005, 0.0015), [cx, cy - 0.097, PZ + 0.019]), S.red);
     label('DISPLAY BACKUP', [cx, cy - 0.097, PZ + 0.0216], { size: 1.1, wmm: 28 });
+    control({ id: 'audio.DISPLAYBACKUP', label: 'DISPLAY BACKUP（表示のバックアップ）', kind: 'button', size: [0.032, 0.010, 0.014], pos: [cx, cy - 0.097, PZ + 0.019], act: () => info('表示のバックアップ切り替えはこの飛行では使いません（両画面とも生きています）') });
   }
 
   // ============================================================ the standby instruments (airspeed, attitude, altimeter)
@@ -874,7 +883,15 @@ export function buildCockpit(FL, A, opts = {}) {
   add(at(cylZ(0.0065, 0.0055, 0.016, 20), [PRIM[0], PRIM[1], PZ + 0.012]), S.chrome);
   label('PRIMER', [PRIM[0], PRIM[1] + 0.018, PZ + 0.0002], { size: 1.7 });
   control({ id: 'primer', label: 'プライマー（押すごとに 1 回）', kind: 'button', size: [0.026, 0.026, 0.03], pos: [PRIM[0], PRIM[1], PZ + 0.012], act: () => ({ type: 'prime' }) });
-  for (const [y, name] of [[0.33, 'PANEL LTS'], [0.285, 'SWITCH LTS']]) { add(at(knurled(0.007, 0.01, 18), [-0.51, y, PZ + 0.005]), S.knob); label(name, [-0.51, y + 0.014, PZ + 0.0002], { size: 1.5, wmm: 22 }); }
+  // the panel lights' dimmers: they turn the backlights themselves (update() scales the labels' and the
+  // lamps' materials by switches.panelDim / switches.switchDim), as the real knobs dim the panel's lamps
+  for (const [y, name, id, field] of [[0.33, 'PANEL LTS', 'dimmer.panel', 'panelDim'], [0.285, 'SWITCH LTS', 'dimmer.switch', 'switchDim']]) {
+    add(at(knurled(0.007, 0.01, 18), [-0.51, y, PZ + 0.005]), S.knob); label(name, [-0.51, y + 0.014, PZ + 0.0002], { size: 1.5, wmm: 22 });
+    control({ id, label: `${name}（パネルの明かりの調光）`, kind: 'knob', cyl: [0.0105, 0.014], pos: [-0.51, y, PZ + 0.005],
+      act: (dir, wheel) => { const cur = switches[field] == null ? 1 : switches[field];
+        const v = wheel ? Math.round(clamp(cur + (dir > 0 ? 0.1 : -0.1), 0, 1) * 10) / 10 : (cur >= 1 ? 0 : Math.min(1, Math.round((cur + 0.25) * 100) / 100));
+        return v === cur ? null : { type: 'select', id: field, value: v }; } });
+  }
   // the air vents (eyeballs)
   for (const sx of [-1, 1]) {
     const x = sx * 0.505, y = 0.415;
@@ -882,17 +899,30 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(sphere(0.019, 12, 8), [x, y, PZ + 0.004]), S.knob);
     add(at(cylZ(0.009, 0.009, 0.02, 12), [x, y, PZ + 0.012]), S.caseBlack);
   }
-  // circuit breakers (right, low)
+  // circuit breakers (right, low — low enough to sit clear of the right yoke's shadow from the left seat:
+  // at the panel's first height the middle columns could be seen but never clicked, the yoke's hub being
+  // in the ray's way): every one of them its own control — pull it (a click) and its circuit
+  // dies (aircraft/systems.js reads switches['cb' + KEY]: the screens, the alternator's field, the boost
+  // pump, the pitot heat, each light's load, the AHRS / GPS the glass fails on, the standby gyro's flag,
+  // the MASTER the whole bus hangs from); push it back and the circuit lives. A tripped breaker shows
+  // its white band, as the real one does. The circuits this trainer's avionics lump onto one bus (ADC,
+  // the second GPS/NAV, COM 1/2, ENG, AUDIO) trip and reset mechanically like the rest; their loads are
+  // the avionics lump's, not separately drawn — the honest limit, said in the Phase report.
   { const names = [['PFD', 'MFD', 'AHRS', 'ADC', 'GPS/NAV1', 'GPS/NAV2', 'AUDIO'], ['COM1', 'COM2', 'XPDR', 'ENG', 'FUEL PUMP', 'PITOT', 'TURN'], ['NAV LT', 'STROBE', 'LDG LT', 'TAXI LT', 'BEACON', 'ALT FLD', 'MASTER']];
     names.forEach((row, j) => row.forEach((n, i) => {
-      const x = 0.322 + i * 0.033, y = 0.178 - j * 0.052;
+      const x = 0.322 + i * 0.033, y = -0.148 - j * 0.052, key = CB_TABLE[j * 7 + i][1];
       add(at(new THREE.CircleGeometry(0.0062, 10), [x, y, PZ + 0.0008]), S.steel);
       add(at(cylZ(0.0048, 0.0052, 0.011, 8), [x, y, PZ + 0.0062]), S.cbBody);
       label(n, [x, y - 0.0125, PZ + 0.0002], { size: 1.3, wmm: 15 });
       label(['5', '5', '5', '3', '5', '5', '2', '5', '5', '2', '5', '10', '10', '2', '5', '5', '5', '5', '5', '5', '60'][j * 7 + i] || '5', [x, y + 0.0095, PZ + 0.0002], { size: 1.2 });
+      lamp('cb' + key, quad(0.0125, 0.0125, dynUV(DYN.white), [x, y, PZ + 0.0128]));      // the white band, lit when it is out
+      control({ id: 'cb.' + key, label: () => `ブレーカー ${n}（${switches['cb' + key] ? '切：回路が切れています' : '入'}）`, kind: 'button', size: [0.028, 0.044, 0.024], pos: [x, y, PZ + 0.010],
+        act: () => ({ type: 'switch', id: 'cb' + key, on: !switches['cb' + key] }) });
     }));
-    label('CIRCUIT BREAKERS', [0.421, 0.205, PZ + 0.0002], { size: 1.8, wmm: 50 });
-    control({ id: 'cb', label: 'サーキット ブレーカー', kind: 'button', size: [0.23, 0.15, 0.02], pos: [0.421, 0.13, PZ + 0.008], aim: [0.49, 0.13, PZ + 0.008], act: () => info('サーキット ブレーカー：飛び出しているもの（切れた回路）がないか、目で確かめます') });
+    label('CIRCUIT BREAKERS', [0.421, -0.112, PZ + 0.0002], { size: 1.8, wmm: 50 });
+    control({ id: 'cb', label: 'サーキット ブレーカー', kind: 'button', size: [0.23, 0.028, 0.02], pos: [0.421, -0.112, PZ + 0.008],
+      act: () => { const out = CB_TABLE.filter(([, k]) => switches['cb' + k]).map(([n]) => n);
+        return info(out.length ? `サーキット ブレーカー：${out.join('・')} が飛び出しています（その回路は切れています。押せば戻ります）` : 'サーキット ブレーカー：すべて押し込まれています'); } });
   }
   // placards (right of the panel)
   placard(['THIS AIRPLANE MUST BE OPERATED IN THE NORMAL OR UTILITY', 'CATEGORY IN COMPLIANCE WITH THE OPERATING LIMITATIONS', 'STATED IN THE FORM OF PLACARDS, MARKINGS AND MANUALS.', 'NO ACROBATIC MANEUVERS INCLUDING SPINS APPROVED.'],
@@ -1032,6 +1062,153 @@ export function buildCockpit(FL, A, opts = {}) {
       act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.xfeed; return on === switches.xfeed ? null : { type: 'switch', id: 'xfeed', on }; } });
     B.variant = null;
   }
+  // ============================================================ the 737 (the first-officer phase's jet)
+  // Its own display system over the Archer's panel: a fascia that covers the G1000 installation whole
+  // (bezels, standby cluster, audio panel, switch row — all behind it, all unpickable in this type: pick()
+  // takes only 'b737' controls while it is showing), the four DUs and the standby in the type's layout,
+  // the MCP on the glareshield, the captain's EFIS panel, and the FMC CDU on the pedestal. Nothing here
+  // is decorative: the MCP works the autopilot and the autothrottle (flight/autopilot.js), the EFIS's
+  // baro knob works the altimeter setting, its mode / range and the DU selectors work the ND and the
+  // displays themselves (aircraft/boeing.js), and the CDU's keys type into its pages.
+  const B737_DU = { pfd: [-0.335, 0.262], nd: [-0.105, 0.262], eicasU: [0.135, 0.262], eicasL: [0.135, 0.104], stby: [0.345, 0.262] };
+  const CDU_O = [0.05, -0.145, -0.795], CDU_A = -0.35;
+  const cduPos = (lx, ly, lz = 0.014) => [CDU_O[0] + lx, CDU_O[1] + Math.cos(CDU_A) * ly - Math.sin(CDU_A) * lz, CDU_O[2] + Math.sin(CDU_A) * ly + Math.cos(CDU_A) * lz];
+  if (boeingA) {
+    B.variant = 'b737';
+    boeingGlass = createBoeingGlass(FL, makeCanvas);
+    const FZ = PZ + 0.046;                                   // the fascia's face (the labels' plane)
+    add(at(rbox(1.10, 0.485, 0.045, 0.006, 2), [0, 0.2225, PZ + 0.0225]), S.panel);
+    label('BOEING 737', [0.50, -0.008, FZ + 0.0002], { size: 1.6, wmm: 30 });
+    // the DUs: a bezel each; the screens themselves are made with the glass, further down
+    for (const k of ['pfd', 'nd', 'eicasU', 'eicasL']) {
+      const [x, y] = B737_DU[k];
+      add(at(rbox(0.20, 0.154, 0.014, 0.004, 2), [x, y, FZ - 0.007]), S.bezel);
+      control({ id: 'view.b737' + k.toLowerCase(), label: `${k === 'pfd' ? 'PFD' : k === 'nd' ? 'ND' : 'EICAS'} を大きく見る`, kind: 'button', size: [0.185, 0.139, 0.004], pos: [x, y, FZ + 0.001],
+        act: () => ({ type: 'view', focus: k === 'pfd' ? 'b737pfd' : k === 'nd' ? 'b737nd' : 'b737eicas' }) });
+    }
+    add(at(rbox(0.108, 0.108, 0.012, 0.004, 2), [B737_DU.stby[0], B737_DU.stby[1], FZ - 0.006]), S.bezel);
+    label('PFD', [B737_DU.pfd[0], 0.352, FZ + 0.0002], { size: 1.5, wmm: 16 });
+    label('ND', [B737_DU.nd[0], 0.352, FZ + 0.0002], { size: 1.5, wmm: 16 });
+    label('EICAS', [B737_DU.eicasU[0], 0.352, FZ + 0.0002], { size: 1.5, wmm: 20 });
+    // the MCP, on its strip under the glareshield
+    const MZ = PZ + 0.071;
+    add(at(rbox(1.02, 0.075, 0.026, 0.004, 2), [0, 0.41, PZ + 0.058]), S.panel);
+    const mcpBtn = (id, x, lab, what, w = 0.034) => {
+      add(at(rbox(w, 0.02, 0.01, 0.002), [x, 0.41, MZ - 0.002]), S.key);
+      label(lab, [x, 0.4365, MZ + 0.0002], { size: 1.05, wmm: 22 });
+      control({ id, label: `MCP ${lab}`, kind: 'button', size: [w + 0.006, 0.026, 0.016], pos: [x, 0.41, MZ + 0.002], act: (dir, wheel) => avc(what, dir, wheel) });
+    };
+    const mcpKnob = (id, x, lab, what) => {
+      add(at(knurled(0.0125, 0.014, 18), [x, 0.41, MZ - 0.001]), S.knob);
+      label(lab, [x, 0.4365, MZ + 0.0002], { size: 1.05, wmm: 22 });
+      control({ id, label: `MCP ${lab}`, kind: 'knob', cyl: [0.016, 0.018], pos: [x, 0.41, MZ + 0.002], act: (dir, wheel) => avc(what, dir, wheel) });
+    };
+    mcpKnob('mcp.spd', -0.44, 'SPD', 'AT_SPD');
+    mcpBtn('mcp.atArm', -0.372, 'A/T ARM', 'AT_ARM');
+    mcpBtn('mcp.fd', -0.305, 'F/D', 'FD');
+    mcpBtn('mcp.ap', -0.238, 'CMD A', 'AP');
+    mcpBtn('mcp.disc', -0.168, 'DISENGAGE', 'AP_DISC', 0.052);
+    mcpKnob('mcp.hdg', -0.062, 'HDG', 'HDG');
+    mcpBtn('mcp.hdgSel', 0.0, 'HDG SEL', 'AP_HDG');
+    mcpBtn('mcp.lvl', 0.062, 'LVL CHG', 'AP_LVLCHG');
+    mcpKnob('mcp.alt', 0.152, 'ALT', 'MCP_ALT');
+    mcpBtn('mcp.altHold', 0.214, 'ALT HOLD', 'AP_ALT');
+    mcpKnob('mcp.vs', 0.276, 'V/S', 'AP_VS_ADJ');
+    mcpBtn('mcp.vsBtn', 0.332, 'V/S ON', 'AP_VS');
+    mcpBtn('mcp.app', 0.394, 'APP', 'AP_APR');
+    mcpBtn('mcp.nav', 0.452, 'LNAV', 'AP_NAV');
+    // the captain's EFIS panel (left of the PFD): the baro knob is the altimeter's, the rest work the ND
+    add(at(knurled(0.0115, 0.013, 18), [-0.50, 0.315, FZ - 0.001]), S.knob);
+    label('BARO', [-0.50, 0.341, FZ + 0.0002], { size: 1.1, wmm: 18 });
+    control({ id: 'efis.baro', label: '気圧規正（クリックで STD）', kind: 'knob', cyl: [0.015, 0.017], pos: [-0.50, 0.315, FZ + 0.002],
+      act: (dir, wheel) => wheel ? avc('BARO', dir, false) : avc('STD_BARO') });
+    const efisBtn = (id, y, lab, fn) => {
+      add(at(rbox(0.036, 0.018, 0.01, 0.002), [-0.50, y, FZ - 0.002]), S.key);
+      label(lab, [-0.50, y + 0.0165, FZ + 0.0002], { size: 1.0, wmm: 22 });
+      control({ id, label: lab, kind: 'button', size: [0.042, 0.024, 0.016], pos: [-0.50, y, FZ + 0.002], act: () => { fn(boeingGlass.state); return null; } });
+    };
+    efisBtn('efis.ndMode', 0.262, 'ND MODE', st => { st.efis.ndMode = st.efis.ndMode === 'MAP' ? 'ROSE' : 'MAP'; });
+    efisBtn('efis.ndRange', 0.209, 'ND RANGE', st => { const R = [10, 20, 40, 80, 160]; st.efis.ndRange = R[(R.indexOf(st.efis.ndRange) + 1) % R.length]; });
+    add(at(rbox(0.036, 0.018, 0.01, 0.002), [-0.50, 0.156, FZ - 0.002]), S.key);
+    label('IN / HPA', [-0.50, 0.1725, FZ + 0.0002], { size: 1.0, wmm: 22 });
+    control({ id: 'efis.baroUnit', label: '気圧の単位（IN / HPA）', kind: 'button', size: [0.042, 0.024, 0.016], pos: [-0.50, 0.156, FZ + 0.002], act: () => avc('ALT_UNIT') });
+    // the DU selectors: which display each unit shows (the glass reads state.du as it draws)
+    const duKnob = (id, x, y, lab, key, vals) => {
+      add(at(knurled(0.010, 0.012, 16), [x, y, FZ - 0.001]), S.knob);
+      label(lab, [x, y - 0.017, FZ + 0.0002], { size: 1.0, wmm: 24 });
+      control({ id, label: lab, kind: 'knob', cyl: [0.013, 0.015], pos: [x, y, FZ + 0.002],
+        act: () => { const st = boeingGlass.state; st.du[key] = vals[(vals.indexOf(st.du[key]) + 1) % vals.length]; return null; } });
+    };
+    duKnob('du.out', B737_DU.pfd[0], 0.10, 'DU 左外', 'out', ['PFD', 'ND']);
+    duKnob('du.inb', B737_DU.nd[0], 0.10, 'DU 左内', 'inb', ['ND', 'EICAS']);
+    duKnob('du.low', 0.29, B737_DU.eicasL[1], 'DU 下段', 'low', ['EICAS', 'ND']);
+    // the gear lever (the type keeps it on the centre panel)
+    add(at(rbox(0.016, 0.10, 0.012, 0.003), [0.475, 0.104, FZ - 0.004]), S.black);
+    add(at(cylZ(0.016, 0.016, 0.02, 14), [0.475, 0.104, FZ + 0.006]), S.red);
+    label('GEAR', [0.475, 0.168, FZ + 0.0002], { size: 1.3, wmm: 18 });
+    control({ id: 'gear', label: 'ランディングギア', kind: 'lever', size: [0.036, 0.10, 0.03], pos: [0.475, 0.104, FZ + 0.004], act: () => flight('gear') });
+    // the electrical switches the jet's own checklists work (battery, displays, pumps, lights): the same
+    // switches fields the pistons' row drives, under the same control ids, so the systems chain and the
+    // checklist guide treat them alike. (The type's overhead panel is not modelled whole; these are the
+    // switches this cockpit's procedures actually touch — nothing else is drawn.)
+    const ELEC737 = [['bat', 'BAT'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'POSITION'], ['strobe', 'STROBE'], ['landing', 'LANDING'], ['taxi', 'TAXI']];
+    ELEC737.forEach(([id, name], i) => {
+      const x = -0.50 + i * 0.072;
+      add(at(rbox(0.030, 0.024, 0.010, 0.002), [x, 0.008, FZ - 0.002]), id === 'bat' ? S.red : S.black);
+      label(name, [x, -0.0135, FZ + 0.0002], { size: 0.95, wmm: 21 });
+      control({ id: 'sw.' + id, label: SWITCH_JA[id] || name, kind: 'switch', size: [0.040, 0.032, 0.018], pos: [x, 0.008, FZ + 0.002],
+        act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches[id]; return on === switches[id] && wheel ? null : { type: 'switch', id, on }; } });
+    });
+    // the pedestal: the thrust quadrant (left) and the CDU (right of it)
+    add(at(rbox(0.17, 0.30, 0.12, 0.01), [-0.185, -0.205, -0.735], [-0.35, 0, 0]), S.panel);
+    const qLev = (id, x, lab, act) => {
+      add(at(rbox(0.02, 0.05, 0.03, 0.004), [x, -0.115, -0.705], [-0.35, 0, 0]), S.black);
+      add(at(sphere(0.016, 10, 8), [x, -0.088, -0.693]), S.knob);
+      label(lab, [x, -0.062, -0.678], { size: 1.1, wmm: 20 });
+      control({ id, label: lab, kind: 'lever', size: [0.036, 0.055, 0.05], pos: [x, -0.10, -0.698], act });
+    };
+    qLev('throttle', -0.245, 'スラスト', dir => flight('thrStep', dir >= 0 ? 1 : -1));
+    qLev('speedbrake', -0.185, 'スピードブレーキ', () => flight('spoiler'));
+    qLev('flaps', -0.125, 'フラップ', dir => flight('flaps', dir));
+    add(at(cylX(0.011, 0.07, 14), [-0.185, -0.262, -0.668]), S.black);
+    label('PARK BRKE', [-0.185, -0.238, -0.662], { size: 1.1, wmm: 24 });
+    control({ id: 'parkBrake', label: 'パーキングブレーキ', kind: 'lever', size: [0.075, 0.032, 0.04], pos: [-0.185, -0.262, -0.668], act: () => flight('parkBrake') });
+    // the CDU: its body and pedestal, the screen's bezel; the screen itself is made with the glass
+    add(at(rbox(0.26, 0.42, 0.09, 0.01), cduPos(0, -0.10, -0.075), [CDU_A, 0, 0]), S.panel);
+    add(at(rbox(0.21, 0.46, 0.03, 0.005), cduPos(0, -0.055, -0.004), [CDU_A, 0, 0]), S.caseBlack);
+    add(at(rbox(0.145, 0.175, 0.008, 0.003), cduPos(0, 0, 0.004), [CDU_A, 0, 0]), S.bezel);
+    control({ id: 'view.b737cdu', label: 'FMC CDU を大きく見る', kind: 'button', size: [0.125, 0.155, 0.01], pos: cduPos(0, 0, 0.006), rot: [CDU_A, 0, 0], act: () => ({ type: 'view', focus: 'b737cdu' }) });
+    const cduBtn = (key, lx, ly, lab, w = 0.023) => {
+      control({ id: 'cdu.' + key, label: lab, kind: 'button', size: [w, 0.02, 0.012], pos: cduPos(lx, ly), rot: [CDU_A, 0, 0], act: () => { boeingGlass.cduKey(key); return null; } });
+    };
+    for (let i = 0; i < 6; i++) {
+      const ly = 0.062 - i * 0.0194;
+      cduBtn('L' + (i + 1), -0.0805, ly, `CDU 左キー ${i + 1}`, 0.017);
+      cduBtn('R' + (i + 1), 0.0805, ly, `CDU 右キー ${i + 1}`, 0.017);
+    }
+    const pageRow = [['INIT', 'INIT REF'], ['RTE', 'RTE'], ['PREV', 'PREV PAGE'], ['NEXT', 'NEXT PAGE'], ['EXEC', 'EXEC']];
+    pageRow.forEach(([k, lab], i) => { cduBtn(k, -0.053 + i * 0.0265, -0.098, 'CDU ' + lab, 0.024); label(lab.split(' ')[0], [...cduPos(-0.053 + i * 0.0265, -0.0865, 0.013)], { size: 1.15, wmm: 15 }); });
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    [...letters].forEach((ch, i) => {
+      const row = Math.floor(i / 7), col = i % 7, n = row === 3 ? 5 : 7;
+      const lx = (col - (n - 1) / 2) * 0.0265, ly = -0.126 - row * 0.026;
+      cduBtn(ch, lx, ly, 'CDU キー ' + ch);
+      label(ch, [...cduPos(lx, ly, 0.013)], { size: 1.5, wmm: 8 });
+    });
+    '1234567890'.split('').forEach((d, i) => {
+      const row = i < 5 ? 0 : 1, col = i % 5;
+      const lx = (col - 2) * 0.0265, ly = -0.230 - row * 0.026;
+      cduBtn(d, lx, ly, 'CDU キー ' + d);
+      label(d, [...cduPos(lx, ly, 0.013)], { size: 1.5, wmm: 8 });
+    });
+    [['DEL', 'DEL'], ['CLR', 'CLR'], ['/', '/'], ['.', '.']].forEach(([k, lab], i) => {
+      const lx = (i - 1.5) * 0.0265, ly = -0.282;
+      cduBtn(k, lx, ly, 'CDU ' + lab);
+      label(lab, [...cduPos(lx, ly, 0.013)], { size: 1.3, wmm: 12 });
+    });
+    B.variant = null;
+  }
+
   function ribbed(w, h, d) {
     const parts = [rbox(w, h, d, 0.004, 2)];
     for (let i = 0; i < 4; i++) parts.push(at(new THREE.BoxGeometry(w + 0.002, 0.0022, d * 0.8), [0, -h / 2 + 0.004 + i * (h - 0.008) / 3, 0]));
@@ -1343,10 +1520,11 @@ export function buildCockpit(FL, A, opts = {}) {
   const decalMesh = mesh(mergeGeometries(B.decals), decalMat, 'cockpit-labels', { cast: false }); decalMesh.renderOrder = 1; decalMesh.userData.noAO = true;
   cabin.add(decalMesh);
   // (M6) each type's own: its shell parts and its labels (the throttle quadrant, the placards; the Seminole's gear)
-  const VG = { pa28: new THREE.Group(), pa44: new THREE.Group() };
+  const VG = { pa28: new THREE.Group(), pa44: new THREE.Group(), b737: new THREE.Group() };
   VG.pa28.name = 'cockpit-pa28'; VG.pa44.name = 'cockpit-pa44'; VG.pa44.visible = false;
-  cabin.add(VG.pa28, VG.pa44);
-  for (const t of ['pa28', 'pa44']) {
+  VG.b737.name = 'cockpit-b737'; VG.b737.visible = false;
+  cabin.add(VG.pa28, VG.pa44, VG.b737);
+  for (const t of ['pa28', 'pa44', 'b737']) {
     if (B.kitV[t].length) VG[t].add(mesh(mergeGeometries(B.kitV[t]), kitMat, 'cockpit-shell-' + t));
     if (B.decalsV[t].length) { const m = mesh(mergeGeometries(B.decalsV[t]), decalMat, 'cockpit-labels-' + t, { cast: false }); m.renderOrder = 1; m.userData.noAO = true; VG[t].add(m); }
   }
@@ -1384,7 +1562,24 @@ export function buildCockpit(FL, A, opts = {}) {
   };
   const dialMesh = mesh(mergeGeometries(B.dynLit), dynLitMat, 'cockpit-dials', { cast: false });
   cabin.add(unlitMesh(strips, B.unlit, 'cockpit-lit'), dialMesh);
-  for (const t of ['pa28', 'pa44']) if (B.unlitV[t].length) VG[t].add(unlitMesh([], B.unlitV[t], 'cockpit-lit-' + t));
+  for (const t of ['pa28', 'pa44', 'b737']) if (B.unlitV[t].length) VG[t].add(unlitMesh([], B.unlitV[t], 'cockpit-lit-' + t));
+  // the 737's screens: a mesh per unit on the fascia (the boeing glass's own canvases), the standby, the CDU
+  const focusMeshes = { pfd: screens.pfd, mfd: screens.mfd };
+  if (boeingGlass) {
+    const duMesh = (unitKey, x, y, w, h, name) => {
+      const m = mesh(new THREE.PlaneGeometry(w, h), screenMaterial(boeingGlass.units[unitKey].texture), name, { cast: false });
+      m.position.set(x, y, PZ + 0.0475); VG.b737.add(m); return m;
+    };
+    focusMeshes.b737pfd = duMesh('pfd', B737_DU.pfd[0], B737_DU.pfd[1], 0.185, 0.139, 'cockpit-b737-pfd');
+    focusMeshes.b737nd = duMesh('nd', B737_DU.nd[0], B737_DU.nd[1], 0.185, 0.139, 'cockpit-b737-nd');
+    focusMeshes.b737eicas = duMesh('eicasU', B737_DU.eicasU[0], B737_DU.eicasU[1], 0.185, 0.139, 'cockpit-b737-eicasu');
+    duMesh('eicasL', B737_DU.eicasL[0], B737_DU.eicasL[1], 0.185, 0.139, 'cockpit-b737-eicasl');
+    duMesh('stby', B737_DU.stby[0], B737_DU.stby[1], 0.095, 0.095, 'cockpit-b737-stby');
+    const cduScr = mesh(new THREE.PlaneGeometry(0.125, 0.155), screenMaterial(boeingGlass.units.cdu.texture), 'cockpit-b737-cdu', { cast: false });
+    const cp0 = cduPos(0, 0, 0.002); cduScr.position.set(cp0[0], cp0[1], cp0[2]); cduScr.rotation.x = CDU_A;
+    VG.b737.add(cduScr); focusMeshes.b737cdu = cduScr;
+    boeingGlass.setAnisotropy(opts.anisotropy || 8);
+  }
 
   // moving parts: each in a group at its pivot (the geometry was built in place)
   const PIV = {
@@ -1439,30 +1634,32 @@ export function buildCockpit(FL, A, opts = {}) {
   const inType = (m, g) => { for (let o = m; o; o = o.parent) if (o === g) return true; return false; };
   for (const m of meshes) {
     const n = (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * (m.isInstancedMesh ? m.count : 1);
-    if (!inType(m, VG.pa44)) triangles += n;
-    if (!inType(m, VG.pa28)) trianglesTwin += n;
+    if (!inType(m, VG.pa44) && !inType(m, VG.b737)) triangles += n;
+    if (!inType(m, VG.pa28) && !inType(m, VG.b737)) trianglesTwin += n;
   }
 
   // what update() works with (made here, once)
   const RK_POS = new THREE.Vector3(), RK_Q = new THREE.Quaternion(), RK_M = new THREE.Matrix4(), RK_E = new THREE.Euler();
   const lastSw = new Array(ROCKERS.length).fill(null);
-  const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '', xpCode: null, xpEntry: null, xpMode: '', ap: -2 };
+  const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '', xpCode: null, xpEntry: null, xpMode: '', ap: -2, cb: -1 };
   const lampCols = [...new Set(lamps.map(l => l.col))];     // (the colours of the unlit meshes the lamps are in)
+  const boeingOpt = { s: null, av: null, eng: null, elecPfd: true, route: null };   // (the boeing glass's options, filled per frame)
   const comp = { a: 0, v: 0, init: false };
   const t = { pfd: 1, mfd: 1, stby: 1 };
   let mfdPowSeen = null;
   const RATE = { pfd: 1 / 30, mfd: 1 / 10, stby: 1 / 15 };
-  let visible = true, flapAng = 0, night = -1, type = 'pa28', gearSeen = -1;
+  let visible = true, flapAng = 0, night = -1, dimP = -1, dimS = -1, type = 'pa28', gearSeen = -1;
 
   // ================================================================ per frame (no allocation below this line)
   function avChanged(av, powered) {
     const a = av.audio, m = a.monitor, x = av.xpdr, ap = av.ap ? (av.ap.on ? 4 : 0) + (av.ap.hdg ? 2 : 0) + (av.ap.alt ? 1 : 0) : -1;   // (the AP's state as a number: no string is built per frame)
+    let cbn = 0; for (let i = 0; i < CB_TABLE.length; i++) if (switches['cb' + CB_TABLE[i][1]]) cbn++;   // (the tripped breakers: their white bands are lamps too)
     if (avSeen.pfdMenu === av.pfdMenu && avSeen.wind === av.wind && avSeen.baroUnit === av.baroUnit && avSeen.mfdPage === av.mfdPage && avSeen.north === av.mapNorthUp
       && avSeen.mic === a.mic && avSeen.c1 === m.COM1 && avSeen.c2 === m.COM2 && avSeen.n1 === m.NAV1 && avSeen.n2 === m.NAV2 && avSeen.powered === powered && avSeen.cdi === av.cdi
-      && avSeen.xpCode === (x ? x.code : null) && avSeen.xpEntry === (x ? x.entry : null) && avSeen.xpMode === (x ? x.mode : '') && avSeen.ap === ap) return false;
+      && avSeen.xpCode === (x ? x.code : null) && avSeen.xpEntry === (x ? x.entry : null) && avSeen.xpMode === (x ? x.mode : '') && avSeen.ap === ap && avSeen.cb === cbn) return false;
     avSeen.pfdMenu = av.pfdMenu; avSeen.wind = av.wind; avSeen.baroUnit = av.baroUnit; avSeen.mfdPage = av.mfdPage; avSeen.north = av.mapNorthUp;
     avSeen.mic = a.mic; avSeen.c1 = m.COM1; avSeen.c2 = m.COM2; avSeen.n1 = m.NAV1; avSeen.n2 = m.NAV2; avSeen.powered = powered; avSeen.cdi = av.cdi;
-    avSeen.xpCode = x ? x.code : null; avSeen.xpEntry = x ? x.entry : null; avSeen.xpMode = x ? x.mode : ''; avSeen.ap = ap;
+    avSeen.xpCode = x ? x.code : null; avSeen.xpEntry = x ? x.entry : null; avSeen.xpMode = x ? x.mode : ''; avSeen.ap = ap; avSeen.cb = cbn;
     return true;
   }
   function lampOn(key, av) {
@@ -1481,7 +1678,9 @@ export function buildCockpit(FL, A, opts = {}) {
   }
   function setLamps(av, powered) {
     for (let i = 0; i < lamps.length; i++) {
-      const l = lamps[i], c = l.col, on = (powered || (l.key && l.key.startsWith('gear') && switches.master)) && lampOn(l.key, av);
+      const l = lamps[i], c = l.col, isCb = l.key && l.key.startsWith('cb');
+      const on = isCb ? !!switches[l.key] : (powered || (l.key && l.key.startsWith('gear') && switches.master)) && lampOn(l.key, av);   // (a breaker's white band is mechanical: it shows with the power off too)
+      if (isCb) { for (let k = 0; k < l.count; k++) c.setXYZ(l.first + k, on ? 1.0 : 0.03, on ? 1.0 : 0.03, on ? 1.0 : 0.03); continue; }
       if (l.key === 'gearRed') { for (let k = 0; k < l.count; k++) c.setXYZ(l.first + k, on ? 1.0 : 0.05, on ? 0.12 : 0.02, on ? 0.08 : 0.02); continue; }
       for (let k = 0; k < l.count; k++) c.setXYZ(l.first + k, on ? 0.35 : 0.035, on ? 1.0 : 0.04, on ? 0.45 : 0.035);
     }
@@ -1509,10 +1708,11 @@ export function buildCockpit(FL, A, opts = {}) {
     cur.s = s; cur.av = av; cur.L = o.L || null;
     poseRockers();
     const nt = clamp(o.night || 0, 0, 1);
-    if (nt !== night) {
-      night = nt;
-      decalMat.emissiveIntensity = 0.7 * nt; dynLitMat.emissiveIntensity = 0.04 + 0.6 * nt;
-      pfdMat.color.setScalar(1 - 0.45 * nt); mfdMat.color.setScalar(1 - 0.45 * nt); unlitMat.color.setScalar(1 - 0.35 * nt);
+    const pDim = switches.panelDim == null ? 1 : switches.panelDim, sDim = switches.switchDim == null ? 1 : switches.switchDim;   // (the dimmers' own state, turned by their knobs)
+    if (nt !== night || pDim !== dimP || sDim !== dimS) {
+      night = nt; dimP = pDim; dimS = sDim;
+      decalMat.emissiveIntensity = 0.7 * nt * pDim; dynLitMat.emissiveIntensity = (0.04 + 0.6 * nt) * (0.3 + 0.7 * pDim);
+      pfdMat.color.setScalar(1 - 0.45 * nt); mfdMat.color.setScalar(1 - 0.45 * nt); unlitMat.color.setScalar((1 - 0.35 * nt) * (0.3 + 0.7 * sDim));
     }
     if (!s) return;
     // the controls: the yokes ride fore and aft with the stabilator (elevator + trim; aft = nose up) and turn with
@@ -1563,6 +1763,13 @@ export function buildCockpit(FL, A, opts = {}) {
     // fly-mode passes elecDead when the systems' voltage is gone)
     refreshHobbs(o.eng && o.eng.hobbs != null ? o.eng.hobbs : s.hobbs);
     if (!visible) return;
+    // the 737's displays are the boeing glass's own (the G1000's screens are hidden behind its fascia)
+    if (boeingGlass && type === 'b737') {
+      boeingOpt.s = s; boeingOpt.av = av; boeingOpt.eng = o.eng || null;
+      boeingOpt.elecPfd = o.elecPfd !== undefined ? !!o.elecPfd : !o.elecDead;
+      boeingOpt.route = o.route || null;
+      boeingGlass.update(dt, boeingOpt);
+    } else {
     // power per screen (E2): the PFD rides the essential bus and outlives the MFD when the battery fades —
     // fly-mode passes elecPfd / elecMfd from the systems' bus stages; without them, the one elecDead for both
     const busOn = !!((switches.bat || switches.alt || switches.master) && switches.avionics);
@@ -1583,7 +1790,8 @@ export function buildCockpit(FL, A, opts = {}) {
     if ((o.elecStandby === undefined || o.elecStandby) && t.stby >= RATE.stby - 1e-6) {
       t.stby = Math.min(t.stby - RATE.stby, RATE.stby);
       const baro = av ? av.baro : s.qnh;
-      glassPanel.drawStandby(s.out, AV.indicatedAlt(s.out.altTrue || 0, s.qnh, baro), baro, !!(av && av.baroUnit === 'HPA'), s.A.v);
+      glassPanel.drawStandby(s.out, AV.indicatedAlt(s.out.altTrue || 0, s.qnh, baro), baro, !!(av && av.baroUnit === 'HPA'), s.A.v, !!switches.cbTURN);
+    }
     }
   }
   // ================================================================ end of the per-frame code
@@ -1596,21 +1804,25 @@ export function buildCockpit(FL, A, opts = {}) {
     raycaster.layers.set(PICK_LAYER);
     const out = raycaster.intersectObject(cabin, true);
     raycaster.layers.mask = mask;
-    for (const h of out) { const c = h.object.userData.control; if (c && (!c.type || c.type === type)) return c; }
+    for (const h of out) { const c = h.object.userData.control; if (c && (type === 'b737' ? c.type === 'b737' : (!c.type || c.type === type))) return c; }
     return null;
   }
   // (M6) the type the cockpit is in: the Archer's quadrant and cowling, or the Seminole's levers, gear and nose
-  const byType = { pa28: controls.filter(c => c.type !== 'pa44'), pa44: controls.filter(c => c.type !== 'pa28') };
+  const byType = { pa28: controls.filter(c => c.type !== 'pa44' && c.type !== 'b737'), pa44: controls.filter(c => c.type !== 'pa28' && c.type !== 'b737'), b737: controls.filter(c => c.type === 'b737') };
   function setType(t) {
     if (t === 'pa44' && !twinA) t = 'pa28';
-    type = t; VG.pa28.visible = t === 'pa28'; VG.pa44.visible = t === 'pa44'; gearSeen = -1; avSeen.powered = null;
+    if (t === 'b737' && !boeingA) t = 'pa28';
+    type = t; VG.pa28.visible = t === 'pa28'; VG.pa44.visible = t === 'pa44'; VG.b737.visible = t === 'b737';
+    screens.pfd.visible = screens.mfd.visible = t !== 'b737';
+    gearSeen = -1; avSeen.powered = null;
   }
   poseRockers();
-  const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
+  const bytes = glassPanel.bytes + (boeingGlass ? boeingGlass.bytes : 0) + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
     root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType,
     // the glass's own canvases (the 2D panel, Tab, shows these very screens: fly-mode blits them, no second drawing)
     glass: { pfd: glassPanel.pfd ? glassPanel.pfd.canvas : null, mfd: glassPanel.mfd ? glassPanel.mfd.canvas : null },
+    boeing: boeingGlass, focusMeshes,
     get controls() { return byType[type]; }, get type() { return type; }, allControls: controls,
     setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },
@@ -1622,7 +1834,7 @@ export function buildCockpit(FL, A, opts = {}) {
       rockers.dispose();                                     // (its instance buffers)
       for (const g of hitGeos) g.dispose();
       for (const m of mats) m.dispose();
-      hitMat.dispose(); glassPanel.dispose(); for (const tx of texs) tx.dispose();
+      hitMat.dispose(); glassPanel.dispose(); if (boeingGlass) boeingGlass.dispose(); for (const tx of texs) tx.dispose();
       root.removeFromParent();
     },
   };

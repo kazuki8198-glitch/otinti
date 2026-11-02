@@ -45,6 +45,7 @@ import { createAudio } from './audio/sfx.js';
 import { createRunner, createDialogState } from './dialog/engine.js';
 import { createSave } from './core/save.js';
 import { gameBook } from './content/book.js';
+import { tagOfSection, tagOfBank, examTagOf, tagChip } from './content/ana-triage.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx } from './content/dialog/instructor.js';
 import { createActor } from './npc/actor.js';
 import { createDialogUI } from './ui/dialog-ui.js';
@@ -295,7 +296,7 @@ async function boot() {
     // choices: [{ k, text }] (the walk-around's decisions, keys 1–4), or none
     card(title, text, choices = null) {
       const c = $('#card'); document.body.classList.toggle('card-open', !!title);
-      if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; simOpen = false; towerOpen = false; return; }
+      if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; simPage = false; towerOpen = false; return; }
       c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text;
       const ch = c.querySelector('.card-choices'); ch.textContent = '';
       for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
@@ -413,7 +414,9 @@ async function boot() {
   const walkTargets = [];
   let walkOpen = null;                                       // the place whose card is open
   let homeOpen = false;                                      // the front door's card (home to sleep) is open
-  let simOpen = false;                                       // the training device's card (the chair-flight practice) is open
+  let simPage = false, simActs = [];                         // the training device's card: a page of it is open, and what its choices do
+  let simSession = false;                                    // a practice flight begun at the device: out of it, back to the desk
+  let simLit = false;                                        // the device room's screen lit by the device itself (its menu, a lesson, a flight)
   let towerOpen = false;                                     // the tower visit's card is open (Phase 4)
   function walkCard(id) {
     const c = today.walk.inspect(id); if (!c) return null;
@@ -845,8 +848,9 @@ async function boot() {
     // briefed: he goes out to the aircraft (out of sight: while the cadet is still in the room he stays to see them off)
     if (who === 'instructor' && insAt === 'room' && insWhere() === 'apron') insGoOut = true;
     afterTalk.splice(0).forEach(f => f());
-    // (a device lesson over: its pictures off the device room's screen — unless k4's run has it now)
-    if (lessonKind && lessonKind.kind === 'ftd' && !chair) academy.redraw('sim', 'wall_screen', null);
+    // (a device lesson over: its pictures off the device room's screen — unless k4's run has it now. The
+    // lecturer's lessons clear it as they always did; the device's own go out with its power, simScreenOff)
+    if (lessonKind && (lessonKind.kind === 'ftd' || lessonKind.kind === 'ftdP') && !chair) { if (who === 'device') simScreenOff(); else academy.redraw('sim', 'wall_screen', null); }
     lessonKind = null;
   }
   const afterTalk = [];                                       // what happens once the talk is over (a fade to the afternoon…)
@@ -883,7 +887,7 @@ async function boot() {
     }
     else if (name === 'point') {
       // the whiteboard (or the screen) behind them, or out of the window towards the apron
-      const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : 'brief-1';
+      const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : talkWho === 'device' ? 'sim' : 'brief-1';
       const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt(room, arg === 'screen' ? 'wall_screen' : 'whiteboard');
       if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
     } else if (name === 'book') openSection(arg);
@@ -897,7 +901,7 @@ async function boot() {
     else if (name === 'quizEnd') { cx.quiz = (lessonKind && (lessonKind.kind === 'exam' || lessonKind.kind === 'practice')) ? examScoreOf(lessonState, lessonQuestions, Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]))) : scoreOf(lessonState, +arg); lessonQuiz = cx.quiz; }
     // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
     else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' && chairLast ? chairLast.missed : null, practice: talkWho === 'tablet' })); }
-    else if (name === 'pace') career.setPace(arg);
+    else if (name === 'pace') { career.setPace(arg); if (lessonKind && lessonKind.kind === 'class') career.setClassPace(lessonKind.id, arg); }
     else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
     else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); if (lessonKind && lessonKind.kind === 'study') studyAnswered = true; }
     else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
@@ -1048,7 +1052,7 @@ async function boot() {
     // (the redesign: the textbook is a reference now, read by choice — reading a section counts as having heard
     // it, at its key points: the readiness, the practices and the listening kinds follow what was read)
     career.heardSection(id, 'q');
-    dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sectionHtml(sec) + lecturerNotesHtml(id) });
+    dui.showBook({ title: `${sec.title} ${tagChip(tagOfSection(id))}`.trim(), chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sectionHtml(sec) + lecturerNotesHtml(id) });
   }
   // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
   const TUTOR_PIC = { ias: 105, alt: 3500, hdg: 30, vs: 500, bank: 15 };
@@ -1428,6 +1432,8 @@ async function boot() {
       setMode(then === 'spectator' ? 'spectator' : 'walk');
       // (back from the introductory flight — flown, or cut short: the evening, at the lobby's apron doors)
       if (o.intro) { introOver(o.intro); if (then !== 'spectator' && !menu.isOpen) input.requestLock(); return; }
+      // (out of a flight begun at the training device: back to its desk in the device room, the device off)
+      if (simSession) { simSession = false; simScreenOff(); placeWalker(DESK.a, DESK.c, DESK.face); if (then !== 'spectator' && !menu.isOpen) input.requestLock(); return; }
       // beside the right wing, behind its trailing edge, facing the cabin
       const tg = spec.target; placeWalker(tg.a + 1.4, tg.c + 2.6, { a: tg.a, c: tg.c });
       if (then !== 'spectator' && !menu.isOpen) input.requestLock();
@@ -1487,7 +1493,7 @@ async function boot() {
     // world line between the fields, at the route's level, headed for the destination
     const hdg = ((Math.atan2(to.e - from.e, to.n - from.n) * 180 / Math.PI) + 360) % 360;
     const cruise = { n: from.n + (to.n - from.n) * 0.55, e: from.e + (to.e - from.e) * 0.55, altFt: route.cruiseAltFt, hdgTrue: hdg, kt: 250 };
-    fly.startLineSession({ field: lineFrame(from), role: item.role, mass: 62000, fuelGal, crew, cruise, title: `路線運航 ${route.id}（${item.role}）`, wind: { rel: 20, kt: 8, gust: 0.5 } });
+    fly.startLineSession({ field: lineFrame(from), role: item.role, mass: 62000, fuelGal, crew, cruise, title: `路線運航 ${route.id}（${item.role}）`, wind: { rel: 20, kt: 8, gust: 0.5 }, route: { id: route.id, from: route.from, to: route.to, alternate: route.alternate, cruiseFL: route.cruiseFL, distKm: route.distKm, blockMin: route.blockMin } });
   }
   // a question of the duty's, on the radio panel (the choices), with the situation on the task panel
   function linePrompt(kind, { title, text, choices }) {
@@ -1660,9 +1666,15 @@ async function boot() {
       else { if (career.chapter === 'prologue') career.done('intro', 'no'); afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
     }
     else if (arg === 'class' && k) {
-      // (the redesign: the knowledge grows by the class's own drill — the five questions at its end, scored at
-      // its 'quizEnd' into lessonQuiz; a class whose drill was not reached grows it a little, as a poor score does)
-      career.done('class', String(k.id)); career.tire(6); for (const [axis, v] of classGrowth(lessonQuiz ? lessonQuiz.pct : null)) career.grow(axis, v, `class:${k.id}`);
+      // (the knowledge grows by how the class was taken: as cards, by its drill — the five questions at its
+      // end, scored at its 'quizEnd' into lessonQuiz; in full (the whole textbook read), by the full class's
+      // own amount, whatever its chapter questions scored — classGrowth(100) is that amount. A class whose
+      // questions were not reached grows it a little, as a poor score does. The class's format is the one
+      // kept with it; a record from before it was kept falls back to the pace chosen last, as the class
+      // itself does when it is taken up again)
+      const keptFmt = career.state.classPace && career.state.classPace[`class:${k.id}`];
+      const inFull = keptFmt ? keptFmt === 'full' : career.state.lastPace === 'full';
+      career.done('class', String(k.id)); career.tire(6); for (const [axis, v] of classGrowth(inFull ? 100 : (lessonQuiz ? lessonQuiz.pct : null))) career.grow(axis, v, `class:${k.id}`);
       // (the time moves on with the record, as the hook comes — a page closed on the last line keeps both; no afternoon
       // in today's plan — a record from the order before, its lesson passed already: on to the evening)
       next(); if (career.slot === 'pm' && !planToday().some(x => x.slot === 'pm')) career.advance('evening');
@@ -1680,7 +1692,7 @@ async function boot() {
       // (the redesign: a fail's weak banks are kept for the tablet's practice page, which points at their drills;
       // a pass of chapter 1's test without its classes exempts them — the classes it covers are done, their
       // sections heard at their key points, so nothing the test unlocked waits on a class not taken)
-      lastWeak = cx.quiz.pass ? null : (cx.quiz.weak && cx.quiz.weak.length ? { exam: k.id, banks: cx.quiz.weak.map(b => ({ id: b, title: (FL.quiz.BANKS.find(x => x.id === b) || { title: b }).title, pct: cx.quiz.banks[b] ? cx.quiz.banks[b].pct : 0 })) } : lastWeak);
+      lastWeak = cx.quiz.pass ? null : (cx.quiz.weak && cx.quiz.weak.length ? { exam: k.id, banks: cx.quiz.weak.map(b => ({ id: b, title: (FL.quiz.BANKS.find(x => x.id === b) || { title: b }).title, tag: tagOfBank(b), pct: cx.quiz.banks[b] ? cx.quiz.banks[b].pct : 0 })) } : lastWeak);
       if (k.id === 'written1' && cx.quiz.pass) {
         const exempt = [];
         for (let i = 0; i < CLASSES.length; i++) if (!career.isDone('class', String(i))) { for (const sec of classSectionIds(FL, i)) career.heardSection(sec, 'q'); career.done('class', String(i)); exempt.push(i); }
@@ -1949,8 +1961,8 @@ async function boot() {
   }
   // ------------------------------------------------------------ usable things (Phase 3): the furniture that does
   // something. Every effect rides an existing system: the coffee through career.tire (once a day, by the
-  // career's own done-mark), the shelf through the textbook, the training device through the same chair-flight
-  // practice the tablet starts, the desk PCs through the tablet's own weather and logbook numbers.
+  // career's own done-mark), the shelf through the textbook, the training device through the lessons and the
+  // free flight it runs itself (simUse below), the desk PCs through the tablet's own weather and logbook numbers.
   function usableUse(t) {
     const id = t.id.replace(/^ex:/, ''), kind = usableKind(id);
     if (kind === 'coffee') return coffeeUse();
@@ -1971,19 +1983,118 @@ async function boot() {
     if (id) { openSection(id); audio.ui('examine'); return 'examined'; }
     return 'examined';
   }
+  // ------------------------------------------------------------ the training device itself (the sim room's
+  // seat): powered on, it runs its lessons and a practice flight, at the desk, in the cockpit view. A lesson
+  // of today's plan, due in this slot, runs as the lesson itself — the same dialogs (simLessonData builds
+  // them exactly as the lecturer's path in chooseTalk does) and the same record (workDone's ftd: the pass in
+  // FLIGHT LAB's progress, the growth, the fatigue, the slot moving on). The others run as a practice (kind
+  // 'ftdP': workDone has no branch for it, so nothing is recorded — the tablet's practices' way). The chair
+  // flight's practice stages stay, as one page of the device. While the device is on — its menu up, a lesson
+  // or a flight running — the room's wall screen is lit with its face; off with it (the loop keeps that true).
+  function simScreen(title, sub) {
+    simLit = true;
+    academy.redraw('sim', 'wall_screen', (g, w, h) => {
+      g.fillStyle = '#0a141c'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#39d353'; g.fillRect(0, 0, w, Math.max(2, h * 0.012));
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = '#cfe8d9'; g.font = `700 ${Math.round(h * 0.11)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif`;
+      g.fillText('訓練装置 FTD', w / 2, h * 0.34);
+      g.fillStyle = '#8fd3ff'; g.font = `400 ${Math.round(h * 0.068)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif`;
+      g.fillText(title || '', w / 2, h * 0.53);
+      g.fillStyle = '#7d8a94'; g.font = `400 ${Math.round(h * 0.052)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif`;
+      g.fillText(sub || '', w / 2, h * 0.67);
+    });
+  }
+  function simScreenOff() { if (!simLit) return; simLit = false; academy.redraw('sim', 'wall_screen', null); }
+  function simShow(title, text, choices) {
+    simPage = true; simActs = choices.map(c => c.act);
+    interactor.showCard(title, text, choices.map((c, i) => ({ k: i + 1, text: c.text })));
+    audio.ui('examine');
+  }
+  function simClose() { simPage = false; simActs = []; interactor.closeCard(); }
   function simUse(t) {
-    simOpen = true;
-    interactor.showCard('訓練装置（FTD 風の練習席）', '席に座って、交信の練習（チェアフライト）ができます。タブレットの練習と同じ記録で、課程の進行には影響しません。', [
-      { k: 1, text: '交信の練習：ステージ 1' }, { k: 2, text: '交信の練習：ステージ 2' },
-      { k: 3, text: '交信の練習：ステージ 3' }, { k: 4, text: 'やめる' },
+    simScreen('メニュー', '課目 ・ 飛行練習 ・ 交信の練習');
+    simShow('訓練装置（FTD）', '電源が入りました。画面と操縦輪・スロットルのある練習席です。装置の課目（k1〜k6）はここで受けられます——今日の予定の課目は、ミラー講師から受けるのと同じ記録になります。飛行練習では、装置の中で実際に飛べます。', [
+      { text: '装置の課目（k1〜k6）', act: () => simLessons() },
+      { text: '飛行練習（フリーフライト）', act: () => simFree() },
+      { text: '交信の練習（チェアフライト）', act: () => simChairPage() },
+      { text: 'やめる（電源を切る）', act: () => { simClose(); simScreenOff(); } },
     ]);
-    audio.ui('examine'); return 'examined';
+    return 'examined';
   }
   function simChoose(k) {
-    if (!simOpen) return false;
-    simOpen = false; interactor.closeCard();
-    if (k >= 0 && k <= 2) startChair(k + 1, { practice: true });
+    if (!simPage) return false;
+    const act = simActs[k];
+    if (act) act();
     return true;
+  }
+  // the device lesson of today's plan, due in this slot — the lecturer's own condition (chooseTalk's ftd)
+  function simDue() {
+    const st = career.state, slot = st.slot;
+    const ftd = planToday().find(x => x.kind === 'ftd' && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
+    return ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id)) ? ftd.id : null;
+  }
+  // a device lesson's dialogs, built as the lecturer's path builds them (chooseTalk's); a practice does not
+  // spend the attempt (its count only turns the questions' order)
+  function simLessonData(id, real) {
+    const st = career.state, sch = planToday();
+    if (id === 'k4') return ftdDialogs(FL, 'k4', { k4: k4State() });
+    return ftdDialogs(FL, id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: real ? career.attempt(`ftd:${id}`) : (st.attempts[`ftd:${id}`] || 0), own: sch.some(x => x.kind === 'class' && CLASS_FTD[+x.id] === id) });
+  }
+  function simLessons() {
+    const dueId = simDue(), p = prog();
+    simShow('訓練装置：課目', dueId ? `今日の予定は ${dueId}「${FTD_TITLES[dueId]}」です（本番：合否が記録され、時間も進みます）。それ以外の課目は練習として受けられます（記録されません）。` : '装置の課目です。予定のない課目・合格済みの課目は、練習として受けられます（記録されません）。', [
+      ...GROUND.map(id => ({
+        text: `${id}「${FTD_TITLES[id]}」${id === dueId ? '（今日の予定・本番）' : groundPassed(p, id) ? '（合格済み・練習）' : '（練習）'}`,
+        act: () => (id === 'k4' && id !== dueId ? simChairPage() : simLesson(id, id === dueId)),
+      })),
+      { text: '戻る', act: () => simUse() },
+    ]);
+  }
+  function simLesson(id, real) {
+    simClose();
+    // (a real lesson is the day's work begun, as any talk the cadet starts: the morning is over — startTalk's rule)
+    if (real && career.slot === 'morning' && career.chapter !== 'prologue' && !planToday().some(x => x.kind === 'graduation')) { career.advance('am'); applySlot(); }
+    // (k4's run just ended and its debrief is still to be heard: that comes first, as the lecturer serves it)
+    if (real && id === 'k4' && chairEnd) { const d = chairEnd; chairEnd = null; deviceTalk('ftd', 'k4', d); return; }
+    deviceTalk(real ? 'ftd' : 'ftdP', id, simLessonData(id, real));
+  }
+  // a talk the device holds (its lessons): the cadet seated at the desk, the device the speaker — the
+  // tablet's way (tabletTalk), with the lesson's name on the room's screen
+  function deviceTalk(kind, id, data) {
+    data.speakers = { ...data.speakers, lecturer: { name_ja: '訓練装置', color: '#8fd3ff' } };
+    placeWalker(DESK.a, DESK.c, DESK.face);
+    talk = { leash: { x: walker.state.x, z: walker.state.z, r: LEASH_M } }; talkWho = 'device'; talkActor = null; faceOn(null);
+    talkRun = startLesson(kind, id, data);
+    document.body.classList.add('talking');
+    simScreen(`${id}「${FTD_TITLES[id]}」`, kind === 'ftd' ? '本番（記録されます）' : '練習（記録されません）');
+    talkRun.start('ftd');
+  }
+  function simChairPage() {
+    simShow('訓練装置：交信の練習', 'k4 チェアフライトの練習です（記録はされません。交信が少し伸びます：1 日 1 回まで）。', [
+      { text: 'ステージ 1：台本を見ながら', act: () => { simClose(); startChair(1, { practice: true }); } },
+      { text: 'ステージ 2：台詞を隠して', act: () => { simClose(); startChair(2, { practice: true }); } },
+      { text: 'ステージ 3：本番形式', act: () => { simClose(); startChair(3, { practice: true }); } },
+      { text: '戻る', act: () => simUse() },
+    ]);
+  }
+  function simFree() {
+    simShow('訓練装置：飛行練習', '装置の中の飛行です。離着陸と操縦の練習ができます（訓練の記録には数えません）。終えるときは Esc のメニューから地上（歩く）へ——装置の席に戻ります。', [
+      { text: '滑走路から（Archer・エンジン始動済み）', act: () => simFlight({ start: 'rwy', aircraft: 'pa28' }) },
+      { text: 'ランプから（Archer・コールドスタート）', act: () => simFlight({ start: 'ramp', aircraft: 'pa28' }) },
+      { text: 'ダウンウインドから（Archer・着陸練習）', act: () => simFlight({ start: 'pattern', aircraft: 'pa28' }) },
+      { text: '滑走路から（Seminole・双発）', act: () => simFlight({ start: 'rwy', aircraft: 'pa44' }) },
+      { text: '戻る', act: () => simUse() },
+    ]);
+  }
+  // a free flight in the device: the menu's free session itself (fly-mode's startFreeSession, its light
+  // wind and standard load), flagged so that leaving it sets the cadet back at the desk (onLeave's branch)
+  function simFlight(cfg0) {
+    if (!fly || fly.status().active || mode === 'fly') { toast('飛行中は使えません。先に飛行を終えてください', 3000); return; }
+    simClose();
+    simSession = true;
+    simScreen('飛行練習', 'フライト中');
+    fly.startFreeSession({ start: cfg0.start, aircraft: cfg0.aircraft, wind: { rel: 10, kt: 5, gust: 0.5 }, loading: { fuel: 'std', front: 2, rear: 0, bagKg: 0 }, fail: null });
   }
   function pcUse(t) {
     const st = career.state, w = career.weather(prog()), lt = logbook.totals();
@@ -2068,12 +2179,12 @@ async function boot() {
     cards.show({ kicker: '', title: '移動', sub: 'アカデミー正面入口へ', ms: 200, fade: 300, onDark: () => placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face) });
     return 'examined';
   } });
-  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); else if (b && simOpen) simChoose(+b.dataset.k); else if (b && towerOpen) towerChoose(+b.dataset.k); else if (b && lineCardCb) lineChoose(+b.dataset.k); });
+  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); else if (b && simPage) simChoose(+b.dataset.k); else if (b && towerOpen) towerChoose(+b.dataset.k); else if (b && lineCardCb) lineChoose(+b.dataset.k); });
 
   // the day's boards: what the career has today
   function boardCard(t) {
     const id = t.id.replace(/^ex:/, '');
-    // (sim-station is usable furniture now: usableUse starts the practice from the seat — see content/usable.js)
+    // (sim-station is usable furniture now: usableUse opens the device itself from the seat — see content/usable.js)
     if (!['schedule', 'metar', 'status-board', 'wb-brief-1', 'notices'].includes(id)) return null;
     const st = career.state, p = prog(), w = career.weather(p), sch = planToday(), it = flightItem();
     const date = dateText(st.day), plan = it ? planOf(it) : null;
@@ -2128,15 +2239,15 @@ async function boot() {
         canJoin: !!st.graduated && !(st.fo && st.fo.hired),
         fo: st.fo && st.fo.hired ? { sectors: st.fo.sectors, blockMin: st.fo.blockMin, evalAvg: st.fo.evalN ? Math.round(st.fo.evalSum / st.fo.evalN * 10) / 10 : null, done: !!st.fo.done, lineCheckReady: career.lineCheckReady() } : null,
         lineToday: (() => { const it = sch.find(x => (x.kind === 'line' || x.kind === 'linecheck') && !career.doneToday(x.kind, x.id)); return it ? { title: it.title } : null; })(),
-        book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
+        book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title, tag: tagOfSection(x.id) })) })),
         // (in chapter 1: of each bank, the questions whose answers the classes have said; the chair flight once its
         // class — the calls of one flight — is done)
-        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length, taught: ch1 ? bankTaught(FL, b.id, heard) : b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: ch1,
+        banks: BANKS.map(b => ({ id: b.id, title: b.title, tag: tagOfBank(b.id), n: b.qs.length, taught: ch1 ? bankTaught(FL, b.id, heard) : b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: ch1,
         // (the redesign: a written test can be sat from the tablet without its classes — the chapter's next test,
         // while it is not passed and not yet taken today; passing chapter 1's exempts the classes it covers.
         // And the last test's weak banks, whose practice the page below points at)
         examNow: (() => { const id = st.chapter === 'ch1' ? 'written1' : st.chapter === 'ch2' ? 'presolo' : st.chapter === 'fo1' ? 'type' : (STAGE[st.chapter] || {}).exam || null;
-          return id && EXAMS[id] && !(st.exams[id] && st.exams[id].pass) && career.examReady(id) ? { id, title: EXAMS[id].title } : null; })(),
+          return id && EXAMS[id] && !(st.exams[id] && st.exams[id].pass) && career.examReady(id) ? { id, title: EXAMS[id].title, tag: examTagOf(EXAMS[id].banks) } : null; })(),
         weak: lastWeak,
         drillsLeft: career.drillsLeft(),
         chair: !ch1 || st.done['class:3'] != null || groundPassed(p, 'k4'),
@@ -2345,7 +2456,7 @@ async function boot() {
     // (G: the next step worked out now — the guide's line may be off in the menu, and then not kept up to date)
     if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { computeGuide(walker.framePos.a, walker.framePos.c); if (!jumpNext()) { const j = jumpPlan(true); toast(j && j.no ? j.no : 'G で行けるのは、一度歩いて入ったことのある部屋です', 2600); } return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
-    if (mode === 'walk' && simOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { simChoose(+e.code.slice(-1) - 1); return; }
+    if (mode === 'walk' && simPage && /^(Digit|Numpad)[1-7]$/.test(e.code)) { simChoose(+e.code.slice(-1) - 1); return; }
     if (mode === 'walk' && towerOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { towerChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
       e.preventDefault();
@@ -2590,6 +2701,9 @@ async function boot() {
     } else if (mode === 'fly') fly.update(dt, { live, paused: menu.isOpen });
     else if (mode === 'epilogue') updateEpilogue(dt, live);
     else if (!menu.isOpen && live) spectator.update(dt);
+    // (the device's screen: its menu closed and nothing running on it — a lesson, a chair flight or one of
+    // its flights — the power goes off, and the room's screen is the room's again)
+    if (simLit && !simPage && !chair && !simSession && !(talk && talkWho === 'device')) simScreenOff();
     input.endFrame();
     camera.updateMatrixWorld();
     camera.getWorldPosition(camWorld);
@@ -2978,6 +3092,8 @@ async function boot() {
       chair: { active: () => !!chair, view: () => (chair ? chair.run.view() : null), rightIndex: () => (chair ? chair.run.rightIndex() : -1),
         answer: (right = true) => { if (!chair) return null; const k = chair.run.rightIndex(); if (k < 0) return null; chairAnswer(right ? k : (k + 1) % chair.run.view().choices.length); return true; },
         why: () => (chair ? chair.run.why() : ''), start: (stage = 2, o = {}) => startChair(stage, o), summary: () => (chair ? chair.run.summary() : null), step: (dt) => stepChair(dt), quit: () => quitChair(), mic: () => (chair ? chair.micState : null) },
+      // the training device at its seat: open its card, its page's choices, a flight begun there, its screen lit
+      device: { open: () => simUse(), page: () => simPage, choose: (k) => simChoose(k), session: () => simSession, lit: () => simLit, due: () => simDue() },
       // the class's page on briefing room 2's screen (the 'page' hook's arg) and the section on its whiteboard
       lecture: () => ({ page: pageNow, section: pageSec }),
       // what a room's board or screen shows now: a hash of its canvas's pixels (null: no such surface)

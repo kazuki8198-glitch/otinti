@@ -19,7 +19,8 @@ export const TOWER_VISIT = {
   about: '管制官の仕事：場周と地上のすべての機体を、頭の中の地図で同時に追うこと。\n天気の変化、滑走路の状態、訓練の予定——指示のひとつひとつの後ろに、その全部がある。\n「管制官がいちばん助かるのは、復唱が正確な機体」——高嶺さんの言葉。',
 };
 // the usable kinds, by examine-target id (academy-spec.js / dorm-spec.js). 'pc' shows the logbook and the weather
-// (the tablet's own data, in main.js); 'shelf' opens the textbook; 'sim' offers the chair-flight practice.
+// (the tablet's own data, in main.js); 'shelf' opens the textbook; 'sim' powers the training device on (its
+// lessons, a free practice flight and the chair-flight practice, in main.js).
 export const USABLE = {
   coffee: 'coffee', 'dorm-coffee': 'coffee',
   'shelf-brief-1': 'shelf', 'shelf-lounge': 'shelf', 'shelf-planning': 'shelf', 'shelf-library': 'shelf', 'dorm-shelf': 'shelf',

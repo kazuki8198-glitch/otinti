@@ -5,7 +5,7 @@
 // such, 考えてみよう asked before it is answered, every page on the screen a real one, the lecturer's notes said where
 // there are any (a test gives its own, to check how they are said; another checks content/lecture-notes as written:
 // a note for every section, every line sayable and said in its place, a note on a figure or a table with it on the
-// screen, none saying the book again), 要点だけ and 続きから too; every table row and every exchange read (the English on
+// screen, none saying the book again), both formats (じっくり and カード＋ドリル) and 続きから too; every table row and every exchange read (the English on
 // a line of its own, spoken), and no subtitle longer than 120 characters.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classDialogs, ftdDialogs, examDialogs, drillDialogs, DRILL_CHOICES, scoreOf, examScoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, DECISION_NODE, sectionHtml, questionPool, classQuestions } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, drillDialogs, DRILL_CHOICES, scoreOf, examScoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, DECISION_NODE, sectionHtml, questionPool, classQuestions, sectionSteps } from '../src/content/school.js';
 import * as TALK from '../src/content/class-talk.js';
 import { CLASS_FTD } from '../src/career/career.js';
 import { units, lectureUnits, proseOf } from '../src/content/lecture-units.js';
@@ -36,13 +36,13 @@ const APP = /ゲーム|ソフト|プレイヤー|FLIGHT LAB|シミュレータ|�
 const QUIZ = { quiz: { right: 1, n: 2, pct: 50, pass: false } };
 
 // run a dialog to its end: right answers (or wrong ones), the score worked out at 'quizEnd' as the game does; other
-// choices: the first, or pick(view, step) → an index (null: the first); the class's pace by its name — じっくり (the whole
-// textbook) unless pace says another (need | full | quick), or pick chooses at the pace node itself. At most a few steps
-// a node (computed from the data)
-const PACE_NAME = { need: /^(最初から：)?今日の訓練に要る/, full: /^(最初から：)?じっくり/, quick: /^(最初から：)?要点だけ/ };
-export const paceIndex = (v, pace = 'full') => v.choices.findIndex(c => PACE_NAME[pace].test(c.text));
+// choices: the first, or pick(view, step) → an index (null: the first); a class's format by its name at the pace
+// node — カード＋ドリル (the redesign's cards and their drill) unless pace says 'full' (じっくり, the whole
+// textbook), or pick chooses at the pace node itself. At most a few steps a node (computed from the data)
+const PACE_NAME = { full: /^じっくり/, card: /^カード/ };
+export const paceIndex = (v, pace = 'card') => v.choices.findIndex(c => PACE_NAME[pace].test(c.text));
 // (press: (view, k) → a letter for a line's other way on — the section's end: R again, B the textbook, Q a break)
-function run(data, id, { right = true, pick = null, pace = 'full', press = null } = {}) {
+function run(data, id, { right = true, pick = null, pace = 'card', press = null } = {}) {
   const st = createDialogState(), ctx = { quiz: null }, hooks = [], lines = [], views = [];
   const qs = data.questions || [], max = 3 * Object.values(data.dialogs).reduce((n, d) => n + Object.keys(d.nodes).length, 0) + 50;
   const r = createRunner({ data, state: st, ctx, hooks: { onHook: (n, a) => { hooks.push([n, a, views.length]); if (n === 'quizEnd') ctx.quiz = scoreOf(st, +a); } } });
@@ -50,7 +50,8 @@ function run(data, id, { right = true, pick = null, pace = 'full', press = null 
   for (let k = 0; k < max && r.running; k++) {
     const v = r.view(); lines.push(v.text, ...v.choices.map(c => c.text)); views.push(v);
     if (v.choices.length) {
-      const qi = /^q(\d+)$/.exec(v.node), x = qi ? (qs[+qi[1]] || null) : null;
+      // (a class's scored questions: the drill's q<k>, or — read in full — its chapters' cq<k>)
+      const qi = /^q(\d+)$/.exec(v.node), ci = /^cq(\d+)$/.exec(v.node), x = qi ? (qs[+qi[1]] || null) : ci ? ((data.chapterQuestions || [])[+ci[1]] || null) : null;
       // (a class taken up midway offers to go on first: that stays the default)
       const resume = v.choices.some(c => /^続きから/.test(c.text));
       const chosen = pick ? pick(v, k) : null, byPace = v.node === 'pace' && !resume && chosen == null && paceIndex(v, pace) >= 0 ? paceIndex(v, pace) : null;
@@ -121,10 +122,13 @@ test('school: the six classes as cards and a drill — each section its key poin
     const { errors, warnings } = validateDialogs(d, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists });
     assert.deepEqual(errors, [], where);
     assert.deepEqual(warnings.filter(w => !/flag "qz_\d+" is declared but never read/.test(w)), [], `${where}: only the score's flags (read by scoreOf)`);
-    // the start: the day's own (what it is for, naming the afternoon's lesson); no pace to choose any more
+    // the start: the day's own (what it is for, naming the afternoon's lesson); the format chosen at the
+    // start — the cards offered first (the redesign's way is the default; the last way chosen anywhere is
+    // offered first instead, checked below); a format the caller names is not asked for
     assert.equal(N.hello.text, TALK.CLASS_DAY[i].hello[0]);
     assert.ok(TALK.CLASS_DAY[i].hello.join('').includes(CLASS_FTD[i]), `${where}: the start names the afternoon's ${CLASS_FTD[i]}`);
-    assert.ok(!N.pace, `${where}: no pace`);
+    assert.ok(N.pace && N.pace.text === TALK.CLASS_DAY[i].pace && N.pace.choices.length === 2 && /^カード/.test(N.pace.choices[0].text) && /^じっくり/.test(N.pace.choices[1].text), `${where}: the format asked, the cards first`);
+    assert.ok(!classDialogs(FL, i, { pace: 'card' }).dialogs.class.nodes.pace, `${where}: a format named, none asked`);
     const r = run(d, 'class');
     clean(r.lines, where);
     assert.equal(r.views[0].text, TALK.CLASS_DAY[i].hello[0]); assert.equal(r.views[r.views.length - 1].text, TALK.CLASS_DAY[i].bye);
@@ -216,7 +220,8 @@ test('school: every line of every class fits the subtitle box (at most 120 chara
 test('school: the lecturer\'s notes — her check as a card\'s prediction where a section runs long (unscored, answered at its end); her lines in the textbook\'s box', () => {
   // (the redesign: a card does not read her introduction and notes aloud — they are the textbook's box, under
   // the section, where the cadet reads by choice. Her check stays in the class, as the prediction, on a
-  // section whose card would otherwise run long without a choice)
+  // section whose card would otherwise run long without a choice. Read in full, her introduction and notes
+  // are said again, on that way's own nodes (f…); this test's runs are the cards' (c…))
   const sec2 = sectionsOf(0)[2], base = 'c0s2';
   const ask2 = { q: '抗力を減らすために、設計でできることは？', opts: ['翼を細長くする', '翼を短く太くする', '表面を粗くする'], ok: 0, why: '細長い翼は誘導抗力が小さいからです。' };
   const withAsk = (id) => (id === sec2.id ? { ask: ask2 } : testNotes(id));
@@ -239,7 +244,7 @@ test('school: the lecturer\'s notes — her check as a card\'s prediction where 
   assert.ok(at(`${base}:rv`) > at(`${base}:pr`) || at(`${base}:rv:ng`) > at(`${base}:pr`) || at(`${base}:rv:dk`) > at(`${base}:pr`), 'answered after the card');
   // her lines are not said in the class any more — not her introduction, not her notes
   assert.ok(!r.lines.some(l => l === TEST_NOTES['aero.forces'].intro[0] || TEST_NOTES['aero.forces'].notes.includes(l)), 'her lines left to the book');
-  assert.ok(!Object.keys(N).some(k => /:(i|n)\d+$/.test(k)), 'no introduction or note nodes');
+  assert.ok(!Object.keys(N).some(k => /^c\d+s\d+:(i|n)\d+$/.test(k)), 'no introduction or note nodes on the cards\' way');
   // bad notes are left out rather than breaking the class
   const bad = classDialogs(FL, 0, { notes: (id) => (id === 'aero.forces' ? { intro: 'x', notes: [3, ''], ask: { q: 'Q', opts: ['a', 'a'], ok: 0 } } : null) });
   assert.deepEqual(validateDialogs(bad, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists }).errors, []);
@@ -332,8 +337,69 @@ test('school: a class\'s choices — the section again, the section in the textb
   assert.ok(on1.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
   // (no place, the first section's, or one past the end: from the start, and no resume)
   for (const from of [null, 0, 99]) assert.ok(!classDialogs(FL, 0, { from }).dialogs.class.nodes.resume, `from ${from}: from the start`);
-  // (a pace passed by a caller from before the redesign: ignored, the class the same)
-  assert.deepEqual(classDialogs(FL, 0, { pace: 'quick' }), classDialogs(FL, 0), 'a pace named is no pace at all now');
+  // (a pace named by a caller from before the redesign names its format now: 'quick' and 'need' are the
+  // cards, and a format named is a format taken — the class the same as the cards named in today's words)
+  assert.deepEqual(classDialogs(FL, 0, { pace: 'quick' }), classDialogs(FL, 0, { pace: 'card' }), 'quick is the cards');
+  assert.deepEqual(classDialogs(FL, 0, { pace: 'need' }), classDialogs(FL, 0, { pace: 'card' }), 'need is the cards');
+});
+
+test('school: the format chosen at a class\'s start — the last way offered first, the pick kept by its hook; in full, the whole textbook (her introduction and notes said, each section heard in full, two scored questions after each chapter)', () => {
+  for (let i = 0; i < CLASS_CHAPTERS.length; i++) {
+    const secs = sectionsOf(i), where = `class ${i}`;
+    // (the choice's shape: the day's own question; the two ways, the cards first when nothing was chosen
+    // before, the last way first when one was; the full way sets the gate's flag, either way the hook keeps it)
+    const args = (d) => d.dialogs.class.nodes.pace.choices.map(c => (c.effects.find(e => e.hook === 'pace') || {}).arg);
+    assert.deepEqual(args(classDialogs(FL, i)), ['card', 'full'], `${where}: the cards first`);
+    assert.deepEqual(args(classDialogs(FL, i, { last: 'full' })), ['full', 'card'], `${where}: the last way first`);
+    assert.deepEqual(args(classDialogs(FL, i, { last: 'need' })), ['card', 'full'], `${where}: a pace of the order before reads as the cards`);
+    const N0 = classDialogs(FL, i).dialogs.class.nodes;
+    assert.ok(N0.pace.choices.every(c => /約 \d+ 分/.test(c.text)), `${where}: each way with its time`);
+    assert.ok((N0.pace.choices.find(c => /^じっくり/.test(c.text)).effects || []).some(e => e.set === 'full'), `${where}: the full way sets the gate`);
+    // in full, by its name at the choice: every section read whole — its place kept, heard in full; her
+    // prediction asked in its section and answered at its end where she has a check; the chapters' two
+    // questions each, scored, the score said; the class done
+    const d = classDialogs(FL, i), r = run(d, 'class', { pace: 'full' });
+    clean(r.lines, `${where} in full`);
+    assert.deepEqual(r.hooks.filter(h => h[0] === 'pace').map(h => h[1]), ['full'], `${where}: the pick kept`);
+    assert.deepEqual(r.hooks.filter(h => h[0] === 'progress').map(h => +h[1]), secs.map((_, j) => j), `${where}: each section's place kept`);
+    assert.deepEqual(r.hooks.filter(h => h[0] === 'heard').map(h => h[1]), secs.map(s => `${s.id}|f`), `${where}: each section heard in full`);
+    assert.equal(d.chapterQuestions.length, 2 * CLASS_CHAPTERS[i].length, `${where}: two questions a chapter`);
+    assert.deepEqual(r.ctx.quiz, { right: d.chapterQuestions.length, n: d.chapterQuestions.length, pct: 100, pass: true }, `${where}: the chapters' questions, answered right, scored`);
+    assert.ok(r.views.some(v => v.node === 'score') && r.hooks.some(h => h[0] === 'done' && h[1] === 'class'), `${where}: the score said, the class done`);
+    for (const sec of secs) assert.ok(r.views.some(v => v.text.includes(qq(sec.title))), `${sec.id}: its title said`);
+    // (the whole book gone through: the screen pages the section itself, then every unit of it that has
+    // lines to say, in turn)
+    for (const sec of secs) {
+      const want = [...new Set(sectionSteps(sec).map(s => s.m))].sort((a, b) => a - b);
+      const paged = [...new Set(r.hooks.filter(h => h[0] === 'page' && h[1].startsWith(`${sec.id}#`)).map(h => +h[1].split('#')[1]))].sort((a, b) => a - b);
+      assert.deepEqual(paged, want, `${sec.id}: every unit paged`);
+      assert.ok(r.hooks.some(h => h[0] === 'page' && h[1] === sec.id), `${sec.id}: its page opens it`);
+    }
+    // her introduction and notes said in full (the tests' own notes): every line of hers, in its section
+    const rn = run(classDialogs(FL, i, { notes: testNotes }), 'class', { pace: 'full' });
+    for (const [id, n] of Object.entries(TEST_NOTES)) {
+      if (!secs.some(s => s.id === id)) continue;
+      for (const l of [...(n.intro || []), ...n.notes]) assert.ok(rn.lines.includes(l), `${where}: ${id}'s line "${l}" said in full`);
+    }
+    // (the cards, by their name: the drill scored, the sections heard at their key points, none of the
+    // chapters' questions asked, her lines left to the book)
+    const rc = run(classDialogs(FL, i), 'class', { pace: 'card' });
+    assert.deepEqual(rc.hooks.filter(h => h[0] === 'pace').map(h => h[1]), ['card'], `${where}: the cards' pick kept`);
+    assert.deepEqual(rc.hooks.filter(h => h[0] === 'heard').map(h => h[1]), secs.map(s => `${s.id}|q`), `${where}: each section heard at its key points`);
+    assert.ok(!rc.views.some(v => /^cq\d+$/.test(v.node)), `${where}: no chapter questions on the cards' way`);
+  }
+  // a class taken up midway in full, at a chapter's head: not asked again — it goes on from the chapter
+  // before's questions, in full, and says no score
+  const all1 = classQuestions(FL, 1, {}).all, head = all1.findIndex(x => x.k === 1 && x.j === 0);
+  assert.ok(head > 0, 'class 1 has a second chapter');
+  const dr = classDialogs(FL, 1, { pace: 'full', from: head });
+  assert.ok(!dr.dialogs.class.nodes.pace, 'not asked again');
+  const rr = run(dr, 'class');
+  assert.match(rr.views[rr.views.findIndex(v => v.node === 'resume')].text, /第 2 章の確認から続けます/, 'from the chapter before\'s questions');
+  assert.ok(rr.views.some(v => /^cq0$/.test(v.node)), 'the chapter before\'s questions asked');
+  assert.ok(rr.views.findIndex(v => v.node === 'c1') > rr.views.findIndex(v => v.node === 'cq1:ok' || v.node === 'cq1:ng' || v.node === 'cq1'), 'then the chapter itself');
+  assert.ok(!rr.views.some(v => v.node === 'score'), 'no score said');
+  assert.deepEqual(rr.hooks.filter(h => h[0] === 'heard').map(h => h[1]), sectionsOf(1).slice(head).map(s => `${s.id}|f`), 'the rest heard in full');
 });
 test('school: the training device — k1 told through, k4 begun (its chair flight: test/k4.test.mjs), k2/k3/k5/k6 ten questions each: passed when right, not when wrong', () => {
   assert.deepEqual(Object.keys(FTD_TITLES), ['k1', 'k2', 'k3', 'k4', 'k5', 'k6']);

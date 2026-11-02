@@ -38,7 +38,11 @@ export function createAutopilot(FL) {
   const P = FL.physics, AV = FL.avionics, clamp = P.clamp;
   const st = { on: false, hdg: false, alt: false, nav: false, apr: false, vs: false, lvl: false, fd: false,
     vsSel: 0, gsCap: false, fdBank: 0, fdPitch: 0, discTone: false,
-    flash: 0, pBase: null, lastVs: 0, engagePitch: 0, ovr: 0, L: null };
+    flash: 0, pBase: null, lastVs: 0, engagePitch: 0, ovr: 0, L: null,
+    // (the 737's MCP adds these: LVL CHG, and the autothrottle — armed on the panel, holding the selected
+    // speed with the thrust lever once airborne. The pistons never arm it: their panels have no such keys,
+    // and the law below is gated on the jet besides.)
+    lvlChg: false, atArm: false, atOn: false, atSpd: 250, atI: 0 };
   const display = { on: false, hdg: false, alt: false, nav: false, apr: false, vs: false, lvl: false, flash: 0 };
   const latName = () => st.apr ? 'APR' : st.nav ? 'NAV' : st.hdg ? 'HDG' : '';
   const vertName = () => st.vs ? 'VS' : st.alt ? 'ALT' : '';
@@ -55,7 +59,7 @@ export function createAutopilot(FL) {
     if (s.onGround) return 'オートパイロットは空中で接続します';
     if (s.out.agl < AP_MIN_ENGAGE_FT) return `高度が足りません：オートパイロットの接続は対地 ${AP_MIN_ENGAGE_FT} ft 以上で`;
     if (what === 'AP_APR') { const n = navNow(flight); if (!n || n.src !== 'LOC1' || n.flag) return 'APR：ローカライザーの信号がありません（CDI を NAV1 に）'; }
-    st.on = true; st.L = flight.L; st.flash = 0; st.ovr = 0; st.lvl = false; st.gsCap = false;
+    st.on = true; st.L = flight.L; st.flash = 0; st.ovr = 0; st.lvl = false; st.gsCap = false; st.lvlChg = false;
     st.nav = what === 'AP_NAV' || what === 'AP_APR'; st.apr = what === 'AP_APR';
     st.hdg = what === 'AP' || what === 'AP_HDG';
     st.alt = what === 'AP' || what === 'AP_ALT' || what === 'AP_VS';
@@ -64,15 +68,34 @@ export function createAutopilot(FL) {
     return `オートパイロット接続：${modes()}（バグは PFD のノブで）`;
   }
   function disconnect(flash) {
-    st.on = false; st.hdg = false; st.alt = false; st.nav = false; st.apr = false; st.vs = false; st.lvl = false; st.gsCap = false; st.pBase = null; st.ovr = 0;
+    st.on = false; st.hdg = false; st.alt = false; st.nav = false; st.apr = false; st.vs = false; st.lvl = false; st.gsCap = false; st.lvlChg = false; st.pBase = null; st.ovr = 0;
     if (flash) { st.flash = 2.5; st.discTone = true; }
     // hand the pitch hold back where the nose is: no jump when the hands take over
     if (st.L && st.L.s && !st.L.s.onGround) { st.L.s.keyHold = true; st.L.s.pTgt = st.L.s.out.pitch; st.L.s.pRate = 0; }
   }
-  // what: 'AP' | 'AP_HDG' | 'AP_ALT' | 'AP_NAV' | 'AP_APR' | 'AP_VS' | 'AP_LVL' | 'FD' (the PFD softkeys)
+  // what: 'AP' | 'AP_HDG' | 'AP_ALT' | 'AP_NAV' | 'AP_APR' | 'AP_VS' | 'AP_LVL' | 'FD' (the PFD softkeys),
+  // and the 737 MCP's own: 'MCP_ALT' (its altitude knob: the G1000's ALT stops at 18,000 ft, the jet flies
+  // to 41,000), 'AT_ARM' / 'AT_SPD' (the autothrottle), 'AP_VS_ADJ' (the V/S wheel), 'AP_LVLCHG', 'AP_DISC'
   // → the line for the toast ('' = nothing to say)
-  function control(flight, what) {
+  function control(flight, what, dir = 1, big = false) {
     if (!flight || !flight.av) return '';
+    if (what === 'MCP_ALT') { const av = flight.av; av.altSel = clamp(Math.round((av.altSel + (big ? 1000 : 100) * dir) / 100) * 100, 0, 41000); return ''; }
+    if (what === 'AT_SPD') { st.atSpd = clamp(st.atSpd + (big ? 10 : 1) * dir, 100, 340); return ''; }
+    if (what === 'AT_ARM') { st.atArm = !st.atArm; if (!st.atArm) { st.atOn = false; st.atI = 0; } return st.atArm ? 'A/T アーム：離陸後、選択速度を A/T が持ちます' : 'A/T アーム解除'; }
+    if (what === 'AP_DISC') { if (st.on) { disconnect(true); return 'オートパイロット解除'; } return ''; }
+    if (what === 'AP_VS_ADJ') {
+      if (!st.on) { const r = engage(flight, 'AP_VS'); if (!st.on) return r; }
+      else if (!st.vs) { st.vs = true; st.lvlChg = false; st.pBase = null; if (flight.s) st.vsSel = clamp(Math.round(vsNow(flight) / 100) * 100, -1500, 1500); }
+      const lim = flight.s && flight.s.A && flight.s.A.jet ? 6000 : 1500;
+      st.vsSel = clamp(st.vsSel + (big ? 500 : 100) * dir, -lim, lim);
+      return '';
+    }
+    if (what === 'AP_LVLCHG') {
+      if (!st.on) { const r = engage(flight, 'AP'); if (!st.on) return r; }
+      st.lvlChg = !st.lvlChg;
+      if (st.lvlChg) { st.vs = false; st.alt = true; st.pBase = null; }
+      return st.lvlChg ? 'LVL CHG：選択高度へ、速度なりの昇降率で' : 'LVL CHG オフ';
+    }
     if (what === 'FD') { st.fd = !st.fd; if (flight.L) st.L = flight.L; if (st.fd && flight.s) st.engagePitch = flight.s.out.pitch; return st.fd ? 'FD オン：フライトディレクター表示' : 'FD オフ'; }
     if (what === 'AP') { if (st.on) { disconnect(true); return 'オートパイロット解除'; } return engage(flight, 'AP'); }
     if (what === 'AP_LVL') {
@@ -92,12 +115,12 @@ export function createAutopilot(FL) {
     if (what === 'AP_VS') {
       st.vs = !st.vs;
       if (st.vs && flight.s) st.vsSel = clamp(Math.round(vsNow(flight) / 100) * 100, -1500, 1500);
-      if (st.vs) st.pBase = null;
+      if (st.vs) { st.pBase = null; st.lvlChg = false; }
       return st.vs ? `VS オン：${st.vsSel > 0 ? '+' : ''}${st.vsSel} fpm（ALT は選択高度で待機）` : 'VS オフ';
     }
     if (what === 'AP_ALT') {
       st.alt = !st.alt;
-      if (st.alt) { st.pBase = null; st.vs = false; }              // (capture the altitude afresh)
+      if (st.alt) { st.pBase = null; st.vs = false; st.lvlChg = false; }              // (capture the altitude afresh)
       else if (flight.s) st.engagePitch = flight.s.out.pitch;      // (pitch hold from here)
       return st.alt ? 'ALT オン：選択高度へ' : 'ALT オフ：いまのピッチを保ちます';
     }
@@ -108,6 +131,19 @@ export function createAutopilot(FL) {
   // servos off they only move the flight director's targets (st.fdBank / st.fdPitch, drawn from av.fd).
   // The bot's law, gains unchanged.
   function pilot(L, dt) {
+    // the autothrottle runs on its own arm, AP or no AP (as the type's does): a PI on the speed error,
+    // writing the thrust lever the hands use, its travel rate-limited; it lets go on the ground, when
+    // disarmed, and (below) whenever the AP's own laws are not the ones flying is irrelevant to it
+    const sA = L && L.s;
+    if (sA && sA.A && sA.A.jet) {
+      st.atOn = !!(st.atArm && !sA.onGround && !sA.crashed);
+      if (st.atOn) {
+        const err = st.atSpd - (sA.out.ias || 0);
+        st.atI = clamp(st.atI + err * dt, -40, 40);
+        const rate = clamp(0.006 * err + 0.0012 * st.atI, -0.22, 0.22);
+        sA.thr = clamp(sA.thr + rate * dt, 0, 1);
+      } else st.atI = 0;
+    }
     if ((!st.on && !st.fd) || L !== st.L) return;
     const s = L.s, av = L.av, c = L.last, o = s.out;
     if (!c || s.onGround || s.crashed) return;
@@ -131,6 +167,13 @@ export function createAutopilot(FL) {
       const nav = AV.navSolve(av, { n: -s.pos[2], e: s.pos[0] }, o, P.MAGVAR_W, P.LAB_RWY);
       if (nav && nav.gsDots != null && Math.abs(nav.gsDots) <= 1) st.gsCap = true;
       if (st.gsCap && nav && nav.gsDots != null) vsLaw = { vsT: clamp(-(o.gs || 0) * 5.31 + nav.gsDots * 120, -1200, 300) };
+    }
+    if (!vsLaw && st.lvlChg) {
+      // LVL CHG: towards the selected altitude at a speed-of-the-moment rate (the type pairs it with the
+      // A/T holding speed; here the rate simply grows with the distance), capturing like VS does
+      const dAlt = av.altSel - c.alt;
+      if (Math.abs(dAlt) <= 100) { st.lvlChg = false; st.alt = true; st.pBase = null; }
+      else vsLaw = { vsT: clamp(dAlt * 1.5, -2500, 2500) };
     }
     if (!vsLaw && st.vs) {
       if (Math.abs(av.altSel - c.alt) <= 100) { st.vs = false; st.alt = true; st.pBase = null; }   // (the armed ALT captures)
@@ -180,16 +223,19 @@ export function createAutopilot(FL) {
   function sync(av) {
     if (!av) return;
     const d = av.ap || (av.ap = { on: false, hdg: false, alt: false, flash: 0 });
-    d.on = st.on; d.hdg = st.hdg; d.alt = st.alt; d.nav = st.nav; d.apr = st.apr; d.vs = st.vs; d.lvl = st.lvl; d.flash = st.flash;
+    d.on = st.on; d.hdg = st.hdg; d.alt = st.alt; d.nav = st.nav; d.apr = st.apr; d.vs = st.vs; d.lvl = st.lvl; d.flash = st.flash; d.lvlChg = st.lvlChg; d.gsCap = st.gsCap;
     display.on = st.on; display.hdg = st.hdg; display.alt = st.alt; display.nav = st.nav; display.apr = st.apr; display.vs = st.vs; display.lvl = st.lvl; display.flash = st.flash;
     const f = av.fd || (av.fd = { on: false, bank: 0, pitch: 0 });
     f.on = st.fd || st.on; f.bank = st.fdBank; f.pitch = st.fdPitch;
+    const at = av.at || (av.at = { arm: false, on: false, spd: 250 });
+    at.arm = st.atArm; at.on = st.atOn; at.spd = st.atSpd;
   }
-  function reset() { st.on = false; st.hdg = false; st.alt = false; st.nav = false; st.apr = false; st.vs = false; st.lvl = false; st.fd = false; st.gsCap = false; st.flash = 0; st.pBase = null; st.ovr = 0; st.L = null; }
+  function reset() { st.on = false; st.hdg = false; st.alt = false; st.nav = false; st.apr = false; st.vs = false; st.lvl = false; st.fd = false; st.gsCap = false; st.lvlChg = false; st.atArm = false; st.atOn = false; st.atI = 0; st.flash = 0; st.pBase = null; st.ovr = 0; st.L = null; }
   return { control, pilot, update, sync, reset,
     takeDiscTone() { const t = st.discTone; st.discTone = false; return t; },
     get on() { return st.on; }, get hdg() { return st.hdg; }, get alt() { return st.alt; }, get nav() { return st.nav; }, get apr() { return st.apr; },
-    get vs() { return st.vs; }, get lvl() { return st.lvl; }, get fdOn() { return st.fd; }, get flash() { return st.flash; }, get display() { return display; } };
+    get vs() { return st.vs; }, get lvl() { return st.lvl; }, get lvlChg() { return st.lvlChg; }, get fdOn() { return st.fd; }, get flash() { return st.flash; }, get display() { return display; },
+    get atArm() { return st.atArm; }, get atOn() { return st.atOn; }, get atSpd() { return st.atSpd; }, get vsSel() { return st.vsSel; } };
 }
 
 // the AFCS annunciation: a strip at the top centre of the PFD, over FLIGHT LAB's drawing (g in the PFD's

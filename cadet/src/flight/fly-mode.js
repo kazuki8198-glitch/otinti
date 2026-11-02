@@ -37,7 +37,7 @@ import { debriefDialogs } from '../content/dialog/debrief.js';
 import { withEnglish, airEnglish } from '../content/dialog/en.js';
 import { EVENT_LINES } from '../content/dialog/day1.js';
 import { createSystems, RUNNING } from '../aircraft/systems.js';
-import { FOCUS_FRAME, FOCUS_LOOK, FOCUS_T, STBY_OFF, nextFocus, zoomStep, smooth01, lerpAngle } from './panel-view.js';
+import { FOCUS_FRAME, FOCUS_IDS_737, FOCUS_LOOK, FOCUS_T, STBY_OFF, nextFocus, zoomStep, smooth01, lerpAngle } from './panel-view.js';
 import { createDayMode } from './day-mode.js';
 import { createTraffic } from './traffic.js';
 import { cbEffect } from './cb.js';
@@ -99,7 +99,7 @@ export function createFlyMode(ctx) {
   const A737 = P.AIRCRAFT.find(a => a.id === 'b737');
   const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, A44, { reg: 'N452SY' }), ...(A737 ? { b737: liveAircraft(FL, A737, { reg: 'JA737S' }) } : {}) };
   let live = lives.pa28, liveId = 'pa28';
-  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44, quality: ctx.quality });
+  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44, boeing: A737, quality: ctx.quality });
   live.root.add(cockpit.root);
   for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
   const todayType = () => (ctx.aircraft ? ctx.aircraft() : 'pa28') || 'pa28';
@@ -109,9 +109,9 @@ export function createFlyMode(ctx) {
     live = lives[id]; liveId = id;
     for (const c of [...was.root.children]) if (c === cockpit.root || c.name === 'cockpit-guide' || (crew && c === crew.root)) live.root.add(c);
     was.root.visible = false; live.root.visible = vis;
-    // (the cockpit's own variants are the Archer's and the Seminole's: the 737 flies with the
-    // Archer's cockpit, per the type-rating design's honest limit — docs/first-officer-design.md)
-    cockpit.setType(id === 'pa44' ? 'pa44' : 'pa28');
+    // (the cockpit's own variants: the Archer's, the Seminole's, and — since the cockpit-correctness
+    // phase — the 737's own fascia, displays, MCP and CDU: cockpit.setType('b737'))
+    cockpit.setType(id === 'pa44' ? 'pa44' : id === 'b737' ? 'b737' : 'pa28');
   }
   const seat = seatFromBody(cockpit.instructorSeat, cockpit.instructorSeat.yaw ?? Math.PI);
   // the engine and the electrics behind the switches
@@ -149,7 +149,7 @@ export function createFlyMode(ctx) {
     }
     return null;
   };
-  const AP_WHATS = new Set(['AP', 'AP_HDG', 'AP_ALT', 'AP_NAV', 'AP_APR', 'AP_VS', 'AP_LVL', 'FD']);
+  const AP_WHATS = new Set(['AP', 'AP_HDG', 'AP_ALT', 'AP_NAV', 'AP_APR', 'AP_VS', 'AP_LVL', 'FD', 'MCP_ALT', 'AT_ARM', 'AT_SPD', 'AP_VS_ADJ', 'AP_LVLCHG', 'AP_DISC']);
   // the first day (what it borrows from here)
   const NOHUD = { setTask() {}, setChecklist() {}, setRadio() {}, hideAll() {} };
   const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
@@ -161,6 +161,7 @@ export function createFlyMode(ctx) {
   // ---- state
   let active = false, phase = 'off';          // 'board' (talking in the seat) | 'ground' | 'lesson' | 'debrief' | 'leaving'
   let lineSes = null;                          // (first-officer phase) a line duty session (flight/line.js is driven by the game through ctx.onLineTick)
+  let lineRoute = null;                        // the duty's route (for the 737's CDU: { id, from, to, alternate, cruiseFL, distKm, blockMin })
   let carbDay = 0;                            // a humid day's carburettor-ice risk (set by beginDay; 0 = it cannot form)
   let faultKind = null;                       // the day's fault kind (mag / carb / pitot / gear / pump / static), applied to the physics each frame
   // (next-wave item 4) the preflight effects the day captured at boarded() (aircraft/failures.js:
@@ -256,13 +257,17 @@ export function createFlyMode(ctx) {
   // focus view aims, and where its eye sits in front of
   const scrCenter = { pfd: null, mfd: null };
   for (const w of ['pfd', 'mfd']) { const g = cockpit.screens[w] && cockpit.screens[w].geometry; if (g) { g.computeBoundingBox(); scrCenter[w] = g.boundingBox.getCenter(new THREE.Vector3()); } }
+  // every focusable unit's centre (the pistons' two plus, in the 737, its DUs and CDU: cockpit.focusMeshes)
+  const focusCenter = {};
+  for (const [id, m] of Object.entries(cockpit.focusMeshes || {})) { if (m && m.geometry) { m.geometry.computeBoundingBox(); focusCenter[id] = m.geometry.boundingBox.getCenter(new THREE.Vector3()); } }
+  const focusMeshOf = id => (cockpit.focusMeshes && cockpit.focusMeshes[id]) || cockpit.screens[id === 'pfd' ? 'pfd' : 'mfd'];
   const fpPose = { eye: new THREE.Vector3(), yaw: 0, pitch: 0 };
   const fpV = new THREE.Vector3(), fpN = new THREE.Vector3(), fpQ = new THREE.Quaternion(), fpQi = new THREE.Quaternion();
   // the pose of a focus view, in the aircraft root's frame: the eye in front of the unit (the standby view aims from
   // the MFD's centre by STBY_OFF), looking straight at it — the head's own small turn is added by the camera
   function focusPose(id) {
-    const mesh = cockpit.screens[id === 'pfd' ? 'pfd' : 'mfd'];
-    fpV.copy(scrCenter[id === 'pfd' ? 'pfd' : 'mfd']);
+    const mesh = focusMeshOf(id);
+    fpV.copy(focusCenter[id] || scrCenter[id === 'pfd' ? 'pfd' : 'mfd']);
     if (id === 'stby') { fpV.x += STBY_OFF[0]; fpV.y += STBY_OFF[1]; }
     mesh.localToWorld(fpV); live.root.worldToLocal(fpV);                       // the unit's centre, in the root's frame
     mesh.getWorldQuaternion(fpQ); live.root.getWorldQuaternion(fpQi).invert();
@@ -277,6 +282,7 @@ export function createFlyMode(ctx) {
   // (a talk begins, a lesson starts, the view leaves the cockpit — the game's own cuts, not the player's look)
   function setFocus(id, instant = false) {
     if (id && view !== 'cockpit') id = null;
+    if (id && id.startsWith('b737') !== (cockpit.type === 'b737')) id = null;   // (a unit of the other cockpit)
     if (id === focusId && (instant || camBlend.t >= 1)) { if (instant) camBlend.t = 1; return; }
     camBlend.eye.copy(camPose.eye); camBlend.yaw = camPose.yaw; camBlend.pitch = camPose.pitch;
     camBlend.t = instant ? 1 : 0;
@@ -284,7 +290,7 @@ export function createFlyMode(ctx) {
     zoomFov = id ? FOCUS_FRAME[id].fov : null;
     if (instant) { camPose.eye.copy(cockpit.eye); camPose.yaw = yaw; camPose.pitch = pitch; }
   }
-  function cycleFocus() { setFocus(nextFocus(focusId)); }
+  function cycleFocus() { setFocus(nextFocus(focusId, cockpit.type === 'b737' ? FOCUS_IDS_737 : undefined)); }
   // the wheel (or + / −) off a control: zoom from where the view is framed (the setting's field of view, or the
   // focus view's own), and back to that framing — the setting's, as no zoom at all — when stepped all the way out
   function stepWheelZoom(notches) {
@@ -408,7 +414,7 @@ export function createFlyMode(ctx) {
       if (crew) { if (crew.setSeated) crew.setSeated(null); ctx.instructorHome(crew.root, crew); }
       rpmVisual = null;
       if (dayMode.active) { if (ctx.onDayOver) ctx.onDayOver(dayMode.day); dayMode.end(); }
-      if (lineSes) { lineSes = null; if (ctx.onLineEnd) ctx.onLineEnd(); }
+      if (lineSes) { lineSes = null; lineRoute = null; if (ctx.onLineEnd) ctx.onLineEnd(); }
       if (audio.crank) audio.crank(false);
       if (audio.engine) audio.engine(null);
       if (audio.traffic) audio.traffic(null);
@@ -568,7 +574,7 @@ export function createFlyMode(ctx) {
       placeNow();
       if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle(cfg.title || '路線運航', 'H でキーの一覧'); if (fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
       phase = 'ground';
-      lineSes = { t: 0, acc: 0 };
+      lineSes = { t: 0, acc: 0 }; lineRoute = cfg.route || null;
       recorder.start({ title: cfg.title || '路線運航', aircraft: 'b737', startISO: new Date().toISOString() });
       input.requestLock();
     }, cfg.instant);
@@ -811,7 +817,7 @@ export function createFlyMode(ctx) {
       if (t) toast(t, 2200);
       if (audio.click) audio.click();
     } else if (d.type === 'av') {
-      const t = AP_WHATS.has(d.what) ? ap.control(flight, d.what) : AV.control(flight.av, d.what, d.dir, d.big);
+      const t = AP_WHATS.has(d.what) ? ap.control(flight, d.what, d.dir, d.big) : AV.control(flight.av, d.what, d.dir, d.big);
       if (cockpit.markDirty) cockpit.markDirty();
       if (t) toast(t, 1200);
       if (audio.knob) audio.knob();
@@ -848,9 +854,9 @@ export function createFlyMode(ctx) {
     return s.crashed || (s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 0.6);
   }
   function lights() {
-    const sw = cockpit.switches, on = sw.master !== false;
-    lightsNow.nav = !!(on && sw.nav); lightsNow.beacon = !!(on && sw.beacon); lightsNow.strobe = !!(on && sw.strobe);
-    lightsNow.landing = !!(on && sw.landing); lightsNow.taxi = !!(on && sw.taxi);
+    const sw = cockpit.switches, on = sw.master !== false && !sw.cbMASTER;
+    lightsNow.nav = !!(on && sw.nav && !sw.cbNAVLT); lightsNow.beacon = !!(on && sw.beacon && !sw.cbBEACON); lightsNow.strobe = !!(on && sw.strobe && !sw.cbSTROBE);
+    lightsNow.landing = !!(on && sw.landing && !sw.cbLDGLT); lightsNow.taxi = !!(on && sw.taxi && !sw.cbTAXILT);
     return lightsNow;
   }
   const lightsOut = { nav: false, beacon: false, strobe: false, landing: false, taxi: false };
@@ -1067,7 +1073,7 @@ export function createFlyMode(ctx) {
         if (wheel && !resumed) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       } else if (wheel && !resumed) stepWheelZoom(wheel);     // off a control, the wheel zooms the view instead
     } else if (hover) { hover = null; hud.prompt(null); }
-    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;
+    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow; cockOpt.route = lineRoute;
     cockOpt.elecDead = !systems.elec.pfdOn;                  // (a dead essential bus: the PFD goes dark, as it would)
     cockOpt.elecPfd = systems.elec.pfdOn; cockOpt.elecMfd = systems.elec.mfdOn; cockOpt.elecStandby = systems.elec.standbyOn;   // (the bus stages, per screen; the standby on its own battery)
     cockpit.update(dt, cockOpt);
@@ -1380,7 +1386,11 @@ export function createFlyMode(ctx) {
   function draw2D(dt = 1 / 60) {
     if (!fh || !fh.panel2D || !flight.L || !active) return;
     if ((p2dT -= dt) > 0) return; p2dT = 1 / 30;
-    if (view === 'cockpit' && fh.blitPanel2D && cockpit.glass.pfd && cockpit.glass.mfd && fh.blitPanel2D(cockpit.glass.pfd, cockpit.glass.mfd)) return;
+    if (view === 'cockpit' && fh.blitPanel2D && cockpit.glass.pfd && cockpit.glass.mfd) {
+      // in the jet the 2D panel shows the jet's own units (the G1000's canvases are not drawn there)
+      if (cockpit.type === 'b737' && cockpit.boeing) { if (fh.blitPanel2D(cockpit.boeing.units.pfd.canvas, cockpit.boeing.units.nd.canvas)) return; }
+      else if (fh.blitPanel2D(cockpit.glass.pfd, cockpit.glass.mfd)) return;
+    }
     const s = flight.s, d = { o: { ...s.out, onGround: s.onGround }, av: flight.av, nav: AV.navSolve(flight.av, P.ne(s), s.out, P.MAGVAR_W, P.LAB_RWY), varW: P.MAGVAR_W, qnh: s.qnh, eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) };
     fh.drawPanel2D(AV, d, (g, W) => drawApStrip(g, W, flight.av));
   }

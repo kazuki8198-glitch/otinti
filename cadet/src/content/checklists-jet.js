@@ -14,8 +14,8 @@ const near = (x, v, d) => Math.abs(x - v) <= d;
 export const CHECKLISTS = {
   before_start: { title: 'エンジン始動前（BEFORE START）', items: [
     ['外部点検', '完了', c => c.walk, null, '機体の周りは見終わりましたね。ジェットは高いところも多いので、見上げる点検でした。', null],
-    ['座席・シートベルト・ドア', '調整・着用・ロック', null, 'door', '座席を合わせて、ベルトを締めます。ドアは閉めて、ロックを確認。', null],
-    ['サーキット ブレーカー', 'すべて押し込まれている', null, 'cb', '飛び出しているものがないか、後ろと右の列を見ます。', null],
+    ['座席・シートベルト・ドア', '調整・着用・ロック', null, null, '座席を合わせて、ベルトを締めます。ドアは閉めて、ロックを確認。', null],
+    ['サーキット ブレーカー', 'すべて押し込まれている', null, null, '飛び出しているものがないか、後ろと右の列を見ます（このコックピットではブレーカーパネルは再現範囲外）。', null],
     ['アビオニクス スイッチ', 'OFF', c => !c.sw.avionics, 'sw.avionics', '始動のときの電圧の変動から、画面を守ります。', c => { c.sw.avionics = false; }],
     ['パーキングブレーキ', 'セット', c => c.park, 'parkBrake', '', c => c.act('parkBrake', true)],
     ['バッテリー／マスター', 'ON', c => c.sw.master, 'sw.master', 'まず電源です。APU を回す電気が要ります。', c => { c.sw.master = true; }],
@@ -38,7 +38,7 @@ export const CHECKLISTS = {
     ['電源', 'エンジンの発電機に切り替わり、安定', null, null, 'APU からエンジンの発電機へ。画面が消えたりしないこと。APU はここで止められます。', null],
     ['航法灯', 'ON', c => c.sw.nav, 'sw.nav', '', c => { c.sw.nav = true; }],
     ['フラップ', 'UP', c => c.s.flapIdx === 0, 'flaps', 'タキシーの間は UP。離陸の 5 は、ランナップの最後に合わせます。', c => c.setFlaps(0)],
-    ['高度計', 'ATIS の値', c => !!c.av && near(c.av.baro, c.qnh ?? 29.92, 0.005), 'pfd.crs.outer', '', c => { if (c.av) c.av.baro = c.qnh ?? 29.92; }],
+    ['高度計', 'ATIS の値', c => !!c.av && near(c.av.baro, c.qnh ?? 29.92, 0.005), 'efis.baro', '', c => { if (c.av) c.av.baro = c.qnh ?? 29.92; }],
     ['タキシー灯', 'ON', c => c.sw.taxi, 'sw.taxi', '', c => { c.sw.taxi = true; }],
     ['燃料ポンプ', 'ON（離陸までそのまま）', c => c.sw.fuelPump, 'sw.fuelPump', 'ジェットは離陸もポンプ ON のままです。Archer のように切ったりしません。', c => { c.sw.fuelPump = true; }],
   ] },

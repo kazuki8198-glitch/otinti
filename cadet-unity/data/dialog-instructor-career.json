@@ -1,0 +1,71 @@
+{
+ "CAREER_FLAGS": [
+  "met_instructor",
+  "soloed",
+  "briefed_today",
+  "prologue_short"
+ ],
+ "CAREER_HOOKS": [
+  "imsafe",
+  "done",
+  "board",
+  "logbook",
+  "solo",
+  "look",
+  "nod",
+  "point",
+  "tem",
+  "miss"
+ ],
+ "CAREER_SAMPLE": {
+  "today": {
+   "lessonTitle": "「直線水平飛行」",
+   "studyTitle": "「場周経路」",
+   "studySection": "ops.pattern",
+   "intro": "",
+   "checkTitle": "ソロ前の審査",
+   "checkWho": "真壁さん",
+   "checkId": "c1",
+   "en": {
+    "checkTitle": "pre-solo check",
+    "checkWho": "Mr. Makabe"
+   }
+  },
+  "imsafe": {
+   "honest": true
+  },
+  "career": {
+   "tired": false,
+   "slot": "morning",
+   "chapter": "ch2"
+  },
+  "miss": {
+   "on": true,
+   "label": "「直線水平飛行」の高度",
+   "o0": "「直線水平飛行」の高度",
+   "o1": "無線の復唱",
+   "o2": "停止線の手前で止まること",
+   "right": true
+  },
+  "tem": {
+   "on": true,
+   "o0": "午後の雷雨",
+   "o1": "場周の混雑（ほかの訓練機）",
+   "o2": "朝の霧",
+   "right": true,
+   "threat": "場周の混雑（ほかの訓練機）",
+   "why": "今日は天気が良く、ほかの訓練機もたくさん飛んでいます",
+   "plan": "見張りを続ける",
+   "not": "",
+   "en": {
+    "threat": "a busy pattern (other trainers)",
+    "why": "The weather is good today and many other trainers are flying",
+    "plan": "keep looking out",
+    "not": ""
+   }
+  }
+ },
+ "careerInstructorDialogs": {
+  "__fn": "careerInstructorDialogs"
+ }
+}

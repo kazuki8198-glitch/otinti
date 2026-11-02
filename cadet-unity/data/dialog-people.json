@@ -1,0 +1,94 @@
+{
+ "GAME_READS": [
+  "met_chief",
+  "met_dispatcher",
+  "asahi_imsafe",
+  "has_tablet",
+  "c1_briefed"
+ ],
+ "PEOPLE_FLAGS": [
+  "met_chief",
+  "met_dispatcher",
+  "met_mechanic",
+  "met_controller",
+  "met_kiryu",
+  "met_asahi",
+  "met_mori",
+  "helped_mori",
+  "kiryu_tip",
+  "asahi_imsafe",
+  "has_tablet",
+  "tour_done",
+  "welcome_done",
+  "c1_briefed",
+  "prologue_short"
+ ],
+ "PEOPLE_HOOKS": [
+  "done",
+  "decide",
+  "tablet",
+  "help",
+  "checkride",
+  "look",
+  "nod",
+  "point",
+  "tem"
+ ],
+ "SAMPLE_CTX": {
+  "career": {
+   "chapter": "ch2",
+   "slot": "am",
+   "day": 12,
+   "dayMod3": 0,
+   "tired": false,
+   "solo": false,
+   "flying": true,
+   "graduated": false,
+   "cls": 6
+  },
+  "today": {
+   "flight": "a3",
+   "flightTitle": "「上昇・降下・レベルオフ」の飛行",
+   "checkride": false,
+   "checkId": "",
+   "checkTitle": "",
+   "graduation": false,
+   "solo": false,
+   "xc": false,
+   "exam": false,
+   "needsDecision": true,
+   "decided": false,
+   "decisionRight": true,
+   "reg": "N738SY",
+   "type": "Archer",
+   "stand": 19
+  },
+  "weather": {
+   "ja": "晴れ",
+   "metarAm": "KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992",
+   "metarPm": "KLAB 121853Z 36005KT 10SM SCT045 22/12 A2992",
+   "taf": "TAF KLAB … 01005KT P6SM FEW035",
+   "why": "視程・雲・風とも基準内です。"
+  },
+  "tem": {
+   "on": true,
+   "o0": "午後の雷雨",
+   "o1": "審査の緊張",
+   "o2": "朝の霧",
+   "right": true,
+   "threat": "審査の緊張",
+   "why": "今日は審査です。緊張すると、いつもの手順が抜けます",
+   "plan": "毎日の手順のとおりに",
+   "not": "",
+   "en": {
+    "threat": "check-ride nerves",
+    "why": "Today is a check; nerves make you skip the usual steps",
+    "plan": "do it the everyday way",
+    "not": ""
+   }
+  }
+ },
+ "peopleDialogs": {
+  "__fn": "peopleDialogs"
+ }
+}

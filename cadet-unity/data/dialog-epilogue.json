@@ -1,0 +1,19 @@
+{
+ "CAPTAIN": {
+  "id": "captain",
+  "name_ja": "柏木 機長",
+  "color": "#ffd27a"
+ },
+ "EPILOGUE_FLAGS": [
+  "epilogue_met"
+ ],
+ "EPILOGUE_HOOKS": [
+  "look",
+  "nod",
+  "point",
+  "done"
+ ],
+ "epilogueDialogs": {
+  "__fn": "epilogueDialogs"
+ }
+}

@@ -1,0 +1,48 @@
+{
+ "CALL": {
+  "full": "Archer Seven Three Eight Sierra Yankee",
+  "short": "Archer 8SY",
+  "spokenShort": "Archer Eight Sierra Yankee",
+  "reg": "N738SY"
+ },
+ "CALLS": {
+  "pa28": {
+   "full": "Archer Seven Three Eight Sierra Yankee",
+   "short": "Archer 8SY",
+   "spokenShort": "Archer Eight Sierra Yankee",
+   "reg": "N738SY"
+  },
+  "pa44": {
+   "full": "Seminole Four Five Two Sierra Yankee",
+   "short": "Seminole 2SY",
+   "spokenShort": "Seminole Two Sierra Yankee",
+   "reg": "N452SY"
+  }
+ },
+ "CTAF": {
+  "freq": "122.9",
+  "field": "LABEF",
+  "rwy": "09"
+ },
+ "CTAF_AREA": "LABEF",
+ "FREQ": {
+  "atis": "127.65",
+  "ground": "121.7",
+  "tower": "118.3"
+ },
+ "ctafRadio": {
+  "__fn": "ctafRadio"
+ },
+ "dayRadio": {
+  "__fn": "dayRadio"
+ },
+ "ourCall": {
+  "__fn": "ourCall"
+ },
+ "setCall": {
+  "__fn": "setCall"
+ },
+ "spoken": {
+  "__fn": "spoken"
+ }
+}

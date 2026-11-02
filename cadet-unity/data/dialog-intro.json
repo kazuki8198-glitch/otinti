@@ -1,0 +1,136 @@
+{
+ "INTRO_AIR": {
+  "L_hi": "少し上がっています。機首をほんの少し下げます。",
+  "L_lo": "少し下がっています。ほんの少し引きます。",
+  "L_wing": "翼を地平線と平行に。傾いた反対へ、少しだけ。",
+  "L_hands": "手を離しても、トリムが合っていれば、飛行機はしばらくまっすぐ飛びます。",
+  "L_good": "いいですね。そのまま。",
+  "K_how": "右の窓の外を見てください。ほかの機がいないか、確かめます。",
+  "K_first": "先に右を見ましょう。曲がる側を確かめてから傾けます。",
+  "K_ok": "右、ほかの機はいませんね。では、ゆっくり右へ。",
+  "K_time": "右は私も見ました。ほかの機はいません。では、ゆっくり右へ。",
+  "T_how": "操縦輪を右へ少し回して、傾いたら戻します。PFD の上の目盛りで 15〜20° くらい。",
+  "T_shallow": "傾きが戻ってきました。また少しだけ右へ。",
+  "T_steep": "傾きすぎです。少し戻して、15〜20° くらいに。",
+  "T_low": "高さが下がってきました。ほんの少し引きます。",
+  "T_high": "少し引きすぎです。機首をほんの少し戻します。",
+  "T_near": "180 が近づいてきました。傾きの半分くらい手前で、翼を水平に戻し始めます。",
+  "T_roll": "はい、ここで翼を水平に。",
+  "W_how": "LAB を機首の正面に。傾けて回し、正面に来る少し手前で戻します。",
+  "G_bank": "傾きが 30° を超えました。少し戻しましょう。",
+  "G_fast": "速度計が黄色の帯に入りました。機首をほんの少し上げます。",
+  "G_alt": "高さが 150 ft 以上ずれました。機首で、ゆっくり戻しましょう。",
+  "X_take": "I have control。少し大きく動いたので、私が水平に戻します。手を離してください。",
+  "X_crash": "……I have control。今日はここまでにします。",
+  "D_level": "私が操縦しています。機首と地平線の位置は、ほとんど動きません。",
+  "D_look": "右、ほかの機はいません。右へ 15° 傾けます。高度計も見ていてください。",
+  "D_roll": "180 の手前、傾きの半分くらいで、翼を水平に戻します。",
+  "D_toward": "LAB へ向けます。正面に来る少し手前で、翼を戻します。",
+  "R_keys": "スロットルとフラップは、今日は私が。操縦輪だけで大丈夫です。"
+ },
+ "INTRO_AIR_EN": {
+  "L_hi": "It's climbing a little. Lower the nose just a touch.",
+  "L_lo": "It's sinking a little. Pull back just a touch.",
+  "L_wing": "Wings parallel to the horizon. A little, against the way it leans.",
+  "L_hands": "Even with your hands off, with the trim right, the aeroplane flies straight for a while.",
+  "L_good": "Nice. Hold it there.",
+  "K_how": "Look out of the right window. We check there's no other aircraft.",
+  "K_first": "Look right first. Check the side you turn to, then bank.",
+  "K_ok": "No other aircraft on the right. Now, gently, to the right.",
+  "K_time": "I've checked right too. No other aircraft. Now, gently, to the right.",
+  "T_how": "Turn the yoke a little to the right, and centre it once you're banked. About 15 to 20° on the scale at the top of the PFD.",
+  "T_shallow": "The bank is coming off. A little more to the right again.",
+  "T_steep": "Too much bank. Ease it back to about 15 to 20°.",
+  "T_low": "The height is dropping. Pull back just a touch.",
+  "T_high": "Pulling a bit too much. Ease the nose back just a touch.",
+  "T_near": "180 is coming up. Start levelling the wings about half the bank before it.",
+  "T_roll": "Now, wings level here.",
+  "W_how": "Put LAB right in front of the nose. Bank to come round, and level out a little before it's ahead.",
+  "G_bank": "The bank is past 30°. Let's ease it back a little.",
+  "G_fast": "The airspeed is into the yellow arc. Raise the nose just a touch.",
+  "G_alt": "The height is off by 150 ft or more. Bring it back slowly with the nose.",
+  "X_take": "I have control. It moved a bit much, so I'll level it. Take your hands off.",
+  "X_crash": "...I have control. That's all for today.",
+  "D_level": "I'm flying. The nose barely moves against the horizon.",
+  "D_look": "Right side: no other aircraft. Banking 15° right. Watch the altimeter too.",
+  "D_roll": "Short of 180, about half the bank early, I level the wings.",
+  "D_toward": "Turning toward LAB. I level the wings a little before it's ahead.",
+  "R_keys": "Today I'll handle the throttle and the flaps. The yoke alone is fine."
+ },
+ "INTRO_CARDS": {
+  "start": {
+   "kicker": "午後",
+   "title": "体験飛行",
+   "sub": "訓練空域の上空 3,000 ft　離陸と移動は早瀬 教官"
+  },
+  "end": {
+   "kicker": "体験飛行",
+   "title": "LAB に着陸",
+   "sub": "着陸と駐機は早瀬 教官"
+  }
+ },
+ "INTRO_HOOKS": [
+  "look",
+  "nod",
+  "point",
+  "intro"
+ ],
+ "INTRO_HUD": {
+  "level": {
+   "title": "まっすぐ・同じ高さ（20 秒）",
+   "text": "高度 3,000 ft ±100　翼は水平"
+  },
+  "look": {
+   "title": "右を見る",
+   "text": "曲がる側に、ほかの機がいないか"
+  },
+  "turn": {
+   "title": "右へ旋回、針路 180 で水平に",
+   "text": "傾き 15〜20°　高度 3,000 ft ±150　180 の手前で戻す"
+  },
+  "toward": {
+   "title": "LAB を機首の正面に",
+   "text": "針路 約 LAB の方向（方位の印）"
+  },
+  "watch": {
+   "title": "早瀬 教官が操縦中",
+   "text": "外と計器を見ていてください"
+  }
+ },
+ "INTRO_KEYS_HUD": [
+  [
+   "W / S",
+   "機首を下げる / 上げる"
+  ],
+  [
+   "A / D",
+   "傾ける"
+  ],
+  [
+   "マウス",
+   "見回す"
+  ]
+ ],
+ "INTRO_RIGHT": {
+  "fly:ex:ck": {},
+  "a:yhc:ask": {},
+  "b:pr": {},
+  "d:ihc:ck": {},
+  "tk:ck": {}
+ },
+ "INTRO_SAMPLE": {
+  "intro": {
+   "level": "good",
+   "watch": false,
+   "turn": "good",
+   "labSide": "r",
+   "toward": "good"
+  }
+ },
+ "introAirDialogs": {
+  "__fn": "introAirDialogs"
+ },
+ "introPanel": {
+  "__fn": "introPanel"
+ }
+}

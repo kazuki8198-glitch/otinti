@@ -1,0 +1,34 @@
+{
+ "COCKPIT_FLAGS": [
+  "briefed_today"
+ ],
+ "COCKPIT_HOOKS": [
+  "look",
+  "nod",
+  "point",
+  "fly",
+  "go"
+ ],
+ "FLY_CHOICES": [
+  "day:intro",
+  "day:basic",
+  "day:precision",
+  "intro",
+  "basic",
+  "precision",
+  "free",
+  "leave"
+ ],
+ "careerBoardDialogs": {
+  "__fn": "careerBoardDialogs"
+ },
+ "cockpitDialogs": {
+  "__fn": "cockpitDialogs"
+ },
+ "debriefLine": {
+  "__fn": "debriefLine"
+ },
+ "flightLine": {
+  "__fn": "flightLine"
+ }
+}

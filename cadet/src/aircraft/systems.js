@@ -163,9 +163,17 @@ export function createSystems(sw) {
   // what the primer does (one stroke); a stroke without fuel does nothing
   function prime() { if (sw.fuelSel !== 'OFF') st.primes = Math.min(st.primes + 1, 9); return st.primes; }
   const tankFuel = (s) => (sw.fuelSel === 'L' ? s.fuel[0] : sw.fuelSel === 'R' ? s.fuel[1] : 0);
-  // how long the starter has to turn before it catches (Infinity: it will not)
-  function catchTime(s) {
-    if (sw.fuelSel === 'OFF' || tankFuel(s) < 0.2) { st.reason = 'fuel'; return Infinity; }
+  // how long the starter has to turn before it catches (Infinity: it will not). For one engine of the twin
+  // (k given) the fuel question is that engine's own feed, by the physics' rule (its valve at its tank, or
+  // — its valve OFF and the crossfeed open — the other side's): the shared selector the Archer answers to
+  // is not the Seminole's control, and reading its tank instead would refuse a start the aircraft would
+  // make — either engine with the other tank dry, and the crossfeed start the drills teach.
+  function catchTime(s, k = null) {
+    if (k != null && s.eng && s.eng.length > 1) {
+      const on = s.eng.map(x => (x.sel || 'ON') !== 'OFF');
+      const feed = on[k] ? k : (s.xfeed && on[1 - k] ? 1 - k : -1);
+      if (feed < 0 || (s.fuel[feed] || 0) < 0.2) { st.reason = 'fuel'; return Infinity; }
+    } else if (sw.fuelSel === 'OFF' || tankFuel(s) < 0.2) { st.reason = 'fuel'; return Infinity; }
     if (sw.mixture < 0.7) { st.reason = 'mixture'; return Infinity; }
     if (st.primes >= 6) { if (s.thr >= 0.45) { st.reason = ''; return 3.2; } st.reason = 'flooded'; return Infinity; }
     if (st.warm) { st.reason = ''; return 0.9; }
@@ -233,13 +241,22 @@ export function createSystems(sw) {
       else if (sw.mag === 'OFF') why = 'マグネトー OFF';
       else if (st.lineT <= 0) why = '燃料セレクター OFF';
       if (why) { st.eng = 'stopping'; cut(s, true); emit('stop', why); }
-      else if (e && (e.failed || e.feedOk === false)) {
-        // stopped by the physics itself (a lesson's engine failure, or starved: the selected tank dry —
-        // the physics' feed says so once the fuel in the lines is gone, whatever the totaliser still
-        // shows in the other tank): the physics' own state is left alone (a restart there brings it
-        // back), the gauge shows its rpm
-        if (!st.dead) { st.dead = true; emit('stop', e.failed ? '故障' : '燃料切れ'); }
+      else if (e && e.failed) {
+        // stopped by the physics itself (a lesson's engine failure): the physics' own state is
+        // left alone (a restart there brings it back), the gauge shows its rpm
+        if (!st.dead) { st.dead = true; emit('stop', '故障'); }
         st.rpm = e.rpm || 0; st.oil = Math.max(0, st.oil - 30 * dt);
+      }
+      else if (e && e.feedOk === false) {
+        // starved — the selected tank is dry (the physics' feed says so once the fuel in the
+        // lines is gone, whatever the totaliser still shows in the other tank). This is a STOP,
+        // exactly as the twin's per-engine branch below treats it: the state goes to 'stopping'
+        // and the physics is cut, so reselecting a tank with fuel and cranking restarts it.
+        // (This branch used to share the lesson-failure path above — dead flag only, state left
+        // in 'run' — which left the Hobbs counting on a stopped engine and the starter
+        // unreachable, the key springing back in 'run': a starved single could never be
+        // restarted at all.)
+        st.eng = 'stopping'; st.dead = true; cut(s, true); emit('stop', '燃料切れ');
       } else {
         st.dead = false;
         if (sw.mag === 'START') sw.mag = 'BOTH';             // (the starter does not engage while running: the key is let go)
@@ -275,7 +292,7 @@ export function createSystems(sw) {
       else if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
       else if (elec.batt <= 0.02) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'バッテリーが上がっています。外部電源か整備を呼んでください。'); } }
       else if (twin[k].crankLock) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'スターターが熱を持っています。1分ほど冷ましてから、もう一度。'); } }
-      else if (twin[k].eng !== 'crank') { twin[k].eng = 'crank'; twin[k].crankT = 0; twin[k].catchAt = catchTime(s); emit('crank', k ? '右エンジン' : '左エンジン'); }
+      else if (twin[k].eng !== 'crank') { twin[k].eng = 'crank'; twin[k].crankT = 0; twin[k].catchAt = catchTime(s, k); emit('crank', k ? '右エンジン' : '左エンジン'); }
     } else st.starterTried = false;
     twin.forEach((t, k) => {
       const e = s.eng[k];
@@ -354,7 +371,12 @@ export function createSystems(sw) {
     if (elec.altFail && running.some(Boolean)) A.push({ id: 'ALTERNATOR', level: 'caution', text: 'ALTERNATOR FAIL' });
     if (elec.volts > 0 && elec.volts < 12 && elec.batOn && (running.some(Boolean) || (s && !s.onGround))) A.push({ id: 'LOW VOLTS', level: 'caution', text: 'LOW VOLTS' });
     if (s && s.eng && s.eng.some(e => e.run && (e.fuelPress || 0) < 0.5)) A.push({ id: 'FUEL PRESS', level: 'caution', text: 'FUEL PRESS LOW' });   // (the physics' teaching scale: under half is a starving engine — the same line the avionics' own CAS derivation uses)
-    if (s && !s.onGround && s.out && s.out.agl != null && s.out.agl < 2000 && s.A && s.A.gear && !s.A.gear.fixed && (s.gearPos || 0) < 0.999) A.push({ id: 'GEAR', level: 'warn', text: 'GEAR UNSAFE' });
+    // the gear warning, on the real annunciator's terms: not merely "gear not down near the ground" (that
+    // would cry wolf through every normal climb-out and low cruise with the gear up, teaching the student
+    // to ignore it) but gear not down AND the aircraft being configured / powered to land — a running
+    // engine's manifold pressure under about 14 inHg, or the flaps beyond the approach stage
+    if (s && !s.onGround && s.out && s.out.agl != null && s.out.agl < 2000 && s.A && s.A.gear && !s.A.gear.fixed && (s.gearPos || 0) < 0.999
+      && ((s.flapIdx || 0) >= 2 || s.eng.some(e => e.run && (e.manIn || 0) < 14))) A.push({ id: 'GEAR', level: 'warn', text: 'GEAR UNSAFE' });
     A.sort((a, b) => (a.level === b.level ? 0 : a.level === 'warn' ? -1 : 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     alertsArr = A; if (s && s.out) s.out.alerts = A;
   }

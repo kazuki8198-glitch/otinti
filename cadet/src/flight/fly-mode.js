@@ -504,16 +504,20 @@ export function createFlyMode(ctx) {
     if (active) return false;
     active = true; phase = 'board';
     fade(() => {
-      useAircraft(lives[cfg.aircraft] ? cfg.aircraft : 'pa28');
+      // the visual is one of the flown models; the physics may be a type that shares one (the
+      // Arrow: the Archer's model and cockpit, its own physics — as on its career days)
+      const visualId = lives[cfg.aircraft] ? cfg.aircraft : 'pa28';
+      const physId = P.AIRCRAFT.some(a => a.id === cfg.aircraft) ? cfg.aircraft : visualId;
+      useAircraft(visualId);
       const wind = cfg.wind || { rel: 10, kt: 5, gust: 0.5 };
       const ramp = cfg.start === 'ramp';
       if (ramp) {
         const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c);
-        flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind });
+        flight.startOnGround(n, e, ctx.stand.hdgTrue, physId, { autoRud: settings.get('autoRud'), wind });
         systems.setCold(flight.s); rpmVisual = 0;
         if (cfg.loading && P.applyLoading) P.applyLoading(flight.s, cfg.loading);
       } else {
-        flight.startFree(cfg.start || 'rwy', liveId, { autoRud: settings.get('autoRud'), wind, loading: cfg.loading || undefined });
+        flight.startFree(cfg.start || 'rwy', physId, { autoRud: settings.get('autoRud'), wind, loading: cfg.loading || undefined });
         systems.setRunning(flight.s);
       }
       parked().visible = false; ctx.todayColliders(false);
@@ -530,7 +534,7 @@ export function createFlyMode(ctx) {
         if (entry && (entry.atMin != null || entry.atAltFt != null) && !(entry.atMin === 0 && entry.atAltFt == null)) failSched = [entry];
         else applyFail(cfg.fail);
       } else if (cfg.seed != null) {
-        const rf = randomFailureFor({ seed: cfg.seed, day: 1, kind: 'free', mode: 'free', aircraft: lives[cfg.aircraft] ? cfg.aircraft : 'pa28' });
+        const rf = randomFailureFor({ seed: cfg.seed, day: 1, kind: 'free', mode: 'free', aircraft: physId });
         const entry = scheduleOf(rf);
         if (entry) failSched = [entry];
       }
@@ -539,7 +543,7 @@ export function createFlyMode(ctx) {
       placeNow();
       if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('自由飛行', '設定した条件で飛ぶ・H でキーの一覧'); if (fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
       phase = 'ground';
-      recorder.start({ title: '自由飛行', aircraft: liveId, startISO: new Date().toISOString() });
+      recorder.start({ title: '自由飛行', aircraft: physId, startISO: new Date().toISOString() });
       input.requestLock();
     }, cfg.instant);
     return true;

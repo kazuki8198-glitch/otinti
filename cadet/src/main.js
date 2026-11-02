@@ -46,6 +46,7 @@ import { createRunner, createDialogState } from './dialog/engine.js';
 import { createSave } from './core/save.js';
 import { gameBook } from './content/book.js';
 import { tagOfSection, tagOfBank, examTagOf, tagChip } from './content/ana-triage.js';
+import { simDeviceCfg } from './content/free-mode.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx } from './content/dialog/instructor.js';
 import { createActor } from './npc/actor.js';
 import { createDialogUI } from './ui/dialog-ui.js';
@@ -2087,14 +2088,20 @@ async function boot() {
       { text: '戻る', act: () => simUse() },
     ]);
   }
-  // a free flight in the device: the menu's free session itself (fly-mode's startFreeSession, its light
-  // wind and standard load), flagged so that leaving it sets the cadet back at the desk (onLeave's branch)
+  // a free flight in the device: the menu's free session itself (fly-mode's startFreeSession, in the
+  // device's own conditions — content/free-mode.js's simDeviceCfg), flagged so that leaving it sets
+  // the cadet back at the desk (onLeave's branch). Two entries start it: the device seat's preset
+  // page (simFlight, in the room) and the free mode's simulator button (onSimSetup, in the menu)
+  function startDeviceFree(sel) {
+    if (!fly || fly.status().active || mode === 'fly') { toast('飛行中は使えません。先に飛行を終えてください', 3000); return; }
+    simSession = true;
+    simScreen('飛行練習', 'フライト中');
+    fly.startFreeSession(simDeviceCfg(sel));
+  }
   function simFlight(cfg0) {
     if (!fly || fly.status().active || mode === 'fly') { toast('飛行中は使えません。先に飛行を終えてください', 3000); return; }
     simClose();
-    simSession = true;
-    simScreen('飛行練習', 'フライト中');
-    fly.startFreeSession({ start: cfg0.start, aircraft: cfg0.aircraft, wind: { rel: 10, kt: 5, gust: 0.5 }, loading: { fuel: 'std', front: 2, rear: 0, bagKg: 0 }, fail: null });
+    startDeviceFree(cfg0);
   }
   function pcUse(t) {
     const st = career.state, w = career.weather(prog()), lt = logbook.totals();
@@ -2378,6 +2385,15 @@ async function boot() {
       if (fly && fly.status().day) { toast('訓練の日の途中では使えません。今日の訓練を終えてから', 3000); return; }
       hours = cfg.hour; applyTime();
       if (fly) fly.startFreeSession(cfg);
+    },
+    // the free mode's simulator button: the device seat's free-practice flight, started from the
+    // mode screen (the seat in the room starts the same session through simFlight). The device
+    // keeps its own conditions and its own sky, so no clock moves; leaving returns to the desk
+    onSimSetup: (sel) => {
+      input.enabled = true;
+      if (mode === 'fly' || (fly && fly.status().active)) { toast('飛行中は使えません。先に飛行を終えてください', 3000); return; }
+      if (fly && fly.status().day) { toast('訓練の日の途中では使えません。今日の訓練を終えてから', 3000); return; }
+      startDeviceFree(sel);
     },
   });
   // (M8) text to take away: the bench's results for README, the player's notes

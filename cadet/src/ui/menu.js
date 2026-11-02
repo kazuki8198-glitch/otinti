@@ -1,6 +1,8 @@
 // CADET — ui/menu.js : the pause menu (Esc): resume, the visit / walk switch, settings, the keys, about.
 // A dimmed overlay with a glass panel in the page's own style; works with the keyboard (Tab, Enter, Esc) and on a
 // phone-width screen. Settings apply live through the settings store.
+import { FREE_AIRCRAFT, FREE_STARTS, FREE_HOURS, FREE_WIND_OPTS, FREE_LOAD_OPTS, FREE_FAIL_OPTS, buildFreeCfg } from '../content/free-mode.js';
+
 const CSS = `
 #menu { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(4, 8, 14, 0.55); backdrop-filter: blur(3px); }
 #menu[hidden] { display: none; }
@@ -52,12 +54,12 @@ const HELD_ROWS = [['up', 'ピッチ下げ（機首下げ）', 'KeyW'], ['down',
 const ACT_ROWS = [['flaps', 'フラップ 下げる', 'KeyV'], ['flapsUp', 'フラップ 上げる', 'Shift+KeyV'], ['gear', '脚（ギア）', 'KeyG'], ['level', '水平に戻す', 'KeyL'], ['autoRud', '自動ラダー 切替', 'KeyU'], ['trim', 'トリム（速度に合わせる）', 'KeyT'], ['feather0', '左エンジン フェザー', 'BracketLeft'], ['feather1', '右エンジン フェザー', 'BracketRight']];
 const codeName = (c) => AXKEY[c] || String(c || '').replace(/^Key/, '').replace(/^Digit/, '');
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null, onFreeSetup = null }) {
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null, onFreeSetup = null, onSimSetup = null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
   let tab = 'main', open = false;
-  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ...(onFreeSetup ? [['free', '自由飛行']] : []), ['about', 'このゲームについて']];
+  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ...((onFreeSetup || onSimSetup) ? [['free', 'フリーモード']] : []), ['about', 'このゲームについて']];
   // the free-flight setup's working values (kept while the menu is open; the start hands them over whole)
   const freeCfg = { start: 'ramp', aircraft: 'pa28', hour: 10, wind: 'light', windRel: 40, windKt: 12, loading: 'std', fail: 'none', failWhen: 'now', failMin: 10, failAlt: 2000 };
   let keyMsg = '', keyBad = false;
@@ -131,6 +133,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <button class="primary" data-act="resume">再開する</button>
         <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? modeLabel() || '機体を降りる（機体は駐機場に戻ります）' : getMode() === 'epilogue' ? '終章を終える（アカデミーに戻ります）' : '歩くモードに戻る'}</button>
         ${onLogbook ? '<button data-act="logbook">航空日誌を見る</button>' : ''}
+        ${(onFreeSetup || onSimSetup) ? '<button data-tab="free">フリーモード（自由飛行・シミュレーター）</button>' : ''}
         <button data-tab="settings">設定</button><button data-tab="keys">操作</button><button data-tab="about">このゲームについて</button></div>`;
     }
     if (tab === 'settings') {
@@ -222,20 +225,20 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <p class="m-note">「変える」を押してから、割り当てたいキーを押します。矢印キーと Space は予備として常に効きます。重なったときは注意が出ます（そのまま使えます）。</p>
         <div class="m-big"><button data-act="keys-reset">キーの割り当てを標準に戻す</button></div>`;
     }
-    if (tab === 'free' && onFreeSetup) {
+    if (tab === 'free' && (onFreeSetup || onSimSetup)) {
       const sel = (k, label, opts) => `<label class="m-row"><span>${label}</span><select data-free="${k}" aria-label="${label}">${opts.map(([val, text]) => `<option value="${val}" ${String(freeCfg[k]) === String(val) ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
-      return sel('start', '開始位置', [['ramp', 'ランプ（駐機・エンジンは自分で始動）'], ['rwy', '滑走路上（エンジン運転中）'], ['pattern', 'ダウンウインド 1,000 ft'], ['final', '最終進入 5 km'], ['area', '訓練空域 3,000 ft'], ['ils', 'ILS 開始点 2,000 ft']])
-        + sel('aircraft', '機体', [['pa28', 'Archer（単発）'], ['pa44', 'Seminole（双発）'], ['b737', '737 級ジェット（双発）']])
-        + sel('hour', '時刻', [[6, '朝 6 時'], [9, '午前 9 時'], [12, '正午'], [15, '午後 3 時'], [18, '夕方 6 時'], [21, '夜 9 時'], [0, '深夜 0 時']])
-        + sel('wind', '風', [['calm', '無風'], ['light', '軽い風（滑走路方向 5 kt）'], ['cross', '横風 10 kt'], ['strong', '強い風 16 kt・ガスト'], ['custom', 'カスタム']])
+      return sel('start', '開始位置', FREE_STARTS)
+        + sel('aircraft', '機体', FREE_AIRCRAFT)
+        + sel('hour', '時刻', FREE_HOURS)
+        + sel('wind', '風', FREE_WIND_OPTS)
         + (freeCfg.wind === 'custom' ? `<label class="m-row"><span>カスタム風（滑走路から何度・何 kt）</span><span><input type="number" min="0" max="359" value="${freeCfg.windRel}" data-free-num="windRel" style="width:5em"> 度 <input type="number" min="0" max="40" value="${freeCfg.windKt}" data-free-num="windKt" style="width:4em"> kt</span></label>` : '')
-        + sel('loading', '搭載（重量・重心）', [['std', '標準（前席 2 名）'], ['light', '軽い（前席 1 名）'], ['heavy', '重い（4 名＋荷物）']])
-        + sel('fail', '故障（練習）', [['none', 'ランダム（シード付き：約2割の飛行で1つ）'], ['mag', 'マグネトー不良（ランナップで分かる）'], ['carb', 'キャブレター着氷（湿度の高い日）'], ['elec', 'オルタネーター故障（電圧低下）'], ['pitot', 'ピトー閉塞（着氷の経路）'], ['static', '静圧閉塞（高度計の凍結）'], ['gear', '脚の故障（双発）'], ['pump', '燃料ポンプ故障'], ['engine', 'エンジン停止（飛行中）'], ['engL', '左エンジン停止（双発）'], ['engR', '右エンジン停止（双発）'], ['ahrs', 'AHRS 故障（姿勢表示）'], ['gps', 'GPS 故障'], ['ppanel', '部分パネル（AHRS＋GPS 故障）']])
+        + sel('loading', '搭載（重量・重心）', FREE_LOAD_OPTS)
+        + sel('fail', '故障（練習）', FREE_FAIL_OPTS)
         + (freeCfg.fail !== 'none' ? sel('failWhen', '教官コンソール：故障の起き方', [['now', 'すぐ'], ['time', '指定した分が過ぎたら'], ['alt', '指定した高度以上で']]) : '')
         + (freeCfg.fail !== 'none' && freeCfg.failWhen === 'time' ? `<label class="m-row"><span>何分後（飛行時間）</span><span><input type="number" min="0" max="180" value="${freeCfg.failMin}" data-free-num="failMin" style="width:5em"> 分</span></label>` : '')
         + (freeCfg.fail !== 'none' && freeCfg.failWhen === 'alt' ? `<label class="m-row"><span>何 ft 以上で</span><span><input type="number" min="0" max="12000" step="100" value="${freeCfg.failAlt}" data-free-num="failAlt" style="width:6em"> ft</span></label>` : '')
-        + `<div class="m-big"><button class="primary" data-act="free-start">この条件で飛ぶ</button></div>
-        <p class="m-note">訓練の日とは別の、自由な飛行です。記録（飛行日誌）には数えません。故障は選んだものが 1 つだけ起きます（「ランダム」はセッションのシードで決まり、飛行中に起きます）。エンジン停止は飛行中に起きるので、高度のある開始位置がおすすめです。</p>`;
+        + `<div class="m-big">${onFreeSetup ? '<button class="primary" data-act="free-start">この条件で飛ぶ（実機・飛行場）</button>' : ''}${onSimSetup ? '<button data-act="sim-start">シミュレーターで飛ぶ（訓練装置）</button>' : ''}</div>
+        <p class="m-note">フリーモードは訓練の日とは別の、自由な飛行です。記録（飛行日誌）・疲労・能力にはいっさい数えません。実機の飛行では、故障は選んだものが 1 つだけ起きます（「ランダム」はセッションのシードで決まり、飛行中に起きます）。エンジン停止は飛行中に起きるので、高度のある開始位置がおすすめです。<br>シミュレーターは、飛行場の訓練装置室の席と同じ飛行練習です。機体と開始位置は上の選択を使い、風・搭載は装置の標準、故障は起きません。終えると装置の席に戻ります。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
@@ -275,16 +278,12 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     }
     if (b.dataset.act === 'pad-reset') { settings.set('padMap', null); render(); return; }
     if (b.dataset.act === 'free-start' && onFreeSetup) {
-      const WINDS = { calm: { rel: 0, kt: 0, gust: 0 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 80, kt: 10, gust: 0.5 }, strong: { rel: 30, kt: 16, gust: 1 } };
-      const LOADS = { std: { fuel: 'std', front: 2, rear: 0, bagKg: 0 }, light: { fuel: 'std', front: 1, rear: 0, bagKg: 0 }, heavy: { fuel: 'std', front: 2, rear: 2, bagKg: 25 } };
-      const cfg = { start: freeCfg.start, aircraft: freeCfg.aircraft, hour: +freeCfg.hour,
-        wind: freeCfg.wind === 'custom' ? { rel: +freeCfg.windRel || 0, kt: +freeCfg.windKt || 0, gust: 0.5 } : WINDS[freeCfg.wind] || WINDS.light,
-        loading: LOADS[freeCfg.loading] || LOADS.std, fail: freeCfg.fail === 'none' ? null : freeCfg.fail,
-        // the instructor console's reservation (a time / an altitude), and the session's seed
-        // for the random roll when no failure was chosen (aircraft/failures.js)
-        failAt: freeCfg.failWhen === 'time' ? { atMin: Math.max(0, +freeCfg.failMin || 0) } : freeCfg.failWhen === 'alt' ? { atAltFt: Math.max(0, +freeCfg.failAlt || 0) } : {},
-        seed: Date.now() % 2147483647 };
-      close(false); onFreeSetup(cfg); return;
+      close(false); onFreeSetup(buildFreeCfg(freeCfg)); return;
+    }
+    if (b.dataset.act === 'sim-start' && onSimSetup) {
+      // the device's own free-practice flight, from the mode screen: the aircraft and start above,
+      // the device's standard conditions inside main.js's onSimSetup (content/free-mode.js)
+      close(false); onSimSetup({ start: freeCfg.start, aircraft: freeCfg.aircraft }); return;
     }
     if (b.dataset.act === 'keys-reset') { settings.set('keyBinds', null); settings.set('heldBinds', null); bindMsg = ''; render(); return; }
     if (b.dataset.rebind) { startCapture(b); return; }

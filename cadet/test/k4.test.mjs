@@ -38,11 +38,15 @@ test('k4 flies day 10\'s radio in day 10\'s order — what the first flight asks
 });
 
 test('k4: a dozen decisions and more, the switches real, no stretch without input over 60 s, a run within 5 minutes, every line short enough', () => {
-  // (each item's section, its debrief's link, taught by k4's morning: the classes up to the calls of one flight)
+  // (each item's section, its debrief's link, taught by k4's morning: the classes up to the calls of one flight.
+  // The first radio chapter's sections are excepted: radio1 left the lecture frame in the redesign — the book
+  // holds it, and k4's own practice is where it is used; the chair flight's script does not quiz it cold, its
+  // debrief links the book)
   const taught = new Set(S.sectionsBefore(FL, L.career.CLASS_FTD.indexOf('k4') + 1));
+  const radio1 = new Set(L.BOOK.chapters.find(c => c.id === 'radio1').sections.map(s => s.id));
   for (let seed = 1; seed <= 60; seed++) {
     const sc = chairScript(FL, { seed });
-    for (const it of sc.items) assert.ok(!it.sec || taught.has(it.sec), `seed ${seed}: ${it.id}'s section ${it.sec} taught before k4`);
+    for (const it of sc.items) assert.ok(!it.sec || taught.has(it.sec) || radio1.has(it.sec), `seed ${seed}: ${it.id}'s section ${it.sec} taught before k4`);
     for (const stage of [1, 2, 3]) {
       const r = runChairFlight(sc, { stage, seed });
       assert.ok(r.run.done, `seed ${seed} stage ${stage}: done`);

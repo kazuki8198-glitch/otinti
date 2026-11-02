@@ -1,27 +1,20 @@
 // CADET — the answer map (content/answer-map.js): every question chapter 1 can ask is tied to the line of the textbook's
-// part 1 that says its answer, and that line is the section's own (said by the class read in full, as the class says it).
+// part 1 that says its answer, and that line is the section's own (the book's lines as they are read: since the
+// redesign no class reads a section in full, the book itself is what the map is checked against — the classes'
+// saying of them is test/taught.test.mjs's).
 // The map's rows are checked against FLIGHT LAB's banks (each row is the question it says it is) and against the book.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from '../tools/measure-ch1.mjs';
 import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, PFD_ANSWERS, EVENT_ANSWERS } from '../src/content/answer-map.js';
-import { CLASS_CHAPTERS } from '../src/content/school.js';
 import { EXAMS } from '../src/career/career.js';
 
 const L = await load(), FL = L.FL;
 const squash = (s) => String(s).replace(/\s+/g, '');
-// each section's lines as the class says them in full (its own nodes: the section's book units)
+// each section's lines as the book says them (school.js sectionSteps: the section's book units, read)
 function sectionLines() {
   const out = new Map();
-  for (let i = 0; i < CLASS_CHAPTERS.length; i++) {
-    const d = L.school.classDialogs(FL, i, { pace: 'full', notes: () => null }), N = d.dialogs.class.nodes;
-    for (const id of L.school.pathOf(N, 'hello', {})) {
-      const m = /^c(\d+)s(\d+)(?::u|$)/.exec(id); if (!m) continue;
-      const sec = L.BOOK.chapters.find(c => c.id === CLASS_CHAPTERS[i][+m[1]]).sections[+m[2]].id;
-      if (!out.has(sec)) out.set(sec, []);
-      out.get(sec).push(N[id].text);
-    }
-  }
+  for (const ch of L.BOOK.chapters.filter(c => c.part === 'p1')) for (const s of ch.sections) out.set(s.id, L.school.sectionSteps(L.BOOK.section(s.id)).map(x => x.text));
   return out;
 }
 const LINES = sectionLines();
@@ -47,7 +40,7 @@ test('answer map: one row for every question of chapter 1\'s banks, each the que
   }
 });
 
-test('answer map: every answer\'s words are a line of its own section, as the class reads it in full', () => {
+test('answer map: every answer\'s words are a line of its own section, as the book reads it', () => {
   const all = [...Object.entries(BANK_ANSWERS).flatMap(([b, l]) => l.map((x, i) => [`${b}#${i}`, x.a])),
     ...Object.entries(SCENE_ANSWERS), ...Object.entries(DRILL_ANSWERS), ...Object.entries(LISTEN_ANSWERS),
     ...Object.entries(EVENT_ANSWERS).flatMap(([e, l]) => l.map((a, k) => [`event:${e}#${k}`, a]))];

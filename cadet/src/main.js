@@ -72,7 +72,7 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, drillDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, examScoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, drillDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, examScoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview, classSectionIds } from './content/school.js';
 import { eventDialogs } from './content/dialog/ch1-events.js';
 import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard, prologueWord } from './content/day-flow.js';
 import { usableKind, COFFEE_TIRE, COFFEE_CARD, LOCKER_CARD, shelfSection, dailyNotices, TOWER_VISIT, TOWER_COMM_BASE } from './content/usable.js';
@@ -638,8 +638,13 @@ async function boot() {
   const peopleRunner = createRunner({ data: withEnglish(peopleDialogs()), state: talkState, ctx: () => cx, hooks: { onHook } });
   // a lesson or a test (its own state: what is scored is not kept)
   let lessonRun = null, lessonState = null, lessonKind = null, lessonQuestions = null, studyAnswered = false;
+  // (the score of the lesson now running, from its own 'quizEnd' — null until it comes: a class's knowledge
+  // grows by its drill's score, and cx.quiz alone could still hold an older lesson's)
+  let lessonQuiz = null;
+  // (the last written test's weak banks, for the tablet's practice page: where a fail points the cadet next)
+  let lastWeak = null;
   function startLesson(kind, id, data) {
-    studyAnswered = false;
+    studyAnswered = false; lessonQuiz = null;
     lessonState = createDialogState(); lessonKind = { kind, id, n: (data.questions || []).length }; lessonQuestions = data.questions || [];
     lessonRun = createRunner({ data: withEnglish(data), state: lessonState, ctx: () => cx, hooks: { onHook } });
     lessonRun.onChange(onRoomView);
@@ -889,7 +894,7 @@ async function boot() {
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
     // (a written test is scored bank by bank too: §4.3's floor — the others keep the plain score)
-    else if (name === 'quizEnd') { cx.quiz = (lessonKind && (lessonKind.kind === 'exam' || lessonKind.kind === 'practice')) ? examScoreOf(lessonState, lessonQuestions, Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]))) : scoreOf(lessonState, +arg); }
+    else if (name === 'quizEnd') { cx.quiz = (lessonKind && (lessonKind.kind === 'exam' || lessonKind.kind === 'practice')) ? examScoreOf(lessonState, lessonQuestions, Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]))) : scoreOf(lessonState, +arg); lessonQuiz = cx.quiz; }
     // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
     else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' && chairLast ? chairLast.missed : null, practice: talkWho === 'tablet' })); }
     else if (name === 'pace') career.setPace(arg);
@@ -1040,6 +1045,9 @@ async function boot() {
   // lecturer's notes on it under it when she has any
   function openSection(id) {
     const sec = book.section(id); if (!sec) return;
+    // (the redesign: the textbook is a reference now, read by choice — reading a section counts as having heard
+    // it, at its key points: the readiness, the practices and the listening kinds follow what was read)
+    career.heardSection(id, 'q');
     dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sectionHtml(sec) + lecturerNotesHtml(id) });
   }
   // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
@@ -1652,7 +1660,9 @@ async function boot() {
       else { if (career.chapter === 'prologue') career.done('intro', 'no'); afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
     }
     else if (arg === 'class' && k) {
-      career.done('class', String(k.id)); career.tire(6); for (const [axis, v] of classGrowth(career.state.lastPace)) career.grow(axis, v, `class:${k.id}`);
+      // (the redesign: the knowledge grows by the class's own drill — the five questions at its end, scored at
+      // its 'quizEnd' into lessonQuiz; a class whose drill was not reached grows it a little, as a poor score does)
+      career.done('class', String(k.id)); career.tire(6); for (const [axis, v] of classGrowth(lessonQuiz ? lessonQuiz.pct : null)) career.grow(axis, v, `class:${k.id}`);
       // (the time moves on with the record, as the hook comes — a page closed on the last line keeps both; no afternoon
       // in today's plan — a record from the order before, its lesson passed already: on to the evening)
       next(); if (career.slot === 'pm' && !planToday().some(x => x.slot === 'pm')) career.advance('evening');
@@ -1667,6 +1677,15 @@ async function boot() {
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
       // (the record takes the score the cadet was told — cx.quiz is the test's own, bank floor and all (§4.3))
       career.exam(k.id, cx.quiz.pct, cx.quiz.pass);
+      // (the redesign: a fail's weak banks are kept for the tablet's practice page, which points at their drills;
+      // a pass of chapter 1's test without its classes exempts them — the classes it covers are done, their
+      // sections heard at their key points, so nothing the test unlocked waits on a class not taken)
+      lastWeak = cx.quiz.pass ? null : (cx.quiz.weak && cx.quiz.weak.length ? { exam: k.id, banks: cx.quiz.weak.map(b => ({ id: b, title: (FL.quiz.BANKS.find(x => x.id === b) || { title: b }).title, pct: cx.quiz.banks[b] ? cx.quiz.banks[b].pct : 0 })) } : lastWeak);
+      if (k.id === 'written1' && cx.quiz.pass) {
+        const exempt = [];
+        for (let i = 0; i < CLASSES.length; i++) if (!career.isDone('class', String(i))) { for (const sec of classSectionIds(FL, i)) career.heardSection(sec, 'q'); career.done('class', String(i)); exempt.push(i); }
+        if (exempt.length) afterTalk.push(() => toast(`学科試験に合格しました。受けていない座学 ${exempt.length} コマは免除され、修了扱いになりました（要点は教科書でいつでも読めます）`, 7000));
+      }
       afterTalk.push(() => { if (arg === 'pass' || k.id !== 'written1') { next(); applySlot(); } else toast('もう一度受けるときは、ミラー講師に話しかけてください（問題は入れ替わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'navlog') {
       // (M6) the navigation log made: the afternoon's solo cross-country (or another try after lunch)
@@ -2113,6 +2132,12 @@ async function boot() {
         // (in chapter 1: of each bank, the questions whose answers the classes have said; the chair flight once its
         // class — the calls of one flight — is done)
         banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length, taught: ch1 ? bankTaught(FL, b.id, heard) : b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: ch1,
+        // (the redesign: a written test can be sat from the tablet without its classes — the chapter's next test,
+        // while it is not passed and not yet taken today; passing chapter 1's exempts the classes it covers.
+        // And the last test's weak banks, whose practice the page below points at)
+        examNow: (() => { const id = st.chapter === 'ch1' ? 'written1' : st.chapter === 'ch2' ? 'presolo' : st.chapter === 'fo1' ? 'type' : (STAGE[st.chapter] || {}).exam || null;
+          return id && EXAMS[id] && !(st.exams[id] && st.exams[id].pass) && career.examReady(id) ? { id, title: EXAMS[id].title } : null; })(),
+        weak: lastWeak,
         drillsLeft: career.drillsLeft(),
         chair: !ch1 || st.done['class:3'] != null || groundPassed(p, 'k4'),
         graduated: !!st.graduated, evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
@@ -2125,6 +2150,14 @@ async function boot() {
       logbook: () => showLogbookNow(-1),
       read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
+      // (a real written test, sat from the tablet: the same dialog, the same record (workDone's exam) — the
+      // classes it covers are not a way in any more, only the day's one sitting is (§4.3))
+      exam: (examId) => {
+        if (talk || chair || mode !== 'walk' || !EXAMS[examId] || (career.state.exams[examId] && career.state.exams[examId].pass) || !career.examReady(examId)) return;
+        const n = career.attempt(`exam:${examId}`);
+        const data = examDialogs(FL, examId, { seed: career.state.seed, attempt: n, speaker: 'lecturer', ...(examId === 'written1' ? { warm: mixedReview(FL, career.state, { attempt: n }) } : {}) });
+        tabletTalk('exam', examId, data, 'exam', 'タブレット（学科試験）');
+      },
       // (the judgement drill: ten mornings of weather, the tablet asking — §4.4)
       drill: () => { if (!talk && !chair && mode === 'walk' && career.drillsLeft() > 0) tabletTalk('drill', 'drill', drillDialogs(FL, career.state, { attempt: career.attempt('drill') }), 'drill', 'タブレット（判断ドリル）'); },
       chair: (stage) => { if (!talk && !chair && mode === 'walk') startChair(stage, { practice: true }); },

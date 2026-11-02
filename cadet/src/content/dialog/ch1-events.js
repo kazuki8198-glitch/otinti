@@ -95,6 +95,7 @@ export function eventDialogs(id, { seed = 1, weather = null, tired = false, revi
     const vv = /\bVV\d{3}\b/.test(w.metar) ? '今朝の VV（霧で空が見えないときの垂直視程）も、雲高として扱います。' : '';
     N = scene('dispatcher', [
       { text: '天気の授業、どうでした？ 画面の今朝の METAR、一緒に読んでみましょう。', hook: { name: 'point', arg: 'weather' } },
+      { text: '訓練生の最低条件は、視程 5 SM 以上、雲高 3,000 フィート以上です。雲高というのは、BKN や OVC のいちばん低い層のことです。' },
       { text: `今朝の METAR は「${w.metar}」です。` },
       { q: 'この METAR の視程は、授業の「訓練生の最低条件」の例（視程 5 SM 以上）を満たしていますか？', opts: [enough ? yes : no, enough ? no : yes, 'METAR には視程が書かれていない'],
         ok: `そうです。視程は ${m ? m[0].trim() : '—'}。${told}`, ng: `視程は ${m ? m[0].trim() : '—'}、${enough ? '5 SM 以上あります' : '5 SM に足りません'}。${told}` },

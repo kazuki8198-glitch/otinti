@@ -504,10 +504,14 @@ function quickEntries(sec, o) {
   // (not with a prediction: it follows the title alone, before anything of the section is said)
   const merged = !o.pred && steps.length && `${head}${steps[0].text}`.length <= LINE_MAX && !steps[0].hook;
   if (merged) lines.splice(0, 2, { ...steps[0], text: `${head}${steps[0].text}` });
-  const E = [];
+  const E = [], us = lectureUnits(sec);
   let shown = null;
   lines.forEach((l, k) => {
-    const page = l.m === null || l.m === undefined ? (k === 0 ? sec.id : null) : `${sec.id}#${l.m}`;
+    // (the redesign: a card does not page the book past the class — the screen changes only for what is read off
+    // it, a figure and a table; the section's own page (its title and key points on the board) opens it, and the
+    // prose is the lecturer's to say, the book itself a thing to open at the section's end, or on the tablet)
+    const paged = l.m !== null && l.m !== undefined && us[l.m] && (us[l.m].k === 'figure' || us[l.m].k === 'table');
+    const page = l.m === null || l.m === undefined ? (k === 0 ? sec.id : null) : paged ? `${sec.id}#${l.m}` : null;
     const eff = [...(page && page !== shown ? [{ hook: 'page', arg: page }] : []), ...(k === lines.length - 1 ? [{ hook: 'heard', arg: `${sec.id}|q` }] : [])];
     if (page) shown = page;
     const qk = merged ? k : k - 1, nx = lines[k + 1], brk = !nx || nx.m !== l.m || nx.g !== l.g;
@@ -782,50 +786,61 @@ export function studyDialogs(FL, state, { attempt = 0 } = {}) {
   N['st:bed'] = { speaker: S, text: '（寮に帰って、少し遅くに寝た。）', effects: [{ hook: 'done', arg: 'night' }], end: true };
   return { speakers: SPEAKERS, flags: [], hooks: [...SCHOOL_HOOKS], dialogs: { study: { start: 'st', nodes: N } }, questions: [] };
 }
-// classDialogs(FL, i, { seed, pace, from, notes, attempt, last, heard, afternoon, review }) → the class's dialog data
-// (dialog 'class'). seed: the career's; attempt: how many times this class was begun before (its questions come in
-// another order); pace: 'need' | 'full' | 'quick' to begin without the choice; from: the index of the section a class
-// left midway reached (the choice then offers to go on from it); last: the pace chosen the time before (offered first);
-// heard: the sections heard before (a Set; default: those of the classes before this one); afternoon: the day's
-// training device lesson; review: the questions to begin with ({ ids, missed }: classOptions's reviewFor); notes:
-// id → the lecturer's notes (content/lecture-notes; the tests give their own)
-// The class: the day's own start (CLASS_DAY: what the day is for, the afternoon's lesson), a review of earlier classes'
-// questions (those missed first), the pace; each chapter its introduction, its sections, two questions; the score,
-// what the afternoon uses of today, the day's goodbye. No stretch without a choice is long: a check (a question of
-// chapter 1 on what was just said, not scored) goes where the time since the last choice reaches CHECK_AFTER, and a
-// section read as its key points gets the prediction when the class needs a choice by then.
-// (the time since the last choice at which a check is put in: a section read in full for today's lessons and the key
-// points — whose limit is 2 minutes — sooner than the rest read in full, whose limit is 3)
-const CHECK_AFTER = { need: 70, full: 120, quick: 85 };
+// classDialogs(FL, i, { seed, from, notes, attempt, heard, afternoon, review }) → the class's dialog data
+// (dialog 'class'). seed: the career's; attempt: how many times this class was begun before (its questions come
+// in another order); from: the index of the section a class left midway reached (the class goes on from it — no
+// choice to make about it); heard: the sections heard before (a Set; default: those of the classes before this
+// one); afternoon: the day's training device lesson; review: the questions to begin with ({ ids, missed }:
+// classOptions's reviewFor); notes: id → the lecturer's notes (content/lecture-notes; the tests give their own).
+// pace / last are still accepted, and ignored: a caller from before the redesign may pass them.
+//
+// The class (the redesign): the day's own start (CLASS_DAY: what the day is for, the afternoon's lesson), a
+// review of earlier classes' questions (those missed first), then each chapter in turn — its introduction, and
+// each of its sections as a card (quickEntries: the title, every ここが大切 — a short summary where the book has
+// none — its figures, and every line that answers a question chapter 1 can ask from it, content/answer-map.js);
+// the lecturer's prediction where a section would otherwise run long without a choice, and a check (a question
+// of chapter 1 on what was just said, not scored) where the time since the last choice reaches CHECK_AFTER.
+// At the end, the drill: five questions on the day's chapters, scored (classDrill); its score is what the
+// class's knowledge grows by (career.js classGrowth — a good score grows it most, a poor one a little, as a
+// written test's does). The textbook is never paged through on the way: it stays a book to open (a section's
+// end, B; the tablet's 教科書), and reading one there counts as heard, at its key points ('q') — as a card's
+// hearing does (hook 'heard' at the section's end: secId|q).
+// A section ends with a line of its own (R the section again, B the textbook, Q a break — the class left there,
+// its place the next section; not after the class's last section). A class taken up midway says no score: the
+// drill it did not begin from its start is not the whole class's.
+// (the time since the last choice at which a check is put in: the cards are short, so the quick pace's old limit)
+const CHECK_AFTER = 85;
 export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes = notesFor, attempt = 0, last = null, heard = null, afternoon = CLASS_FTD[i], review = null } = {}) {
+  void pace; void last;
   const book = gameBook(FL), ids = CLASS_CHAPTERS[i], r = rng(seed * 31 + i + attempt * 7919);
   if (!ids) throw new Error(`classDialogs: no class ${i}`);
   const chs = ids.map(id => book.chapters.find(c => c.id === id)).filter(Boolean);
   const noteOf = typeof notes === 'function' ? notes : () => null;
-  const need = needSections(FL, i, afternoon), day0 = TALK.CLASS_DAY[i] || TALK.CLASS_DAY[0];
+  const day0 = TALK.CLASS_DAY[i] || TALK.CLASS_DAY[0];
   // (an afternoon other than the class's own lesson — one not passed before, or none: said as it is)
   const day = afternoon === CLASS_FTD[i] ? day0 : { ...day0, hello: [day0.hello[0], afternoon ? `午後は訓練装置 ${afternoon}「${FTD_TITLES[afternoon]}」です。前に届かなかった課目を、もう一度。` : '今日の午後は、訓練装置の課目はありません。'],
     preview: [afternoon ? `午後は訓練装置室で ${afternoon} です。今日の授業のことも、明日からの訓練で使います。` : '今日の授業のことは、明日からの訓練と初飛行で使います。'] };
   const ci0 = CLASS_CHAPTERS.slice(0, i).flat().length;                       // (the class's first chapter's place in part 1)
-  const N = {}, data = () => ({ speakers: SPEAKERS, flags: [...qs.map((_, k) => `qz_${k}`), 'quick', 'need', 'resumed', 'pr'], hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs });
-  const all0 = classQuestions(FL, i, { from, heard, r: rng(1) }).all;
-  // ---- each section planned: its entries in full and as its key points, the checks, the order of its parts
-  const known = new Set(heard ? [...heard] : sectionsBefore(FL, i)), used = new Set(), plans = [];
-  // (the class's start before its first section: its own lines, the review, the pace, the chapter's introduction)
-  let gFull = 30, gQuick = 30, gNeed = 30, prev = '';
-  const run = (E, g0) => { let g = g0; for (const e of E) for (const x of timeline(e)) { g += x.t; if (x.dec) g = 0; } return g; };
-  // (the longest stretch without a choice in the entries, the one carried in and the one left at their end counted)
+  const { all, start } = classQuestions(FL, i, { from, heard, r: rng(1) });
+  const N = {};
+  // ---- each section planned: its card, the checks on the way, the prediction where one is due
+  const known = new Set(heard ? [...heard] : sectionsBefore(FL, i)), used = new Set();
+  let carried = 30;                    // (the time since the last choice, carried in: the class's own start)
   const longest = (E, g0) => { let g = g0, m = 0; for (const e of E) for (const x of timeline(e)) { g += x.t; if (x.dec) { m = Math.max(m, g); g = 0; } } return Math.max(m, g); };
+  const run = (E, g0) => { let g = g0; for (const e of E) for (const x of timeline(e)) { g += x.t; if (x.dec) g = 0; } return g; };
   // (the checks: after the step whose line completes the answer, where the time since the last choice has reached
   // CHECK_AFTER; a step index → its entry)
   // (none of the section's own yet: one from a section heard earlier — this class's latest first — once it is late)
-  const placeChecks = (E, g0, cands, recall, idOf, mine, g7, T) => {
+  const placeChecks = (E, g0, cands, recall, idOf, mine, g7) => {
     const at = new Map(); let g = g0;
     for (const e of E) {
       for (const x of timeline(e)) { g += x.t; if (x.dec) g = 0; }
-      if (e.step === undefined || !e.brk || at.has(e.step) || g < T) continue;
-      let c = cands.find(x => x.after <= e.step && !mine.has(x.id));
-      if (!c && g >= T + 20) c = recall.find(x => !mine.has(x.id));
+      if (e.step === undefined || !e.brk || at.has(e.step) || g < CHECK_AFTER) continue;
+      // (of the checks that fit here, the day's own rng picks one — the pool's order alone would ask the same
+      // question of every cadet, every day)
+      const pick = (list) => { const cs = list.filter(x => !mine.has(x.id)); return cs.length ? cs[Math.floor(rng(seed * 61 + i * 17 + g7 + e.step * 131 + attempt * 3571)() * cs.length)] : null; };
+      let c = pick(cands.filter(x => x.after <= e.step));
+      if (!c && g >= CHECK_AFTER + 20) c = pick(recall);
       if (!c) continue;
       const ce = checkEntry(book, rng(seed * 61 + i * 17 + g7 + e.step + attempt * 3571), c, idOf(e.step), g7 + e.step);
       if (!ce) continue;
@@ -836,106 +851,108 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
   };
   // (recalled: today's earlier sections first, the latest first; then the classes before, in an order of the day's own —
   // not the pool's, which would ask the same ones every day; the review's questions not again)
-  const order0 = all0.map(x => x.sec.id), rr = rng(seed * 7919 + i * 31 + attempt * 104729), shuf = new Map(questionPool(FL).map(x => [x.id, rr()]));
+  const order0 = all.map(x => x.sec.id), rr = rng(seed * 7919 + i * 31 + attempt * 104729), shuf = new Map(questionPool(FL).map(x => [x.id, rr()]));
   const recallFor = (sec) => questionPool(FL).filter(x => !x.note && !x.secs.includes(sec.id) && x.secs.every(s => known.has(s)))
     .map(x => { const at = order0.indexOf(x.home); return { ...x, earlier: true, at, key: at >= 0 ? at + 1 : -shuf.get(x.id) }; }).sort((a, b) => b.key - a.key);
   const reviewed = review && !from ? (review.ids || []).slice(0, 3) : [];
-  const usedFull = new Set(reviewed), usedQuick = new Set(reviewed);
-  all0.forEach((x, idx) => {
-    const sec = x.sec, base = `c${x.k}s${x.j}`, g = secAt(FL, sec.id), nt = notesOf(noteOf(sec.id)), isNeed = need.has(sec.id);
-    for (const s of book.chapters.find(c => c.id === ids[x.k]).sections) if (s.id === sec.id) known.add(s.id);
+  for (const id of reviewed) used.add(id);
+  const plans = [];
+  all.forEach((x, idx) => {
+    const sec = x.sec, base = `c${x.k}s${x.j}`, g = secAt(FL, sec.id), nt = notesOf(noteOf(sec.id));
+    known.add(sec.id);
+    // (a class taken up midway: the sections before its place are not built at all — no way back to them is
+    // offered, and the validator's reachability is the class's own shape. Their being known still counts:
+    // the checks of the sections to come may recall them, and the drill may ask them)
+    if (idx < start) return;
     const rf = () => rng(seed * 97 + i * 131 + idx + attempt * 15485);
-    const o = { base, g, j: x.j, of: x.of, idx, nt, ci: ci0 + x.k };
-    // (the entries made from the book's steps carry the step's index: a check goes after one)
-    const make = (order, checks) => fullEntries(sec, { ...o, r: rf(), order, checks });
-    const E0 = make(g % 4, null);
-    const steps = sectionSteps(sec), recall = recallFor(sec);
-    const fullChecks = placeChecks(E0, Math.max(gFull, isNeed ? gNeed : 0), [...sectionChecks(FL, sec, steps, known), ...radioChecks(sec, steps)].sort((a, b) => a.after - b.after), recall, (k) => `${base}:c${k}:ck`, usedFull, g * 7, isNeed ? CHECK_AFTER.need : CHECK_AFTER.full);
-    // (the order: the first, from the section's place, whose parts do not go as the section before's did)
-    let E = null;
-    for (let t = 0; t < 4; t++) { const ord = (g + t) % 4, e = make(ord, fullChecks); if (stagesOf(e) !== prev || t === 3) { E = e; o.order = ord; break; } }
-    prev = stagesOf(E);
-    gFull = run(E, Math.max(gFull, isNeed ? gNeed : 0)); if (isNeed) gNeed = gFull;
-    // as its key points: the prediction where a choice is due by its end
-    const qid = `r${x.k}s${x.j}`, qsteps = quickSteps(sec), carried = Math.max(gQuick, isNeed ? 0 : gNeed);
+    const qsteps = quickSteps(sec), recall = recallFor(sec);
+    const qc = [...sectionChecks(FL, sec, qsteps, known), ...radioChecks(sec, qsteps)].sort((a, b) => a.after - b.after);
     // (a check on a line just said first — shorter, and a second hearing of an answer; the prediction only where the
     // section would still go too long without a choice)
-    const qc = [...sectionChecks(FL, sec, qsteps, known), ...radioChecks(sec, qsteps)].sort((a, b) => a.after - b.after);
-    const tryChecks = (pred) => { const mine = new Set(usedQuick), at = placeChecks(quickEntries(sec, { id: qid, g, pred }), carried, qc, recall, (k) => `${qid}:c${k}:ck`, mine, g * 7 + 3, CHECK_AFTER.quick); return { at, mine, E: quickEntries(sec, { id: qid, g, pred, checks: at }) }; };
-    let qp = tryChecks(null), pred = null;
-    if (nt.ask && longest(qp.E, carried) > CHECK_AFTER.quick + 20) { pred = predEntry(`${qid}:pr`, nt.ask, rf(), g); qp = tryChecks(pred); }
-    for (const id of qp.mine) usedQuick.add(id);
-    const Q = qp.E;
-    gQuick = run(Q, carried); if (!isNeed) gNeed = gQuick;
-    for (const e of [...E, ...Q]) if (e.k === 'ask' && e.qid) used.add(e.qid);
-    plans.push({ x, base, E, Q, qid, isNeed });
+    const tryCard = (pred) => { const mine = new Set(used), at = placeChecks(quickEntries(sec, { id: base, g, pred }), carried, qc, recall, (k) => `${base}:c${k}:ck`, mine, g * 7 + 3); return { at, mine, E: quickEntries(sec, { id: base, g, pred, checks: at }) }; };
+    let cp = tryCard(null), pred = null;
+    if (nt.ask && longest(cp.E, carried) > CHECK_AFTER + 20) { pred = predEntry(`${base}:pr`, nt.ask, rf(), g); cp = tryCard(pred); }
+    for (const id of cp.mine) used.add(id);
+    const E = cp.E;
+    // (the section's place kept from its first line; and it is the end that says it was heard — the card's last line
+    // gives its 'heard' up to the end, where R, B and Q live too)
+    if (E.length) { const e0 = E[0]; e0.effects = [...(e0.effects || []), { hook: 'progress', arg: String(idx) }]; }
+    for (const e of E) if (e.effects) e.effects = e.effects.filter(fx => fx.hook !== 'heard');
+    E.push({ k: 'end', id: `${base}:end`, text: say(TALK.END, g)(qq(sec.title)), effects: [{ hook: 'heard', arg: `${sec.id}|q` }], keys: true, stage: '区切り' });
+    carried = run(E, carried);
+    for (const e of E) if (e.k === 'ask' && e.qid) used.add(e.qid);
+    plans[idx] = { x, base, E };
   });
-  // ---- the chapters' questions (scored): two each, of those not asked as a check today where there are enough
-  const { all, start, qs, runs } = classQuestions(FL, i, { from, heard, r, avoid: used });
+  // ---- the drill: five questions on the day's chapters (drawn after the plans, so a check's question is not
+  // asked again where others are left), scored at the class's end
+  const qs = classDrill(FL, i, { heard, r, avoid: used });
+  // (the 'pr' flag only where a prediction is in the class at all — declared and read, or not declared)
+  const hasPred = plans.some(p => p && p.E.some(e => e.k === 'pred'));
+  const data = () => ({ speakers: SPEAKERS, flags: [...qs.map((_, k) => `qz_${k}`), 'resumed', ...(hasPred ? ['pr'] : [])], hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs });
+  // ---- the chapters and their sections, then the drill, the score, what the afternoon uses, the goodbye
+  // (a chapter's introduction is built only where the class reaches its first section: a chapter taken up
+  // midway is entered at its section, not at its head)
   chs.forEach((c, k) => {
-    const secs = all.filter(x => x.k === k), check = `c${k}:check`, nextC = k < chs.length - 1 ? `c${k + 1}` : 'q:end', ci = ci0 + k;
+    const secs = all.filter(x => x.k === k);
+    if (!secs.length || !plans[all.indexOf(secs[0])] || secs[0].j !== 0) return;
     const intro = TALK.CHAPTER_INTRO[c.id] ? TALK.CHAPTER_INTRO[c.id]({ n: c.n, title: q(c.title) }, secs.length) : `第 ${c.n} 章${q(c.title)}、${secs.length} 節です。`;
-    chain(N, `c${k}`, fit(intro), secs.length ? `c${k}s0` : check);
-    secs.forEach((x) => {
-      const p = plans[all.indexOf(x)], more = x.j < x.of - 1, after = more ? `c${k}s${x.j + 1}` : check, idx = all.indexOf(x), next = all[idx + 1] ? all[idx + 1].sec : null;
-      emit(N, p.E, after, { rest: next });
-      emit(N, p.Q, after);
-      // (each section read in full or as its key points: at the quick pace, its key points; at the pace for today's
-      // training, in full only the sections today's lessons need)
-      Object.assign(N[p.base], { if: p.isNeed ? { not: { flag: 'quick' } } : { not: { any: [{ flag: 'quick' }, { flag: 'need' }] } }, else: p.qid });
-      N[`${p.base}:book`] = { speaker: S, text: `教科書の${qq(x.sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: x.sec.id }, next: `${p.base}:end` };
-      if (next) N[`${p.base}:break`] = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
-    });
-    const [a, b] = runs[k];
-    N[check] = { speaker: S, text: b > a ? say(TALK.CHECK_HEAD, ci)(c.n, b - a) : say(TALK.CHECK_NONE, ci)(c.n), next: b > a ? `q${a}` : nextC };
-    quizNodes(N, qs, { from: a, to: b, end: false, then: nextC, fitTo: LINE_MAX, words: { head: (j, n) => say(TALK.QUIZ_HEAD, ci * 2 + j)(j + 1, n), ok: (j) => say(TALK.QUIZ_OK, ci * 2 + j), ng: (j, x) => say(TALK.QUIZ_NG, ci * 2 + j)(x) } });
+    chain(N, `c${k}`, fit(intro), `c${k}s0`);
   });
-  // (only the end: the day's questions scored, and the score said — not to a class taken up midway, which did not ask
-  // the questions before its place); then what the afternoon uses, and the goodbye
-  quizNodes(N, qs, { from: qs.length, then: 'score' });
-  // (a class taken up midway: no score to say — the questions' end said without the promise of one)
-  Object.assign(N['q:end'], { if: { not: { flag: 'resumed' } }, else: 'q:end:r' });
-  N['q:end:r'] = { speaker: S, text: '今日の問題は以上です。', hook: N['q:end'].hook, next: 'preview' };
+  all.forEach((x, idx) => {
+    const p = plans[idx]; if (!p) return;
+    const next = all[idx + 1] || null;
+    const after = next ? (next.k !== x.k ? `c${next.k}` : plans[idx + 1].base) : 'drill:lead';
+    emit(N, p.E, after, { rest: next });
+    N[`${p.base}:book`] = { speaker: S, text: `教科書の${qq(x.sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: x.sec.id }, next: `${p.base}:end` };
+    if (next) N[`${p.base}:break`] = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.sec.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
+  });
+  N['drill:lead'] = { speaker: S, text: say(TALK.DRILL_HEAD, ci0)(qs.length), next: qs.length ? 'q0' : 'score' };
+  quizNodes(N, qs, { end: true, then: 'score', fitTo: LINE_MAX, words: { head: (j, n) => say(TALK.QUIZ_HEAD, ci0 * 2 + j)(j + 1, n), ok: (j) => say(TALK.QUIZ_OK, ci0 * 2 + j), ng: (j, x) => say(TALK.QUIZ_NG, ci0 * 2 + j)(x) } });
+  // (a class taken up midway: no score to say — the drill's end said without the promise of one)
+  if (qs.length) {
+    Object.assign(N['q:end'], { if: { not: { flag: 'resumed' } }, else: 'q:end:r' });
+    N['q:end:r'] = { speaker: S, text: '今日の問題は以上です。', hook: N['q:end'].hook, next: 'preview' };
+  }
   N.score = { speaker: S, text: '{quiz.right} / {quiz.n} 問、{quiz.pct}% でした。', if: { not: { flag: 'resumed' } }, else: 'preview', next: 'preview' };
   chain(N, 'preview', day.preview.flatMap(t => fit(t)), 'bye');
   N.bye = { speaker: S, text: day.bye, hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'class' }], end: true };
-  // the start: the day's own lines, the review, then how to go through it
-  const paceSet = (p) => [...(PACE_FLAG[p] ? [{ set: PACE_FLAG[p] }] : []), { hook: 'pace', arg: p }];
-  const pool = questionPool(FL), rv = (review && start === 0 ? review.ids || [] : []).map(id => pool.find(x => x.id === id)).filter(Boolean).slice(0, 3);
-  const toPace = pace ? 'c0' : 'pace';
+  // the start: the day's own lines, the review, then the chapters — or, taken up midway, straight on from its place
+  const pool = questionPool(FL), rv = reviewed.map(id => pool.find(x => x.id === id)).filter(Boolean);
+  const at = start ? all[start] : null;
+  const toClass = at ? 'resume' : 'c0';
   // (a class taken up again: not the day's first greeting, but its own — then the afternoon, as the day's)
-  const hello = start && !pace ? [`${['続きをやりましょう', 'では、続きです', 'さあ、続きを始めましょう'][i % 3]}。第 ${chs.map(c => c.n).join('・')} 章の授業の途中からです。`, ...day.hello.slice(1)] : day.hello;
-  chain(N, 'hello', hello.flatMap(t => fit(t)), rv.length ? 'rv:lead' : toPace, S, { hook: { name: 'look', arg: 'player' }, ...(pace && PACE_FLAG[pace] ? { effects: [{ set: PACE_FLAG[pace] }] } : {}) });
+  const hello = at ? [`${['続きをやりましょう', 'では、続きです', 'さあ、続きを始めましょう'][i % 3]}。第 ${chs.map(c => c.n).join('・')} 章の授業の途中からです。`, ...day.hello.slice(1)] : day.hello;
+  chain(N, 'hello', hello.flatMap(t => fit(t)), rv.length ? 'rv:lead' : toClass, S, { hook: { name: 'look', arg: 'player' } });
   if (rv.length) {
-    const rr = rng(seed * 43 + i + attempt * 7919), E = [];
+    const rrv = rng(seed * 43 + i + attempt * 7919), E = [];
     rv.forEach((x, k) => {
-      const b = fromBank(book, rr, x.id)(x.raw), lead = k === 0 ? (review.missed ? say(TALK.REVIEW_MISSED, i) : '') : say(TALK.REVIEW_NEXT, i + k);
+      const b = fromBank(book, rrv, x.id)(x.raw), lead = k === 0 ? (review.missed ? say(TALK.REVIEW_MISSED, i) : '') : say(TALK.REVIEW_NEXT, i + k);
       E.push(askEntry(`rv${k}`, { q: `${lead}${b.q}`, opts: b.opts, right: b.opts[b.ok], said: b.opts[b.ok], why: b.why, id: x.id }, i * 3 + k, undefined, '振り返り'));
     });
     E.push({ k: 'line', id: 'rv:done', text: say(TALK.REVIEW_DONE, i) });
     N['rv:lead'] = { speaker: S, text: day.review || '始める前に、これまでの授業を少し思い出しましょう。', next: 'rv0' };
-    emit(N, E, toPace);
+    emit(N, E, toClass);
   }
-  if (pace) return data();                                            // (begun without the choice)
-  // the paces, each with the time it takes (the reading time of its lines), the one chosen last time first
-  const mins = (p) => { const m = minutesOf(N, 'c0', PACE_FLAG[p] ? { [PACE_FLAG[p]]: true } : {}); return m < 12 ? Math.max(1, Math.round(m)) : Math.round(m / 5) * 5; };
-  const label = { need: need.size ? `今日の訓練に要るところ（約 ${mins('need')} 分）` : `今日の訓練に要るところ（約 ${mins('need')} 分・今日は要点だけと同じ）`,
-    full: `じっくり（教科書を全部、約 ${mins('full')} 分）`, quick: `要点だけ（約 ${mins('quick')} 分）` };
-  const order = PACES.includes(last) ? [last, ...PACES.filter(p => p !== last)] : PACES;
-  const paceChoices = order.map(p => ({ text: label[p], next: 'c0', effects: paceSet(p) }));
-  const at = start ? all[start] : null;
-  if (at) {
-    N.pace = { speaker: S, text: '前回は途中まででしたね。どこから始めましょうか？',
-      choices: [{ text: `続きから（第 ${at.sec.chapter.n} 章${qq(at.sec.title)}から）`, next: 'resume', effects: paceSet(PACES.includes(last) ? last : 'full') }, ...paceChoices.map(c => ({ ...c, text: `最初から：${c.text}` }))] };
-    // (a place at a chapter's first section: the chapter before it ended there, its questions not yet asked — taken up
-    // from them, which go on to the chapter)
-    const back = at.j === 0 && at.k > 0;
-    N.resume = { speaker: S, text: back ? `では、第 ${chs[at.k - 1].n} 章の確認から続けます。` : 'では、続きから始めます。', effects: [{ set: 'resumed' }], next: back ? `c${at.k - 1}:check` : `c${at.k}s${at.j}` };
-  } else {
-    N.pace = { speaker: S, text: day.pace, choices: paceChoices };
-  }
+  if (at) N.resume = { speaker: S, text: at.j === 0 ? `では、第 ${chs[at.k].n} 章から続けます。` : 'では、続きから始めます。', effects: [{ set: 'resumed' }], next: at.j === 0 ? `c${at.k}` : `c${at.k}s${at.j}` };
   return data();
 }
+// the class's drill (the redesign): five questions on the class's own chapters, asked at its end and scored —
+// of those whose every answer has been said by then (before this class, or in it: a card says every line that
+// answers a question of its section, quickSteps' own rule), the ones already asked as a check on the way taken
+// only where too few others are left. Its score grows the knowledge (career.js classGrowth)
+export function classDrill(FL, i, { heard = null, r = null, seed = 1, attempt = 0, avoid = null } = {}) {
+  const book = gameBook(FL), chs = CLASS_CHAPTERS[i], rr = r || rng(seed * 37 + i + attempt * 7919);
+  const known = new Set(heard ? [...heard] : sectionsBefore(FL, i));
+  for (const x of classQuestions(FL, i, { heard }).all) known.add(x.sec.id);
+  const pool = questionPool(FL);
+  const fits = pool.filter(x => chs.includes(chapterOfSec(book, x.home)) && allHeard(x.secs.map(s => [s]), known));
+  const fresh = (x) => !(avoid && avoid.has(x.id));
+  const drawn = [...shuffled(fits.filter(x => !x.note && fresh(x)), rr), ...shuffled(fits.filter(x => x.note && fresh(x)), rr), ...shuffled(fits.filter(x => !fresh(x)), rr)].slice(0, 5);
+  return drawn.map(x => fromBank(book, rr, x.id)(x.raw));
+}
+// the sections of a class, in order (main.js: a written test passed without its classes marks them heard, and
+// the classes done — the exemption)
+export function classSectionIds(FL, i) { const book = gameBook(FL); return (CLASS_CHAPTERS[i] || []).flatMap(id => (book.chapters.find(c => c.id === id) || { sections: [] }).sections.map(s => s.id)); }
 // what the classroom shows for a 'page' hook (arg: a section id, or secId#k for its k-th lecture unit): the screen's page
 // { id, k (null: the section's first page), chapter, title, n (its units), summary, unit } in the words the class hears
 // (today's call sign; the svg of a figure as it is), and the whiteboard's { title, points, key } (its ここが大切, or its

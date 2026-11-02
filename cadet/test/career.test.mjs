@@ -129,6 +129,29 @@ test('career: the save — another version or broken data is not read, values of
   assert.equal(createCareer({ store: null, seed: 2 }).slot, SLOTS[0], 'no storage: still a career');
 });
 
+test('career: a v2 save under the redesign (v3) — its classes read by their chapters, as the order before was', () => {
+  // (v2's order: aero | sys perf | radio1 radio2 | radio3 radio4 | wx radio5 | law hf. The redesign's:
+  // aero | sys perf | radio2 | radio3 radio4 | radio5 | law hf — the weather and how a radio works are
+  // no longer classes)
+  const done = (d, more = {}) => cleanCareer({ v: 2, seed: 3, day: 9, slot: 'am', chapter: 'ch1', done: d, heard: {}, ...more }).done;
+  // (a class done whose chapters the new class keeps whole: done, at its day)
+  assert.equal(done({ 'class:0': 2 })['class:0'], 2);
+  assert.equal(done({ 'class:3': 6 })['class:3'], 6);
+  // (the old second class covered radio2, the new second's only chapter: it stays done)
+  assert.equal(done({ 'class:2': 5 })['class:2'], 5);
+  // (the old fourth covered radio5, the new fourth's only chapter: it stays done)
+  assert.equal(done({ 'class:4': 7 })['class:4'], 7);
+  // (nothing heard of radio2 alone — the old second not done: the new second not done either)
+  assert.equal(done({ 'class:1': 3 })['class:2'], undefined);
+  assert.deepEqual(done({}), {});
+  // (a class left midway: its place kept where the class's chapters are the very same, dropped where they changed)
+  const d = done({ 'lecture:1': 3, 'lecture:2': 2, 'lecture:4': 1, 'lecture:5': 4 });
+  assert.equal(d['lecture:1'], 3); assert.equal(d['lecture:5'], 4);
+  assert.equal(d['lecture:2'], undefined); assert.equal(d['lecture:4'], undefined);
+  // (a v3 save is read as it is)
+  assert.deepEqual(cleanCareer({ v: 3, seed: 3, day: 9, chapter: 'ch1', done: { 'class:2': 5, 'lecture:4': 1 }, heard: {} }).done, { 'class:2': 5, 'lecture:4': 1 });
+});
+
 test('career: one file for everything — written, read back cleaned; a wrong or broken file is refused with the reason', async () => {
   const fs = await import('node:fs'), vm = await import('node:vm'), path = await import('node:path'), { fileURLToPath } = await import('node:url');
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -340,7 +363,7 @@ test('career growth: a v1 save migrates — its progress is kept, the abilities 
   const old = { v: 1, seed: 3, day: 12, slot: 'pm', chapter: 'ch2', fatigue: 40, exams: { presolo: { tries: 1, best: 90, pass: true } }, done: { prologue: 1 } };
   const c = cleanCareer(old);
   assert.ok(c, 'a v1 save is read, not refused');
-  assert.equal(c.v, 2); assert.equal(c.day, 12); assert.equal(c.chapter, 'ch2'); assert.equal(c.exams.presolo.pass, true);
+  assert.equal(c.v, 3); assert.equal(c.day, 12); assert.equal(c.chapter, 'ch2'); assert.equal(c.exams.presolo.pass, true);
   assert.deepEqual(c.abilities, { hand: 10, know: 5, comm: 5, judge: 10 });
   assert.deepEqual(c.firstTry, { pass: 0, total: 0 }); assert.deepEqual(c.growth, {});
   // and a v2 save with a record keeps it, clamped to the axes' range
@@ -367,11 +390,14 @@ test('career growth: what a lesson, a device lesson and a class teach (the §4.1
   near(ftdGrowth('k2'), [['know', 1.6], ['hand', 0.6]], 'k2');
   near(ftdGrowth('k4'), [['comm', 2.4], ['hand', 0.6]], 'k4');
   near(ftdGrowth('k6'), [['comm', 2.4], ['hand', 0.6]], 'k6');
-  // a class: knowledge by its pace
-  near(classGrowth('full'), [['know', 6.0]], 'the full pace');
-  near(classGrowth('need'), [['know', 6.0 * 0.7]], 'only what is needed');
-  near(classGrowth('quick'), [['know', 6.0 * 0.45]], '要点だけ');
-  near(classGrowth(undefined), [['know', 6.0]], 'no pace said: the full one');
+  // a class: knowledge by its drill's score — a good one (the drill's own line, 80%) grows it most, a poor
+  // one a little, in the written tests' shape; no score said, the little one
+  near(classGrowth(100), [['know', 6.0]], 'the drill all right');
+  near(classGrowth(80), [['know', 6.0]], 'the drill at its pass line');
+  near(classGrowth(79), [['know', 1.8]], 'the drill just under');
+  near(classGrowth(0), [['know', 1.8]], 'the drill all wrong');
+  near(classGrowth(null), [['know', 1.8]], 'no score said');
+  near(classGrowth(undefined), [['know', 1.8]], 'no score said');
 });
 
 test('career exams: thirty questions everywhere, and a test is never taken twice in a day (§4.3)', () => {

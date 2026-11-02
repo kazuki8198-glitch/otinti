@@ -2,8 +2,11 @@
 // CADET — the ground-school reading load, measured: for every chapter-1 class, run its dialog the way the game does
 // (right answers) and count what a cadet must sit through on the REQUIRED path: the textbook units paged onto the
 // screen ('page' hooks), the lines shown, the minutes of reading (school.js's own readingSeconds), the decisions
-// and the drill's scored questions. After the redesign a class has no pace to choose: each section comes as a card
-// (its key points) and five scored questions close the class. --before <json> compares with a run of the classes as
+// and the drill's scored questions. A class's required path is the cards' way (the redesign's): each section
+// comes as a card (its key points) and five scored questions close the class — the runner takes the first way
+// offered at the format's choice, which is the cards'. (The choice has since been restored — じっくり reads
+// the whole textbook instead; this tool still measures the cards' way, the redesign's own numbers.) --before
+// <json> compares with a run of the classes as
 // they were (the three paces of the old classDialogs, measured by the version of this tool from before the
 // redesign). Usage: node tools/measure-zagaku.mjs [out.json] [--before before.json]
 import fs from 'node:fs';

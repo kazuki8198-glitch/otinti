@@ -14,10 +14,19 @@ export const FOCUS_VIEWS = [
   { id: 'stby', label: '予備計器・オーディオ' },
 ];
 export const FOCUS_IDS = FOCUS_VIEWS.map(v => v.id);
+// the 737's focus views (its own displays: the captain's PFD and ND, the EICAS pair, the CDU) — the focus
+// key visits these instead while the jet is the day's aircraft (cockpit.type says which)
+export const FOCUS_VIEWS_737 = [
+  { id: 'b737pfd', label: 'PFD（737）' },
+  { id: 'b737nd', label: 'ND（737）' },
+  { id: 'b737eicas', label: 'EICAS（737）' },
+  { id: 'b737cdu', label: 'FMC CDU' },
+];
+export const FOCUS_IDS_737 = FOCUS_VIEWS_737.map(v => v.id);
 // the next focus after cur (null = the pilot's view), cycling forward; an unknown id starts again at the PFD
-export function nextFocus(cur) {
-  const i = FOCUS_IDS.indexOf(cur);
-  return i < 0 ? FOCUS_IDS[0] : (i + 1 < FOCUS_IDS.length ? FOCUS_IDS[i + 1] : null);
+export function nextFocus(cur, ids = FOCUS_IDS) {
+  const i = ids.indexOf(cur);
+  return i < 0 ? ids[0] : (i + 1 < ids.length ? ids[i + 1] : null);
 }
 // how each focus view is framed: the field of view (degrees) and how far in front of the unit's face the eye sits
 // (metres). The bezel is 0.27 × 0.21 m: at 0.42 m and 38° it fills most of the height, its knobs still in frame;
@@ -26,6 +35,10 @@ export const FOCUS_FRAME = {
   pfd: { fov: 38, dist: 0.42 },
   mfd: { fov: 38, dist: 0.42 },
   stby: { fov: 46, dist: 0.46 },
+  b737pfd: { fov: 36, dist: 0.40 },
+  b737nd: { fov: 36, dist: 0.40 },
+  b737eicas: { fov: 40, dist: 0.44 },
+  b737cdu: { fov: 44, dist: 0.46 },
 };
 // the standby dials' centre from the MFD screen's centre, in the panel's own frame (metres): the dials stand at
 // x = 0.255 (the MFD's centre is 0.051) and a touch lower; the aim is pulled a little left, towards the audio panel

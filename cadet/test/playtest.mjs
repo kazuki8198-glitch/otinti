@@ -9,8 +9,8 @@
 // seminole: a chapter 5 day, from the walk-around to both engines running.
 // epilogue (M8): the evening of the graduation — out of the front doors, the 737's right seat at Haneda, the captain
 // (E to talk to him again, Esc for the menu), his goodbye, the academy's next morning.
-// ch1day: one day of chapter 1 (the 2nd argument: 2–9), as a cadet who took the days before at the pace PACE (need,
-// full or quick; the class chooses it by its name): the guide followed — or the ways skipped with G (SKIP=1) — the
+// ch1day: one day of chapter 1 (the 2nd argument: 2–9), as a cadet who took the days before in the format PACE (full
+// or card; the class chooses it by its name): the guide followed — or the ways skipped with G (SKIP=1) — the
 // class, the training device (k4: the chair flight flown, the right call each time), the evening's event, home. A few
 // pictures of the screen as it is, with SHOT=1 (test-output/ch1-<pace>-day<d>-*.jpg): the class, the device room, k4.
 // One browser; no pictures (the software renderer grows with every one) unless SHOT=1 (one at the end; ch1day's too).
@@ -79,7 +79,7 @@ async function waitCards() { for (let i = 0; i < 60; i++) { if (!(await ev(() =>
 // a talk, read and answered with the keys: Space for the next line, the number of a choice (the right answer where a
 // lesson asks, else one that goes on with the day)
 const AVOID = /また後で|あとで|やめ|戻る|今はいい/;
-const PACE = { need: /^今日の訓練に要る/, full: /^じっくり/, quick: /^要点だけ/ }[process.env.PACE || 'need'];
+const PACE = { full: /^じっくり/, card: /^カード/ }[process.env.PACE || 'card'];
 const shots = new Set();
 let shotIn = null;                                                  // (ch1day: the talk's nodes to take a picture at)
 async function picture(name) {
@@ -247,7 +247,7 @@ if (which === 'start') {
   }
 } else if (which === 'ch1day') {
   // the days before taken at PACE: their classes done, their sections heard, their lessons passed
-  const day = +daysArg, pace = process.env.PACE || 'need';
+  const day = +daysArg, pace = process.env.PACE || 'card';
   const M = await import('../tools/measure-ch1.mjs'), L = await M.load(), S = L.school;
   const CLASS_OF = { 2: 0, 3: 1, 5: 2, 6: 3, 7: 4, 8: 5 }, before = CLASS_OF[day] ?? (day === 4 ? 2 : 6);
   const heard = Object.fromEntries(S.sectionsBefore(L.FL, before).map(id => [id, pace === 'full' ? 'f' : 'q']));

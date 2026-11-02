@@ -113,6 +113,10 @@ export function createGlass(FL, makeCanvas) {
   const ENG1 = [ENG[0]];
   const OILP1 = [0], OILP2 = [0, 0], OILT1 = [0], OILT2 = [0, 0];   // (the systems' oil, handed to the MFD in place of the physics'; one array per engine count — the MFD reads a pair as L/R)
   const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 } };
+  // a tripped AHRS / GPS breaker fails the displays the way the lessons' own failures do (av.fail): the
+  // avionics state itself is the lesson's, so the drawing is handed a copy with the failure merged in —
+  // made once, refilled per draw (the per-frame rule below)
+  const CBAV = {}, CBFAIL = {};
   const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
   // the standby dials, drawn 15 times a second: the gradients, fonts and numerals are made once
   const grads = new Map(), fonts = new Map(), NUM = [];
@@ -131,7 +135,14 @@ export function createGlass(FL, makeCanvas) {
   // magneto drop included; aircraft/systems.js), in place of the physics' own for a single engine
   function fill(s, av, eng) {
     Object.assign(d.o, s.out); d.o.onGround = s.onGround;
-    d.av = av; d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
+    d.av = av;
+    if (eng && eng.elec && (eng.elec.cbAhrs || eng.elec.cbGps)) {
+      Object.assign(CBAV, av); Object.assign(CBFAIL, av.fail);
+      if (eng.elec.cbAhrs) CBFAIL.ahrs = true;
+      if (eng.elec.cbGps) CBFAIL.gps = true;
+      CBAV.fail = CBFAIL; d.av = CBAV;
+    }
+    d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
     d.traffic = av && Array.isArray(av.trafficPos) ? av.trafficPos : null;   // (CADET's pattern traffic, when fly-mode hands it over)
     d.nav = AV.navSolve(av, d.pos, s.out, P.MAGVAR_W, P.LAB_RWY);
     d.qnh = s.qnh; d.V = s.A.v; d.fuelCap = s.A.fuelCap;
@@ -299,14 +310,21 @@ export function createGlass(FL, makeCanvas) {
     // the case's black rim (covers the card's edge)
     g.strokeStyle = '#050505'; g.lineWidth = R * 0.08; g.beginPath(); g.arc(cx, cy, R * 0.98, 0, Math.PI * 2); g.stroke();
   }
-  // all three at once: o = s.out, alt = indicated altitude (ft), baro (inHg), hpa = the setting shown in hPa
-  function drawStandby(o, alt, baro, hpa, V) {
+  // all three at once: o = s.out, alt = indicated altitude (ft), baro (inHg), hpa = the setting shown in hPa;
+  // attOff: the attitude dial's breaker (TURN) is out — the gyro is flagged off, as the real dial flags it
+  function drawStandby(o, alt, baro, hpa, V, attOff) {
     if (!dyn) return;
     stats.standby++;
     const g = dyn.g;
     const A = DYN.asi, T = DYN.att, H = DYN.alt;
     drawASI(g, A[0] + A[2] / 2, A[1] + A[3] / 2, A[2] / 2 - 2, o.ias || 0, V);
-    drawATT(g, T[0] + T[2] / 2, T[1] + T[3] / 2, T[2] / 2 - 2, o.pitch || 0, o.bank || 0);
+    if (attOff) {
+      const cx = T[0] + T[2] / 2, cy = T[1] + T[3] / 2, R = T[2] / 2 - 2;
+      face(g, cx, cy, R);
+      g.fillStyle = '#b3271e'; g.fillRect(cx - R * 0.44, cy - R * 0.17, R * 0.88, R * 0.34);
+      g.fillStyle = '#fff'; g.font = font(700, Math.round(R * 0.26)); g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('OFF', cx, cy + 1);
+    } else drawATT(g, T[0] + T[2] / 2, T[1] + T[3] / 2, T[2] / 2 - 2, o.pitch || 0, o.bank || 0);
     drawALT(g, H[0] + H[2] / 2, H[1] + H[3] / 2, H[2] / 2 - 2, alt, baro, hpa);
     dyn.texture.needsUpdate = true;
   }

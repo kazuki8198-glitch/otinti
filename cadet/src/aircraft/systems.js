@@ -62,23 +62,28 @@ export function createSystems(sw) {
   // avionics load falls to the essential bus (PFD + comm, about 4 A), and the PFD stays alive until the
   // battery is flat — so shedding early, and switching the avionics master off, buys real PFD time. The
   // standby instruments have their own battery: they live while it lasts, even with the main bus dead.
-  const elec = { batt: 1, standby: 1, volts: 12.6, amps: 0, altFail: false, flat: false, gen: 0, load: 0, batOn: false, altOn: false, shed: 0, pfdOn: false, mfdOn: false, standbyOn: true };
+  const elec = { batt: 1, standby: 1, volts: 12.6, amps: 0, altFail: false, flat: false, gen: 0, load: 0, batOn: false, altOn: false, shed: 0, pfdOn: false, mfdOn: false, standbyOn: true, cbAhrs: false, cbGps: false };
   let hobbs = 471.2;                                       // (this airframe's meter; session only — nothing saves it)
   // (the split switches are the cockpit's own: the presets never grow them, so a caller driving the legacy
   // master alone — a checklist, a test — is never overridden by a stale bat/alt left in the object)
   const batOnF = () => (sw.bat != null ? !!sw.bat : !!sw.master);
   const altOnF = () => (sw.alt != null ? !!sw.alt : !!sw.master);
   function elecUpdate(dt, rpmNow, cranking) {
-    const batOn = batOnF(), altOn = altOnF();
-    if (sw.bat != null && sw.alt != null) sw.master = batOn || altOn;   // (the legacy switch mirrors the split ones)
+    // the breakers sit between the switches and the bus (Phase: cockpit correctness): the MASTER breaker
+    // out leaves the whole bus dead however the switches stand, the ALT FLD breaker takes the alternator
+    // off the line, and each load's own breaker unloads it. A switches object without the cb fields (a
+    // checklist's, a test's) reads as every breaker in.
+    const rawBat = batOnF(), rawAlt = altOnF();
+    if (sw.bat != null && sw.alt != null) sw.master = rawBat || rawAlt;   // (the legacy switch mirrors the split ones)
+    const batOn = rawBat && !sw.cbMASTER, altOn = rawAlt && !sw.cbMASTER && !sw.cbALTFLD;
     const gen = altOn && !elec.altFail ? clamp((rpmNow - 500) / 500, 0, 1) * 55 : 0;
     const onBat = gen <= 1 && batOn;
     const shed = onBat && elec.batt < 0.45 ? 1 : 0;
     let load = 0;
     if (sw.avionics) load += shed ? 4 : 9;                  // (shed: the essential bus only — the PFD and the comm radio)
-    if (sw.beacon) load += 2; if (sw.nav) load += 2.5; if (sw.strobe) load += 1.5;
-    if (!shed) { if (sw.landing) load += 9; if (sw.taxi) load += 6; if (sw.pitot) load += 4; }
-    if (sw.fuelPump) load += 2.5;
+    if (sw.beacon && !sw.cbBEACON) load += 2; if (sw.nav && !sw.cbNAVLT) load += 2.5; if (sw.strobe && !sw.cbSTROBE) load += 1.5;
+    if (!shed) { if (sw.landing && !sw.cbLDGLT) load += 9; if (sw.taxi && !sw.cbTAXILT) load += 6; if (sw.pitot && !sw.cbPITOT) load += 4; }
+    if (sw.fuelPump && !sw.cbFUELPUMP) load += 2.5;
     if (cranking) load += 65;
     if (!batOn && !altOn) load = 0;
     let net = gen - load;
@@ -90,10 +95,12 @@ export function createSystems(sw) {
     elec.amps = dead || !batOn ? 0 : Math.round(net);
     elec.flat = elec.batt <= 0.02;
     elec.gen = Math.round(gen); elec.load = Math.round(load); elec.batOn = batOn; elec.altOn = altOn; elec.shed = shed;
-    elec.pfdOn = gen > 1 || (batOn && !dead);
-    elec.mfdOn = elec.pfdOn && !shed;
+    const busLive = gen > 1 || (batOn && !dead);
+    elec.pfdOn = busLive && !sw.cbPFD;
+    elec.mfdOn = busLive && !shed && !sw.cbMFD;
+    elec.cbAhrs = !!sw.cbAHRS; elec.cbGps = !!sw.cbGPS1;   // (the glass reads these: a tripped AHRS / GPS breaker fails the PFD / the map, as the lessons' own failures do)
     if (gen > 1) elec.standby = Math.min(1, elec.standby + dt / 3600);
-    else if (!elec.pfdOn) elec.standby = Math.max(0, elec.standby - dt / (2.5 * 3600));   // (the standby battery carries its instruments for about two and a half hours)
+    else if (!busLive) elec.standby = Math.max(0, elec.standby - dt / (2.5 * 3600));   // (the standby battery carries its instruments for about two and a half hours)
     elec.standbyOn = elec.standby > 0.02;
   }
   // oil temperature (°F, the holder is st or one twin engine): minutes behind power, cooling slowly stopped;
@@ -181,8 +188,8 @@ export function createSystems(sw) {
     // the electric boost pump and the pitot heat answer to the bus as it was left last frame: the pump runs
     // while the bus can feed it; shed (stage 2) or a flat bus stills it, and the pitot heat with it
     const busLive = (elec.gen || 0) > 1 || (elec.batOn && !elec.flat);
-    s.boostPump = !!sw.fuelPump && busLive;
-    s.pitotHeat = !!sw.pitot && busLive && !elec.shed;
+    s.boostPump = !!sw.fuelPump && busLive && !sw.cbFUELPUMP;
+    s.pitotHeat = !!sw.pitot && busLive && !elec.shed && !sw.cbPITOT;
     if (s.eng.length > 1) return twinUpdate(dt, s);
     const e = s.eng[0], master = batOnF();   // (the starter answers to the BAT switch; sw.master where the split switches are not in use)
     if (st.eng === 'off' || st.eng === 'stopping') {
@@ -226,9 +233,11 @@ export function createSystems(sw) {
       else if (sw.mag === 'OFF') why = 'マグネトー OFF';
       else if (st.lineT <= 0) why = '燃料セレクター OFF';
       if (why) { st.eng = 'stopping'; cut(s, true); emit('stop', why); }
-      else if (e && (e.failed || s.fuel[0] + s.fuel[1] <= 0)) {
-        // stopped by the physics itself (a lesson's engine failure, no fuel left): the physics' own state is left alone
-        // (a restart there brings it back), the gauge shows its rpm
+      else if (e && (e.failed || e.feedOk === false)) {
+        // stopped by the physics itself (a lesson's engine failure, or starved: the selected tank dry —
+        // the physics' feed says so once the fuel in the lines is gone, whatever the totaliser still
+        // shows in the other tank): the physics' own state is left alone (a restart there brings it
+        // back), the gauge shows its rpm
         if (!st.dead) { st.dead = true; emit('stop', e.failed ? '故障' : '燃料切れ'); }
         st.rpm = e.rpm || 0; st.oil = Math.max(0, st.oil - 30 * dt);
       } else {
@@ -288,6 +297,10 @@ export function createSystems(sw) {
         if (t.rpm <= 0.5 && t.eng === 'stopping') t.eng = 'off';
       } else if (t.eng === 'run') {
         if (e && (e.failed || e.feather)) { t.rpm = e.rpm || 0; return; }
+        // this engine's own valve shut, or its tank (and the crossfeed's) dry: the physics starves it
+        // once the lines are empty — the systems' state follows, or the gauges would swear a stopped
+        // engine is running (its oil pressure held up, the day's checks reading it as live)
+        if (e && e.feedOk === false) { t.eng = 'stopping'; cut(s, true, k); emit('stop', e.sel === 'OFF' ? '燃料セレクター OFF' : '燃料切れ'); return; }
         // (the constant-speed propeller's governor keeps the physics' rpm up; at low power on the ground the gauge
         // reads as the lever is set: about 1,000 rpm a little open, 2,000 for the run-up)
         const lever = s.thr < 0.045 ? 650 + s.thr / 0.045 * 350 : 1000 + (s.thr - 0.045) / 0.625 * 1000, r = Math.min(e ? e.rpm || 0 : 0, lever), kk = clamp((r - 700) / 1300, 0, 1.25);
@@ -340,7 +353,7 @@ export function createSystems(sw) {
     if (st.crankLock || twin.some(t => t.crankLock)) A.push({ id: 'STARTER HOT', level: 'caution', text: 'STARTER HOT' });
     if (elec.altFail && running.some(Boolean)) A.push({ id: 'ALTERNATOR', level: 'caution', text: 'ALTERNATOR FAIL' });
     if (elec.volts > 0 && elec.volts < 12 && elec.batOn && (running.some(Boolean) || (s && !s.onGround))) A.push({ id: 'LOW VOLTS', level: 'caution', text: 'LOW VOLTS' });
-    if (s && s.eng && s.eng.some(e => e.run && (e.fuelPress || 0) < 0.25)) A.push({ id: 'FUEL PRESS', level: 'caution', text: 'FUEL PRESS LOW' });
+    if (s && s.eng && s.eng.some(e => e.run && (e.fuelPress || 0) < 0.5)) A.push({ id: 'FUEL PRESS', level: 'caution', text: 'FUEL PRESS LOW' });   // (the physics' teaching scale: under half is a starving engine — the same line the avionics' own CAS derivation uses)
     if (s && !s.onGround && s.out && s.out.agl != null && s.out.agl < 2000 && s.A && s.A.gear && !s.A.gear.fixed && (s.gearPos || 0) < 0.999) A.push({ id: 'GEAR', level: 'warn', text: 'GEAR UNSAFE' });
     A.sort((a, b) => (a.level === b.level ? 0 : a.level === 'warn' ? -1 : 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     alertsArr = A; if (s && s.out) s.out.alerts = A;
@@ -355,6 +368,6 @@ export function createSystems(sw) {
     twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
-    get powered() { return batOnF() || altOnF(); }, get avionicsOn() { return !!((batOnF() || altOnF()) && sw.avionics); },
+    get powered() { return (batOnF() || altOnF()) && !sw.cbMASTER; }, get avionicsOn() { return !!((batOnF() || altOnF()) && !sw.cbMASTER && sw.avionics); },
   };
 }

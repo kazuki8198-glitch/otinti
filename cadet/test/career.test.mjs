@@ -400,6 +400,28 @@ test('career growth: what a lesson, a device lesson and a class teach (the §4.1
   near(classGrowth(undefined), [['know', 1.8]], 'no score said');
 });
 
+test('career: a class\'s format is kept with it — the pace chosen last anywhere, each class\'s own format, and a save without the record reads clean (the record is an addition: no version bump)', () => {
+  const st = memStore(), C = createCareer({ store: st, seed: 11 });
+  C.setPace('card'); assert.equal(C.state.lastPace, 'card', 'the cards are a pace the career keeps');
+  C.setPace('need'); assert.equal(C.state.lastPace, 'need', 'a pace of the order before is still kept');
+  C.setPace('bogus'); assert.equal(C.state.lastPace, 'need', 'an unknown pace is not');
+  C.setClassPace(2, 'full'); assert.equal(C.state.classPace['class:2'], 'full', 'a class read in full');
+  C.setClassPace(2, 'quick'); assert.equal(C.state.classPace['class:2'], 'full', 'only the two formats are kept');
+  C.setClassPace(3, 'card'); assert.equal(C.state.classPace['class:3'], 'card');
+  // in the save, and back out of it
+  const back = createCareer({ store: st, seed: 11 });
+  assert.deepEqual(back.state.classPace, { 'class:2': 'full', 'class:3': 'card' });
+  assert.equal(back.state.lastPace, 'need');
+  // a save from before the record was kept: none of it, and nothing else changed
+  const raw = JSON.parse(st.getItem(CAREER_KEY)); delete raw.classPace;
+  const cleaned = cleanCareer(raw);
+  assert.deepEqual(cleaned.classPace, {});
+  assert.equal(cleaned.v, raw.v, 'the version is the save\'s own');
+  // and a kept record with a value that is no format is cleaned away
+  raw.classPace = { 'class:0': 'full', 'class:1': 'need', bogus: 'card' };
+  assert.deepEqual(cleanCareer(raw).classPace, { 'class:0': 'full' });
+});
+
 test('career exams: thirty questions everywhere, and a test is never taken twice in a day (§4.3)', () => {
   for (const [id, E] of Object.entries(EXAMS)) assert.equal(E.n, 30, id);
   const st = memStore(), C = createCareer({ store: st, seed: 11 });

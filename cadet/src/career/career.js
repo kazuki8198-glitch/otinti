@@ -68,11 +68,13 @@ export function lessonGrowth(grade, levelId, lessonId, tired = false) {
 export function ftdGrowth(id) {
   return (id === 'k3' || id === 'k4' || id === 'k5' || id === 'k6') ? [['comm', 2.4], ['hand', 0.6]] : [['know', 1.6], ['hand', 0.6]];
 }
-// (growth design v1 §4.1; the redesign) a class done: knowledge by the score of the class's own drill — the five
-// questions at its end (content/school.js's class drill). In the written tests' shape (exam(): a pass grows it
-// most, a fail a little): a good score — 80% and over, the drill's own pass line — grows it by the old full
-// class's 6.0, a poor one by 1.8 (three tenths of it, as the test's 1.2 is of its 4.0). No score said (a class
-// whose drill was not reached): the little one
+// (growth design v1 §4.1; the redesign, and the format choice restored) a class done: knowledge by how the
+// class was taken. As cards: by the score of the class's own drill — the five questions at its end
+// (content/school.js's class drill), in the written tests' shape (exam(): a pass grows it most, a fail a
+// little): a good score — 80% and over, the drill's own pass line — grows it by the full class's 6.0, a poor
+// one by 1.8 (three tenths of it, as the test's 1.2 is of its 4.0). In full (the whole textbook read): the
+// 6.0 itself, whatever its chapter questions scored — the caller passes 100 for a class kept as 'full' (its
+// format is in classPace). No score said (a class whose drill was not reached): the little one
 export function classGrowth(pct) {
   return [['know', pct != null && pct >= 80 ? 6.0 : 1.8]];
 }
@@ -392,10 +394,14 @@ export function newCareer(seed = 1) {
     // the first-officer phase is done, and the sectors at a failed line check (offered again at +4)
     fo: FO_DEFAULT(),
     // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
-    // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
+    // pace chosen last, the format each class was begun in ('full' | 'card': a class taken up midway goes on in
+    // its own), how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
-    heard: {}, lastPace: null, attempts: {}, answers: {}, walked: [] };
+    heard: {}, lastPace: null, classPace: {}, attempts: {}, answers: {}, walked: [] };
 }
+// (the paces of the order before the redesign, kept for the saves that name them: a save's lastPace may be
+// any of these, or 'card' — the class's formats now are 'full' (the whole textbook) and 'card' (the redesign's
+// key-point cards and drill); 'need' and 'quick' both read as 'card' where a format is wanted)
 export const PACE_IDS = ['need', 'full', 'quick'];
 const SEC_ID = /^[a-z0-9]{1,12}\.[a-z0-9]{1,16}$/, Q_ID = /^[a-z0-9_]{1,12}[#:][a-z0-9_.]{1,24}$/, ATTEMPT_ID = /^[a-z0-9]{1,12}:[a-z0-9_]{1,16}$/;
 // a saved state that can be used: this version, the parts of the right kind (a cleaned copy), else null.
@@ -470,7 +476,11 @@ export function cleanCareer(o) {
     const today = (d) => d === s.day;
     if (s.chapter === 'ch1' && [...chapters.values()].some(today) && !CLASSES.some((_, i) => today(s.done[`class:${i}`]))) s.slot = 'morning';
   }
-  if (PACE_IDS.includes(o.lastPace)) s.lastPace = o.lastPace;
+  if (PACE_IDS.includes(o.lastPace) || o.lastPace === 'card') s.lastPace = o.lastPace;
+  // (a class's format, kept with it: a save from before it was kept has none — its classes are asked again
+  // when begun, and one left midway goes on as the pace chosen last says. Read if present, so no version
+  // bump: the record is an addition, not a change of shape)
+  if (isObj(o.classPace)) for (const [k, v] of Object.entries(o.classPace)) if (ATTEMPT_ID.test(k) && (v === 'full' || v === 'card')) s.classPace[k] = v;
   if (isObj(o.attempts)) for (const [k, v] of Object.entries(o.attempts)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.attempts[k] = Math.min(v, 9999);
   if (isObj(o.answers)) for (const [k, v] of Object.entries(o.answers).slice(0, 400)) {
     if (Q_ID.test(k) && Array.isArray(v) && v.length === 4 && v.every(Number.isInteger)) s.answers[k] = [clamp(v[0], 0, 9999), clamp(v[1], 0, 9999), v[2] ? 1 : 0, clamp(v[3], 0, 9999)];
@@ -793,7 +803,10 @@ export function createCareer({ store = null, seed } = {}) {
     heardSection(id, how) { if (!SEC_ID.test(String(id)) || (how !== 'f' && how !== 'q')) return; if (st.heard[id] !== 'f') st.heard[id] = how; save(); },
     // the sections heard: the record, and the classes finished before it was kept (heard in full: see cleanCareer)
     heardSet: () => heardSet(st),
-    setPace(p) { if (PACE_IDS.includes(p)) { st.lastPace = p; save(); } },
+    setPace(p) { if (PACE_IDS.includes(p) || p === 'card') { st.lastPace = p; save(); } },
+    // a class's format, chosen at its start and kept with the class: a class taken up midway goes on in it,
+    // and a class read in full grows the knowledge by the full class's own amount (classGrowth)
+    setClassPace(i, p) { const k = `class:${i}`; if (ATTEMPT_ID.test(k) && (p === 'full' || p === 'card')) { st.classPace[k] = p; save(); } },
     // a room walked into on foot (kept: the way there may be skipped the next time)
     walkedInto(room) { if (typeof room === 'string' && /^[a-z0-9-]{1,16}$/.test(room) && !st.walked.includes(room) && st.walked.length < 40) { st.walked.push(room); save(); } },
     // a class, a lesson, a test begun: how many times before (its questions come in another order each time)

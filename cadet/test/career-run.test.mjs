@@ -36,8 +36,9 @@ const FL = globalThis.FL, SC = FL.school;
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };
 
 // the career from its first day to the first solo; intro: the first afternoon's introductory flight flown ('fly': the
-// scripted cadet, flight/intro-flight.js) or declined ('no')
-function careerToSolo(intro) {
+// scripted cadet, flight/intro-flight.js) or declined ('no'); paceRe: the classes' format, by its name at their
+// choice (the whole textbook, unless the cards are named)
+function careerToSolo(intro, paceRe = /^じっくり/) {
   const career = createCareer({ store: memStore(), seed: 11 });
   const talk = createDialogState(), prog = SC.sanitizeProgress({});
   const log = [], flown = [];
@@ -84,8 +85,8 @@ function careerToSolo(intro) {
           career.done('intro', 'flight');
         } else { assert.equal(done, 'meet'); career.done('intro', 'no'); }
       }
-      // (the class's pace by its name: the whole textbook; the career keeps what was heard and answered, as the game does)
-      else if (it.kind === 'class') { const q = { quiz: {} }, s2 = createDialogState(), d = classDialogs(FL, +it.id, { seed: st.seed, ...classOptions(FL, career.state, +it.id, { attempt: career.attempt(`class:${it.id}`) }) }); run(d, 'class', { state: s2, ctx: q, pick: [/^じっくり/], hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); careerHook(career, n, a); } }); career.done('class', it.id); }
+      // (the class's format by its name: the whole textbook; the career keeps what was heard and answered, as the game does)
+      else if (it.kind === 'class') { const q = { quiz: {} }, s2 = createDialogState(), d = classDialogs(FL, +it.id, { seed: st.seed, ...classOptions(FL, career.state, +it.id, { attempt: career.attempt(`class:${it.id}`) }) }); run(d, 'class', { state: s2, ctx: q, pick: [paceRe], hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'pace') career.setClassPace(+it.id, a); careerHook(career, n, a); } }); career.done('class', it.id); }
       else if (it.kind === 'ftd' || it.kind === 'exam') {
         const q = { quiz: {} }, s2 = createDialogState(), heard = heardOf(FL, career.state), d = it.kind === 'ftd' ? ftdDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`ftd:${it.id}`) }) : examDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`exam:${it.id}`) });
         let result = null;
@@ -145,6 +146,19 @@ test('career run: from the first day to the first solo — every gate in order, 
   assert.equal(f.career.state.done['intro:flight'], 1); assert.equal(st.done['intro:no'], 1);
   assert.deepEqual(f.log, log); assert.deepEqual(f.flown, flown);
   assert.equal(f.career.state.solo.day, st.solo.day);
+});
+
+// the same road with the classes taken the other way — as cards and a drill (the drill answered right, as
+// the bot answers): the gates are the format's neither to open nor to hold, and the solo comes as it does
+test('career run: the classes as cards and a drill — the same road to the first solo', { timeout: 1800000 }, () => {
+  const { career, prog, days } = careerToSolo('no', /^カード/);
+  const st = career.state;
+  assert.ok(st.solo, `the solo was flown (after ${days} days)`);
+  assert.equal(st.chapter, 'ch2');
+  for (const id of GROUND) assert.ok(prog.lessons[id] && prog.lessons[id].pass, id);
+  assert.ok(CLASSES.every((_, i) => st.done[`class:${i}`]), 'every class taken');
+  assert.ok(st.exams.written1.pass && st.exams.presolo.pass);
+  assert.ok(days >= 18 && days <= 60, `${days} days`);
 });
 const FLY_KINDS = ['flight', 'checkride', 'solo', 'night'];
 // what the game does with a lesson's hooks to the career (main.js onHook): the pace, a section heard, an answer

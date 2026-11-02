@@ -57,6 +57,9 @@ const PAGES = [['today', '今日'], ['progress', '進み具合'], ['logbook', '�
 //   solo, book: [{ id, n, title, sections: [{ id, title }] }], banks: [{ id, title, n }], evening, canWait }
 // act: { logbook(), read(sectionId), practice(bankId), exportSave() → text, importSave(text) → message, reset(), wait(), home(),
 //   (M8) notes: { list(), draft, setDraft(t), add(t), remove(id), clear(), export() } }
+// (the ANA triage label 【必須】/【推奨】/【ゲーム内のみ】 comes from content/ana-triage.js — a display only)
+import { tagChip } from '../content/ana-triage.js';
+
 export function createTablet({ doc = document, model, act, onClose } = {}) {
   if (!doc.getElementById('tb-css')) { const st = doc.createElement('style'); st.id = 'tb-css'; st.textContent = CSS; doc.head.appendChild(st); }
   const make = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -65,7 +68,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
   const root = make('div', 'tb'); root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'タブレット');
   const dev = make('section', 'tb-dev'), top = make('nav', 'tb-top'), scr = make('div', 'tb-scr');
   put(dev, top, scr); put(root, dev); doc.body.appendChild(root);
-  let page = 'today', bookCh = null, msg = '';
+  let page = 'today', bookCh = null, bookMust = false, msg = '';
 
   function nav(m) {
     top.textContent = '';
@@ -133,7 +136,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
       const sg = make('div', 'tb-marks');
       for (const c of m.marks) for (const ch of c.chapters) {
         const card = put(make('div', 'tb-card'), make('h3', '', `第 ${ch.n} 章　${ch.title}`)), ul = make('ul', 'tb-list');
-        for (const x of ch.sections) put(ul, put(make('li'), make('span', 'st' + (x.mark === '✓' ? ' ok' : x.mark === '△' ? ' ng' : ''), x.mark || '　'), make('span', '', `${x.title}${x.how === 'q' ? '（要点だけ）' : ''}`)));
+        for (const x of ch.sections) put(ul, put(make('li'), make('span', 'st' + (x.mark === '✓' ? ' ok' : x.mark === '△' ? ' ng' : ''), x.mark || '　'), make('span', '', `${x.title}${tagChip(x.tag) ? ` ${tagChip(x.tag)}` : ''}${x.how === 'q' ? '（要点だけ）' : ''}`)));
         put(card, ul); put(sg, card);
       }
       put(scr, sg);
@@ -141,7 +144,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (m.written1) {
       const w = put(make('div', 'tb-card'), make('h3', '', '学科試験（第 1 章）への準備：30 問、分野ごとに最大 5 問出ます'));
       const ul = make('ul', 'tb-list');
-      for (const b of m.written1) put(ul, put(make('li'), make('span', 'st' + (b.taught >= 4 ? ' ok' : ''), `${b.taught} 問`), make('span', '', `${b.title}：習った問題 ${b.taught} / ${b.total}、前回正解 ${b.right}`)));
+      for (const b of m.written1) put(ul, put(make('li'), make('span', 'st' + (b.taught >= 4 ? ' ok' : ''), `${b.taught} 問`), make('span', '', `${b.title} ${tagChip(b.tag)}：習った問題 ${b.taught} / ${b.total}、前回正解 ${b.right}`)));
       put(w, ul); put(scr, w);
     }
     put(scr, make('h3', '', '第 2 章　ソロまでの課目（「基礎」以上で合格したもの）'));
@@ -151,7 +154,23 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
   }
   function logbook() { put(scr, make('h2', '', '航空日誌'), make('p', 'sub', '訓練所の記録です。飛んだ日ごとに、教官の署名が入ります。'), btn('航空日誌を開く', () => act.logbook())); }
   function book(m) {
-    put(scr, make('h2', '', '教科書'));
+    put(scr, make('h2', '', '教科書'),
+      // (the triage: what a real airline cadet has to know too. 【必須】 real training and examinations;
+      // 【推奨】 worth knowing, not needed at first; 【ゲーム内のみ】 only this academy's own)
+      make('p', 'sub', '節のタグは、本物の訓練生として要るかどうかの目安です。【必須】本物の訓練・試験・実務でも要る　【推奨】知っていると強いが、はじめは必須ではない　【ゲーム内のみ】この訓練所だけのこと'),
+      btn(bookMust ? '全部を表示' : '必須だけを表示', () => { bookMust = !bookMust; draw(); }, 'tb-btn ghost'));
+    if (bookMust) {
+      // (the must-only list: every 【必須】 section, grouped by chapter, straight to the section)
+      for (const c of m.book) {
+        const must = c.sections.filter(s => s.tag === 'must');
+        if (!must.length) continue;
+        put(scr, make('h3', '', `第 ${c.n} 章　${c.title}`));
+        const ul = make('ul', 'tb-list');
+        for (const s of must) put(ul, put(make('li'), btn(`${s.title} ${tagChip(s.tag)}`, () => act.read(s.id), 'tb-btn ghost')));
+        put(scr, ul);
+      }
+      return;
+    }
     if (!bookCh) {
       const ul = make('ul', 'tb-list');
       for (const c of m.book) put(ul, put(make('li'), btn(`第 ${c.n} 章　${c.title}`, () => { bookCh = c.id; draw(); }, 'tb-btn ghost')));
@@ -160,7 +179,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     const c = m.book.find(x => x.id === bookCh);
     put(scr, btn('← 章の一覧', () => { bookCh = null; draw(); }, 'tb-btn ghost'), make('h3', '', `第 ${c.n} 章　${c.title}`));
     const ul = make('ul', 'tb-list');
-    for (const s of c.sections) put(ul, put(make('li'), btn(s.title, () => act.read(s.id), 'tb-btn ghost')));
+    for (const s of c.sections) put(ul, put(make('li'), btn(`${s.title} ${tagChip(s.tag)}`.trim(), () => act.read(s.id), 'tb-btn ghost')));
     put(scr, ul);
   }
   function practice(m) {
@@ -169,14 +188,14 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (act.exam && m.examNow) {
       put(scr, make('h2', '', '学科試験（本番）'), make('p', 'sub', '授業を受けていなくても受けられます。合格すると、その試験がカバーする座学は修了扱いになります（1 日に 1 回まで）。'));
       const ec = make('div', 'tb-card');
-      put(ec, make('h3', '', m.examNow.title), btn('受験する', () => { close(); act.exam(m.examNow.id); }));
+      put(ec, make('h3', '', `${m.examNow.title} ${tagChip(m.examNow.tag)}`.trim()), btn('受験する', () => { close(); act.exam(m.examNow.id); }));
       put(scr, ec);
     }
     if (m.weak && m.weak.banks && m.weak.banks.length) {
       put(scr, make('h2', '', '弱い分野'), make('p', 'sub', 'この前の学科試験で 6 割に届かなかった分野です。練習で確かめてから、また受けられます。'));
       const g = make('div', 'tb-grid');
       for (const b of m.weak.banks) {
-        const c = put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', `この前の試験で ${b.pct}%`));
+        const c = put(make('div', 'tb-card'), make('h3', '', `${b.title} ${tagChip(b.tag)}`.trim()), make('div', 'sub', `この前の試験で ${b.pct}%`));
         put(c, btn('練習する', () => { close(); act.practice(b.id); }));
         put(g, c);
       }
@@ -184,7 +203,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     }
     // (the judgement drill, §4.4: read the morning's weather ten times; the judgement grows, twice a day)
     if (act.drill) {
-      put(scr, make('h2', '', '判断ドリル'), make('p', 'sub', '朝の天気（METAR と TAF）を読んで、飛ぶ・午後まで待つ・午前だけ飛ぶ・今日は飛ばない、を選びます（10 問）。ソロに要る判断が、少し育ちます。'));
+      put(scr, make('h2', '', '判断ドリル【必須】'), make('p', 'sub', '朝の天気（METAR と TAF）を読んで、飛ぶ・午後まで待つ・午前だけ飛ぶ・今日は飛ばない、を選びます（10 問）。ソロに要る判断が、少し育ちます。本物の訓練でも、天気を読んで行く・行かないを決める力は必須です。'));
       const dc = make('div', 'tb-card');
       if (m.drillsLeft > 0) { put(dc, make('div', 'sub', `今日はあと ${m.drillsLeft} 回できます`)); put(dc, btn('ドリルを始める', () => { close(); act.drill(); })); }
       else put(dc, make('div', 'sub', '今日の分は終わりました。また明日。'));
@@ -203,7 +222,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     const g = make('div', 'tb-grid');
     // (chapter 1: the questions the classes have said; none yet, no practice there)
     for (const b of m.banks) {
-      const n = b.taught ?? b.n, c = put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', n ? (n < b.n ? `授業で話した ${n} 問から ${Math.min(10, n)} 問` : `${b.n} 問から 10 問`) : 'まだ授業で話していません'));
+      const n = b.taught ?? b.n, c = put(make('div', 'tb-card'), make('h3', '', `${b.title} ${tagChip(b.tag)}`.trim()), make('div', 'sub', n ? (n < b.n ? `授業で話した ${n} 問から ${Math.min(10, n)} 問` : `${b.n} 問から 10 問`) : 'まだ授業で話していません'));
       if (n) put(c, btn('練習する', () => { close(); act.practice(b.id); }));
       put(g, c);
     }

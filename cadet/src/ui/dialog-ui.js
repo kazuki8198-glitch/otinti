@@ -14,6 +14,8 @@
 // what is heard comes back through setAskText and only fills the field — sending is still the player's own Enter.
 // Works with a mouse, a keyboard or a touch screen, at phone width. The CSS is injected once and scoped under #dlg, so
 // it cannot leak into the game's HUD.
+import { voiceParamsFor } from './voice-params.js';
+
 const CSS = `
 #dlg { position: fixed; inset: 0; z-index: 25; pointer-events: none; font-family: var(--font, system-ui, sans-serif); color: var(--ink, #eef3f8); }
 #dlg [hidden] { display: none !important; }
@@ -367,8 +369,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     onNext();
   }
 
-  // ---- the instructor's voice (settings.voice): the browser's speech synthesis, only with a Japanese voice (M8: an
-  // English one for the crew's English lines)
+  // ---- the voices (settings.voice; full voice: everyone, the player's lines included, each at their own pitch
+  // and rate — ui/voice-params.js; the narrator stays silent): the browser's speech synthesis, only with a
+  // Japanese voice (M8: an English one for the crew's English lines)
   function jaVoice(lang = 'ja') {
     try {
       const vs = win.speechSynthesis.getVoices() || [], re = lang === 'en' ? /^en([-_]|$)/i : /^ja([-_]|$)/i;
@@ -379,12 +382,14 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function speak(v) {
     hush();
     if (!settings || typeof settings.get !== 'function' || !settings.get('voice')) return;
-    if (!v || v.pending || v.speaker === 'player' || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
+    if (!v || v.pending || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
     const voice = jaVoice(v.lang === 'en' ? 'en' : 'ja');
     if (!voice) return;
     try {
       const u = new win.SpeechSynthesisUtterance(String(v.text).replace(/\s+/g, ' '));
-      u.voice = voice; u.lang = voice.lang; u.rate = 1.05;
+      // (full voice) each speaker at their own pitch and rate (ui/voice-params.js) — the player's chosen lines too
+      const vp = voiceParamsFor(v.speaker);
+      u.voice = voice; u.lang = voice.lang; u.pitch = vp.pitch; u.rate = vp.rate;
       const vol = settings.get('volume'); if (typeof vol === 'number') u.volume = Math.min(1, Math.max(0, vol));
       win.speechSynthesis.speak(u); spoke = true;
     } catch (e) { /* no voice this time */ }

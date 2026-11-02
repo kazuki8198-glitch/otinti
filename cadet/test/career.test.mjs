@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { STAGE, CHECKS, LATER, weatherFor2, nextIn, createCareer, newCareer, cleanCareer, prologueFlags, PROLOGUE_FLAGS, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, noteGround, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, SOLO_JUDGE, CAREER_KEY, SLOTS, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk, MISS_LABELS } from '../src/career/career.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { careerInstructorDialogs, CAREER_HOOKS } from '../src/content/dialog/instructor-career.js';
 
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), m }; };
 const rec = (levels = ['basic']) => ({ tries: 1, best: 'S', pass: true, levels });
@@ -584,6 +585,89 @@ test('career miss: the debrief\'s main missed item is kept overnight, asked abou
   assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'BAD KEY', label: 'x' } }).miss, null);
   assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'walk', label: 42 } }).miss, null);
   assert.equal(cleanCareer({ v: 1, seed: 1, day: 5 }).miss, null, 'a v1 save has none');
+});
+
+test('career miss streak (Wave C): the same item three debriefs running books a remedial lesson for tomorrow; a different item restarts the count', () => {
+  const st = memStore(), C = createCareer({ store: st, seed: 9 });
+  assert.equal(C.state.streak, null, 'a new career has no streak');
+  assert.equal(C.state.remedial, null, 'and no remedial pending');
+  assert.equal(C.noteMiss('lesson:a3', '「場周経路」の高度'), 1, 'noteMiss returns the streak count');
+  assert.deepEqual(C.state.streak, { key: 'lesson:a3', n: 1 });
+  assert.equal(C.noteMiss('lesson:a3', '「場周経路」の高度'), 2);
+  assert.equal(C.state.remedial, null, 'two is not yet a remedial');
+  // the morning's question being answered (clearMiss) ends neither the streak nor a pending remedial
+  C.clearMiss();
+  assert.equal(C.state.miss, null);
+  assert.deepEqual(C.state.streak, { key: 'lesson:a3', n: 2 }, 'the streak survives clearMiss');
+  assert.equal(C.noteMiss('lesson:a3', '「場周経路」の高度'), 3);
+  assert.deepEqual(C.state.remedial, { key: 'lesson:a3', label: '「場周経路」の高度', day: C.state.day + 1, seen: false }, 'at 3: the remedial, for tomorrow, not yet seen');
+  assert.deepEqual(createCareer({ store: st, seed: 9 }).state.remedial, C.state.remedial, 'the remedial is in the save');
+  assert.deepEqual(createCareer({ store: st, seed: 9 }).state.streak, { key: 'lesson:a3', n: 3 }, 'and so is the streak');
+  // a fourth miss of the same item does not re-book it (not exactly 3, and one is already pending for the key)
+  const booked = C.state.remedial.day;
+  assert.equal(C.noteMiss('lesson:a3', '「場周経路」の高度'), 4);
+  assert.equal(C.state.remedial.day, booked);
+  // a different item restarts the count at 1
+  assert.equal(C.noteMiss('walk', '外部点検の外し忘れ'), 1);
+  assert.deepEqual(C.state.streak, { key: 'walk', n: 1 });
+  // a clean day breaks the streak (the integrator's breakMissStreak), and the remedial is untouched by it
+  C.breakMissStreak();
+  assert.equal(C.state.streak, null);
+  assert.ok(C.state.remedial, 'breakMissStreak does not clear a pending remedial');
+  // the chief's word heard (seeMakabe), then the lesson done (doneRemedial)
+  C.seeMakabe();
+  assert.equal(C.state.remedial.seen, true);
+  assert.equal(createCareer({ store: st, seed: 9 }).state.remedial.seen, true, 'seen is in the save');
+  C.doneRemedial();
+  assert.equal(C.state.remedial, null);
+  assert.equal(createCareer({ store: st, seed: 9 }).state.remedial, null, 'cleared in the save too');
+  // a bad record is refused and counts nothing, as the miss itself was
+  assert.equal(C.noteMiss('Bad Key', 'x'), 0);
+  assert.equal(C.state.streak, null);
+  // the save's cleaning: the streak and the remedial are read only in their shape
+  assert.deepEqual(cleanCareer({ v: 3, seed: 1, streak: { key: 'walk', n: 2 } }).streak, { key: 'walk', n: 2 });
+  assert.equal(cleanCareer({ v: 3, seed: 1, streak: { key: 'BAD KEY', n: 2 } }).streak, null);
+  assert.equal(cleanCareer({ v: 3, seed: 1, streak: { key: 'walk', n: 0 } }).streak, null);
+  assert.deepEqual(cleanCareer({ v: 3, seed: 1, remedial: { key: 'walk', label: '外部点検の外し忘れ', day: 5, seen: 1 } }).remedial, { key: 'walk', label: '外部点検の外し忘れ', day: 5, seen: true });
+  assert.equal(cleanCareer({ v: 3, seed: 1, remedial: { key: 'walk', label: 'x', day: 0, seen: false } }).remedial, null);
+  assert.equal(cleanCareer({ v: 1, seed: 1, day: 5 }).streak, null, 'a v1 save has neither');
+  assert.equal(cleanCareer({ v: 1, seed: 1, day: 5 }).remedial, null);
+});
+
+test('career remedial (Wave C): on the remedial day the plan ends with the evening ground lesson, the flying untouched', () => {
+  const good = weatherFor(9, 10, { force: 'good' });
+  // chapter 2: the day's flight stays, the remedial is appended in the evening
+  const s = newCareer(9); s.chapter = 'ch2'; s.day = 10;
+  s.remedial = { key: 'lesson:a3', label: '「場周経路」の高度', day: 10, seen: true };
+  const plan = schedule(s, {}, { weather: good });
+  assert.ok(plan.some(x => x.kind === 'flight' && x.id === 'a1'), `the flight is not displaced: ${JSON.stringify(plan)}`);
+  assert.deepEqual(plan[plan.length - 1], { slot: 'evening', kind: 'study', id: 'remedial', title: '補習の地上課目（「場周経路」の高度）', where: 'brief-1', who: 'instructor' });
+  // another day: nothing of it
+  s.day = 12;
+  assert.ok(!schedule(s, {}, { weather: weatherFor(9, 12, { force: 'good' }) }).some(x => x.id === 'remedial'));
+  // a later chapter's flying day too (the stages' path)
+  const s3 = newCareer(9); s3.chapter = 'ch3'; s3.day = 20;
+  s3.remedial = { key: 'lesson:n1', label: '高度を基準に保つこと', day: 20, seen: false };
+  const plan3 = schedule(s3, {}, { weather: weatherFor(9, 20, { force: 'good' }) });
+  assert.deepEqual(plan3[plan3.length - 1], { slot: 'evening', kind: 'study', id: 'remedial', title: '補習の地上課目（高度を基準に保つこと）', where: 'brief-1', who: 'instructor' });
+});
+
+test('career dialog (Wave C): the morning \'day\' talk opens with the chief instructor\'s word when career.makabe, and carries the makabe hook', () => {
+  const data = careerInstructorDialogs(), n = data.dialogs.day.nodes;
+  assert.equal(data.dialogs.day.start, 'mk1', 'the day now starts at the chief\'s word, not the chapter intro');
+  assert.equal(n.mk1.speaker, 'instructor');
+  assert.deepEqual(n.mk1.if, { ctx: 'career.makabe', is: true });
+  assert.equal(n.mk1.next, 'mk2'); assert.equal(n.mk1.else, 'i3', 'an ordinary morning goes straight to the old start');
+  assert.match(n.mk1.text, /同じ反省点が続いているので、主任にも相談しました/);
+  assert.equal(n.mk2.speaker, 'chief');
+  assert.deepEqual(data.speakers.chief, { name_ja: '真壁 主任教官', color: '#ffb35c' });
+  assert.equal(n.mk2.text, '真壁です。「{miss.label}」が続いていると聞きました。基準は変わりません。今日は、そこを確かめてから飛びなさい。');
+  assert.equal(n.mk2.next, 'mk3');
+  assert.equal(n.mk3.speaker, 'instructor');
+  assert.match(n.mk3.text, /補習の地上課目を 1 コマ入れます。罰ではありません/);
+  assert.deepEqual(n.mk3.effects, [{ hook: 'makabe' }], 'the hook the integrator wires to career.seeMakabe()');
+  assert.equal(n.mk3.next, 'i3', 'and then the morning as it was');
+  assert.ok(CAREER_HOOKS.includes('makabe') && data.hooks.includes('makabe'));
 });
 
 test('career (next-wave item 6): the complex endorsement — opened only after graduation, gates and schedules like a stage, in the Arrow', () => {

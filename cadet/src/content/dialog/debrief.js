@@ -168,11 +168,15 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
       effects: [{ trust: 'instructor', add: t }, { set: 'day1_done', to: true }], hook: { name: 'nod' }, next: nx('trust') });
   N.sign = say(V ? V.sign : '航空日誌に今日の飛行を書いて、署名しておきます。', V ? VE.sign : 'I\'ll write today\'s flight in your logbook and sign it.', { choices: [
     { text: '航空日誌を見る', next: 'bye', effects: [{ hook: 'logbook' }] },
-    // (M8) a free question about the day, to the AI instructor (only while the setting is on: ctx ai.on); his own
-    // debrief only (the AI instructor is 早瀬 教官: the chief and the examiner do not take it)
-    ...(V ? [] : [{ text: '今日の飛行について質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' }]),
+    // (M8) a free question about the day, to the AI instructor (only while the setting is on: ctx ai.on)
+    // (AI instructors wave) the chief and the examiner take it too, in their own person: the hook's arg says
+    // whose debrief this is ('debrief:chief' / 'debrief:examiner'); their answers stay within their scope
+    { text: '今日の飛行について質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' },
   ] });
-  if (!V) N.free = say('いいですよ。今日の飛行のことなら、何でも。', 'Sure. Anything about today\'s flight.', { hook: { name: 'ai', arg: 'debrief' }, next: 'sign' });
+  N.free = say(
+    voice === 'chief' ? '聞きたいことがあれば、どうぞ。基準の範囲で答えます。' : voice === 'examiner' ? '……記録に関することだけ、聞きます。' : 'いいですよ。今日の飛行のことなら、何でも。',
+    voice === 'chief' ? 'If you have questions, ask. I answer within the standards.' : voice === 'examiner' ? '...I will hear only what concerns the record.' : 'Sure. Anything about today\'s flight.',
+    { hook: { name: 'ai', arg: voice === 'instructor' ? 'debrief' : `debrief:${voice}` }, next: 'sign' });
   N.bye = say(V ? V.bye : '今日はここまで。ゆっくり休んでください。', V ? VE.bye : 'That\'s all for today. Get some good rest.', { end: true });
-  return { speakers: SPEAKERS, flags: [...DEBRIEF_FLAGS], hooks: DEBRIEF_HOOKS.filter(h => !V || h !== 'ai'), dialogs: { debrief: { start: 'open', nodes: N } } };
+  return { speakers: SPEAKERS, flags: [...DEBRIEF_FLAGS], hooks: [...DEBRIEF_HOOKS], dialogs: { debrief: { start: 'open', nodes: N } } };
 }

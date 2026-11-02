@@ -58,6 +58,10 @@ export function createDayMode(h) {
     const [text, ms] = queue.shift();
     const d = ms || Math.min(7000, 1800 + text.length * 70);
     h.say(text, d); lineT = d / 1000 + 0.3;
+    // (full voice) the same line spoken, when the host lends a voice (h.voice(text): the instructor's — the host
+    // picks the voice and its pitch/rate; hosts without one, the tests among them, just show the line as before).
+    // Only the instructor's lines come through here: the cadet's own notes (note() → h.note) are never voiced.
+    if (typeof h.voice === 'function') h.voice(text);
   }
   // ---- the controllers' voice (the browser's English speech, when the setting is on)
   function speak(en) {

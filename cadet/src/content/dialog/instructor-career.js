@@ -24,12 +24,12 @@
 // is signed off), 'look', 'nod', 'point'.
 import { INSTRUCTOR } from './instructor.js';
 
-export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem', 'miss'];
+export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem', 'miss', 'makabe'];
 export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today', 'prologue_short'];
-const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
+const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' }, chief: { name_ja: '真壁 主任教官', color: '#ffb35c' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }, miss { on, label, o0..o2, right } (yesterday's debrief)
-export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1', en: { checkTitle: 'pre-solo check', checkWho: 'Mr. Makabe' } }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' },
+export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1', en: { checkTitle: 'pre-solo check', checkWho: 'Mr. Makabe' } }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2', makabe: false },
   miss: { on: true, label: '「直線水平飛行」の高度', o0: '「直線水平飛行」の高度', o1: '無線の復唱', o2: '停止線の手前で止まること', right: true },
   tem: { on: true, o0: '午後の雷雨', o1: '場周の混雑（ほかの訓練機）', o2: '朝の霧', right: true, threat: '場周の混雑（ほかの訓練機）', why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます', plan: '見張りを続ける', not: '',
     en: { threat: 'a busy pattern (other trainers)', why: 'The weather is good today and many other trainers are flying', plan: 'keep looking out', not: '' } } };
@@ -136,6 +136,12 @@ export function careerInstructorDialogs() {
   };
   // (M6) a later chapter's first day: what it is, then the day as always
   const I = {
+    // (Wave C) the same miss three debriefs running: before anything else, the chief instructor's one line —
+    // the instructor consulted him, the standard does not move, and a remedial ground lesson closes the day.
+    // ctx career.makabe says the morning is that morning (the integrator sets it from the career's remedial)
+    mk1: say('その前に。同じ反省点が続いているので、主任にも相談しました。', { if: { ctx: 'career.makabe', is: true }, else: 'i3', next: 'mk2' }),
+    mk2: { speaker: 'chief', text: '真壁です。「{miss.label}」が続いていると聞きました。基準は変わりません。今日は、そこを確かめてから飛びなさい。', next: 'mk3' },
+    mk3: say('今日の終わりに、補習の地上課目を 1 コマ入れます。罰ではありません。練習の追加です。', { effects: [{ hook: 'makabe' }], next: 'i3' }),
     i3: say('今日から第 3 章、航法です。場周経路の外へ、もっと遠くへ。横風、短い滑走路、VOR、それから地図と時計で飛ぶ推測航法。', { if: { ctx: 'today.intro', is: 'ch3' }, else: 'i4', hook: { name: 'look', arg: 'player' }, next: 'i3:2' }),
     'i3:2': say('最後は、ひとりでの野外飛行です。航法ログを自分で作って、ひとりで飛んで、帰ってくる。途中で目的地が変わることもあります。', { hook: { name: 'point', arg: 'board' }, next: 'd1' }),
     i4: say('今日から第 4 章、計器飛行です。フードをかぶると、外は見えません。見えるのは計器だけ。', { if: { ctx: 'today.intro', is: 'ch4' }, else: 'i5', hook: { name: 'look', arg: 'player' }, next: 'i4:2' }),
@@ -208,7 +214,7 @@ export function careerInstructorDialogs() {
   };
   return {
     speakers: SPEAKERS, flags: [...CAREER_FLAGS], hooks: [...CAREER_HOOKS],
-    dialogs: { meet: { start: 'ms', nodes: M }, meetAgain: { start: 'fly:re', nodes: MA }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
+    dialogs: { meet: { start: 'ms', nodes: M }, meetAgain: { start: 'fly:re', nodes: MA }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'mk1', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
       xc: { start: 'x1', nodes: X }, grad: { start: 'g1', nodes: GR },
       solo: { start: 'o1', nodes: O }, checkday: { start: 'k1', nodes: K }, celebrate: { start: 'c1', nodes: C }, after: { start: 'a1', nodes: A } },
   };

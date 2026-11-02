@@ -294,6 +294,15 @@ export const EN = {
   'その前に、昨日の講評から一つ。昨日の飛行で、いちばんの反省点はどれでしたか。': 'Before that, one thing from yesterday\'s debrief. What was the biggest point to work on from yesterday\'s flight?',
   'そう、それです。「{miss.label}」。今日は、そこを意識して飛びましょう。': 'That\'s it: “{miss.label}”. Keep that in mind as you fly today.',
   '昨日のいちばんは「{miss.label}」でした。今日は、そこを意識して飛びましょう。': 'Yesterday\'s biggest point was “{miss.label}”. Keep that in mind as you fly today.',
+  // (AI instructors wave) the repeated miss: the instructor's word, the chief's, and the remedial period
+  'その前に。同じ反省点が続いているので、主任にも相談しました。': 'Before that. The same point has come up again and again, so I spoke with the chief instructor about it.',
+  '真壁です。「{miss.label}」が続いていると聞きました。基準は変わりません。今日は、そこを確かめてから飛びなさい。': 'Makabe. I hear “{miss.label}” has come up again and again. The standard does not change. Today, check that point before you fly.',
+  '今日の終わりに、補習の地上課目を 1 コマ入れます。罰ではありません。練習の追加です。': 'At the end of today, I\'ll add one period of remedial ground study. It isn\'t a punishment; it\'s extra practice.',
+  // (AI instructors wave) the free question offered by the chief and the examiner themselves
+  '聞きたいことがあれば、どうぞ。基準と安全の範囲で答えます。': 'If you have a question, ask. I answer within the standards and safety.',
+  'ほかに無ければ、以上です。いつもどおりに。': 'If there is nothing else, that is all. As always.',
+  '……質問は、今日の審査と記録に関することだけ聞きます。': '...I will hear only questions about today\'s check and its record.',
+  '……以上です。': '...That is all.',
   'そのとおりです。よく聞いていましたね。': 'That\'s right. You were listening.',
   '目標がはっきりしていれば、何に集中すればいいかが決まります。': 'With a clear goal, you know what to focus on.',
   '大丈夫。飛ぶ前に確かめられて、よかったです。': 'It\'s all right. Good that we checked before flying.',

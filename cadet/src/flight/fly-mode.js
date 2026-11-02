@@ -48,6 +48,7 @@ import { randomFailureFor, makeSchedule, scheduleOf, dueSchedule } from '../airc
 import { createTrafficView } from './traffic-view.js';
 import { createAutopilot, drawApStrip } from './autopilot.js';
 import { createRouteLine } from '../world/route-line.js';
+import { voiceParamsFor } from '../ui/voice-params.js';
 import { ourCall, CALL } from '../content/dialog/atc.js';
 
 const DEG = Math.PI / 180;
@@ -155,6 +156,8 @@ export function createFlyMode(ctx) {
   const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
     get stand() { return { a: ctx.stand.a, c: ctx.stand.c }; },
     say: (t, ms) => say(t, ms), note: (t, ms) => { if (fh) fh.say('メモ', t, ms); else toast(t, ms); },
+    // (AI instructors wave) the day mode's instructor lines are spoken too (早瀬's voice: ui/voice-params.js)
+    voice: (t) => speakLine(t),
     setGuide: (id) => setGuide(id), startLesson: startDayLesson, talk: (w) => startTalk(w), debrief: startDebrief,
     markDirty: () => { if (cockpit.markDirty) cockpit.markDirty(); } });
 
@@ -1194,6 +1197,26 @@ export function createFlyMode(ctx) {
     yaw += (ty - yaw) * k; pitch += (tp - pitch) * k;
   }
   function night() { const el = sky.state.el; return 1 - THREE.MathUtils.smoothstep(el, -4, 6); }
+
+  // (AI instructors wave) speaking a line aloud (the browser's speech synthesis, when the voice setting is on):
+  // the instructor's parameters from ui/voice-params.js; a crew-English line (English over Japanese, split by a
+  // newline) is spoken in English. No voice on this machine: nothing said, nothing waited for.
+  function speakLine(text) {
+    try {
+      const synth = globalThis.speechSynthesis;
+      if (!synth || typeof globalThis.SpeechSynthesisUtterance !== 'function' || settings.get('voice') === false) return;
+      const en = settings.get('crewEnglish') && String(text).includes('\n');
+      const said = en ? String(text).split('\n')[0] : String(text);
+      const vs = synth.getVoices() || [], re = en ? /^en([-_]|$)/i : /^ja([-_]|$)/i;
+      const v = vs.find(x => re.test(x.lang) && x.localService) || vs.find(x => re.test(x.lang));
+      if (!v) return;
+      const u = new globalThis.SpeechSynthesisUtterance(said.replace(/\s+/g, ' '));
+      const p = voiceParamsFor('instructor');
+      u.voice = v; u.lang = v.lang; u.pitch = p.pitch; u.rate = p.rate;
+      const vol = settings.get('volume'); if (typeof vol === 'number') u.volume = Math.min(1, Math.max(0, vol));
+      synth.speak(u);
+    } catch (e) { /* no voice this time */ }
+  }
 
   // ---- what the instructor says in a lesson: each step's instruction, the hints (not too often)
   function say(text, ms = 5200) {

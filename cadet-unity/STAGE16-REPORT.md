@@ -98,3 +98,12 @@
 - tools/check-unity-compile.sh: **全ソース 0 エラー**（core/flight/slice/unity 全ファイル）
 - BotWalkCs: ALL PASS ／ BotSttCs: ALL PASS ／ BotQuizCs: QUIZ PASS
 - BotLineRealCs: LINE REAL FLIGHT PASS ／ BotG1000Cs: 11,319 ops・不一致 0
+
+## push 結果（unity/full-port、2026-11-02）
+
+- コミット A `cca34533589b`（Stage 13/14: G1000 グラス＋ライン PF 実飛行、11 ファイル）
+- コミット B `de551ddde251`（Stage 15: キャリア直列結線、9 ファイル）
+- コミット C `b11013499818`（Stage 16: 故障注入／デバイス／NPC／鏡像／STT／TTS、15 ファイル）
+- blob 照合: CareerMain.cs（7a0c420e…）／STAGE15-REPORT.md（4e160e98…）／
+  WalkMain.cs（7368f654…）のリモート blob がローカルと一致。
+- 改変ファイルは push 前にミラー＝リモートの blob 一致をサンプル確認済み（乖離なし）。

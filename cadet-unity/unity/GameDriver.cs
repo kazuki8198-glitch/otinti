@@ -70,6 +70,42 @@ public class GameDriver : MonoBehaviour
         fm.SelAircraft = "b737"; fm.SelStart = "area";
         var cfg = fm.StartSession();
         Check((string)cfg["aircraft"] == "b737" && fm.Cockpit != null && fm.Cockpit.Sys.St.Eng == "run", "free session started from the panel (737, engine running)");
+        // ---- Stage 13: G1000 glass live on the piston cockpit ----
+        gm.ClosePanel(); gm.Open("free");
+        yield return null; yield return null;
+        fm.SelAircraft = "pa28"; fm.SelStart = "ramp"; fm.SelFail = "none";
+        fm.StartSession();
+        var glass = FindObjectOfType<G1000GlassMain>();
+        Check(glass != null && glass.Bound, "G1000 glass bound to the free-mode cockpit");
+        if (glass != null)
+        {
+            glass.Pump();
+            var tx = glass.PfdTexture;
+            bool anyLit = false;
+            if (tx != null) { var px = tx.GetPixels32(); for (int i = 0; i < px.Length; i += 997) if (px[i].r > 24 || px[i].g > 24 || px[i].b > 24) { anyLit = true; break; } }
+            Check(anyLit, "G1000 PFD texture is drawn (non-black sample)");
+        }
+        // ---- Stage 13: free-mode failure injection, live ----
+        fm.SelFail = "pitot"; fm.SelFailWhen = "now";
+        fm.StartSession();
+        Check(fm.FailFiredKinds.Contains("pitot") && fm.Cockpit.S.PitotRisk == 3, "free-mode fault injection fires (pitot, immediate)");
+        fm.SelFail = "engine"; fm.SelFailWhen = "time"; fm.SelFailValue = 0.02;
+        fm.StartSession();
+        float fw = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - fw < 20 && !fm.FailFiredKinds.Contains("engine")) yield return null;
+        Check(fm.FailFiredKinds.Contains("engine") && fm.Cockpit.S.Eng[0].Failed, "free-mode fault injection fires on schedule (engine at 0.02 min)");
+        fm.SelFail = "none";
+        // ---- Stage 13: device axes consumed by the flight loop ----
+        var dev = FindObjectOfType<DevicesMain>();
+        Check(dev != null, "devices component present");
+        if (dev != null)
+        {
+            dev.Synthetic = new DeviceAxes { Pitch = 0.6, Roll = 0, Yaw = 0, Throttle01 = 0.42 };
+            float dw = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - dw < 10 && !(Math.Abs(sm.S.PIn) > 0.2 && Math.Abs(sm.S.Thr - 0.42) < 0.03)) yield return null;
+            Check(Math.Abs(sm.S.PIn) > 0.2 && Math.Abs(sm.S.Thr - 0.42) < 0.03, "device axes reach the flight loop (PIn " + sm.S.PIn.ToString("F2") + ", Thr " + sm.S.Thr.ToString("F2") + ")");
+            dev.Synthetic = null;
+        }
         gm.ClosePanel();
         gm.Open("line");
         yield return null; yield return null;

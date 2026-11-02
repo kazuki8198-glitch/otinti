@@ -60,6 +60,12 @@ public struct DeviceAxes
 public class DevicesMain : MonoBehaviour
 {
     public List<DeviceAssignment> Assignments = new List<DeviceAssignment>();
+    /// <summary>True when the last Poll matched at least one connected device
+    /// (or a synthetic set was injected). Gates absolute-throttle takeover.</summary>
+    public bool AnyLive;
+    /// <summary>Test hook: when set, Poll returns this set (the VM has no
+    /// physical devices; the acceptance drives the flight loop through it).</summary>
+    public DeviceAxes? Synthetic;
     public string SavePath { get { return Path.Combine(Application.persistentDataPath, "cadet-devices.json"); } }
 
     public static List<(string Name, string Layout, string Path)> Enumerate()
@@ -105,12 +111,15 @@ public class DevicesMain : MonoBehaviour
     /// <summary>The merged axis set from all adopted devices (first non-zero wins per axis).</summary>
     public DeviceAxes Poll()
     {
+        if (Synthetic.HasValue) { AnyLive = true; return Synthetic.Value; }
         var outp = new DeviceAxes();
+        AnyLive = false;
         foreach (var a in Assignments)
         {
             InputDevice dev = null;
             foreach (var d in InputSystem.devices) if (d.name == a.DeviceName) { dev = d; break; }
             if (dev == null) continue;
+            AnyLive = true;
             string P(string k) { return a.Axes.TryGetValue(k, out var v) ? v : null; }
             string B(string k) { return a.Buttons.TryGetValue(k, out var v) ? v : null; }
             if (outp.Pitch == 0) outp.Pitch = -ReadAxis(dev, P("pitch"));
@@ -121,5 +130,34 @@ public class DevicesMain : MonoBehaviour
             outp.FlapUp |= ReadButton(dev, B("flapUp")); outp.FlapDown |= ReadButton(dev, B("flapDown"));
         }
         return outp;
+    }
+}
+
+/// <summary>Stage 13 (Task 3): merge a polled device axis set into the flight
+/// state AFTER Controls.Update and BEFORE Sim.Step — the device path the
+/// Stage 11 enumeration/assignment work was always aimed at. Pitch/roll/yaw
+/// add onto the keyboard state (same 1.3 curve as controls.js), throttle is
+/// absolute when a device is live, brake is momentary, gear/flaps are
+/// rising-edge actions through Controls.Action.</summary>
+public static class DeviceMerge
+{
+    public struct Edge { public bool Gear, FlapUp, FlapDown; }
+    static double Curve(double v) { return Math.Sign(v) * Math.Pow(Math.Abs(v), 1.3); }
+    public static void Apply(Controls ctl, State s, DeviceAxes ax, bool anyLive, ref Edge prev, bool free)
+    {
+        if (s == null) return;
+        const double DZ = 0.04;
+        if (Math.Abs(ax.Pitch) > DZ) s.PIn = Curve(PhysMath.Clamp(s.PKey + ax.Pitch, -1, 1));
+        if (Math.Abs(ax.Roll) > DZ) s.RIn = Curve(PhysMath.Clamp(s.RKey + ax.Roll, -1, 1));
+        if (Math.Abs(ax.Yaw) > DZ) s.Rud = PhysMath.Clamp(s.Rud + ax.Yaw, -1, 1);
+        if (anyLive) s.Thr = PhysMath.Clamp(ax.Throttle01, 0, 1);
+        if (ax.Brake) s.Brake = 1;
+        if (ctl != null)
+        {
+            if (ax.Gear && !prev.Gear) ctl.Action(s, "gear", null, free);
+            if (ax.FlapDown && !prev.FlapDown) ctl.Action(s, "flaps", null, free);
+            if (ax.FlapUp && !prev.FlapUp) ctl.Action(s, "flapsUp", null, free);
+        }
+        prev.Gear = ax.Gear; prev.FlapUp = ax.FlapUp; prev.FlapDown = ax.FlapDown;
     }
 }

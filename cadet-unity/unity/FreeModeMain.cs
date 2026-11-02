@@ -62,6 +62,13 @@ public class FreeModeMain : MonoBehaviour
     public Dict LastCfg;
     public double LastNowMs;
     public string FailPlanDesc = "";
+    // Stage 13 (Task 3): the failure plan made live — the fly-mode scheduler
+    // (failSched / failElapsed / dueSchedule / applyFail) running on the
+    // cockpit session this screen starts.
+    public System.Collections.Generic.List<Failures.Schedule> FailSched = new System.Collections.Generic.List<Failures.Schedule>();
+    public double FailElapsedMin;
+    public System.Collections.Generic.List<string> FailFiredKinds = new System.Collections.Generic.List<string>();
+    public bool SessionActive;
     public CockpitMain Cockpit;
     readonly List<(Button btn, string group, string value)> optionBtns = new List<(Button, string, string)>();
     Text hourValLabel;
@@ -208,9 +215,30 @@ public class FreeModeMain : MonoBehaviour
         // wind: the cfg's wind is relative to the runway (LAB heading 264°)
         var wn = (Dict)cfg["wind"];
         s.Wind = new WindState { FromDeg = (264 + MiniJson.Num(wn, "rel")) % 360, Kt = MiniJson.Num(wn, "kt"), Gust = MiniJson.Num(wn, "gust") };
-        // failure plan (recorded for the session; injection points are the
-        // fly-mode failure scheduler's — the plan itself is the contract)
-        FailPlanDesc = cfg["fail"] == null ? "ランダム（シード " + MiniJson.Num(cfg, "seed") + "）" : (string)cfg["fail"];
+        // failure plan — live since Stage 13: previous faults are cleared,
+        // then the chosen failure is applied at once or scheduled through
+        // Failures.MakeSchedule, and with no choice the seeded roll
+        // (randomFailureFor, day 1 / free) schedules one instead (fly-mode.js
+        // startFreeSession, line for line).
+        Cockpit.Sys.SetFault(null); Cockpit.Sys.SetElecFault(false); s.CarbRisk = 0;
+        FailSched.Clear(); FailFiredKinds.Clear(); FailElapsedMin = 0; SessionActive = true;
+        if (cfg["fail"] != null)
+        {
+            string kind = (string)cfg["fail"];
+            var fa = cfg["failAt"] as Dict;
+            double? atMin = fa != null && fa.TryGetValue("atMin", out var mv) ? (double?)MiniJson.Num(fa, "atMin") : null;
+            double? atAlt = fa != null && fa.TryGetValue("atAltFt", out var av) ? (double?)MiniJson.Num(fa, "atAltFt") : null;
+            var entry = Failures.MakeSchedule(kind, atMin, atAlt);
+            if (entry != null && (atAlt != null || (atMin != null && atMin.Value > 0))) { FailSched.Add(entry); FailPlanDesc = kind + "（予約：" + (atAlt != null ? atAlt.Value + " ft 到達時" : atMin.Value + " 分後") + "）"; }
+            else { ApplyFail(kind); FailPlanDesc = kind + "（即時）"; }
+        }
+        else
+        {
+            var rf = Failures.RandomFailureFor((int)MiniJson.Num(cfg, "seed"), 1, "free", false, false, false, type, null, "free");
+            var entry = Failures.ScheduleOf(rf);
+            if (entry != null) { FailSched.Add(entry); FailPlanDesc = "ランダム（シード " + MiniJson.Num(cfg, "seed") + "）：" + entry.Kind + " を予約"; }
+            else FailPlanDesc = "ランダム（シード " + MiniJson.Num(cfg, "seed") + "）：この飛行では故障なし";
+        }
         if (start != "ramp")
         {
             Cockpit.Sys.SetRunning(s);
@@ -228,5 +256,47 @@ public class FreeModeMain : MonoBehaviour
         }
         Sim.Derive(s);
         return cfg;
+    }
+
+    /// <summary>fly-mode.js applyFail: the systems' own faults for mag/elec,
+    /// the carb-ice gate for carb, FLIGHT LAB's failNow effects for the rest
+    /// (ppanel = ahrs + gps).</summary>
+    public void ApplyFail(string kind)
+    {
+        if (Cockpit == null || !Cockpit.SessionLive) return;
+        FailFiredKinds.Add(kind);
+        if (kind == "mag") { Cockpit.Sys.SetFault(200); return; }
+        if (kind == "elec") { Cockpit.Sys.SetElecFault(true); return; }
+        if (kind == "carb") { Cockpit.S.CarbRisk = 1; return; }
+        if (kind == "ppanel") { FailEffects("ahrs"); FailEffects("gps"); return; }
+        FailEffects(kind);
+    }
+    void FailEffects(string kind)
+    {
+        // CadetSchoolEngine School.FailNow, applied to the session's own
+        // state/avionics (there is no lesson state in free flight).
+        var s = Cockpit.S; var av = Cockpit.Av;
+        if (kind == "engine") s.Eng[0].Failed = true;
+        else if (kind == "engL") s.Eng[0].Failed = true;
+        else if (kind == "engR") s.Eng[s.Eng.Count - 1].Failed = true;
+        else if (kind == "ahrs") { if (av.Fail == null) av.Fail = new System.Collections.Generic.Dictionary<string, bool>(); av.Fail["ahrs"] = true; }
+        else if (kind == "gps") { if (av.Fail == null) av.Fail = new System.Collections.Generic.Dictionary<string, bool>(); av.Fail["gps"] = true; if (av.Cdi == "GPS") av.Direct = null; }
+        else if (kind == "pitot") s.PitotRisk = 3;
+        else if (kind == "static") s.StaticBlocked = true;
+        else if (kind == "pump") s.Eng[0].PumpFail = true;
+        else if (kind == "gear") s.GearFault = true;
+    }
+
+    /// <summary>One scheduler tick (dtMin = elapsed flight minutes). Called
+    /// from CockpitMain.Frame — the setup panel itself is inactive while the
+    /// session is flown, so it cannot tick from its own Update.</summary>
+    public void TickScheduler(double dtMin)
+    {
+        // the scheduler clock runs only while the flight does (fly-mode.js)
+        if (!SessionActive || Cockpit == null || !Cockpit.SessionLive || FailSched.Count == 0) return;
+        FailElapsedMin += dtMin;
+        double altFt = Cockpit.S.Out != null ? Cockpit.S.Out.AltTrue : 0;
+        var due = Failures.DueSchedule(FailSched, FailElapsedMin, altFt);
+        foreach (var e in due) { FailSched.Remove(e); ApplyFail(e.Kind); }
     }
 }

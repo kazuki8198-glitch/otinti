@@ -46,7 +46,7 @@ public class WorldMain : MonoBehaviour
     {
         var g = GameObject.CreatePrimitive(PrimitiveType.Cube);
         g.name = name; g.transform.SetParent(parent.transform, false);
-        g.transform.localPosition = new Vector3((float)((c0 + c1) / 2), (float)((y0 + y1) / 2), (float)((a0 + a1) / 2));
+        g.transform.localPosition = new Vector3((float)((c0 + c1) / 2), (float)((y0 + y1) / 2), (float)(-(a0 + a1) / 2));   // original frame: z = -a (Stage 9 note)
         g.transform.localScale = new Vector3((float)Math.Abs(c1 - c0), (float)(y1 - y0), (float)Math.Abs(a1 - a0));
         var mr = g.GetComponent<MeshRenderer>();
         mr.sharedMaterial = mat; mr.receiveShadows = true;
@@ -79,11 +79,11 @@ public class WorldMain : MonoBehaviour
     void Build()
     {
         field = new GameObject("Field");
-        field.transform.rotation = Quaternion.Euler(0, -6, 0);   // RWY 36 → true 354°
+        field.transform.rotation = Quaternion.Euler(0, -6.1784656f, 0);   // the original frame yaw (interiors.json; RWY 36 ≈ true 354°)
         var grass = Toon(new Color(0.36f, 0.55f, 0.30f));
         var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.name = "Ground"; ground.transform.SetParent(field.transform, false);
-        ground.transform.localPosition = new Vector3(600, -0.05f, 600);
+        ground.transform.localPosition = new Vector3(600, -0.05f, -600);
         ground.transform.localScale = new Vector3(400, 1, 400);
         var gmr = ground.GetComponent<MeshRenderer>();
         gmr.sharedMaterial = grass; gmr.receiveShadows = true;
@@ -147,8 +147,8 @@ public class WorldMain : MonoBehaviour
         {
             modelRoot = new GameObject("ArcherAtStand");
             modelRoot.transform.SetParent(field.transform, false);
-            modelRoot.transform.localPosition = new Vector3(207.6f, 0.1f, 636.5f);   // the day.js stand (a 636.5, c 207.6)
-            modelRoot.transform.localRotation = Quaternion.Euler(0, 90, 0);
+            modelRoot.transform.localPosition = new Vector3(207.6f, 0.1f, -636.5f);   // the day.js stand (a 636.5, c 207.6; z = -a)
+            modelRoot.transform.localRotation = Quaternion.Euler(0, -90, 0);
             var gltf = new GltfImport();
             string path = Path.Combine(Application.streamingAssetsPath, "archer.glb");
             if (await gltf.Load(path)) { await gltf.InstantiateMainSceneAsync(modelRoot.transform); HideExtraRegs(); Debug.Log("WORLD_MODEL_LOADED"); }
@@ -184,7 +184,7 @@ public class WorldMain : MonoBehaviour
     }
     private Vector3 F(double a, double c, double y)   // field (a, c) → world (field group rotated -6°)
     {
-        return field.transform.TransformPoint(new Vector3((float)c, (float)y, (float)a));
+        return field.transform.TransformPoint(new Vector3((float)c, (float)y, (float)(-a)));
     }
 
     void Update()

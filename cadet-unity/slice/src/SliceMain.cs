@@ -44,6 +44,7 @@ public class SliceMain : MonoBehaviour
 
     private const double DT = 1.0 / 120.0;
     private double acc;
+    private DevicesMain devices; private DeviceMerge.Edge devEdge;
     private GameObject titlePanel, aircraft, modelRoot;
     public Canvas MainCanvas;
     private Text statusText, guideText, modeText;
@@ -227,6 +228,8 @@ public class SliceMain : MonoBehaviour
         {
             acc -= DT;
             Ctl.Update(S, DT, KeySource, true);
+            if (devices == null) devices = FindObjectOfType<DevicesMain>();
+            if (devices != null) DeviceMerge.Apply(Ctl, S, devices.Poll(), devices.AnyLive, ref devEdge, !CareerMode);
             Sim.Step(S, DT);
         }
         SyncAircraft();

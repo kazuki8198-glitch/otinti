@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using GLTFast;
+using System.Threading.Tasks;
 using Cadet;
 
 using Dict = System.Collections.Generic.Dictionary<string, object>;
@@ -29,6 +31,14 @@ public class WalkMain : MonoBehaviour
     Transform frameGroup;
     readonly List<(MeshRenderer Mesh, int ColliderId)> leafMeshes = new List<(MeshRenderer, int)>();
     readonly Dictionary<string, GameObject> npcFigures = new Dictionary<string, GameObject>();
+    // Stage 13 (Task 5): figures assembled from the actor.glb parts kit
+    // (head/torso bust — the kit has no skins or skeletal animation, in the
+    // original either: actor.js poses it procedurally). The capsule
+    // stand-ins remain as the fallback until the kit lands.
+    class FigureRig { public Transform LegL, LegR, ArmL, ArmR; }
+    readonly Dictionary<GameObject, FigureRig> rigs = new Dictionary<GameObject, FigureRig>();
+    GameObject actorKit; bool actorDressed;
+    double npcWalkPhase, npcSwing; Vector3 npcPrevPos; bool npcPrevSet;
     WalkPath npcPath; string npcWalkingId; GameObject npcWalkingFig;
     Dictionary<string, Door> doorById = new Dictionary<string, Door>();
 
@@ -225,6 +235,7 @@ public class WalkMain : MonoBehaviour
             npcPath = new WalkPath(npcRoute, CadetNpcWalk.WALK_SPEED, new NpcPoint(633, 378));
         }
 
+        _ = LoadActorKit();
         // camera
         var camGo = new GameObject("WalkCamera"); camGo.transform.SetParent(transform, false);
         Cam = camGo.AddComponent<Camera>(); Cam.fieldOfView = 75; Cam.nearClipPlane = 0.05f; Cam.farClipPlane = 8000;
@@ -248,6 +259,59 @@ public class WalkMain : MonoBehaviour
         head.GetComponent<MeshRenderer>().material = Mat(new Color(0.93f, 0.80f, 0.68f));
         Object.Destroy(head.GetComponent<Collider>());
         return root;
+    }
+
+    async Task LoadActorKit()
+    {
+        try
+        {
+            actorKit = new GameObject("ActorKit");
+            actorKit.transform.SetParent(transform, false);
+            var gltf = new GltfImport();
+            string path = System.IO.Path.Combine(Application.streamingAssetsPath, "actor.glb");
+            if (!await gltf.Load(path)) { Object.Destroy(actorKit); actorKit = null; Debug.Log("ACTOR_KIT_FAIL load"); return; }
+            await gltf.InstantiateMainSceneAsync(actorKit.transform);
+            actorKit.SetActive(false);
+            foreach (var kv in npcFigures) DressFigure(kv.Value);
+            actorDressed = true;
+            Debug.Log("ACTOR_KIT_DRESSED figures=" + rigs.Count);
+        }
+        catch (System.Exception ex) { Debug.Log("ACTOR_KIT_FAIL " + ex.Message); }
+    }
+
+    static readonly string[] ACTOR_KEEP = { "head.base.skin", "head.base.eye", "irisL.", "irisR.", "mouth.base.lip", "lids.base", "head.hair-short", "torso.base.shirt", "torso.base.button", "torso.base.pocket", "torso.nametag", "anchor.nametag" };
+    void DressFigure(GameObject root)
+    {
+        if (actorKit == null || root == null) return;
+        foreach (Transform ch in root.transform) if (ch.name == "body" || ch.name == "head") ch.gameObject.SetActive(false);
+        var inst = Object.Instantiate(actorKit, root.transform, false);
+        inst.name = "actor"; inst.SetActive(true);
+        foreach (var t in inst.GetComponentsInChildren<Transform>(true))
+        {
+            if (t == inst.transform) continue;
+            bool keep = false;
+            foreach (var k in ACTOR_KEEP) if (t.name.StartsWith(k)) { keep = true; break; }
+            if (!keep && t.parent == inst.transform) t.gameObject.SetActive(false);
+        }
+        var rig = new FigureRig();
+        rig.LegL = MakeLimb(root, "legL", -0.09f, 0.96f, 0.13f, 0.48f, new Color(0.16f, 0.17f, 0.22f));
+        rig.LegR = MakeLimb(root, "legR", 0.09f, 0.96f, 0.13f, 0.48f, new Color(0.16f, 0.17f, 0.22f));
+        rig.ArmL = MakeLimb(root, "armL", -0.235f, 1.44f, 0.09f, 0.36f, new Color(0.85f, 0.87f, 0.90f));
+        rig.ArmR = MakeLimb(root, "armR", 0.235f, 1.44f, 0.09f, 0.36f, new Color(0.85f, 0.87f, 0.90f));
+        rigs[root] = rig;
+    }
+    Transform MakeLimb(GameObject root, string name, float x, float hipY, float w, float lenScale, Color col)
+    {
+        var pivot = new GameObject(name);
+        pivot.transform.SetParent(root.transform, false);
+        pivot.transform.localPosition = new Vector3(x, hipY, 0);
+        var limb = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        limb.name = name + "Mesh"; limb.transform.SetParent(pivot.transform, false);
+        limb.transform.localPosition = new Vector3(0, -0.47f * lenScale / 0.48f, 0);
+        limb.transform.localScale = new Vector3(w, lenScale, w);
+        limb.GetComponent<MeshRenderer>().material = Mat(col);
+        Object.Destroy(limb.GetComponent<Collider>());
+        return pivot.transform;
     }
 
     public (double X, double Y, double Z) RwyToLocal(double a, double c, double y)
@@ -275,6 +339,28 @@ public class WalkMain : MonoBehaviour
             var r = npcPath.Update(dt);
             var pos = npcPath.Pos;
             npcWalkingFig.transform.localPosition = new Vector3((float)pos.C, 0, (float)(-pos.A));
+            if (rigs.TryGetValue(npcWalkingFig, out var rig))
+            {
+                // the original's procedural walk (actor.js): phase at
+                // 6 rad/s at full speed, arms against the legs, hips bob
+                // twice a cycle; the figure turns to face its heading.
+                if (r.Moving) npcWalkPhase += dt * 6.0 * (r.Speed / CadetNpcWalk.WALK_SPEED);
+                npcSwing += ((r.Moving ? 1.0 : 0.0) - npcSwing) * System.Math.Min(1, dt * 8);
+                float sw = (float)(System.Math.Sin(npcWalkPhase) * 0.55 * npcSwing) * Mathf.Rad2Deg;
+                if (rig.LegL) rig.LegL.localRotation = Quaternion.Euler(sw, 0, 0);
+                if (rig.LegR) rig.LegR.localRotation = Quaternion.Euler(-sw, 0, 0);
+                if (rig.ArmL) rig.ArmL.localRotation = Quaternion.Euler(-sw * 0.8f, 0, 0);
+                if (rig.ArmR) rig.ArmR.localRotation = Quaternion.Euler(sw * 0.8f, 0, 0);
+                var lp = npcWalkingFig.transform.localPosition;
+                lp.y = (float)(System.Math.Abs(System.Math.Cos(npcWalkPhase)) * 0.03 * npcSwing);
+                npcWalkingFig.transform.localPosition = lp;
+                if (npcPrevSet)
+                {
+                    double dc = pos.C - npcPrevPos.x, dz = -pos.A - npcPrevPos.z;
+                    if (dc * dc + dz * dz > 1e-6) npcWalkingFig.transform.localRotation = Quaternion.Euler(0, (float)(System.Math.Atan2(dc, dz) * 180 / System.Math.PI), 0);
+                }
+                npcPrevPos = new Vector3((float)pos.C, 0, (float)(-pos.A)); npcPrevSet = true;
+            }
             var tgt = npcPath.Target;
             if (tgt.HasValue && tgt.Value.Door != null && doorById.TryGetValue(tgt.Value.Door, out var door))
             {

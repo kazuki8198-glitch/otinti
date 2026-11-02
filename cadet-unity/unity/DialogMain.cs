@@ -133,6 +133,7 @@ public class DialogMain : MonoBehaviour
         if (!on) return;
         DrawLine(nameCv, v.Name, 32, string.IsNullOrEmpty(v.Color) ? "#ffffff" : v.Color);
         DrawBody(v.Text, "#ffffff");
+        TtsMain.Speak(v.Text);   // Stage 13: voice on Windows via the SAPI bridge (no-op elsewhere)
         foreach (var b in choiceButtons) Destroy(b.gameObject);
         choiceButtons.Clear(); choiceCvs.Clear();
         if (v.Choices.Count > 0)

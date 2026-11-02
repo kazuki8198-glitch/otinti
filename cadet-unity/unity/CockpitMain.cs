@@ -23,6 +23,8 @@ public class CockpitMain : MonoBehaviour
     public Autopilot Ap;
     public Controls Ctl;
     public LessonState Fl;
+    private DevicesMain devices; private DeviceMerge.Edge devEdge;
+    private FreeModeMain freeMode;
     public string Type = "";
     public string LastToast = "";
     public bool SessionLive;
@@ -161,11 +163,15 @@ public class CockpitMain : MonoBehaviour
     {
         if (!SessionLive) return;
         Ctl.Update(S, 1.0 / 60, NoKeys, true);
+        if (devices == null) devices = FindObjectOfType<DevicesMain>();
+        if (devices != null) DeviceMerge.Apply(Ctl, S, devices.Poll(), devices.AnyLive, ref devEdge, true);
         acc += 1.0 / 60;
         double H = 1.0 / 120; int n = 0;
         while (acc >= H && n < 30) { Ap.Pilot(Fl, H); Sim.Step(S, H); acc -= H; n++; }
         Sys.Update(1.0 / 60, S);
         Ap.Sync(Av);
+        if (freeMode == null) freeMode = FindFirstObjectByType<FreeModeMain>(FindObjectsInactive.Include);
+        if (freeMode != null && freeMode.Cockpit == this) freeMode.TickScheduler(1.0 / 60 / 60);
     }
     public void StepSeconds(double sec) { for (double t = 0; t < sec - 1e-9; t += 1.0 / 60) Frame(); }
 

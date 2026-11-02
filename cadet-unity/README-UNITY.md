@@ -31,5 +31,21 @@ HTML 版 CADET（`cadet/`）の Unity 6000.3.27f2 への本移植一式。段階
   歩行 20,453 ステップ・ライン 9 シナリオ・効果音グラフ 1,703 エントリ）。
 - 統合シーン（Game）でのコールドブート画面通し：タイトル→キャリア飛行→離陸→
   各画面（フリー/ライン/AI/歩行）の起動を確認（STAGE12-REPORT）。
-- 「卒業までの連続プレイフロー」は未統合（キャリアのロジックは全周同値検証済みだが、
-  予定→課目→試験→卒業を1本の画面流れとして直列結線する作業が残っている）。
+- 卒業までの連続プレイフローは STAGE15 で直列結線した（unity/CareerMain.cs。
+  実入力アクセプタンス unity/CareerDriver.cs が序章→卒業→FO 入社を通す設計。
+  2026-11-02 時点では VM 交換で Unity ライセンスのマシン結合が外れ、エディタ実行に
+  ユーザー本人の Hub サインインによる再アクティベーションが必要 — STAGE15-REPORT 参照）。
+
+## 音声（STT / TTS）
+
+- STT（音声入力）: `unity/SttMain.cs` + `flight/src/CadetStt.cs`。マイク →
+  16kHz WAV → 外部 python3 の faster-whisper（tiny / CPU / int8）→ 書き起こし →
+  リードバック照合（数字は digit 化して照合）。実行には python3 +
+  faster-whisper + PyAV が必要。VM ではマイクが無いため録音経路は未検証だが、
+  ファイル→書き起こし→照合のパイプラインはハーネス（flight/test/BotSttCs.cs、
+  JFK サンプル）で実証済み。
+- TTS（読み上げ）: `unity/TtsMain.cs`。Windows 実機専用の SAPI ブリッジ
+  （PowerShell + System.Speech、初回に persistentDataPath/cadet-tts/ へ
+  スクリプトを書き出して行ごとに起動）。会話行の表示で自動的に呼ばれる。
+  **実機未検証**（VM に音声エンジンが無く、Windows 実機での再生確認は未実施）。
+  日本語の行には日本語 SAPI 音声のインストールが必要。

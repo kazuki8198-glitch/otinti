@@ -37,7 +37,7 @@ export function dormSpec() {
       furniture: [
         { type: 'locker_bank', a: 639.8, c: 375.4, rot: 270 }, { type: 'locker_bank', a: 647.0, c: 375.4, rot: 270 },
         { type: 'bulletin_board', a: 638.46, c: 371.5, rot: 90 },
-        { type: 'bench', a: 643.2, c: 367.8, rot: 90 },
+        { type: 'bench', a: 639.9, c: 366.85, rot: 0 },
         { type: 'plant', a: 639.2, c: 367.4, rot: 0 }, { type: 'plant', a: 647.6, c: 367.4, rot: 0 },
       ] },
     peerRoom('dorm-peer-2', '朝日の部屋', 648.4, 658.4, 366.4, 376.8),

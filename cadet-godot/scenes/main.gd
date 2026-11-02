@@ -6,7 +6,7 @@ extends Node3D
 ##
 ## 操作:
 ##   飛行: W/S 機首, A/D ラダー, ←→ ロール, ↑↓ ピッチ(スプリング), R/F スロットル,
-##         B/Space ブレーキ, V フラップ, Shift+V フラップ上げ, G ギア, T トリム,
+##         B/Space ブレーキ, Shift+B パーキングブレーキ, V フラップ, Shift+V フラップ上げ, G ギア, T トリム,
 ##         [ ] ラダートリム, Enter チェックリスト, 1-3 無線の回答
 ##   AP: F2 = AP 接続/解除 (HDG バグ＋選択高度へ), F5/F6 方位バグ, F7/F8 選択高度,
 ##       F9/F10 G1000 レンジ
@@ -51,6 +51,14 @@ var finish_done := false
 # Phase 3: career mode + traffic + aircraft selection + walker
 var driver = null
 var career_item: Dictionary = {}
+# v1.0.1: items of the current day this scene has already performed.
+# career.schedule() (like the HTML original) keeps today's done items in
+# today's plan — it carries no done flags — so a caller that re-reads the
+# schedule after every item MUST track performance itself. v1.0.0's
+# _career_advance did not: in ch1 every F3 re-performed the class and
+# restarted the same ground drill forever, and the day could never end.
+var career_done_today: Dictionary = {}
+var career_done_day := -1
 var exam_state: Dictionary = {}
 var hud_career: Label = null
 var hud_debrief: Label = null
@@ -91,6 +99,19 @@ var world_env: Environment = null
 var sun_light: DirectionalLight3D = null
 var clouds_root: Node = null
 var hud_version: Label = null
+# v1.0.1: title screen + first-time flight guide. v1.0.0 booted straight
+# into this harness's free-flight scene — no title, no menu, only a small
+# corner help text — which is why a first-time player could not find any
+# way in (see FIX-REPORT.md).
+var title_on := false
+var title_layer: CanvasLayer = null
+var title_main_box: VBoxContainer = null
+var title_lesson_box: VBoxContainer = null
+var title_btn_career: Button = null
+var title_btn_cont: Button = null
+var title_btn_free: Button = null
+var title_btn_lessons: Button = null
+var hud_guide: Label = null
 
 static func version_string() -> String:
 	return "v" + String(ProjectSettings.get_setting("application/config/version", "0.0.0"))
@@ -230,7 +251,16 @@ func _ready() -> void:
 	hud_career = _mk_label(layer, Vector2(16, 300), 16)
 	hud_debrief = _mk_label(layer, Vector2(560, 300), 15)
 	var help := _mk_label(layer, Vector2(760, 10), 14)
-	help.text = "1 フリー滑走路 / 2 エプロン / 3-6 レッスン a1・t1・t2・t3\nC 視点切替 / F2 AP / F5-F10 G1000ノブ / F11 機体切替\nF3 キャリア開始・次の予定 / F4 徒歩モード / W/S 機首 R/F スロットル\nTab EFB / P リプレイ（Cでカメラ切替） / J 会話 / F12 設定"
+	help.text = "Esc タイトル / 1 フリー滑走路 / 2 エプロン / 3-6 レッスン\nC 視点 / F2 AP / F3 キャリア / F4 徒歩 / Tab EFB / F12 設定\nW/S 機首 R/F スロットル Shift+B パーキングブレーキ"
+	# v1.0.1: the always-on first-time guide (dynamic "what to do now" line
+	# + the essential keys), shown from flight start until well airborne.
+	hud_guide = _mk_label(layer, Vector2(16, 118), 16)
+	var gsb := StyleBoxFlat.new()
+	gsb.bg_color = Color(0, 0, 0, 0.55)
+	gsb.set_corner_radius_all(6)
+	gsb.set_content_margin_all(10.0)
+	hud_guide.add_theme_stylebox_override("normal", gsb)
+	hud_guide.visible = false
 	# Phase 5: version in the bottom-right corner of the screen
 	hud_version = _mk_label(layer, Vector2(1150, 692), 12)
 	hud_version.text = "CADET " + version_string()
@@ -315,6 +345,10 @@ func _ready() -> void:
 		bridge.start_free("rwy", "pa28", {"wind": "light"})
 	_sync_visual(1.0)
 	_update_screens()
+	# v1.0.1: normal boots stop at the title screen; the free flight above
+	# is only the backdrop and the sim is not stepped until a mode is picked.
+	if shot_mode == "":
+		_build_title()
 
 func _set_layer_recursive(n: Node, layer: int) -> void:
 	if n is VisualInstance3D:
@@ -356,6 +390,183 @@ func _toast(text: String) -> void:
 	hud_toast.text = text
 	toast_t = 4.0
 
+func _title_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(440, 46)
+	b.add_theme_font_size_override("font_size", 20)
+	return b
+
+## v1.0.1 title screen: the game's front door. Built at boot (normal mode)
+## and rebuilt whenever the player returns with Esc, so the "つづきから"
+## button reflects a save written during the session.
+func _build_title() -> void:
+	title_on = true
+	title_layer = CanvasLayer.new()
+	title_layer.layer = 4
+	add_child(title_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.04, 0.08, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	title_layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	title_layer.add_child(center)
+	title_main_box = VBoxContainer.new()
+	title_main_box.add_theme_constant_override("separation", 12)
+	center.add_child(title_main_box)
+	var t := Label.new()
+	t.text = "CADET"
+	t.add_theme_font_size_override("font_size", 72)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_main_box.add_child(t)
+	var sub := Label.new()
+	sub.text = "パイロット訓練生シミュレーター（Godot ネイティブ版 " + version_string() + "）"
+	sub.add_theme_font_size_override("font_size", 20)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_main_box.add_child(sub)
+	var has_save := typeof(store.get("cadet.career")) == TYPE_STRING
+	title_btn_career = _title_button("キャリアをはじめから（セーブを消して開始）" if has_save else "キャリアをはじめる")
+	title_btn_career.name = "TitleCareerBtn"
+	title_btn_career.pressed.connect(_on_title_career)
+	title_main_box.add_child(title_btn_career)
+	if has_save:
+		title_btn_cont = _title_button("つづきから")
+		title_btn_cont.name = "TitleContinueBtn"
+		title_btn_cont.pressed.connect(_on_title_continue)
+		title_main_box.add_child(title_btn_cont)
+	else:
+		title_btn_cont = null
+	title_btn_free = _title_button("フリー飛行")
+	title_btn_free.name = "TitleFreeBtn"
+	title_btn_free.pressed.connect(_on_title_free)
+	title_main_box.add_child(title_btn_free)
+	title_btn_lessons = _title_button("レッスンを選ぶ")
+	title_btn_lessons.name = "TitleLessonsBtn"
+	title_btn_lessons.pressed.connect(_on_title_lessons)
+	title_main_box.add_child(title_btn_lessons)
+	var note := Label.new()
+	note.text = "飛行中 Esc でこの画面に戻れます。操作は飛行開始後の画面ガイドに表示されます。"
+	note.add_theme_font_size_override("font_size", 14)
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_main_box.add_child(note)
+	# lesson picker (hidden until chosen): every flight lesson in the
+	# syllabus (ground drills k1-k6 have no steps and run inside career).
+	title_lesson_box = VBoxContainer.new()
+	title_lesson_box.add_theme_constant_override("separation", 6)
+	title_lesson_box.visible = false
+	center.add_child(title_lesson_box)
+	var head := Label.new()
+	head.text = "レッスンを選ぶ"
+	head.add_theme_font_size_override("font_size", 28)
+	title_lesson_box.add_child(head)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(580, 420)
+	title_lesson_box.add_child(scroll)
+	var lv := VBoxContainer.new()
+	lv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(lv)
+	for st in CadetSchool.stages():
+		for les in (st as Dictionary)["lessons"]:
+			if not (les as Dictionary).has("steps"):
+				continue
+			var lid := String(les["id"])
+			var b := _title_button(lid + "  " + String(les["title"]))
+			b.pressed.connect(func() -> void: _on_title_lesson(lid))
+			lv.add_child(b)
+	var back := _title_button("もどる")
+	back.pressed.connect(_on_title_back)
+	title_lesson_box.add_child(back)
+
+func _title_off() -> void:
+	title_on = false
+	if title_layer != null:
+		title_layer.visible = false
+
+func _show_title_again() -> void:
+	if title_layer != null:
+		title_layer.visible = false
+		title_layer.queue_free()
+		title_layer = null
+	_build_title()
+
+func _on_title_career() -> void:
+	# 「はじめる」is a fresh career: wipe any previous career save first
+	# (「つづきから」is the resume path). Mirrors starting a new game.
+	if typeof(store.get("cadet.career")) == TYPE_STRING:
+		store.erase("cadet.career")
+		store.erase("cadet-progress")
+		store.erase("cadet-dialog")
+		dialog_state = {}
+		driver = null
+		save_store.save(store)
+	_title_off()
+	_career_advance()
+
+func _on_title_continue() -> void:
+	_title_off()
+	if driver == null:
+		driver = CareerDriver.new(store, 11)
+	_show_career()
+	_toast("つづきから再開しました。F3 で次の予定を実行します")
+
+func _on_title_free() -> void:
+	_title_off()
+	finish_done = false
+	_reset_recorder()
+	if profile_graph != null:
+		profile_graph.visible = false
+	bridge.start_free("rwy", "pa28", {"wind": "light"})
+	_toast("フリー飛行（滑走路）。画面左上のガイドに沿って離陸できます")
+
+func _on_title_lessons() -> void:
+	title_main_box.visible = false
+	title_lesson_box.visible = true
+
+func _on_title_back() -> void:
+	title_lesson_box.visible = false
+	title_main_box.visible = true
+
+func _on_title_lesson(id: String) -> void:
+	_title_off()
+	finish_done = false
+	_reset_recorder()
+	if profile_graph != null:
+		profile_graph.visible = false
+	bridge.start_lesson(id, "intro")
+	_toast("開始: " + String(bridge.status()["title"]))
+
+## v1.0.1 first-time guide: a dynamic "what to do now" line over the
+## essential keys, visible from flight start until the aircraft is well
+## airborne (and again whenever it is back on the ground).
+func _update_guide() -> void:
+	if hud_guide == null:
+		return
+	if shot_mode != "" or title_on or walk_on or replay_on or bridge == null or bridge.get_s() == null:
+		hud_guide.visible = false
+		return
+	var s: Dictionary = bridge.get_s()
+	var pnl: Dictionary = bridge.panel()
+	var step := ""
+	if bool(s.get("crashed", false)):
+		step = "墜落しました。Esc でタイトルに戻れます"
+	elif bool(pnl.get("parkBrake", false)):
+		step = "▶ 今やること： Shift+B でパーキングブレーキを解除"
+	elif bool(s["onGround"]):
+		if float(pnl["thr"]) < 0.5 and float(s["out"]["gs"]) < 3.0:
+			step = "▶ 今やること： R を長押ししてスロットルを全開に"
+		elif float(pnl["ias"]) < 53.0:
+			step = "▶ 今やること： そのまま加速。55 kt を過ぎたら次へ"
+		else:
+			step = "▶ 今やること： S を少し引いて機首を上げ、離陸"
+	elif float(s["out"]["altTrue"]) < 400.0:
+		step = "▶ 空中： W/S 機首の上げ下げ、A/D バンク、R/F スロットル"
+	if step == "":
+		hud_guide.visible = false
+		return
+	hud_guide.text = step + "\n―――\nR 長押し スロットル（F で下げる） / Shift+B パーキングブレーキ\nB・Space ブレーキ / Q・E ラダー / A・D バンク / W・S 機首\nV フラップ / G ギア / T トリム / C 視点 / F2 AP / Tab EFB / F12 設定 / Esc タイトル"
+	hud_guide.visible = true
+
 func _flight_dict() -> Dictionary:
 	var L = bridge.get_L()
 	return {"L": L, "s": L["s"], "av": L["av"]}
@@ -372,8 +583,13 @@ func _process(dt: float) -> void:
 	if traffic != null:
 		traffic.update(minf(dt, 0.1) if shot_mode == "" else 0.1, null)
 		_sync_traffic()
-	# input
-	if shot_mode == "":
+	# input (v1.0.1: while the title screen is up the sim is not stepped —
+	# the parked free flight behind the overlay is just a backdrop. This
+	# branch must come FIRST: without it the title state falls through to
+	# the shot-mode else-branch below and gets flown by _shot_keys.)
+	if title_on:
+		pass
+	elif shot_mode == "":
 		_keys = IM.poll_keys()
 		for e in IM.pad_edges():
 			if String(e) == "flaps":
@@ -410,6 +626,7 @@ func _process(dt: float) -> void:
 		_sync_visual(-1.0)
 	_update_screens()
 	_update_hud()
+	_update_guide()
 	_update_audio(dt)
 	if not walk_on and shot_mode != "walk" and shot_mode != "p4walk" and shot_mode != "p5walk" and shot_mode != "p4room" and shot_mode != "p5room" and not replay_on:
 		_update_external_cam(dt)
@@ -598,9 +815,14 @@ func _show_career() -> void:
 		hud_career.text = ""
 		return
 	var sch: Array = driver.schedule()
+	# v1.0.1 fix: CadetCareerInstance has abilities() (a Dictionary), not
+	# ability(axis) — the v1.0.0 call threw on every career HUD refresh, so
+	# the career panel never displayed at all. tired() is a bool (fatigue
+	# >= 65), not the fatigue value; the HUD prints st["fatigue"] instead.
+	var ab: Dictionary = driver.career.abilities()
 	var txt := "[キャリア] %d日目 %s  HAND %.0f KNOW %.0f COMM %.0f JUDGE %.0f 疲労 %.0f\n今日の予定:\n" % [
 		driver.career.day(), driver.chapter(),
-		driver.career.ability("hand"), driver.career.ability("know"), driver.career.ability("comm"), driver.career.ability("judge"), driver.career.tired()]
+		float(ab.get("hand", 0.0)), float(ab.get("know", 0.0)), float(ab.get("comm", 0.0)), float(ab.get("judge", 0.0)), float(driver.career.st.get("fatigue", 0.0))]
 	for it in sch:
 		txt += "・%s %s %s\n" % [String(it.get("kind", "")), String(it.get("title", "")), "✓" if bool(it.get("done", false)) else ""]
 	txt += "F3: 次の予定を実行"
@@ -621,18 +843,30 @@ func _career_advance() -> void:
 	if drill_core != null:
 		return # a ground-device drill is in progress; answer with 1-4
 	driver.daily_decision_and_drills()
+	# v1.0.1: (re)seed the performed-today set when the day changes, from
+	# the career's own done record (kind:id -> day), then skip those items.
+	if driver.career.day() != career_done_day:
+		career_done_day = driver.career.day()
+		career_done_today = {}
+		for k in driver.career.st["done"].keys():
+			if int(driver.career.st["done"][k]) == career_done_day:
+				career_done_today[k] = true
 	for item in driver.schedule():
-		if bool(item.get("done", false)):
+		var ikey := String(item.get("kind", "")) + ":" + String(item.get("id", ""))
+		if bool(item.get("done", false)) or career_done_today.has(ikey):
 			continue
 		# Phase 4: ground-device lessons run the interactive drill first;
 		# the driver's bookkeeping happens when the drill completes.
 		if String(item.get("kind", "")) == "ftd":
+			career_done_today[ikey] = true
 			_start_drill(item)
 			_show_career()
 			return
 		var act: String = driver.perform(item)
 		if act == "done" or act == "graduate" or act == "skip":
+			career_done_today[ikey] = true
 			continue
+		career_done_today[ikey] = true
 		if act.begins_with("fly:"):
 			career_item = item
 			finish_done = false
@@ -748,6 +982,8 @@ func _cycle_aircraft() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if shot_mode != "":
 		return
+	if title_on:
+		return # the title screen owns input (buttons) until a mode is picked
 	if event is InputEventKey and event.pressed and not event.echo:
 		# Phase 4: an open conversation takes Enter / number keys first
 		if dialog_ui != null and dialog_ui.is_running():
@@ -760,6 +996,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Phase 4: a running ground drill takes the number keys
 		if drill_core != null and event.keycode in [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6]:
 			_drill_answer(event.keycode - KEY_1)
+			return
+		# v1.0.1: Esc is the way back to the title screen (never mid-dialog)
+		if event.keycode == KEY_ESCAPE:
+			if dialog_ui == null or not dialog_ui.is_running():
+				_show_title_again()
 			return
 		if event.keycode == KEY_TAB:
 			if efb != null:
@@ -789,6 +1030,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_ENTER: code = "Enter"
 			KEY_KP_ENTER: code = "NumpadEnter"
+			KEY_B: code = "KeyB" # Shift+B = parking brake toggle (v1.0.1)
 			KEY_V: code = "KeyV"
 			KEY_G: code = "KeyG"
 			KEY_T: code = "KeyT"

@@ -11,7 +11,7 @@ extends SceneTree
 ## [devices] and [ai] sections (no clobbering either way); the master
 ## volume maps and applies to the real Master bus; the settings UI
 ## builds headless and its controls drive the same object; and the
-## project version is 1.0.0.
+## project version is 1.0.1.
 
 const AppSettings = preload("res://src/app_settings.gd")
 const DeviceMap = preload("res://src/device_map.gd")
@@ -193,4 +193,4 @@ func _test_ui() -> void:
 	DirAccess.remove_absolute("user://_test_settings_p5_ui.cfg")
 
 func _test_version() -> void:
-	_eq(String(ProjectSettings.get_setting("application/config/version", "")), "1.0.0", "project version is 1.0.0")
+	_eq(String(ProjectSettings.get_setting("application/config/version", "")), "1.0.1", "project version is 1.0.1")

@@ -20,6 +20,12 @@ const FLY_HELD := ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "
 const KEY_ACTS := {
 	"KeyV": ["flaps", "flapsUp"], "KeyR": [null, "thrFull"], "KeyF": [null, "thrIdle"], "KeyG": ["gear", "gear"], "KeyT": ["trim", "trimReset"],
 	"KeyL": ["level", "level"], "KeyU": ["autoRud", "autoRud"], "BracketLeft": ["feather0", "restart0"], "BracketRight": ["feather1", "restart1"],
+	# Shift+B toggles the parking brake, exactly like the HTML original
+	# (fly-mode.js: KeyB + shiftKey -> 'parkBrake'). Plain B stays the held
+	# toe brake (FLY_HELD / HELD0.brake), so its no-shift action is null.
+	# v1.0.0 shipped WITHOUT this entry: the parkBrake action existed but no
+	# key could reach it, so a parked (apron) start could never move.
+	"KeyB": [null, "parkBrake"],
 	"KeyZ": ["rtrimL", "rtrimL"], "KeyX": ["rtrimR", "rtrimR"],
 }
 const HELD0 := {"up": "KeyW", "down": "KeyS", "left": "KeyA", "right": "KeyD", "rudL": "KeyQ", "rudR": "KeyE", "thrUp": "KeyR", "thrDn": "KeyF", "brake": "KeyB"}

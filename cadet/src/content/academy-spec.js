@@ -248,7 +248,7 @@ export function academySpec(FL) {
       lights: lightsGrid(638, 645, 265, 276, 4.2),
       furniture: [
         { type: 'bench', a: 638.6, c: 276.5, rot: 270 },
-        { type: 'plant', a: 638.3, c: 264.5, rot: 0 },
+        { type: 'plant', a: 637.6, c: 264.5, rot: 0 },
         { type: 'sign_board', a: 645.94, c: 274.0, rot: 270, note: 'roof', y: 6.5 },
       ] },
     // the roof over the south wing: a lookout over the circuit and the apron, reached through the stair bulkhead's
@@ -284,7 +284,7 @@ export function academySpec(FL) {
     { id: 'd-class2', rooms: ['class2', 'corridor2-s'], kind: 'double_swing', wall: 'c', at: 261.0, from: 619.2, to: 621.0, y: 4.22, label_ja: '大教室' },
     { id: 'd-library', rooms: ['library', 'corridor2-s'], kind: 'double_swing', wall: 'c', at: 263.6, from: 617.2, to: 619.0, y: 4.22, label_ja: '図書・自習室' },
     { id: 'd-av', rooms: ['av', 'corridor2-s'], kind: 'swing', wall: 'c', at: 263.6, from: 632.6, to: 633.6, y: 4.22, label_ja: '教材・視聴覚室' },
-    { id: 'd-stairs2', rooms: ['stairs2', 'corridor2-s'], kind: 'swing', wall: 'c', at: 263.6, from: 642.0, to: 643.2, y: 4.22, label_ja: '階段室（2 階）' },
+    { id: 'd-stairs2', rooms: ['stairs2', 'corridor2-s'], kind: 'swing', wall: 'c', at: 263.6, from: 638.9, to: 640.1, y: 4.22, label_ja: '階段室（2 階）' },
     { id: 'stair-up', rooms: ['stairs', 'stairs2'], kind: 'opening', wall: 'a', at: 646.0, from: 264.0, to: 266.4, graph: true, label_ja: '階段' },
     { id: 'd-roof', rooms: ['stairs2', 'roof'], kind: 'swing', wall: 'c', at: 268.0, from: 645.0, to: 646.0, y: 8.27, bulkhead: true, label_ja: '屋上' },
     { id: 'x-airside', rooms: ['lobby', 'outside'], kind: 'sliding_auto', wall: 'c', at: 249.0, from: 653.0, to: 657.0, label_ja: 'エプロン（駐機場）へ' },

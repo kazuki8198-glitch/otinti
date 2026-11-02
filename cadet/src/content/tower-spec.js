@@ -15,9 +15,14 @@ export function towerSpec() {
   // the cab's floor, in colliders' pieces (world/tower.js builds them, and the floor flats over them): the east
   // lane's block, the south-west block, and the aprons over the disc beyond the shaft's square — the north-west
   // L (the last flight and its landing) stays open, that is where the stair arrives
+  // the south-west block starts only where the last flight's treads have dropped a body's height (plus the
+  // slab and a margin) below the cab floor: any further west it hangs over the climbers' heads and the last
+  // flight cannot be climbed or descended (full-play audit, domain D)
+  const lastF = S.flights[S.flights.length - 1];
+  const swEdge = +(lastF.aTo + Math.ceil(2.5 / S.stepRise) * S.tread + 0.3).toFixed(2);
   const cabFloors = [
     [S.inA0, S.inA1, S.inC0 + S.laneW + 0.2, S.inC1],
-    [S.inA1 - S.land, S.inA1, S.inC0, S.inC0 + S.laneW + 0.2],
+    [swEdge, S.inA1, S.inC0, S.inC0 + S.laneW + 0.2],
     [717.9, S.inA0, 260.6, 263.4],
     [S.inA1, 724.1, 260.6, 263.4],
     [719.3, 722.7, 258.9, S.inC0],
@@ -43,7 +48,7 @@ export function towerSpec() {
       floorRects: cabFloors,
       lights: [],
       furniture: [
-        { type: 'atc_console', a: 722.6, c: 260.4, rot: 180 }, { type: 'office_chair', a: 722.6, c: 261.5, rot: 0 },
+        { type: 'atc_console', a: 722.85, c: 260.4, rot: 180 }, { type: 'office_chair', a: 722.85, c: 261.5, rot: 0 },
         { type: 'atc_console', a: 719.9, c: 263.6, rot: 180 }, { type: 'office_chair', a: 719.9, c: 262.5, rot: 0 },
         { type: 'atc_console', a: 722.9, c: 263.6, rot: 180 }, { type: 'office_chair', a: 722.9, c: 262.5, rot: 0 },
         { type: 'stool', a: 720.5, c: 264.6, rot: 0 }, { type: 'stool', a: 719.6, c: 259.6, rot: 0 },

@@ -428,7 +428,12 @@ test('grading: ≥ 85 % of the time inside and the largest deviation within 1.6 
 
 test('the scripted pilot flies and passes the lessons a script can fly (Archer, Seminole, instruments, navigation)', () => {
   const fails = [];
-  for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'e3', 'c1', 'x3', 'n1', 'n2', 'n3', 'i3', 'i4', 'i5', 'i6', 'i7', 'm1', 'm2', 'm3', 'm4']) {
+  // (e3 and c1 left this list in the full-play audit: their bot "passes" had been graded through the
+  // crash gate's dead conditions (audit C-1) — with the gate judging the arrival as flown, the bot's
+  // e3 glide lands short of the runway and its c1 lands off it. Bot limits, like t2/r1/x1/x2/i1/i2/m5
+  // and the jet lessons elsewhere: the lessons complete and score sanely, and e2 — whose pilot now
+  // flies the glide and flare it teaches — passes for real)
+  for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'x3', 'n1', 'n2', 'n3', 'i3', 'i4', 'i5', 'i6', 'i7', 'm1', 'm2', 'm3', 'm4']) {
     const L = runLesson(FL, id, 'basic', 1200);
     if (!(L.done && L.passed)) fails.push(`${id}: ${L.grade} ${L.reason} ${L.results.flatMap(r => r.rows).filter(r => !r.pass).map(r => r.name + ' ' + r.val).join(' / ')}`);
   }

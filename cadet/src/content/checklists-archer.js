@@ -37,7 +37,11 @@ export const CHECKLISTS = {
   ] },
   runup: { title: 'ランナップ（RUN-UP）', items: [
     ['パーキングブレーキ', 'セット', c => c.park, 'parkBrake', '止まって、機首を風上へ。プロペラの後ろに人や機体がないこと。', c => c.act('parkBrake', true)],
-    ['スロットル', '2,000 rpm', c => c.rpm >= 1900 && c.rpm <= 2120 && c.memo.both > 0, 'throttle', '', c => c.setThr(0.67)],
+    // the instructor's hand: 0.67 is 2,000 rpm in the Archer, but the Arrow (ch7 flies this same list)
+    // has a constant-speed prop — at full prop travel 0.67 gives the 2,700 rpm redline and the run-up
+    // can never complete, stalling the whole day at this item (full-play audit, domain A). In the
+    // Arrow the same 2,000 rpm sits at about 0.15 of throttle, prop full forward, as in the real -R.
+    ['スロットル', '2,000 rpm', c => c.rpm >= 1900 && c.rpm <= 2120 && c.memo.both > 0, 'throttle', '', c => c.setThr(c.s && c.s.A && c.s.A.id === 'pa28r' ? 0.15 : 0.67)],
     ['マグネトー L', '回転の低下 175 rpm 以内', c => c.memo.dropL > 20 && c.memo.dropL <= 175, 'mag', 'キーを L に。回転がどれだけ下がるか見ます。', c => { c.sw.mag = 'L'; }],
     ['マグネトー R', '低下 175 rpm 以内・左右の差 50 rpm 以内', c => c.memo.dropR > 20 && c.memo.dropR <= 175 && Math.abs(c.memo.dropL - c.memo.dropR) <= 50, 'mag', '次に R。', c => { c.sw.mag = 'R'; }],
     ['マグネトー', 'BOTH', c => c.sw.mag === 'BOTH' && c.memo.dropR > 0, 'mag', '必ず BOTH に戻します。', c => { c.sw.mag = 'BOTH'; }],

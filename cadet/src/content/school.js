@@ -29,7 +29,10 @@ import { tagOfSection, tagOfBank, tagChipSpoken } from './ana-triage.js';
 import * as TALK from './class-talk.js';
 import { say } from './class-talk.js';
 
-export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book', 'pace', 'heard', 'ans', 'chair'];
+export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book', 'pace', 'heard', 'ans', 'chair', 'ai'];
+// (AI instructors wave) the free question to the lecturer, offered only while the AI setting is on (ctx ai.on);
+// the hook 'ai' carries her id, and the game resumes the lesson at its goodbye afterwards
+const FREE_Q = { text: '自由に質問したい', if: { ctx: 'ai.on', is: true }, next: 'ai' };
 const SPEAKERS = { lecturer: { name_ja: PEOPLE.lecturer.title, color: PEOPLE.lecturer.color }, instructor: { name_ja: PEOPLE.instructor.title, color: PEOPLE.instructor.color }, player: { name_ja: 'あなた', color: '#f2b632' },
   // (the classmates in the class)
   kiryu: { name_ja: PEOPLE.kiryu.title, color: PEOPLE.kiryu.color }, mori: { name_ja: PEOPLE.mori.title, color: PEOPLE.mori.color } };
@@ -94,11 +97,17 @@ export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result',
   }
   return { entry: from < to ? entry(from) : then };
 }
-const resultNodes = (N, speaker, passText, failText, endText) => {
+const resultNodes = (N, speaker, passText, failText, endText, freeArg = null) => {
   if (endText && N['q:end']) N['q:end'].text = endText;
   N.result = { speaker, text: '{quiz.right} / {quiz.n} 問、{quiz.pct}% でした。', next: 'result:pass' };
-  N['result:pass'] = { speaker, text: passText, if: { ctx: 'quiz.pass', is: true }, else: 'result:fail', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }], end: true };
-  N['result:fail'] = { speaker, text: failText, effects: [{ hook: 'done', arg: 'fail' }], end: true };
+  // (AI instructors wave) with freeArg, the result offers a free question to that person before the goodbye
+  const tail = freeArg ? { choices: [FREE_Q, { text: '終わります', next: 'result:bye' }] } : { end: true };
+  N['result:pass'] = { speaker, text: passText, if: { ctx: 'quiz.pass', is: true }, else: 'result:fail', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }], ...tail };
+  N['result:fail'] = { speaker, text: failText, effects: [{ hook: 'done', arg: 'fail' }], ...tail };
+  if (freeArg) {
+    N['result:bye'] = { speaker, text: 'お疲れさまでした。また練習しましょう。', end: true };
+    N.ai = { speaker, text: 'いいですよ。何でも聞いてください。', hook: { name: 'ai', arg: freeArg }, next: 'result:bye' };
+  }
 };
 
 // ---------------------------------------------------------------- a class (index into CLASS_CHAPTERS)
@@ -994,7 +1003,11 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     N['q:end:r'] = { speaker: S, text: '今日の問題は以上です。', hook: N['q:end'].hook, next: 'preview' };
   }
   N.score = { speaker: S, text: '{quiz.right} / {quiz.n} 問、{quiz.pct}% でした。', if: { not: { flag: 'resumed' } }, else: 'preview', next: 'preview' };
-  chain(N, 'preview', day.preview.flatMap(t => fit(t)), 'bye');
+  chain(N, 'preview', day.preview.flatMap(t => fit(t)), 'bye:ck');
+  // (AI instructors wave) after the class, a free question to the lecturer before the goodbye (a decision
+  // node, ':ck' as the section ends' checks are: a class's choices live only on such nodes)
+  N['bye:ck'] = { speaker: S, text: '授業はここまで。質問があれば、今のうちにどうぞ。', choices: [FREE_Q, { text: '大丈夫です', next: 'bye' }] };
+  N.ai = { speaker: S, text: 'いいですよ。何でも聞いてください。', hook: { name: 'ai', arg: 'lecturer' }, next: 'bye' };
   N.bye = { speaker: S, text: day.bye, hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'class' }], end: true };
   // the start: the day's own lines, the review, the format's choice where one is to be made, then the
   // chapters — or, taken up midway, straight on from its place, in the class's own format
@@ -1149,7 +1162,7 @@ export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null, k4 = nu
     // (nothing of it said yet — a record whose classes came in another order: the class first, nothing to fail)
     if (!questions.length) N.intro = { speaker: 'lecturer', text: `${k} で使うところは、まだ授業で話していません。先に授業を受けてから、また来てください。`, end: true };
     else quizNodes(N, questions, { fitTo: LINE_MAX, fitQ: true });
-    if (questions.length) resultNodes(N, 'lecturer', `Excellent! ${k} は合格です。`, 'Not yet. 大丈夫、間違えたところを見直して、もう一度やりましょう。準備ができたら、また声をかけてください。', TALK.FTD_END[k]);
+    if (questions.length) resultNodes(N, 'lecturer', `Excellent! ${k} は合格です。`, 'Not yet. 大丈夫、間違えたところを見直して、もう一度やりましょう。準備ができたら、また声をかけてください。', TALK.FTD_END[k], 'lecturer');
     flags = questions.map((_, i) => `qz_${i}`);
   }
   return { speakers: SPEAKERS, flags, hooks: [...SCHOOL_HOOKS], dialogs: { ftd: { start: 'hello', nodes: N } }, questions: questions || [] };

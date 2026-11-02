@@ -19,7 +19,11 @@ export const SAMPLE_CTX = {
   tem: { on: true, o0: '午後の雷雨', o1: '審査の緊張', o2: '朝の霧', right: true, threat: '審査の緊張', why: '今日は審査です。緊張すると、いつもの手順が抜けます', plan: '毎日の手順のとおりに', not: '',
     en: { threat: 'check-ride nerves', why: 'Today is a check; nerves make you skip the usual steps', plan: 'do it the everyday way', not: '' } },        // (M8: the crew in English)
 };
-export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point', 'tem'];
+export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point', 'tem', 'ai'];
+// (AI instructors wave) the free question to this person, offered only while the AI setting is on (ctx ai.on) —
+// the same gating as the instructor's FREE. The hook 'ai' carries the person's id; the game opens that
+// character's own AI talk, and afterwards resumes this dialog at 'ai:thanks'. AI talks carry no effects.
+const FREE_Q = { text: '自由に質問したい', if: { ctx: 'ai.on', is: true }, next: 'ai' };
 // ('done' also takes 'graduation': the ceremony's speech heard)
 export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_controller', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed', 'prologue_short'];
 // the flags set here that the game reads (the tablet, the people met for the prologue's end, the check ride's brief)
@@ -68,8 +72,12 @@ export function peopleDialogs() {
       'c1:2': say('審査の間、私は手伝いません。何も言わないのは、あなたの判断を見るためです。いつもどおり、チェックリストと交信を省かずに。', { next: 'c1:3' }),
       'c1:3': say('離陸、上昇、水平、急旋回、失速からの回復、そして模擬のエンジン故障。最後まで、自分の言葉で操縦してください。', { choices: [
         { text: 'よろしくお願いします', next: 'c1:go' },
+        FREE_Q,
         { text: '少し準備してから行きます', next: 'c1:later' },
       ] }),
+      // (AI instructors wave) a free question to the chief himself, around his check rides
+      ai: say('聞きたいことがあれば、どうぞ。基準と安全の範囲で答えます。', { hook: { name: 'ai', arg: 'chief' }, next: 'ai:thanks' }),
+      'ai:thanks': say('ほかに無ければ、以上です。いつもどおりに。', { hook: { name: 'nod' }, end: true }),
       'c1:go': say('機体で待っています。外部点検から、いつもどおりに。', { hook: { name: 'nod' }, effects: [{ hook: 'checkride' }], end: true }),
       'c1:later': say('わかりました。焦らなくていい。準備ができたら来てください。', { end: true }),
       after: say('ソロの日のことは、ずっと覚えているはずです。でも、明日の飛行も、同じように丁寧に。それがいちばん難しい。', { if: { all: [{ ctx: 'career.solo', is: true }, ch('ch2')] }, else: 'ch6', hook: { name: 'nod' }, end: true }),
@@ -79,12 +87,14 @@ export function peopleDialogs() {
       'ir:2': say('離陸したら、部分パネル。主の姿勢表示が止まった想定で、予備の計器で飛んでもらいます。そのあと、ILS 進入。決心高度で滑走路が見えなければ、そこで判断を。', { next: 'ir:3' }),
       'ir:3': say('スキャンを止めないこと。ひとつの計器を見つめると、ほかが逃げていきます。', { choices: [
         { text: 'よろしくお願いします', next: 'chk:tem' },
+        FREE_Q,
         { text: '少し準備してから行きます', next: 'c1:later' },
       ] }),
       me: say('今日は双発の審査です。Seminole で、私が右の席に座ります。', { if: { all: [{ ctx: 'today.checkride', is: true }, { ctx: 'today.checkId', is: 'me' }] }, else: 'final', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'c1_briefed' }], next: 'me:2' }),
       'me:2': say('離陸の直後に、片方のエンジンを止めます。Identify、Verify、Feather。足で方向を保って、Vyse で上昇。上空でもう一度、そして片発のまま着陸です。', { next: 'me:3' }),
       'me:3': say('死んだ足は、死んだエンジン。踏んでいない側のエンジンが止まっています。……落ち着いて、声に出して確かめなさい。', { choices: [
         { text: 'よろしくお願いします', next: 'chk:tem' },
+        FREE_Q,
         { text: '少し準備してから行きます', next: 'c1:later' },
       ] }),
       // (M7) TEM on a later chapter's check too (ctx tem: career/tem.js, as the instructor's briefing): his own words
@@ -101,7 +111,7 @@ export function peopleDialogs() {
       // (growth design v1 §4.6) the rank, in the chief's words (ctx career.rank: main.js counts it)
       'grad:rank': say('成績は、優等です。一発で通した課目が多く、試験も少ない回数で済みました。今年の訓練生では、いちばんの出来です。', { if: { ctx: 'career.rank', is: '優等' }, else: 'grad:rank2', next: 'grad:4' }),
       'grad:rank2': say('成績は、優秀です。派手さはないけれど、崩れない。空の仕事では、それがいちばん難しいことです。', { if: { ctx: 'career.rank', is: '優秀' }, else: 'grad:rank3', next: 'grad:4' }),
-      'grad:rank3': say('成績は、標準です。標準というのは、基準を全部満たしたということです。胸を張ってください。', { next: 'grad:4' }),
+      'grad:rank3': say('成績は、通常です。通常というのは、基準を全部満たしたということです。胸を張ってください。', { next: 'grad:4' }),
       'grad:4': say('ここから先は、大きな機体と、もっと多くの人を乗せた空です。でも、やることは同じです。点検し、確かめ、声に出して、正直に飛ぶ。', { next: 'grad:5' }),
       'grad:5': say('修了証です。……いってらっしゃい。', { hook: { name: 'point', arg: 'player' }, choices: [{ text: 'ありがとうございました', next: 'grad:6' }] }),
       'grad:6': { speaker: 'instructor', text: 'おめでとう。しかも、優等です。最初の日、ブリーフィング室で「急がなくて大丈夫」と言ったのを覚えていますか。その言葉どおり、一日ずつ積み上げた結果です。', if: { ctx: 'career.rank', is: '優等' }, else: 'grad:6n', next: 'grad:7' },
@@ -145,10 +155,18 @@ export function peopleDialogs() {
         me('午後まで待ちます（天気の回復を待つ）', 'wx:right', { effects: [{ hook: 'decide', arg: 'wait' }] }),
         me('早めに出て、午前のうちに戻ります', 'wx:right', { effects: [{ hook: 'decide', arg: 'early' }] }),
         me('今日は飛びません', 'wx:right', { effects: [{ hook: 'decide', arg: 'cancel' }] }),
+        FREE_Q,
       ] }),
+      // (AI instructors wave) a free question to the dispatcher, at her counter: weather and operations only
+      ai: say('天気と運航のことなら、どうぞ。', { hook: { name: 'ai', arg: 'dispatcher' }, next: 'ai:thanks' }),
+      'ai:thanks': say('ほかに無ければ、予定の確認をお願いしますね。', { hook: { name: 'nod' }, end: true }),
       'wx:right': say('私もそう思います。{weather.why}早瀬教官にも伝えておきますね。', { if: { ctx: 'today.decisionRight', is: true }, else: 'wx:wrong', hook: { name: 'nod' }, effects: [{ trust: 'dispatcher', add: 2 }], end: true }),
       'wx:wrong': say('うーん、私は違う判断です。{weather.why}今日はそれで予定を組み直します。', { effects: [{ trust: 'dispatcher', add: -1 }], end: true }),
-      'info:ch2': say('今日の予定はタブレットにも出ています。機体は {today.reg}（{today.type}）、19 番の場所です。天気は「{weather.ja}」。', { if: { ctx: 'career.flying', is: true }, else: 'info:ch1', end: true }),
+      'info:ch2': say('今日の予定はタブレットにも出ています。機体は {today.reg}（{today.type}）、19 番の場所です。天気は「{weather.ja}」。', { if: { ctx: 'career.flying', is: true }, else: 'info:ch1', choices: [
+        FREE_Q,
+        { text: 'ありがとうございます', next: 'info:bye' },
+      ] }),
+      'info:bye': say('いってらっしゃい。飛ぶ前の確認、忘れずに。', { hook: { name: 'nod' }, end: true }),
       'info:grad': say('修了、おめでとうございます。予定表から名前が消えるの、ちょっと寂しいですね。', { if: { ctx: 'career.graduated', is: true }, else: 'info:ch2', end: true }),
       ...byClass(say, 'info:ch1', [
         '座学の間は、こちらに用事は少ないですね。画面の METAR は、天気の授業が終わるころには読めるようになりますよ。',
@@ -167,6 +185,10 @@ export function peopleDialogs() {
     D.mechanic = { start: 'm1', nodes: {
       m1: say('整備の大城です。……あんたが新しい訓練生か。', { if: flag('met_mechanic', false), else: 'tip:0', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_mechanic' }], next: 'm2' }),
       m2: say('ひとつだけ。おかしいと思ったら、言ってくれ。勘違いでいい。言わないで飛ぶのが、いちばん困る。', { hook: { name: 'nod' }, end: true }),
+      // (AI instructors wave) a free question to the mechanic: the aircraft and its defects only, in his own tone
+      ai: say('機体のことなら、聞いてくれ。', { hook: { name: 'ai', arg: 'mechanic' }, next: 'ai:thanks' }),
+      'ai:thanks': say('おう。また何かあったら言ってくれ。', { end: true }),
+      'tip:bye': say('おう。おかしいと思ったら、すぐ言ってくれよ。', { end: true }),
       ...byClass(say, 'pre', [
         '飛ぶのはまだ先か。機体を見に来るのはいいことだ。外部点検の順番、見て覚えていくといい。',
         '主翼の上の面を見てくれ。揚力はここで生まれる。霜や汚れがあるだけで、翼の働きは落ちるんだ。',
@@ -176,13 +198,13 @@ export function peopleDialogs() {
         '雨の次の日は、燃料のサンプに水が出やすい。天気と点検は、つながってるんだ。',
         '初飛行の機体は 19 番の Archer だ。前の晩に給油しておく。朝の点検、楽しみにしてるよ。',
       ]),
-      'tip:0': say('燃料のサンプは、透明な容器で光に透かして見る。水は青い燃料の下に、丸い玉になって沈む。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 0 }] }, else: 'tip:1', end: true }),
-      'tip:1': say('タイヤは、空気の量だけじゃない。溝と、ひび割れ。それから、ブレーキの配管から油が漏れていないか。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'tip:2', end: true }),
-      'tip:2': say('オイルの量は、エンジンが冷えているうちに。ゲージを拭いてから差し直して、もう一度。6 クォートを切っていたら言ってくれ。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }] }, else: 'sem:0', end: true }),
+      'tip:0': say('燃料のサンプは、透明な容器で光に透かして見る。水は青い燃料の下に、丸い玉になって沈む。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 0 }] }, else: 'tip:1', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
+      'tip:1': say('タイヤは、空気の量だけじゃない。溝と、ひび割れ。それから、ブレーキの配管から油が漏れていないか。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'tip:2', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
+      'tip:2': say('オイルの量は、エンジンが冷えているうちに。ゲージを拭いてから差し直して、もう一度。6 クォートを切っていたら言ってくれ。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }] }, else: 'sem:0', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
       // (M6) the Seminole
-      'sem:0': say('Seminole は、点検するところが倍だ。エンジン 2 つ、プロペラ 2 つ。それに、引っ込む脚。脚の収納部に、油や鳥の巣がないか、しゃがんで見てくれ。', { if: { all: [{ ctx: 'today.type', is: 'Seminole' }, { ctx: 'career.dayMod3', is: 0 }] }, else: 'sem:1', end: true }),
-      'sem:1': say('左右のプロペラは、逆に回る。どっちのエンジンが止まっても、同じだけ曲がるようにな。……それでも、止まれば重い。', { if: { all: [{ ctx: 'today.type', is: 'Seminole' }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'sem:2', end: true }),
-      'sem:2': say('静圧孔のテープ、洗機のあとに貼りっぱなしのことがある。あれで高度計が狂って、何人も青くなってる。', { if: { ctx: 'today.type', is: 'Seminole' }, else: 'grad', end: true }),
+      'sem:0': say('Seminole は、点検するところが倍だ。エンジン 2 つ、プロペラ 2 つ。それに、引っ込む脚。脚の収納部に、油や鳥の巣がないか、しゃがんで見てくれ。', { if: { all: [{ ctx: 'today.type', is: 'Seminole' }, { ctx: 'career.dayMod3', is: 0 }] }, else: 'sem:1', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
+      'sem:1': say('左右のプロペラは、逆に回る。どっちのエンジンが止まっても、同じだけ曲がるようにな。……それでも、止まれば重い。', { if: { all: [{ ctx: 'today.type', is: 'Seminole' }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'sem:2', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
+      'sem:2': say('静圧孔のテープ、洗機のあとに貼りっぱなしのことがある。あれで高度計が狂って、何人も青くなってる。', { if: { ctx: 'today.type', is: 'Seminole' }, else: 'grad', choices: [FREE_Q, { text: 'ありがとう', next: 'tip:bye' }] }),
       grad: say('修了か。……おめでとう。最後まで、点検で手を抜かなかったな。それがいちばんだ。', { if: { ctx: 'career.graduated', is: true }, else: 'pre', hook: { name: 'nod' }, end: true }),
     } };
   }
@@ -199,8 +221,12 @@ export function peopleDialogs() {
         '風が変わると、使う滑走路も変わる。ATIS は出発前に必ず新しい記号を取ること。',
         '場周が混む日は、報告は短く。位置と高度と意図、それで十分伝わる。',
       ]),
-      'tip:0': say('ソロの日の場周は、私たちも少し静かに見守っている。……内緒ね。', { if: { ctx: 'career.solo', is: true }, else: 'tip:1', end: true }),
-      'tip:1': say('見学は午前がおすすめ。訓練が一番多くて、交信も一番聞ける。', { if: { ctx: 'career.graduated', is: false }, else: 'grad', end: true }),
+      'tip:0': say('ソロの日の場周は、私たちも少し静かに見守っている。……内緒ね。', { if: { ctx: 'career.solo', is: true }, else: 'tip:1', choices: [FREE_Q, { text: 'ありがとうございます', next: 'tip:bye' }] }),
+      'tip:1': say('見学は午前がおすすめ。訓練が一番多くて、交信も一番聞ける。', { if: { ctx: 'career.graduated', is: false }, else: 'grad', choices: [FREE_Q, { text: 'ありがとうございます', next: 'tip:bye' }] }),
+      // (AI instructors wave) a free question to the controller, at the tower: communications only
+      ai: say('交信のことなら、どうぞ。', { hook: { name: 'ai', arg: 'controller' }, next: 'ai:thanks' }),
+      'ai:thanks': say('ほかに無ければ、見学は自由に。交信中は静かにね。', { end: true }),
+      'tip:bye': say('また来てね。周波数で待っているよ。', { end: true }),
       grad: say('修了おめでとう。次にこの周波数で会うときは、もう訓練生じゃないんだね。待っているよ。', { if: { ctx: 'career.graduated', is: true }, else: 'pre', hook: { name: 'nod' }, end: true }),
     } };
   }
@@ -320,8 +346,19 @@ export function peopleDialogs() {
         'Weather and emergencies, a big day. MAYDAY は 3 回、忘れずに。',
         '次は学科試験。30 問、80% で合格です。Good luck — you are ready.',
       ], { guard: ch('ch1'), otherwise: 'ch2', exam: ['今日は学科試験。30 問、80% で合格です。Good luck — you are ready.', 'Well done! 学科試験は合格です。初飛行では、教室で練習した交信をそのまま使ってください。'] }),
-      ch2: say('Good to see you! もう飛んでいるんですね。交信、教室で練習したとおりにできていますか？ Read back, always.', { if: { ctx: 'career.graduated', is: false }, else: 'grad', end: true }),
-      grad: say('Congratulations! 最初の授業で、niner の言い方に苦労していたのを覚えています。今は、立派なパイロットの英語ですよ。', { hook: { name: 'nod' }, end: true }),
+      ch2: say('Good to see you! もう飛んでいるんですね。交信、教室で練習したとおりにできていますか？ Read back, always.', { if: { ctx: 'career.graduated', is: false }, else: 'grad', choices: [
+        FREE_Q,
+        { text: 'はい、できています', next: 'lec:bye' },
+      ] }),
+      grad: say('Congratulations! 最初の授業で、niner の言い方に苦労していたのを覚えています。今は、立派なパイロットの英語ですよ。', { hook: { name: 'nod' }, choices: [
+        FREE_Q,
+        { text: 'ありがとうございました', next: 'lec:bye' },
+      ] }),
+      // (AI instructors wave) a free question to the lecturer outside class too (in class and at the FTD the
+      // entry is at the end of the lesson itself: content/school.js)
+      ai: say('Any questions? 何でも聞いてください。', { hook: { name: 'ai', arg: 'lecturer' }, next: 'ai:thanks' }),
+      'ai:thanks': say('Good. またいつでもどうぞ。', { hook: { name: 'nod' }, end: true }),
+      'lec:bye': say('Read back, always. 気をつけて。', { end: true }),
     } };
   }
   // ---------------------------------------------------------------- 黒田 審査官（M6：最終審査）
@@ -333,8 +370,13 @@ export function peopleDialogs() {
       x3: say('審査の間、私は何も言いません。手伝いもしません。私を乗客だと思ってください。', { next: 'x4' }),
       x4: say('ひとつだけ。わからないとき、迷ったときは、そう言って、安全なほうを選びなさい。それも審査のうちです。', { choices: [
         { text: 'よろしくお願いします', next: 'x:tem' },
+        FREE_Q,
         { text: '少し準備してから行きます', next: 'x:later' },
       ] }),
+      // (AI instructors wave) the examiner answers too — facts and standards of today's check only, here at the
+      // face-to-face before the flight (never during it)
+      ai: say('……質問は、今日の審査と記録に関することだけ聞きます。', { hook: { name: 'ai', arg: 'examiner' }, next: 'ai:thanks' }),
+      'ai:thanks': say('……以上です。', { end: true }),
       // (M7) the examiner asks for the TEM too, and only notes the answer
       'x:tem': say('出発前に、TEM を聞きます。今日の脅威を、ひとつ挙げてください。', { if: { ctx: 'tem.on', is: true }, else: 'x:go', hook: { name: 'look', arg: 'player' }, choices: temChoices('x:tem') }),
       'x:tem:a': say('……「{tem.threat}」。記録しておきます。対策も、言葉にしてありますね。', { if: { ctx: 'tem.right', is: true }, else: 'x:tem:b', next: 'x:go' }),

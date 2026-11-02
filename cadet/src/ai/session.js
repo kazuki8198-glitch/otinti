@@ -24,20 +24,61 @@ export const AI_LINES_EN = {
   cut: ' ...Check the rest in the textbook.',
 };
 
-// opts: tutor (ai/tutor.js), book, speaker { name, color }, today() → the material, place 'brief' | 'debrief',
+// Per-character failure lines (Wave A): each character says the failure in their own words.
+// Only failBrief / failDebrief are character-specific here; the session merges them over AI_LINES / AI_LINES_EN
+// when passed as `lines: AI_LINES_BY.<id>`, so intro/again/think/declined/cut keep the defaults unless overridden.
+export const AI_LINES_BY = {
+  chief: {
+    failBrief: '……すみません、いまはうまく答えがまとまりません。基準については、教科書の節で確かめてください。',
+    failDebrief: '……すみません、いまはうまく答えがまとまりません。基準については、教科書の節で確かめてください。',
+  },
+  examiner: {
+    failBrief: '……いまは、答えがまとまりません。記録の確認は、講評で行います。',
+    failDebrief: '……いまは、答えがまとまりません。記録の確認は、講評で行います。',
+  },
+  lecturer: {
+    failBrief: 'ごめんなさい、いまは答えをまとめられませんでした。教科書の目次から、一緒に探しましょう。',
+    failDebrief: 'ごめんなさい、いまは答えをまとめられませんでした。教科書の目次から、一緒に探しましょう。',
+  },
+  dispatcher: {
+    failBrief: 'すみません、いまは答えをまとめられません。天気と予定は、運航の資料で確かめてください。',
+    failDebrief: 'すみません、いまは答えをまとめられません。天気と予定は、次の運航で一緒に確かめましょう。',
+  },
+  mechanic: {
+    failBrief: '悪いな、いまはうまくまとまらねえ。機体のことは、整備記録で確かめてくれよ。',
+    failDebrief: '悪いな、いまはうまくまとまらねえ。機体のことは、整備記録で確かめてくれよ。',
+  },
+  controller: {
+    failBrief: 'すみません、いまは答えがまとまりません。交信のことは、教科書の節で確かめてください。',
+    failDebrief: 'すみません、いまは答えがまとまりません。交信のことは、次の交信と教科書で確かめてください。',
+  },
+};
+
+// opts: tutor (ai/tutor.js), book, speaker { name, color }, speakerId (default 'instructor': used as view.speaker
+// for the character's lines), lines (partial overrides merged over AI_LINES / AI_LINES_EN — e.g. AI_LINES_BY.chief;
+// also accepts { ja, en } shaped overrides), today() → the material, place 'brief' | 'debrief',
 // ready() → true, or why it cannot ask at all: false (no key) or a reason ('off': the setting turned off) — asked when
 // the talk opens and again before each question, onEnd(how: 'done' | 'cancel' | 'fallback'), onBook(sectionId),
 // notice(text, reason), placeholder, micLang() → the language the question may be dictated in ('ja-JP' / 'en-US'),
 // or null: no microphone on this field (the words heard only ever fill the field — submit() is still the only way
-// a question leaves, and it is still the player's)
-export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false, micLang = () => null } = {}) {
+// a question leaves, and it is still the player's). The session attaches no effects of any kind: it never touches
+// career state, abilities, trust, or any other game state — it only shows lines and calls its callbacks.
+export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, speakerId = 'instructor', lines = null, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false, micLang = () => null } = {}) {
   const fns = new Set();
-  const T = () => (english() ? AI_LINES_EN : AI_LINES);
+  const T = () => {
+    const base = english() ? AI_LINES_EN : AI_LINES;
+    if (!lines) return base;
+    if (lines.en || lines.ja) {
+      const over = english() ? (lines.en || {}) : (lines.ja || {});
+      return { ...base, ...over };
+    }
+    return { ...base, ...lines };
+  };
   let cur = null, seq = 0, running = false, ctrl = null, lastAnswer = null;
   const node = (k) => `${k}:${++seq}`;
   // (lang: the language of his line — English when the crew speak English, the answer included — for the voice and
   // the subtitle's lang; no `en`: the line is already in the language it is said in)
-  const me = (text, more = {}) => ({ dialog: 'ai', node: node(more.kind || 'say'), speaker: 'instructor', name: speaker.name, color: speaker.color || null, text, choices: [], ends: false, lang: english() ? 'en' : 'ja', ...more });
+  const me = (text, more = {}) => ({ dialog: 'ai', node: node(more.kind || 'say'), speaker: speakerId, name: speaker.name, color: speaker.color || null, text, choices: [], ends: false, lang: english() ? 'en' : 'ja', ...more });
   function emit() { const v = view(); for (const f of [...fns]) { try { f(v); } catch (e) { console.error(e); } } }
   function set(v) { cur = v; emit(); }
   function input(first) {

@@ -395,6 +395,7 @@
   function update(L, dt) {
     if (!L || L.done) return;
     const c = ctx(L, dt); L.last = c;
+    if (!L.s.crashed && !c.onGround) L.lastAir = c;   // (the last airborne state: crash judgement reads it — by the time a crash is seen, the derived state has been zeroed by physics' crash())
     L.t += dt;
     // keep the history for the record (every 2 s)
     if (L.t >= L.nextSample) { L.nextSample = L.t + 2; if (L.hist.alt.length < 1800) { L.hist.alt.push(Math.round(c.alt)); L.hist.ias.push(Math.round(c.kias)); } }
@@ -501,8 +502,13 @@
   // crash: a controlled, low-energy touchdown off the runway after an engine failure is a survivable forced landing
   function crashed(L, reason) {
     if (L.done) return;
-    const c = L.last, S = L.def.steps[L.step] || {};
     const engineOut = L.fail.engine || L.fail.engL || L.fail.engR;
+    // (gentleness is judged on the last AIRBORNE derived state (L.lastAir, kept by update): the current
+    // derived state is computed AFTER physics' crash() zeroed the velocity, so its sink and speed read
+    // ~0 whatever the impact was and these conditions could never fail; and the touchdown record is
+    // never written for the impacts that break the gear — that crash fires inside the contact
+    // resolution, before any touchdown is recorded. L.lastAir is the final approach as it was flown)
+    const c = L.lastAir;
     const gentle = c && engineOut && c.vs > -800 && c.kias < (L.V.glide || 76) + 12 && Math.abs(c.bank) < 20 && !/湖/.test(reason);
     if (gentle) {
       L.results.push({ step: '不時着', rows: [{ name: '結果', val: '滑走路外へ不時着（機体は損傷・乗員は無事という想定）', std: '安全に接地', pass: true }] });

@@ -96,7 +96,7 @@ import { spoken } from './content/dialog/atc.js';
 import { nextStep, makeRouter } from './career/guide.js';
 import { installSorajima } from './flight/sorajima.js';
 import { createTutor, DEFAULT_MODEL, REASON_JA } from './ai/tutor.js';
-import { createAiSession } from './ai/session.js';
+import { createAiSession, AI_LINES_BY } from './ai/session.js';
 import { createKeyStore, KEY_NAME } from './ai/keys.js';
 import { withEnglish, CHECK_EN, WHO_EN } from './content/dialog/en.js';
 import { buildHaneda, OFFSET as HANEDA_OFFSET, EYE as HANEDA_EYE, CAPTAIN as HANEDA_SEAT } from './epilogue/haneda.js';
@@ -594,6 +594,8 @@ async function boot() {
       // is stored — the same count made now (nothing that feeds it changes between the check and the ceremony)
       rank: (st.graduated && st.graduated.rank) || (st.checks.final && st.checks.final.pass ? graduationRank(st, prog()).rank : ''),
       cls: CLASSES.filter((_, i) => st.done[`class:${i}`]).length, veteran: veteran(),
+      // (AI instructors wave) the same debrief miss three days running: 真壁's word is owed this morning
+      makabe: !!(st.remedial && st.remedial.day === st.day && !st.remedial.seen),
       // (chapter 1's written test: 0 still to come, 1 today, 2 passed — the people's lines of the days after the classes)
       exam1: st.exams.written1 && st.exams.written1.pass ? 2 : sch.some(x => x.kind === 'exam' && x.id === 'written1') ? 1 : 0 });
     const study = it && it.kind === 'flight' ? it.id : sch.find(x => x.kind === 'study') ? (CH2.find(id => !passedAt(prog(), id)) || 't2') : 't2';
@@ -681,8 +683,11 @@ async function boot() {
   // made or sent before a question is asked. aiFetch: the tests' stand-in for the API.
   const aiKeys = createKeyStore(store);
   let aiFetch = null;
-  const tutor = createTutor({ book, getKey: () => aiKeys.get(), getModel: () => settings.get('aiModel') || DEFAULT_MODEL,
-    fetchImpl: (...a) => (aiFetch || globalThis.fetch)(...a) });
+  // (AI instructors wave) one tutor per character, each with its own persona and history (ai/tutor.js PERSONAS);
+  // made lazily, as the single 早瀬 tutor was: nothing exists until that person's talk is opened
+  const aiTutors = {};
+  const tutorFor = (id) => aiTutors[id] || (aiTutors[id] = createTutor({ book, character: id, getKey: () => aiKeys.get(), getModel: () => settings.get('aiModel') || DEFAULT_MODEL,
+    fetchImpl: (...a) => (aiFetch || globalThis.fetch)(...a) }));
   // what the instructor knows of today: the chapter, the day, the weather, today's lesson; at the debrief, the results
   function aiToday(place, summary) {
     refreshCtx();
@@ -693,11 +698,24 @@ async function boot() {
   }
   // the talk `prev` reached its 'free' line (hook 'ai'): the AI instructor's talk takes the screen, and when it is
   // over `prev` goes on (thanks, or the textbook's questions when no answer came; at the debrief, back to the logbook)
-  function openAi(place, prev, extra = {}) {
+  const AI_PEOPLE = ['chief', 'examiner', 'lecturer', 'dispatcher', 'mechanic', 'controller'];
+  function openAi(placeArg, prev, extra = {}) {
     if (aiRun || !prev) return;
     const v0 = prev.view() || {};
+    // whose talk this is: 'brief' is 早瀬's; a person's id (their own talk in the academy or a lesson) is that
+    // character's; 'debrief[:who]' (from the fly mode) is the debrief's giver — 早瀬 unless a voice is named
+    let place = placeArg || 'brief', character = 'instructor', resume = null;
+    if (place === 'debrief' || place.startsWith('debrief:')) { character = place.split(':')[1] || 'instructor'; place = 'debrief'; }
+    else if (AI_PEOPLE.includes(place)) {
+      character = place; place = 'brief';
+      if (v0.dialog === character) resume = { dialog: character, node: 'ai:thanks' };
+      else if (v0.dialog === 'class') resume = { dialog: 'class', node: 'bye' };
+      else if (v0.dialog === 'ftd') resume = { dialog: 'ftd', node: 'result:bye' };
+    }
+    const tutor = tutorFor(character);
     const s = createAiSession({
-      tutor, book, place, speaker: { name: v0.name || INSTRUCTOR.title_ja, color: v0.color || '#5cc8ff' },
+      tutor, book, place, speakerId: character, lines: AI_LINES_BY[character],
+      speaker: character !== 'instructor' && PEOPLE[character] ? { name: PEOPLE[character].title, color: PEOPLE[character].color } : { name: v0.name || INSTRUCTOR.title_ja, color: v0.color || '#5cc8ff' },
       // (asked when the talk opens and again before each question: the setting turned off, or the key erased, stops it)
       ready: () => (settings.get('aiTutor') ? aiKeys.has() : 'off'), today: () => aiToday(place, extra.summary),
       // (the field's microphone, in the game's language — only while the microphone is on in the settings)
@@ -708,7 +726,8 @@ async function boot() {
         if (aiRun !== s) return;                              // (closed with the talk itself)
         aiRun = null; stopAiMic(); tutor.reset();
         if (!prev.running) return;
-        if (place === 'debrief') prev.start('debrief', 'sign');
+        if (resume) prev.start(resume.dialog, resume.node);
+        else if (place === 'debrief') prev.start('debrief', 'sign');
         else if (how === 'fallback') prev.start('ask', 'root');
         else if (how === 'cancel') prev.start('brief', 'menu');
         else prev.start('ask', 'thanks');
@@ -717,7 +736,7 @@ async function boot() {
     s.onChange((v) => { if (v) { dui.show(v); if (!v.pending && v.speaker === 'instructor' && talkActor && !talkActor.gesturing && Math.random() < 0.4) talkActor.gesture('explain'); } });
     aiRun = s; s.start();
   }
-  const closeAi = () => { const a = aiRun; aiRun = null; stopAiMic(); if (a) a.stop(); tutor.reset(); };
+  const closeAi = () => { const a = aiRun; aiRun = null; stopAiMic(); if (a) a.stop(); for (const t of Object.values(aiTutors)) t.reset(); };
   // ---- (M8) dictating the question to the AI instructor: the same microphone as the radio's (ui/mic.js), in the
   // game's language. What it hears only fills the question field (dui.setAskText) — it is never sent from here: the
   // cadet reads it, mends it and sends it with Enter / 聞く. Listening stops, and what a stopped listen heard is
@@ -926,6 +945,8 @@ async function boot() {
     }
     // yesterday's miss, answered: whether it was yesterday's, and the record cleared (asked only once)
     else if (name === 'miss') { if (missData) { cx.miss.right = +arg === missData.right; career.clearMiss(); } }
+    // (AI instructors wave) 真壁's word about the repeated miss was heard: it is not said twice
+    else if (name === 'makabe') { if (typeof career.seeMakabe === 'function') career.seeMakabe(); refreshCtx(); }
     else if (name === 'imsafe') {
       const tired = career.tired(), honest = (arg === 'tired') === tired;
       cx.imsafe.honest = honest;
@@ -935,7 +956,9 @@ async function boot() {
       if (arg === 'tired' || tired) { career.done('grounded', 'imsafe'); afterTalk.push(() => { buildInstructorTalk(); toast('今日は飛ばずに、地上で予習します。もう一度、早瀬 教官と話してください', 4200); }); }
     } else if (name === 'logbook') showLogbookNow(logbook.entries.length - 1);
     // (M8) the free question: once the line that offers it is on screen, the AI instructor's talk takes over
-    else if (name === 'ai') { const prev = talkRunner(); Promise.resolve().then(() => { if (talk) openAi('brief', prev); }); }
+    // (AI instructors wave) the hook's arg says whose talk it is: 'brief' (早瀬), a person's id (people/school
+    // talks), or 'debrief[:who]' via the fly mode's own onAi below
+    else if (name === 'ai') { const prev = talkRunner(); Promise.resolve().then(() => { if (talk) openAi(arg || 'brief', prev); }); }
     else if (name === 'solo') { celebrate = false; career.soloDone(); talkState.flags.soloed = true; afterTalk.push(() => { career.advance('evening'); applySlot(); placeInstructor('room'); layoutPeople(); }); }
   }
   // (M6) the navigation log on briefing room 1's whiteboard, in marker: the chart's line LAB → LAB-A → LAB-B, the wind's
@@ -1712,7 +1735,7 @@ async function boot() {
       });
     } else if (arg === 'epilogue') { afterTalk.push(() => finishEpilogue());
     } else if (arg === 'depart') { afterTalk.push(() => beginDeparture());
-    } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
+    } else if (arg === 'study') { const rem = !!(career.state.remedial && career.state.remedial.day === career.day); career.done('study', rem ? 'remedial' : grounded() ? 'imsafe' : 'weather'); if (rem) career.doneRemedial(); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
     else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state, { nextFtd: nextGround() }); if (d && skipDay !== career.day) toast(d, 5200); }); }
     // (the evening's study over: to bed, a little late; a review set answered counts as the day's review)
     else if (arg === 'night') { if (studyAnswered) reviewDone(); afterTalk.push(() => sleepNow({ late: true })); }
@@ -1828,7 +1851,7 @@ async function boot() {
     // (M6) a later check: passed when every lesson of the day was
     const sum = d.summary ? d.summary() : null, all = !!(sum && sum.lessons.length && sum.lessons.every(l => l.done && l.passed));
     applyFlightGrowth(sum);
-    const miss = missOf(sum); if (miss) career.noteMiss(miss.key, miss.label);
+    const miss = missOf(sum); if (miss) career.noteMiss(miss.key, miss.label); else if (typeof career.breakMissStreak === 'function') career.breakMissStreak();
     if (it.kind === 'checkride' && CHECKS[it.id]) career.check(it.id, all); else career.done(it.kind, it.id);
     career.tire(15);
     talkState.flags.briefed_today = false;

@@ -13,8 +13,8 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gameBook } from '../src/content/book.js';
-import { createTutor, buildParams, findSections, parseAnswer, visible, summaryText, stablePrompt, PERSONA, DEFAULT_MODEL, REASON_JA } from '../src/ai/tutor.js';
-import { createAiSession, AI_LINES } from '../src/ai/session.js';
+import { createTutor, buildParams, findSections, parseAnswer, visible, summaryText, stablePrompt, stablePromptFor, PERSONA, PERSONAS, personaFor, DEFAULT_MODEL, REASON_JA } from '../src/ai/tutor.js';
+import { createAiSession, AI_LINES, AI_LINES_BY } from '../src/ai/session.js';
 import { createKeyStore, KEY_NAME, maskKey } from '../src/ai/keys.js';
 import { createSettings, DEFAULTS } from '../src/ui/settings.js';
 import { instructorDialogs } from '../src/content/dialog/instructor.js';
@@ -305,4 +305,122 @@ test('the day\'s results as the instructor reads them', () => {
   assert.match(t, /課目 a2「上昇・降下」：C（もう一度）・不合格。基準の外：速度/);
   assert.match(t, /TEM：今日の脅威は「午後の横風」/);
   assert.equal(summaryText(null), '');
+});
+
+test('personas: every character exists, keeps the shared safety markers, and carries their own scope words', () => {
+  assert.equal(PERSONAS.instructor, PERSONA, 'instructor is the original PERSONA, byte-identical object');
+  const ids = ['instructor', 'chief', 'examiner', 'lecturer', 'dispatcher', 'mechanic', 'controller'];
+  assert.deepEqual(Object.keys(PERSONAS).sort(), [...ids].sort());
+  const shared = ['翔洋航空', 'LAB 飛行場', 'N738SY', 'N452SY', '架空', 'G1000 型', 'Archer', 'PA-28-181', 'Seminole', 'PA-44-180', '教材の値では', '根拠：', '根拠：なし', 'ゲーム・ソフト', '実機の訓練の代わりにはならない', 'ここでの訓練の範囲を越えます'];
+  for (const id of ids) {
+    const p = PERSONAS[id];
+    assert.equal(typeof p, 'string', id);
+    assert.ok(p.length > 400, `${id}: a full prompt`);
+    for (const w of shared) assert.ok(p.includes(w), `${id} missing shared marker: ${w}`);
+    assert.doesNotMatch(p, /ANA|Garmin/, `${id}: no real names`);
+  }
+  // character-specific scope words
+  assert.ok(PERSONAS.chief.includes('基準'), 'chief: 基準');
+  assert.ok(PERSONAS.chief.includes('真壁 恭一'), 'chief: name');
+  assert.ok(PERSONAS.chief.includes('結果は飛んでから言います'), 'chief: no pass/fail prediction');
+  assert.ok(PERSONAS.chief.includes('早瀬教官'), 'chief: redirects flying tips to 早瀬');
+  assert.ok(PERSONAS.examiner.includes('記録'), 'examiner: 記録');
+  assert.ok(PERSONAS.examiner.includes('記録します'), 'examiner: 記録します');
+  assert.ok(PERSONAS.examiner.includes('黒田 誠一'), 'examiner: name');
+  assert.ok(PERSONAS.examiner.includes('名前では決して呼ばない') || PERSONAS.examiner.includes('名前では呼ばない'), 'examiner: never calls by name');
+  assert.ok(PERSONAS.lecturer.includes('教科書') && PERSONAS.lecturer.includes('英語'), 'lecturer: 教科書 / 英語');
+  assert.ok(PERSONAS.lecturer.includes('ミラー'), 'lecturer: name');
+  assert.ok(PERSONAS.dispatcher.includes('天気') && PERSONAS.dispatcher.includes('METAR'), 'dispatcher: 天気 / METAR');
+  assert.ok(PERSONAS.dispatcher.includes('佐伯 由美'), 'dispatcher: name');
+  assert.ok(PERSONAS.dispatcher.includes('決めるのはあなたです'), 'dispatcher: go/no-go stays the cadet\'s');
+  // mechanic: the one casual exception — plain 〜だ / 〜よ style marker, not です・ます instruction
+  assert.ok(/〜だ|だよ/.test(PERSONAS.mechanic), 'mechanic: casual style marker');
+  assert.ok(PERSONAS.mechanic.includes('大城 剛'), 'mechanic: name');
+  assert.ok(PERSONAS.mechanic.includes('です・ます調は使わない'), 'mechanic: explicitly not です・ます');
+  assert.ok(PERSONAS.controller.includes('管制') && PERSONAS.controller.includes('復唱'), 'controller: 管制 / 復唱');
+  assert.ok(PERSONAS.controller.includes('高嶺 葵'), 'controller: name');
+  // all but the mechanic speak in です・ます
+  for (const id of ['instructor', 'chief', 'examiner', 'lecturer', 'dispatcher', 'controller']) assert.ok(PERSONAS[id].includes('です・ます調'), `${id}: です・ます調`);
+  // personaFor fallbacks
+  assert.equal(personaFor('instructor'), PERSONA);
+  assert.equal(personaFor('chief'), PERSONAS.chief);
+  assert.equal(personaFor('nope'), PERSONA, 'unknown id falls back to PERSONA');
+  assert.equal(personaFor(undefined), PERSONA);
+  assert.equal(personaFor(null), PERSONA);
+});
+
+test('buildParams with a non-default persona: the system prompt starts with that persona; stablePromptFor matches stablePrompt for the default', () => {
+  assert.equal(stablePrompt(BOOK), stablePromptFor(PERSONA, BOOK), 'stablePrompt is stablePromptFor(PERSONA, book)');
+  const chief = buildParams({ book: BOOK, question: '基準とは何ですか', persona: PERSONAS.chief });
+  assert.ok(chief.params.system[0].text.startsWith(PERSONAS.chief), 'system starts with the chief persona');
+  assert.ok(chief.params.system[0].text.includes('教科書の目次と要約'), 'the textbook index still follows');
+  const def = buildParams({ book: BOOK, question: '基準とは何ですか' });
+  assert.ok(def.params.system[0].text.startsWith(PERSONA), 'no persona given: the default PERSONA');
+  // English mode keeps working for every persona: todayText still carries the English instruction
+  const en = buildParams({ book: BOOK, question: 'What is the standard?', persona: PERSONAS.lecturer, today: { lang: 'en' } });
+  assert.ok(en.params.system[0].text.startsWith(PERSONAS.lecturer));
+  assert.ok(en.params.messages.at(-1).content.includes('答える言葉：英語'), 'the English-mode line is in the user part');
+});
+
+test('createTutor with character chief sends the chief persona', async () => {
+  const calls = [];
+  const tutor = createTutor({ book: BOOK, getKey: () => KEY, getModel: () => 'claude-opus-5-5', fetchImpl: fakeClaude({ calls }), character: 'chief' });
+  const r = await tutor.ask('審査の基準を教えてください');
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.equal(calls.length, 1);
+  const sys = calls[0].body.system[0].text;
+  assert.ok(sys.startsWith(PERSONAS.chief), 'the chief persona is sent');
+  assert.ok(!sys.startsWith(PERSONA) || PERSONAS.chief.startsWith(PERSONA), 'not the instructor persona');
+  // unknown character falls back to PERSONA
+  const calls2 = [];
+  const tutor2 = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ calls: calls2 }), character: 'nope' });
+  await tutor2.ask('揚力とは');
+  assert.ok(calls2[0].body.system[0].text.startsWith(PERSONA), 'unknown character falls back to PERSONA');
+  // default character is the instructor
+  const calls3 = [];
+  const tutor3 = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ calls: calls3 }) });
+  await tutor3.ask('揚力とは');
+  assert.ok(calls3[0].body.system[0].text.startsWith(PERSONA), 'default character is instructor');
+});
+
+test('AI_LINES_BY: every character has fail lines in their own words; the default lines are unchanged', () => {
+  for (const id of ['chief', 'examiner', 'lecturer', 'dispatcher', 'mechanic', 'controller']) {
+    assert.equal(typeof AI_LINES_BY[id].failBrief, 'string', `${id}.failBrief`);
+    assert.ok(AI_LINES_BY[id].failBrief.length > 0, `${id}.failBrief non-empty`);
+    assert.equal(typeof AI_LINES_BY[id].failDebrief, 'string', `${id}.failDebrief`);
+    assert.ok(AI_LINES_BY[id].failDebrief.length > 0, `${id}.failDebrief non-empty`);
+  }
+  assert.equal(AI_LINES_BY.chief.failBrief, '……すみません、いまはうまく答えがまとまりません。基準については、教科書の節で確かめてください。');
+  assert.equal(AI_LINES_BY.lecturer.failBrief, 'ごめんなさい、いまは答えをまとめられませんでした。教科書の目次から、一緒に探しましょう。');
+  assert.equal(AI_LINES_BY.examiner.failBrief, '……いまは、答えがまとまりません。記録の確認は、講評で行います。');
+  assert.equal(AI_LINES.failBrief, 'すみません、いまはうまく答えがまとまりません。教科書から一緒に探しましょう。', 'default instructor lines unchanged');
+});
+
+test('the talk with a character: speakerId chief and the chief lines — speaker is chief, a failed ask says the chief fail line', async () => {
+  // failed at open (no key): the chief fail line, under speaker chief
+  const a = talk({ tutor: createTutor({ book: BOOK, getKey: () => '' }), ready: () => false, speaker: { name: '真壁 主任教官', color: '#888888' }, speakerId: 'chief', lines: AI_LINES_BY.chief });
+  a.s.start();
+  assert.equal(a.s.view().speaker, 'chief', 'view.speaker is the speakerId');
+  assert.equal(a.s.view().name, '真壁 主任教官');
+  assert.equal(a.s.view().text, AI_LINES_BY.chief.failBrief, 'the chief fail line on failure');
+  a.s.choose(0); assert.deepEqual(a.ends, ['fallback']);
+  // partial override: other lines still come from the defaults
+  const tutor = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({}) });
+  const b = talk({ tutor, speaker: { name: '真壁 主任教官' }, speakerId: 'chief', lines: AI_LINES_BY.chief });
+  b.s.start();
+  assert.equal(b.s.view().speaker, 'chief');
+  assert.equal(b.s.view().text, AI_LINES.intro, 'intro falls back to the default lines when not overridden');
+  await b.s.submit('基準とは何ですか');
+  assert.equal(b.s.view().speaker, 'chief', 'the answer line is also under speaker chief');
+  b.s.choose(b.s.view().choices.length - 1); assert.deepEqual(b.ends, ['done']);
+  // a failed ask after a question (network): chief failDebrief in a debrief
+  const c = talk({ tutor: createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ network: true }) }), place: 'debrief', speaker: { name: '真壁 主任教官' }, speakerId: 'chief', lines: AI_LINES_BY.chief });
+  c.s.start(); await c.s.submit('今日の審査はどうでしたか');
+  assert.equal(c.s.view().speaker, 'chief');
+  assert.equal(c.s.view().text, AI_LINES_BY.chief.failDebrief);
+  // without speakerId / lines, the session is exactly as before
+  const d = talk({ tutor: createTutor({ book: BOOK, getKey: () => '' }), ready: () => false });
+  d.s.start();
+  assert.equal(d.s.view().speaker, 'instructor');
+  assert.equal(d.s.view().text, AI_LINES.failBrief);
 });

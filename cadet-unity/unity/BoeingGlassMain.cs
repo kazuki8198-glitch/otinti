@@ -55,6 +55,7 @@ public class BoeingGlassMain : MonoBehaviour
 
     void Update()
     {
+        if (Cm != null && Glass == null && Cm.SessionLive && Cm.Type == "b737") Bind();   // in-scene lazy bind (the acceptance driver binds explicitly)
         if (Glass == null || Cm == null || !Cm.SessionLive || !Application.isPlaying) return;
         var frame = new BoeingFrame
         {

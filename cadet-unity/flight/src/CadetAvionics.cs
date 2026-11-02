@@ -39,6 +39,11 @@ namespace Cadet
         public double Timer;
         public Dictionary<string, bool> Fail;   // { ahrs, gps } — null = no failures
         public List<string> Nrts = new List<string>();
+        // G1000 draw state (avionics.js's av._egtPeak / av._fuelInit / av._alertsUnacked):
+        // the engine page's leaned-EGT peaks, the system page's fuel totalizer latch, the CAS ack flag
+        public List<double> EgtPeak = new List<double>();
+        public double? FuelInit;
+        public int AlertsUnacked;
     }
 
     public class WptDef { public string Id, Name, Kind; public double N, E; }

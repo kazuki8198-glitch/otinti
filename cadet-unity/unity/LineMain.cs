@@ -69,6 +69,8 @@ public class LineMain : MonoBehaviour
         x = 170;
         foreach (var c in CadetLineData.Captains) { string id = c.Id; var b = Btn(c.Name + "（" + c.Style + "）", x, 196, 300, () => { SelCaptain = id; ShowSetup(); }); if (SelCaptain == id) b.GetComponent<Image>().color = new Color(0.85f, 0.6f, 0.15f); x += 312; }
         Btn("シード " + SelSeed + "（クリックで変更）", 170, 256, 300, () => { SelSeed = SelSeed % 20 + 1; ShowSetup(); });
+        var rf = Btn(RealFlight ? "PF 操縦：実飛行（737 物理で実際に飛ぶ）" : "PF 操縦：スクリプト観測（従来）", 490, 256, 560, () => { RealFlight = !RealFlight; ShowSetup(); });
+        if (RealFlight) rf.GetComponent<Image>().color = new Color(0.85f, 0.6f, 0.15f);
         Btn("勤務開始（ブリーフィングへ）", 170, 330, 420, () => StartDuty(), 22);
         if (!string.IsNullOrEmpty(status)) Txt(status, 170, 400, 1500, 18, new Color(0.8f, 0.9f, 1f));
     }
@@ -77,6 +79,7 @@ public class LineMain : MonoBehaviour
     {
         Duty = new CadetLineDuty(SelRoute, SelRole, SelCaptain, SelSeed);
         tClock = 0; pfStep = 0; LastSummary = null; LegRecorded = false;
+        Pilot = null;
         ShowPhase();
     }
     void ShowPhase()
@@ -118,8 +121,16 @@ public class LineMain : MonoBehaviour
             default: // PF flight phases
                 if (Duty.Event != null && Duty.EventAnswer == null) { ShowEvent(70); break; }
                 Txt(PfPhaseText(), 30, 70, 1600, 19, Color.white);
-                if (Duty.Phase == "cruise") Btn("巡航を圧縮する（TOD へ）", 30, 130, 420, () => { Duty.Compress(); ShowPhase(); });
-                Btn("飛行を進める", 30, 190, 300, () => { StepPf(); ShowPhase(); });
+                if (RealFlight)
+                {
+                    Txt(RealNote, 30, 116, 1700, 18, new Color(0.8f, 0.9f, 1f));
+                    Btn("飛行を進める（実飛行 30 秒）", 30, 170, 460, () => { StepReal(30); ShowPhase(); });
+                }
+                else
+                {
+                    if (Duty.Phase == "cruise") Btn("巡航を圧縮する（TOD へ）", 30, 130, 420, () => { Duty.Compress(); ShowPhase(); });
+                    Btn("飛行を進める", 30, 190, 300, () => { StepPf(); ShowPhase(); });
+                }
                 break;
         }
     }
@@ -202,5 +213,29 @@ public class LineMain : MonoBehaviour
                 return;
             }
         }
+    }
+
+    // ================= real flight (Stage 13): PF flown in the 737 physics =================
+    // The sector is flown by CadetLinePilot on a real physics state; the duty
+    // reads real observations, so the touchdown is scored from the actual
+    // touchdown point and sink (see flight/src/CadetLinePilot.cs).
+    public bool RealFlight;
+    public LinePilot Pilot;
+    public State RS { get { return Pilot != null ? Pilot.S : null; } }
+    public bool RealDone { get { return Pilot != null && Pilot.Done; } }
+    public string RealNote = "";
+
+    public void SetupRealFlight()
+    {
+        Pilot = new LinePilot(Duty, SelSeed);
+        RealNote = Pilot.Note;
+    }
+
+    /// <summary>Advance the real flight by dtSim seconds of sim time.</summary>
+    public void StepReal(double dtSim)
+    {
+        if (Pilot == null) SetupRealFlight();
+        Pilot.Step(dtSim);
+        RealNote = Pilot.Note;
     }
 }

@@ -29,6 +29,14 @@ public class GameDriver : MonoBehaviour
         DestroyImmediate(rt); DestroyImmediate(tex);
     }
 
+    static bool AnyLit(Texture2D tx)
+    {
+        if (tx == null) return false;
+        var px = tx.GetPixels32();
+        for (int i = 0; i < px.Length; i += 997) if (px[i].r > 24 || px[i].g > 24 || px[i].b > 24) return true;
+        return false;
+    }
+
     System.Collections.IEnumerator Run()
     {
         yield return null; yield return null; yield return null;
@@ -76,14 +84,31 @@ public class GameDriver : MonoBehaviour
         fm.SelAircraft = "pa28"; fm.SelStart = "ramp"; fm.SelFail = "none";
         fm.StartSession();
         var glass = FindObjectOfType<G1000GlassMain>();
+        // Bound is set inside Pump(), which runs from Update — judging it in
+        // the session-start frame races the bind. Wait for it (capped).
+        float bw = Time.realtimeSinceStartup;
+        while (Time.realtimeSinceStartup - bw < 10 && !(glass != null && glass.Bound)) yield return null;
         Check(glass != null && glass.Bound, "G1000 glass bound to the free-mode cockpit");
         if (glass != null)
         {
+            // The ramp start above is unpowered, so the PFD must be black
+            // (that is the spec: no bus power, no picture). Then restart in
+            // the air with the engine running — the PFD must be drawn.
             glass.Pump();
-            var tx = glass.PfdTexture;
-            bool anyLit = false;
-            if (tx != null) { var px = tx.GetPixels32(); for (int i = 0; i < px.Length; i += 997) if (px[i].r > 24 || px[i].g > 24 || px[i].b > 24) { anyLit = true; break; } }
-            Check(anyLit, "G1000 PFD texture is drawn (non-black sample)");
+            bool darkOk = !AnyLit(glass.PfdTexture);
+            fm.SelStart = "area";
+            fm.StartSession();
+            // The session is built cold (split BAT/ALT off) and SetRunning —
+            // faithfully to systems.js — does not touch the split switches,
+            // so power the bus the way the pilot does: the cockpit's own
+            // rocker controls, through the normal Press path.
+            if (!fm.Cockpit.Cp.GetBool("bat")) fm.Cockpit.Press("sw.bat");
+            if (!fm.Cockpit.Cp.GetBool("alt")) fm.Cockpit.Press("sw.alt");
+            float pw = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - pw < 10 && !fm.Cockpit.Sys.Elec.PfdOn) yield return null;
+            glass.Pump();
+            bool anyLit = AnyLit(glass.PfdTexture);
+            Check(darkOk && anyLit, "G1000 PFD texture is drawn (non-black sample)");
         }
         // ---- Stage 13: free-mode failure injection, live ----
         fm.SelFail = "pitot"; fm.SelFailWhen = "now";

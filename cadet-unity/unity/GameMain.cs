@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class GameMain : MonoBehaviour
 {
-    public GameObject FreeModeRoot, LineRoot, AiRoot, WalkRoot;
+    public GameObject FreeModeRoot, LineRoot, AiRoot, WalkRoot, CareerRoot;
     public string OpenPanel = "";
     GameObject titlePanel, backButton;
     readonly Dictionary<string, GameObject> panels = new Dictionary<string, GameObject>();
@@ -17,11 +17,12 @@ public class GameMain : MonoBehaviour
     {
         titlePanel = GameObject.Find("TitlePanel");
         if (titlePanel == null) { Debug.Log("GAME_MAIN_NO_TITLE"); return; }
-        panels["free"] = FreeModeRoot; panels["line"] = LineRoot; panels["ai"] = AiRoot; panels["walk"] = WalkRoot;
+        panels["free"] = FreeModeRoot; panels["line"] = LineRoot; panels["ai"] = AiRoot; panels["walk"] = WalkRoot; panels["career"] = CareerRoot;
         AddHubButton("フリーモード設定", -170, "free");
         AddHubButton("ライン運航（副操縦士）", -245, "line");
         AddHubButton("AI 教官に質問", -320, "ai");
         AddHubButton("歩行：寮・学園を歩く", -395, "walk");
+        AddHubButton("キャリア（訓練課程）", -470, "career");
         // the return button lives on SliceMain's canvas
         var canvas = titlePanel.transform.parent;
         var go = new GameObject("HubBack");

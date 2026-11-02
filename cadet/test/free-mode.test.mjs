@@ -67,6 +67,7 @@ const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
 const spec = academySpec(FL);
 const parkedRoot = new THREE.Group(); scene.add(parkedRoot);
 const events = { enter: 0, leave: [] };
+const toasts = [];
 const settings = createSettings(undefined, memStore());
 const cy = Math.cos(L.frameYaw), sy = Math.sin(L.frameYaw);
 const fly = createFlyMode({
@@ -74,7 +75,7 @@ const fly = createFlyMode({
   renderer: { capabilities: { getMaxAnisotropy: () => 1 } },
   sky: { setShadowHalf() {}, state: { el: 40, az: 180 } },
   input: { requestLock() {}, exitLock() {}, takeLook: () => ({ x: 0, y: 0 }), takeWheel: () => 0, down: () => false, pressed: () => false },
-  settings, audio: {}, toast: () => {}, hud: { prompt() {} }, dui: null, talkState: {}, saveTalk: () => {},
+  settings, audio: {}, toast: (t) => toasts.push(t), hud: { prompt() {} }, dui: null, talkState: {}, saveTalk: () => {},
   instructor: null, instructorName: '早瀬 教官',
   stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (P.LAB_RWY.trueHdg + 270) % 360 },
   parkedToday: () => parkedRoot, todayColliders: () => {}, world: createCollisionWorld(),
@@ -166,4 +167,93 @@ test('the wiring: the mode screen and the device seat share the one session path
     'the menu entry and the seat start the same device session');
   const simFlight = mainSrc.slice(mainSrc.indexOf('function simFlight'), mainSrc.indexOf('function pcUse'));
   assert.ok(simFlight.includes('startDeviceFree(cfg0)'), 'the in-world seat keeps working through the same starter');
+});
+
+// ---- （訓練装置の不具合調査） the device entry through the REAL fade: the reported fault was that a
+// free flight started on the training-room device showed nothing. Every headless level of the path
+// is asserted here against the outdoor free flight started the same way (no instant flag: the fade
+// runs on its real timers) — same session state, same view, same camera, no error swallowed by the
+// fade, and the career untouched. (The pixels themselves stay a real-PC check: this VM has no
+// browser; what can be proven in code is proven here.)
+test('the simulator entry, through the real fade: the device session lands in the same fly state as the outdoor one', async () => {
+  const errors = [];
+  const err0 = console.error;
+  console.error = (...a) => errors.push(a.map(String).join(' '));
+  const run = async (cfg) => {
+    assert.equal(fly.startFreeSession({ ...cfg }), true, 'the session is accepted (the real fade, not instant)');
+    await new Promise(r => setTimeout(r, 700));            // the fade's midpoint at 420 ms, its settle 120 ms after
+    for (let i = 0; i < 30; i++) fly.update(1 / 30);
+    const st = fly.status(), cam = camera.position.toArray();
+    fly.leave({ instant: true });
+    assert.equal(fly.status().active, false, 'left again');
+    return { st, cam };
+  };
+  try {
+    const dev = await run(simDeviceCfg({ start: 'rwy', aircraft: 'pa28' }));
+    const out = await run(buildFreeCfg({ ...SEL, start: 'rwy', aircraft: 'pa28' }));
+    for (const [label, r] of [['device', dev], ['outdoor', out]]) {
+      assert.equal(r.st.active, true, `${label}: the session is live after the fade`);
+      assert.equal(r.st.phase, 'ground', `${label}: on the ground, ready`);
+      assert.equal(r.st.view, 'cockpit', `${label}: the cockpit view`);
+      assert.equal(r.st.flight.mode, 'free', `${label}: a free flight`);
+      assert.equal(r.st.flight.crashed, false, `${label}: not crashed`);
+      assert.equal(r.st.parked, false, `${label}: the parked airframe is away, the live one is out`);
+      assert.equal(r.st.engine.running, true, `${label}: engine running on the runway start`);
+    }
+    assert.deepEqual(dev.cam.map(x => +x.toFixed(3)), out.cam.map(x => +x.toFixed(3)), 'the camera sits at the same eye point on both paths');
+    assert.deepEqual(errors, [], `no error swallowed on either path: ${errors.join(' | ')}`);
+    assert.equal(careerJSON(), before, 'career state bit-identical after both');
+  } finally { console.error = err0; }
+});
+
+// ---- （時間を進める) the sim rate in flight: F7 in free flight, substeps, the scored lock
+const F7 = (shiftKey = false) => ({ code: 'F7', shiftKey, preventDefault() {} });
+
+test('sim rate: ×1 flies the plain frame — the same session twice is bit-identical', () => {
+  const once = () => {
+    assert.equal(fly.startFreeSession({ ...buildFreeCfg({ ...SEL, start: 'area', aircraft: 'pa28' }), instant: true }), true);
+    assert.equal(fly.simRate, 1, 'a session starts at ×1');
+    for (let i = 0; i < 90; i++) fly.update(1 / 30);
+    const s = fly.flight.s, snap = JSON.stringify([s.t, s.pos, s.vel, s.out.altTrue, s.out.ias]);
+    fly.leave({ instant: true });
+    return snap;
+  };
+  assert.equal(once(), once(), '×1 is deterministic — the rate machinery does not perturb it');
+  assert.equal(careerJSON(), before);
+});
+
+test('sim rate: F7 cycles 1→2→4→8→16→1 (Shift+F7 back) and ×4 advances simulated time ~4×, stable', () => {
+  assert.equal(fly.startFreeSession({ ...buildFreeCfg({ ...SEL, start: 'area', aircraft: 'pa28' }), instant: true }), true);
+  for (let i = 0; i < 90; i++) fly.update(1 / 30);
+  const t1 = fly.flight.s.t;
+  fly.leave({ instant: true });
+  assert.equal(fly.startFreeSession({ ...buildFreeCfg({ ...SEL, start: 'area', aircraft: 'pa28' }), instant: true }), true);
+  fly.key(F7()); assert.equal(fly.simRate, 2);
+  fly.key(F7()); assert.equal(fly.simRate, 4);
+  for (let i = 0; i < 90; i++) fly.update(1 / 30);
+  const t4 = fly.flight.s.t;
+  assert.ok(Math.abs(t4 - 4 * t1) < 0.4, `×4: simulated time ${t4.toFixed(2)} s ≈ 4 × the ×1 run's ${t1.toFixed(2)} s`);
+  assert.ok(Number.isFinite(fly.flight.s.out.altTrue) && fly.flight.s.out.altTrue > 0, 'the flight is stable at ×4');
+  assert.equal(fly.status().flight.crashed, false);
+  fly.key(F7()); assert.equal(fly.simRate, 8);
+  fly.key(F7()); assert.equal(fly.simRate, 16);
+  for (let i = 0; i < 30; i++) fly.update(1 / 30);
+  assert.ok(Number.isFinite(fly.flight.s.out.altTrue), 'the flight is stable at ×16');
+  fly.key(F7()); assert.equal(fly.simRate, 1, 'the cycle wraps to ×1');
+  fly.key(F7(true)); assert.equal(fly.simRate, 1, 'Shift+F7 at ×1 stays at ×1');
+  fly.key(F7()); fly.key(F7(true)); assert.equal(fly.simRate, 1, 'up then Shift+down returns to ×1');
+  fly.leave({ instant: true });
+  assert.equal(careerJSON(), before);
+});
+
+test('sim rate: a scored lesson is locked at ×1 — F7 refuses and says why', () => {
+  assert.equal(fly.startFreeSession({ ...buildFreeCfg({ ...SEL, start: 'rwy', aircraft: 'pa28' }), instant: true }), true);
+  fly.flight.startLesson('a1', 'basic', { autoRud: false });   // the live session's lesson becomes a scored one
+  assert.equal(fly.flight.free, false);
+  const n0 = toasts.length;
+  fly.key(F7());
+  assert.equal(fly.simRate, 1, 'the rate does not move in a scored lesson');
+  assert.ok(toasts.slice(n0).some(t => /1× に固定/.test(t)), `the refusal is said aloud: ${JSON.stringify(toasts.slice(n0))}`);
+  fly.leave({ instant: true });
+  assert.equal(careerJSON(), before);
 });

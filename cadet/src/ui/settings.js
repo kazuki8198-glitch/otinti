@@ -12,7 +12,11 @@ export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: tr
   // (M8) every one off at first: the AI instructor (and its model), the microphone on the radio, the crew in English
   aiTutor: false, aiModel: 'claude-opus-5-5', micRadio: false, crewEnglish: false, crewEnglishJa: true,
   // (full voice) not a player setting: whether the one-time migration of the voice default (see createSettings) has run
-  voiceFullMigrated: false };
+  voiceFullMigrated: false,
+  // (VOICEVOX) which engine says the Japanese lines (ui/voice.js): 'auto' uses VOICEVOX when the engine
+  // answers on this machine and the browser's voice when it does not; 'browser' never looks; 'voicevox'
+  // prefers VOICEVOX and falls back to the browser per line. English lines are always the browser's.
+  voiceEngine: 'auto' };
 const KEY = 'cadet.settings';
 const RULES = {
   sensitivity: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.2, v)) : undefined),
@@ -24,6 +28,7 @@ const RULES = {
   walkHold: (v) => (typeof v === 'boolean' ? v : undefined),
   voice: (v) => (typeof v === 'boolean' ? v : undefined),
   voiceFullMigrated: (v) => (typeof v === 'boolean' ? v : undefined),
+  voiceEngine: (v) => (typeof v === 'string' && /^(auto|browser|voicevox)$/.test(v) ? v : undefined),
   textSpeed: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.5, v)) : undefined),
   quality: (v) => (v === null || (typeof v === 'string' && /^(low|medium|high|ultra)$/.test(v)) ? v : undefined),
   autoRud: (v) => (typeof v === 'boolean' ? v : undefined),

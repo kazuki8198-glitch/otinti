@@ -374,6 +374,15 @@ export function activeRunway(W) {
   return s.kt >= 4 && s.from >= 140 && s.from <= 230 ? '18' : '36';
 }
 
+// ---- （すべて無視して進める) the skipped record: what a skip resolved, kept apart from every real
+// record — a skipped lesson is not in FLIGHT LAB's progress, a skipped test has no tries, a
+// skipped check no pass, a skipped duty no sector. The gates and the schedule read it through
+// the *Behind helpers below: a skipped requirement counts as satisfied FOR PROGRESSION ONLY,
+// and the truth — passed or not — stays where it has always been kept.
+export const freshSkipped = () => ({ lessons: [], classes: [], exams: [], checks: [], events: [], duties: 0, dutyBlockMin: 0, solo: false, night: false, lineCheck: false });
+const EMPTY_SKIPPED = freshSkipped();
+export const skippedOf = (state) => (state && state.skipped) || EMPTY_SKIPPED;
+
 // ---- the state
 export function newCareer(seed = 1) {
   return { v: CAREER_VERSION, seed: seed >>> 0 || 1, day: 1, slot: 'morning', chapter: 'prologue', fatigue: 20, exams: {}, ground: {}, decisions: [], done: {}, solo: null, checks: {}, graduated: null, started: true,
@@ -400,7 +409,11 @@ export function newCareer(seed = 1) {
     // pace chosen last, the format each class was begun in ('full' | 'card': a class taken up midway goes on in
     // its own), how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
-    heard: {}, lastPace: null, classPace: {}, attempts: {}, answers: {}, walked: [] };
+    heard: {}, lastPace: null, classPace: {}, attempts: {}, answers: {}, walked: [],
+    // （すべて無視して進める) what a skip resolved as スキップ (see freshSkipped above): the ids of
+    // lessons / classes / tests / checks / events, the duties and their block minutes as a shadow
+    // (the line check's due-ness only — never the record), and the one-off marks
+    skipped: freshSkipped() };
 }
 // (the paces of the order before the redesign, kept for the saves that name them: a save's lastPace may be
 // any of these, or 'card' — the class's formats now are 'full' (the whole textbook) and 'card' (the redesign's
@@ -446,10 +459,20 @@ export function cleanCareer(o) {
       blockMin: Number.isFinite(f.blockMin) && f.blockMin >= 0 ? Math.min(Math.round(f.blockMin), 999999) : 0,
       evalSum: Number.isFinite(f.evalSum) ? clamp(f.evalSum, 0, 999999) : 0,
       evalN: Number.isInteger(f.evalN) && f.evalN >= 0 ? Math.min(f.evalN, 9999) : 0,
-      lineCheck: f.lineCheck === 'pass' || f.lineCheck === 'fail' ? f.lineCheck : null,
+      lineCheck: f.lineCheck === 'pass' || f.lineCheck === 'fail' || f.lineCheck === 'skip' ? f.lineCheck : null,
       done: !!f.done,
       failSectors: Number.isInteger(f.failSectors) && f.failSectors >= 0 ? Math.min(f.failSectors, 9999) : null };
-    if (s.fo.done) s.fo.lineCheck = 'pass';
+    if (s.fo.done && !s.fo.lineCheck) s.fo.lineCheck = 'pass';   // (a 'skip' kept is never cleaned into a pass)
+  }
+  // （すべて無視して進める) the skipped record, with the same care as the rest: a save from before
+  // it was kept has none — an empty record. Read if present, so no version bump.
+  if (isObj(o.skipped)) {
+    const sk = o.skipped, ID = /^[a-z0-9_:]{1,24}$/;
+    const ids = (v) => Array.isArray(v) ? [...new Set(v.filter(x => typeof x === 'string' && ID.test(x)))].slice(0, 400) : [];
+    s.skipped = { lessons: ids(sk.lessons), classes: ids(sk.classes), exams: ids(sk.exams), checks: ids(sk.checks), events: ids(sk.events),
+      duties: Number.isFinite(sk.duties) && sk.duties > 0 ? Math.min(Math.round(sk.duties), 9999) : 0,
+      dutyBlockMin: Number.isFinite(sk.dutyBlockMin) && sk.dutyBlockMin > 0 ? Math.min(Math.round(sk.dutyBlockMin), 999999) : 0,
+      solo: !!sk.solo, night: !!sk.night, lineCheck: !!sk.lineCheck };
   }
   // (saves from before these were kept have none: an empty record, the classes already finished taken as heard in full
   // — the pace they were heard at was not kept)
@@ -515,25 +538,34 @@ export function noteGround(rec, pass, pct = 100) {
 }
 // the next lesson of chapter 2 to fly (null: all 15 are passed)
 export const nextLesson = (prog) => CH2.find(id => !passedAt(prog, id)) || null;
+// （すべて無視して進める) "behind" = passed for real, or resolved as スキップ: the gates and the
+// schedule ask these, so a skipped item is never offered again and never holds a chapter shut —
+// while passedAt / groundPassed themselves keep saying only what was really flown
+const lessonBehind = (state, prog, id) => passedAt(prog, id) || skippedOf(state).lessons.includes(id);
+const groundBehind = (state, prog, id) => groundPassed(prog, id) || skippedOf(state).lessons.includes(id);
+const examBehind = (state, id) => !!((state.exams && state.exams[id] && state.exams[id].pass) || skippedOf(state).exams.includes(id));
+const checkBehind = (state, id) => !!((state.checks && state.checks[id] && state.checks[id].pass) || skippedOf(state).checks.includes(id));
+const nextLessonSkipping = (state, prog) => CH2.find(id => !lessonBehind(state, prog, id)) || null;
+const nextInSkipping = (state, prog, list) => list.find(id => !lessonBehind(state, prog, id)) || null;
 // the gates: what is still missing (an empty list: the gate is open)
 export function gate(state, prog, trust = 50) {
   if (state.chapter === 'fo2') return [];   // (first-officer S3/S4) line flying has no chapter gate: its goal is the line check (foLineCheckReady), not a gate
   if (state.chapter === 'prologue') return state.done.prologue ? [] : ['入社の 1 日'];
   if (state.chapter === 'ch1') {
-    const miss = GROUND.filter(id => !groundPassed(prog, id)).map(id => `訓練装置 ${id}`);
-    if (!(state.exams.written1 && state.exams.written1.pass)) miss.push(EXAMS.written1.title);
+    const miss = GROUND.filter(id => !groundBehind(state, prog, id)).map(id => `訓練装置 ${id}`);
+    if (!examBehind(state, 'written1')) miss.push(EXAMS.written1.title);
     return miss;
   }
   if (STAGE[state.chapter]) {
-    const S = STAGE[state.chapter], miss = S.lessons.filter(id => !passedAt(prog, id)).map(id => `課目 ${id}`);
-    if (!(state.exams[S.exam] && state.exams[S.exam].pass)) miss.push(EXAMS[S.exam].title);
-    if (!(state.checks[S.check] && state.checks[S.check].pass)) miss.push(CHECKS[S.check].title);
+    const S = STAGE[state.chapter], miss = S.lessons.filter(id => !lessonBehind(state, prog, id)).map(id => `課目 ${id}`);
+    if (!examBehind(state, S.exam)) miss.push(EXAMS[S.exam].title);
+    if (!checkBehind(state, S.check)) miss.push(CHECKS[S.check].title);
     return miss;
   }
   if (state.solo) return [];                                  // (chapter 2 is over with the first solo)
-  const miss = CH2.filter(id => !passedAt(prog, id)).map(id => `課目 ${id}`);
-  if (!(state.exams.presolo && state.exams.presolo.pass)) miss.push(EXAMS.presolo.title);
-  if (!passedAt(prog, 'c1')) miss.push('ソロ前の審査（c1）');
+  const miss = CH2.filter(id => !lessonBehind(state, prog, id)).map(id => `課目 ${id}`);
+  if (!examBehind(state, 'presolo')) miss.push(EXAMS.presolo.title);
+  if (!lessonBehind(state, prog, 'c1')) miss.push('ソロ前の審査（c1）');
   if (trust < SOLO_TRUST) miss.push(`担当教官の信頼（${SOLO_TRUST} 以上）`);
   if (judgeOf(state) < SOLO_JUDGE) miss.push(`判断（${SOLO_JUDGE} 以上）`);
   return miss;
@@ -602,28 +634,28 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   if (state.chapter === 'ch1') {
     // (what was done today stays today's: the plan does not move on to tomorrow's work)
     const today = (key) => state.done[key] === day;
-    const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`] || today(`class:${i}`));
+    const cls = CLASSES.findIndex((_, i) => (!state.done[`class:${i}`] && !skippedOf(state).classes.includes(String(i))) || today(`class:${i}`));
     // (a device lesson waits for the class that teaches it — today's, or one before: a save from the classes' order before
     // can have a lesson whose class is still to come)
-    const k0 = GROUND.find(id => !groundPassed(prog, id) || today(`ftd:${id}`)), ci = k0 ? CLASS_FTD.indexOf(k0) : -1;
+    const k0 = GROUND.find(id => !groundBehind(state, prog, id) || today(`ftd:${id}`)), ci = k0 ? CLASS_FTD.indexOf(k0) : -1;
     const k = k0 && (ci < 0 || state.done[`class:${ci}`] != null || ci === cls) ? k0 : null;
     if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学 ${cls + 1} / ${CLASSES.length}（${classShort(cls)}）`, where: 'brief-2', who: 'lecturer' });
     if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置 ${k}・${FTD_TITLES[k]}`, where: 'sim', who: 'lecturer' });
     // (the evening's event of the day's class: the class taken today, or still to come this morning — not a class missed)
     const ev = cls >= 0 && (today(`class:${cls}`) || SLOTS.indexOf(state.slot) <= SLOTS.indexOf('am')) && CH1_EVENTS.find(e => e.cls === cls);
-    if (ev && (!state.done[`event:${ev.id}`] || today(`event:${ev.id}`))) out.push({ slot: 'evening', kind: 'event', id: ev.id, title: ev.title, where: ev.where, who: ev.who });
+    if (ev && (!state.done[`event:${ev.id}`] || today(`event:${ev.id}`)) && !skippedOf(state).events.includes(ev.id)) out.push({ slot: 'evening', kind: 'event', id: ev.id, title: ev.title, where: ev.where, who: ev.who });
     const ex = state.exams.written1;
     // (taken and failed today, the test is not offered again until tomorrow; passed today, it stays as the day's record)
-    if (cls < 0 && !k && ((!(ex && ex.pass) && (state.examDay || {}).written1 !== state.day) || (ex && ex.pass && today('exam:written1')))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
+    if (cls < 0 && !k && ((!examBehind(state, 'written1') && (state.examDay || {}).written1 !== state.day) || (ex && ex.pass && today('exam:written1')))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
   }
   if (STAGE[state.chapter] || state.chapter === 'fo2') return withRemedial(laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot)));
   // chapter 2: one flight a day (in the morning, or the afternoon when the morning cannot be flown); the tests. A flight
   // already flown today stays today's
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|solo):/.test(k));
-  const id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextLesson(prog), ex = state.exams.presolo;
+  const id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextLessonSkipping(state, prog), ex = state.exams.presolo;
   const flySlot = W.fly.am ? 'am' : W.fly.pm ? 'pm' : null;
-  const ground = (slot) => { if (!(ex && ex.pass) && (state.examDay || {}).presolo !== day && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
+  const ground = (slot) => { if (!examBehind(state, 'presolo') && (state.examDay || {}).presolo !== day && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
   if (state.solo && !(flown && flown[0] === 'solo:solo')) return withRemedial([{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }]);
   if (flown && flown[0] === 'checkride:c1') return withRemedial([{ slot: W.fly.am ? 'am' : 'pm', kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' }]);
   if (flown && flown[0] === 'solo:solo') return withRemedial([{ slot: W.fly.am ? 'am' : 'pm', kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' }]);
@@ -631,9 +663,9 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   if (id) out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' });
   // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
   // failed, the day is a finishing flight instead and the test comes back tomorrow)
-  else if ((!(ex && ex.pass) && (state.examDay || {}).presolo !== day) || (ex && ex.pass && state.done['exam:presolo'] === day)) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
-  else if (!(ex && ex.pass)) out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
-  else if (!passedAt(prog, 'c1')) out.push({ slot: flySlot, kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' });
+  else if ((!examBehind(state, 'presolo') && (state.examDay || {}).presolo !== day) || (ex && ex.pass && state.done['exam:presolo'] === day)) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
+  else if (!examBehind(state, 'presolo')) out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
+  else if (!lessonBehind(state, prog, 'c1')) out.push({ slot: flySlot, kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' });
   else if (trust >= SOLO_TRUST && judgeOf(state) >= SOLO_JUDGE) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
   else out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
   if (id) ground(flySlot === 'am' ? 'pm' : 'am');
@@ -650,20 +682,20 @@ function laterSchedule(state, prog, W, out) {
   const day = state.day, S = STAGE[state.chapter], C = CHECKS[S.check], ex = state.exams[S.exam];
   const today = (key) => state.done[key] === day;
   if (state.graduated && state.chapter !== 'ch7' && state.chapter !== 'fo1') return [{ slot: 'am', kind: 'off', id: 'grad', title: '修了（訓練はすべて終わりました）', where: null, who: null }];   // (ch7: the endorsement trains after graduation; fo1: the type rating does too)
-  const checkPassed = !!(state.checks[S.check] && state.checks[S.check].pass);
+  const checkPassed = checkBehind(state, S.check);
   if (state.chapter === 'ch6' && checkPassed) return [{ slot: 'morning', kind: 'graduation', id: 'grad', title: '修了式（ロビー）', where: 'lobby', who: 'chief' }];
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|xc):/.test(k));
   const W2 = weatherFor2(W, state.chapter, flown && flown[0].startsWith('xc:') ? 'xc' : 'flight');
   const flySlot = W2.fly.am ? 'am' : W2.fly.pm ? 'pm' : null;
-  let id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextIn(prog, S.lessons);
+  let id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextInSkipping(state, prog, S.lessons);
   if (flown && !flown[0].startsWith('flight:')) id = null;
-  const written = (slot) => { if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && id && S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2)) out.push({ slot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); };
+  const written = (slot) => { if (!examBehind(state, S.exam) && (state.examDay || {})[S.exam] !== day && id && S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2)) out.push({ slot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); };
   // (first-officer S1) the type rating's own order, unlike the chapters': the written test first (on its
   // own day, examReady's rule), then the lessons one a day with the instructor, then — lessons and test
   // both behind them — the type-rating check
   if (state.chapter === 'fo1') {
     if (flown && flown[0] === `${C.kind}:${S.check}`) return checkItems(state, C, S.check, W, out, true);
-    if (!(ex && ex.pass)) {
+    if (!examBehind(state, S.exam)) {
       // (failed today: nothing more is due today and the test comes back tomorrow, §4.3 as elsewhere)
       if ((state.examDay || {})[S.exam] !== day) out.push({ slot: 'am', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
       return out;
@@ -676,7 +708,7 @@ function laterSchedule(state, prog, W, out) {
   if (flown && flown[0] === `${C.kind}:${S.check}`) return checkItems(state, C, S.check, W, out, true);
   if (!flySlot) {
     out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' });
-    if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && (!id || S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2))) out.push({ slot: 'pm', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
+    if (!examBehind(state, S.exam) && (state.examDay || {})[S.exam] !== day && (!id || S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2))) out.push({ slot: 'pm', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
     return out;
   }
   // (next-wave item 3) a forecast-bust day in the late chapters: the flight itself carries the
@@ -686,17 +718,173 @@ function laterSchedule(state, prog, W, out) {
   if (id) { out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor', ...(W.kind === 'forecastBust' ? { divert: { to: 'LABEF', rwy: '09', freq: '122.9', ctaf: true } } : {}) }); written(flySlot === 'am' ? 'pm' : 'am'); return out; }
   // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
   // failed, nothing more is due today and the test comes back tomorrow)
-  if ((!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day) || (ex && ex.pass && today(`exam:${S.exam}`))) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
-  if (!(ex && ex.pass)) return out;
+  if ((!examBehind(state, S.exam) && (state.examDay || {})[S.exam] !== day) || (ex && ex.pass && today(`exam:${S.exam}`))) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
+  if (!examBehind(state, S.exam)) return out;
   // (B5.1-M) the final chapter's night flight: with the review lesson and the written test behind them,
   // one evening is given to the pattern after dark — the field's lights, the PAPI, the circuit flown on
   // them — before the examiner's check. It waits for a flyable day like any flight, and once flown (or
   // flown today) it is not offered again.
-  if (state.chapter === 'ch6' && !state.done['night:t2']) {
+  if (state.chapter === 'ch6' && !state.done['night:t2'] && !skippedOf(state).night) {
     out.push({ slot: 'evening', kind: 'night', id: 't2', title: '夜間飛行：場周経路（t2）', where: 'apron', who: 'instructor' });
     return out;
   }
   return checkItems(state, C, S.check, W2, out, false);
+}
+
+// ---- the time moved on in steps (時間を進める): compressed living, never a skip. A day's STOP items
+// are the ones the cadet must live through — a class, a lesson, a device lesson, a written test, a
+// check, a flight, a duty, a story event, the booked remedial evening. Rest days ('off') and the
+// self-study fillers ('study', the remedial evening aside) hold nothing mandatory: a night slept
+// through them changes the record exactly as the night itself does, so advancing over them is the
+// same nights, taken together. An item the schedule itself marks optional (the Sunday review) is
+// not a stop. The preview walks a CLONE of the state through the very mutations sleep() and
+// advanceChapter() perform (the *Mutate functions below are those mutations, shared by both), so
+// what it promises is what living through the span produces — and the span is never offered when
+// no stop day is found within the bound.
+export function isStopItem(item) {
+  if (!item || item.optional) return false;
+  if (item.kind === 'study') return item.id === 'remedial';   // the booked remedial evening is a commitment
+  return item.kind !== 'off' && item.kind !== 'study';
+}
+export function stopItemsOf(state, prog, opts = {}) { return schedule(state, prog, opts).filter(isStopItem); }
+// the night itself, as a mutation (createCareer's sleep() is this plus the save and the report)
+function sleepMutate(st, late = false) {
+  st.fatigue = clamp(st.fatigue - (late ? 15 : 50) + (late ? 10 : 0), 0, 100);
+  st.day++; st.slot = 'morning';
+}
+// the chapter step, as a mutation (advanceChapter() is this plus the save): the chapter it moves
+// to, or null when the gate is shut or the chapter does not move at a day's boundary
+function chapterMutate(st, prog, trust = 50) {
+  if (gate(st, prog, trust).length) return null;
+  if (st.chapter === 'prologue') st.chapter = 'ch1';
+  else if (st.chapter === 'ch1') st.chapter = 'ch2';
+  else if (st.chapter === 'ch2') { if (!st.solo) return null; st.chapter = 'ch3'; }
+  else if (LATER.includes(st.chapter) && st.chapter !== 'ch6') st.chapter = LATER[LATER.indexOf(st.chapter) + 1];
+  else return null;
+  return st.chapter;
+}
+// the next morning with anything mandatory on it, from tonight: { days (the nights to sleep),
+// day, items (that morning's stop items), chapter } — or null when none is found within maxDays
+// nights. Pure: the state it is given is not touched.
+export function previewAdvanceDays(state, prog, { trust = 50, maxDays = 62 } = {}) {
+  const sim = JSON.parse(JSON.stringify(state));
+  for (let n = 1; n <= maxDays; n++) {
+    sleepMutate(sim); chapterMutate(sim, prog, trust);
+    const items = stopItemsOf(sim, prog, { trust });
+    if (items.length) return { days: n, day: sim.day, items, chapter: sim.chapter };
+  }
+  return null;
+}
+
+// ---- （すべて無視して進める): the skip. Where the advance above is compressed living that stops
+// at everything mandatory, the skip walks the same nights (the same sleepMutate nights, the same
+// fatigue and day count) but resolves every mandatory item it meets as スキップ, and only stops
+// at a milestone boundary: the next chapter, the graduation morning, or — in the airline phase —
+// the morning after the line check would have closed the phase. A resolved item is written ONLY
+// into state.skipped (and, for the line check, fo.lineCheck = 'skip'): no lesson is passed, no
+// test gains a try, no check a pass, no duty a sector — and nothing grows. The gates treat the
+// skipped as satisfied for progression (gate() reads the same record), so the morning landed on
+// is a morning the normal flow can live from. The graduation itself is never resolved: the walk
+// lands ON its morning and the ceremony plays as it always does.
+export function skipTargetsOf(state) {
+  if (!state || !CHAPTERS[state.chapter]) return [];
+  if (state.chapter === 'fo1') return ['chapter', 'fo'];
+  if (state.chapter === 'fo2') return state.fo && state.fo.done ? [] : ['fo'];
+  if (state.graduated) return [];   // (the endorsement is open-ended; joining the airline is a choice, not a boundary)
+  if (state.chapter === 'ch6') return ['graduation'];
+  if (state.chapter === 'ch7') return [];
+  return ['chapter', 'graduation'];
+}
+// one mandatory item, resolved as skipped: only the skipped record changes (plus the two
+// bookings a resolution spends: the remedial evening is spent, as doneRemedial spends it, and a
+// line check resolved closes the phase with its honest 'skip' outcome beside fo.done)
+function resolveSkipItem(st, prog, item, acc) {
+  const sk = skippedOf(st);
+  const add = (arr, v) => { if (!arr.includes(v)) { arr.push(v); return true; } return false; };
+  switch (item.kind) {
+    case 'class': if (st.done[`class:${item.id}`] == null && add(sk.classes, String(item.id))) acc.classes++; break;
+    case 'ftd': case 'flight': {
+      const r = prog && prog.lessons && prog.lessons[item.id];
+      if (!(r && r.pass) && add(sk.lessons, item.id)) acc.lessons++;   // (already passed for real: a filler, not a skip)
+      break;
+    }
+    case 'exam': if (!((st.exams[item.id] || {}).pass) && add(sk.exams, item.id)) acc.exams++; break;
+    case 'checkride': case 'xc': case 'navlog':
+      if (CHECKS[item.id]) { if (!((st.checks[item.id] || {}).pass) && add(sk.checks, item.id)) acc.checks++; }
+      else if (add(sk.lessons, item.id)) acc.lessons++;   // (c1: its record is a lesson's, in FLIGHT LAB's progress)
+      break;
+    case 'solo': if (!sk.solo) { sk.solo = true; acc.solo = true; } break;
+    case 'night': if (!sk.night) { sk.night = true; acc.night = true; } break;
+    case 'line': sk.duties++; sk.dutyBlockMin += item.blockMin || 0; acc.duties++; break;
+    case 'linecheck':
+      if (st.fo && !st.fo.done) { st.fo.lineCheck = 'skip'; st.fo.done = true; st.fo.failSectors = null; if (!sk.lineCheck) { sk.lineCheck = true; acc.lineCheck = true; } }
+      break;
+    case 'study': if (item.id === 'remedial') { st.remedial = null; if (add(sk.events, 'remedial')) acc.events++; } break;
+    case 'graduation': break;   // (never resolved: landed on, not consumed)
+    default: if (add(sk.events, item.id)) acc.events++; break;   // ceremony / tour / brief / event: not shown
+  }
+}
+// the chapter step of a skip: chapterMutate's shape, but the gate reads the skipped record (a
+// skipped requirement is satisfied), the trust/judgement conditions on the solo are waived —
+// they are attributes, not items, and the user ordered the gates ignored for progression — and
+// the type-rating check steps fo1 → fo2 as check() steps it on a pass
+function skipChapterStep(st, prog, trust) {
+  if (st.chapter === 'prologue') { if (!st.done.prologue) return null; st.chapter = 'ch1'; return 'ch1'; }
+  if (st.chapter === 'fo1') { if (!checkBehind(st, 'typerate')) return null; st.chapter = 'fo2'; return 'fo2'; }
+  const miss = gate(st, prog, trust);
+  if (miss.length && !miss.every(m => m.startsWith('担当教官の信頼') || m.startsWith('判断（'))) return null;
+  if (st.chapter === 'ch1') { st.chapter = 'ch2'; return 'ch2'; }
+  if (st.chapter === 'ch2') { if (!(st.solo || skippedOf(st).solo)) return null; st.chapter = 'ch3'; return 'ch3'; }
+  if (LATER.includes(st.chapter) && st.chapter !== 'ch6') { st.chapter = LATER[LATER.indexOf(st.chapter) + 1]; return st.chapter; }
+  return null;
+}
+// the line check's due-ness over the duties a skip has resolved: the real counters do not move
+// (no sectors, no block minutes on the record), so the shadow ones in state.skipped stand in —
+// for due-ness only, through foLineCheckReady's own rule
+function virtualLineCheckReady(st) {
+  const sk = skippedOf(st), fo = st.fo || {};
+  return foLineCheckReady({ ...fo, sectors: (fo.sectors || 0) + sk.duties, blockMin: (fo.blockMin || 0) + sk.dutyBlockMin });
+}
+// the walk itself, on the state it is given (a clone for the preview, the real state for the
+// deed): resolve the day's stops, sleep the night, step the chapter — until the target's
+// boundary. → { target, days, day, chapter, summary } or null when none is found within maxDays
+function skipWalk(st, prog, { trust = 50, target, maxDays = 400, onNight = null } = {}) {
+  if (!st.skipped) st.skipped = freshSkipped();
+  const acc = { lessons: 0, classes: 0, exams: 0, checks: 0, events: 0, duties: 0, solo: false, night: false, lineCheck: false };
+  let days = 0;
+  for (let n = 0; n <= maxDays; n++) {
+    // (the graduation morning is a landing, never a resolution: the ceremony plays normally)
+    if (target === 'graduation' && st.chapter === 'ch6' && !st.graduated && schedule(st, prog, { trust }).some(x => x.kind === 'graduation'))
+      return { target, days, day: st.day, chapter: st.chapter, summary: acc, graduation: true };
+    if (n === maxDays) break;
+    const items = schedule(st, prog, { trust });
+    for (const item of items) if (isStopItem(item)) resolveSkipItem(st, prog, item, acc);
+    // (chapter 2) the solo the schedule hides behind its trust/judgement gate — t2 fillers
+    // instead: in a skip the gate is waived, so when everything else of the chapter is behind,
+    // the solo is the day's real business and resolves like any other item
+    if (st.chapter === 'ch2' && !st.solo && !skippedOf(st).solo
+      && CH2.every(id => lessonBehind(st, prog, id)) && examBehind(st, 'presolo') && lessonBehind(st, prog, 'c1'))
+      resolveSkipItem(st, prog, { kind: 'solo', id: 'solo' }, acc);
+    // (the airline phase) the line check the roster cannot offer — its due-ness counts flown
+    // sectors, and skipped duties are not flown: when the shadow record says it would be due,
+    // it resolves here instead
+    if (st.chapter === 'fo2' && st.fo && !st.fo.done && !items.some(x => x.kind === 'linecheck') && virtualLineCheckReady(st))
+      resolveSkipItem(st, prog, { kind: 'linecheck', id: 'linecheck' }, acc);
+    // (the prologue closes when its three talks are all behind the cadet — lived, or skipped)
+    if (st.chapter === 'prologue' && !st.done.prologue && ['welcome', 'tour', 'meet'].every(id => skippedOf(st).events.includes(id))) st.done.prologue = st.day;
+    sleepMutate(st); days++;
+    const moved = skipChapterStep(st, prog, trust);
+    if (onNight) onNight();
+    if (target === 'chapter' && moved) return { target, days, day: st.day, chapter: st.chapter, summary: acc };
+    if (target === 'fo' && acc.lineCheck) return { target, days, day: st.day, chapter: st.chapter, summary: acc, foDone: true };
+  }
+  return null;
+}
+// the skip promised, without touching the state (the preview the confirmation shows)
+export function previewSkipDays(state, prog, { trust = 50, target, maxDays = 400 } = {}) {
+  if (!target || !skipTargetsOf(state).includes(target)) return null;
+  const sim = JSON.parse(JSON.stringify(state));
+  return skipWalk(sim, prog, { trust, target, maxDays });
 }
 function checkItems(state, C, id, W, out, flown) {
   if (C.kind === 'xc') {
@@ -818,12 +1006,7 @@ export function createCareer({ store = null, seed } = {}) {
     decidedToday: () => st.decisions.find(d => d.day === st.day) || null,
     // the chapter moves on when its gate is open (the game calls it at the end of the work that opens it)
     advanceChapter(prog, trust) {
-      if (gate(st, prog, trust).length) return false;
-      if (st.chapter === 'prologue') st.chapter = 'ch1';
-      else if (st.chapter === 'ch1') st.chapter = 'ch2';
-      else if (st.chapter === 'ch2') { if (!st.solo) return false; st.chapter = 'ch3'; }   // (the gate opens the solo; the solo flown, chapter 3)
-      else if (LATER.includes(st.chapter) && st.chapter !== 'ch6') st.chapter = LATER[LATER.indexOf(st.chapter) + 1];
-      else return false;
+      if (!chapterMutate(st, prog, trust)) return false;
       save(); return true;
     },
     finishPrologue() { st.done.prologue = st.day; save(); },
@@ -908,13 +1091,46 @@ export function createCareer({ store = null, seed } = {}) {
       if (j > i && j < SLOTS.length) { st.slot = SLOTS[j]; save(); return true; }
       return false;
     },
+    // （時間を進める) the next thing today that must be lived through, at a later slot than now —
+    // the within-day target: everything between here and it is free time, and the normal flow
+    // resolves free slots by simply arriving at the next one
+    nextStop(prog, { trust = 50 } = {}) {
+      const i = SLOTS.indexOf(st.slot);
+      return stopItemsOf(st, prog, { trust }).find(x => SLOTS.indexOf(x.slot) > i) || null;
+    },
+    // （時間を進める) the next morning with anything mandatory on it (see previewAdvanceDays)
+    previewDays(prog, opts = {}) { return previewAdvanceDays(st, prog, opts); },
+    // （時間を進める) live those nights now: the preview recomputed, then exactly that many real
+    // nights through sleep() + advanceChapter() — the state that lands is the state the same nights
+    // slept one by one would leave, by construction. Returns the preview applied, or null.
+    advanceDays(prog, { trust = 50, maxDays = 62 } = {}) {
+      const p = previewAdvanceDays(st, prog, { trust, maxDays });
+      if (!p) return null;
+      // the same nights, one by one: sleepMutate + save is sleep(); chapterMutate + save is advanceChapter()
+      for (let n = 0; n < p.days; n++) { sleepMutate(st); save(); if (chapterMutate(st, prog, trust)) save(); }
+      return p;
+    },
+    // （すべて無視して進める) the milestone boundaries this phase offers a skip to (see skipTargetsOf)
+    skipTargets: () => skipTargetsOf(st),
+    // （すべて無視して進める) what a skip to a boundary would resolve, promised without moving
+    previewSkip(prog, opts = {}) { return previewSkipDays(st, prog, opts); },
+    // （すべて無視して進める) take the skip: the preview recomputed, then the very same walk on
+    // the real state, a save a night — everything in the span resolved as スキップ (state.skipped),
+    // nothing passed, flown or grown. Returns the walk applied, or null when the boundary is
+    // not offered or not found.
+    skipDays(prog, { trust = 50, target, maxDays = 400 } = {}) {
+      const p = previewSkipDays(st, prog, { trust, target, maxDays });
+      if (!p) return null;
+      const applied = skipWalk(st, prog, { trust, target, maxDays, onNight: () => save() });
+      save();
+      return applied || p;
+    },
     // work tires (a flight 15, a class or the device 6, a test 8); a night's sleep rests: early 50, late (studying)
     // 15, and the studying itself tires 10 back — a late night nets only 5, so a run of them under flying days
     // climbs to the IMSAFE line (65) instead of hovering below it
     tire(n) { st.fatigue = clamp(st.fatigue + n, 0, 100); save(); },
     sleep({ late = false } = {}) {
-      st.fatigue = clamp(st.fatigue - (late ? 15 : 50) + (late ? 10 : 0), 0, 100);
-      st.day++; st.slot = 'morning'; save();
+      sleepMutate(st, late); save();
       return { day: st.day, date: dateText(st.day), off: isOff(st.day) };
     },
     // IMSAFE: tired enough to say so (the honest answer)

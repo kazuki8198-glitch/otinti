@@ -113,4 +113,72 @@ describe('sim room device', { skip: !chromium && 'Playwright not found', timeout
     assert.equal(await ev(() => window.__cadet.career.device.session()), false);
     assert.equal(await ev(() => window.__cadet.career.device.lit()), false);
   });
+
+  test('the powered device stands by when its card closes — lit, not dead — and やめる powers it down', async () => {
+    const blank = await ev(() => window.__cadet.career.screen('sim'));
+    await openDeviceAtSeat();
+    assert.equal(await ev(() => window.__cadet.career.device.power()), true);
+    // walk away from the desk: the card closes, the device stays ON at its standby face
+    await ev(() => { window.__cadet.placeWalker(616.5, 264.5, { a: 616.5, c: 268.0 }); window.__cadet.simulate(0.2); });
+    assert.equal(await ev(() => window.__cadet.career.device.page()), false);
+    assert.equal(await ev(() => window.__cadet.career.device.power()), true, 'still powered');
+    assert.equal(await ev(() => window.__cadet.career.device.standby()), true, 'at its standby face');
+    assert.equal(await ev(() => window.__cadet.career.device.lit()), true, 'still lit');
+    assert.notEqual(await ev(() => window.__cadet.career.screen('sim')), blank);
+    // open it again and choose やめる： the power goes off and the screen is the room's again
+    await openDeviceAtSeat();
+    const top = await cardChoices();
+    await ev((i) => window.__cadet.career.device.choose(i), top.length - 1);
+    await ev(() => window.__cadet.simulate(0.1));
+    assert.equal(await ev(() => window.__cadet.career.device.power()), false);
+    assert.equal(await ev(() => window.__cadet.career.device.lit()), false);
+    assert.equal(await ev(() => window.__cadet.career.screen('sim')), blank);
+  });
+
+  // stand at the full flight simulator's seat and use it
+  const openFfsAtSeat = async () => {
+    await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { polling: 100, timeout: 30000 });
+    await ev(() => { const C = window.__cadet; C.placeWalker(626.5, 272.6, { a: 626.5, c: 274.4 }); C.lookAt(626.5, 273.2, 1.1); C.simulate(0.05); });
+    assert.equal(await ev(() => window.__cadet.current()), 'ex:ffs-station');
+    await ev(() => { window.__cadet.use(); window.__cadet.simulate(0.05); });
+    assert.equal(await ev(() => window.__cadet.career.ffs.page()), true);
+  };
+
+  test('the full flight simulator: a 737 practice flight, and back to its own seat', async () => {
+    await openFfsAtSeat();
+    const card = await ev(() => window.__cadet.card());
+    assert.match(card.title, /フルフライトシミュレーター/);
+    const top = await cardChoices();
+    assert.ok(top.some(t => /滑走路から（737/.test(t)), JSON.stringify(top));
+    assert.ok(!top.some(t => /リハーサル/.test(t)), 'no rehearsal before graduation');
+    await ev(() => window.__cadet.career.ffs.choose(0));       // from the runway, the 737
+    await g.page.waitForFunction(() => window.__cadet.mode() === 'fly' && window.__cadet.fly.status().active, null, { polling: 100, timeout: 30000 });
+    assert.equal(await ev(() => window.__cadet.career.ffs.session()), true);
+    assert.equal((await ev(() => window.__cadet.fly.status())).flight.aircraft, 'b737');
+    await ev(() => window.__cadet.fly.leave());
+    await g.page.waitForFunction(() => window.__cadet.mode() === 'walk', null, { polling: 100, timeout: 30000 });
+    const p = await ev(() => window.__cadet.player());
+    assert.equal(p.place, '訓練装置室（FTD）');
+    assert.ok(Math.abs(p.a - 626.5) < 1.5 && Math.abs(p.c - 272.4) < 1.5, `back at the FFS seat: ${JSON.stringify(p)}`);
+    assert.equal(await ev(() => window.__cadet.career.ffs.session()), false);
+    assert.equal(await ev(() => window.__cadet.career.ffs.lit()), false);
+  });
+
+  test('the full flight simulator: a graduated first officer rehearses a sector, and nothing is recorded', async () => {
+    await ev(() => window.__cadet.career.set({ state: { chapter: 'fo2', day: 80, slot: 'morning', graduated: { day: 49, rank: '優秀' } }, flags: { met_instructor: true, has_tablet: true, epilogue_seen: true }, place: false }));
+    await ev(() => window.__cadet.simulate(0.1));
+    const before = JSON.stringify(await ev(() => window.__cadet.career.state()));
+    await openFfsAtSeat();
+    const top = await cardChoices();
+    const i = top.findIndex(t => /リハーサル/.test(t));
+    assert.ok(i >= 0, JSON.stringify(top));
+    await ev((i) => window.__cadet.career.ffs.choose(i), i);
+    await g.page.waitForFunction(() => window.__cadet.mode() === 'fly' && window.__cadet.fly.status().active, null, { polling: 100, timeout: 30000 });
+    assert.equal(await ev(() => window.__cadet.career.ffs.session()), true);
+    await ev(() => window.__cadet.fly.leave());
+    await g.page.waitForFunction(() => window.__cadet.mode() === 'walk', null, { polling: 100, timeout: 30000 });
+    assert.equal(JSON.stringify(await ev(() => window.__cadet.career.state())), before, 'the rehearsal leaves the career untouched');
+    const p = await ev(() => window.__cadet.player());
+    assert.ok(Math.abs(p.a - 626.5) < 1.5 && Math.abs(p.c - 272.4) < 1.5, `back at the FFS seat: ${JSON.stringify(p)}`);
+  });
 });

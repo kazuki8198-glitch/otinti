@@ -54,7 +54,8 @@ const PAGES = [['today', '今日'], ['progress', '進み具合'], ['logbook', '�
 // model() → { date, chapterTitle, slotName, plan: [{ slot, title, state: 'done' | 'now' | 'later' | 'missed' }],
 //   weather: { ja, metarAm, metarPm, taf, flyAm, flyPm }, fatigue, tired, gate: [..], ground: [{ id, title, pass }],
 //   classes: { done, total }, exams: [{ title, best, pass, tries }], lessons: [{ id, title, best, pass }], trust: [{ name, v }],
-//   solo, book: [{ id, n, title, sections: [{ id, title }] }], banks: [{ id, title, n }], evening, canWait }
+//   solo, book: [{ id, n, title, sections: [{ id, title }] }], banks: [{ id, title, n }], evening, waitTo, waitDays,
+//   skipOpts: [{ target, label, days, detail }] (すべて無視して進める: the milestone skips of this phase) }
 // act: { logbook(), read(sectionId), practice(bankId), exportSave() → text, importSave(text) → message, reset(), wait(), home(),
 //   (M8) notes: { list(), draft, setDraft(t), add(t), remove(id), clear(), export() } }
 // (the ANA triage label 【必須】/【推奨】/【ゲーム内のみ】 comes from content/ana-triage.js — a display only)
@@ -68,7 +69,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
   const root = make('div', 'tb'); root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'タブレット');
   const dev = make('section', 'tb-dev'), top = make('nav', 'tb-top'), scr = make('div', 'tb-scr');
   put(dev, top, scr); put(root, dev); doc.body.appendChild(root);
-  let page = 'today', bookCh = null, bookMust = false, msg = '';
+  let page = 'today', bookCh = null, bookMust = false, msg = '', confirmDays = 0, confirmSkip = null;   // (confirmDays: the day the armed 時間を進める button would land on — the second tap takes it; confirmSkip: the armed すべて無視して進める target, the same way)
 
   function nav(m) {
     top.textContent = '';
@@ -85,7 +86,25 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (!m.plan.length) put(ul, put(make('li'), make('span', '', '今日の予定はありません。')));
     for (const p of m.plan) { const [c, t] = status(p.state); put(ul, put(make('li'), make('span', 'st ' + c, t), make('span', '', `${p.slotName}　${p.title}`))); }
     put(plan, ul);
-    if (m.canWait) put(plan, btn('次の予定まで待つ', () => { act.wait(); draw(); }, 'tb-btn ghost'));
+    // （時間を進める) on to the next thing that must be lived: later today if there is one (named,
+    // its slot and title), else the next morning that has one — its day, its first thing and the
+    // number of nights named on the button, and that one asks twice before it is taken
+    if (m.waitTo) put(plan, btn(`次の予定まで待つ（${m.waitTo.slotName}：${m.waitTo.title}）`, () => { confirmDays = 0; confirmSkip = null; act.waitNext(); draw(); }, 'tb-btn ghost'));
+    else if (m.waitDays) {
+      if (confirmDays === m.waitDays.day) put(plan, btn(`${m.waitDays.label} — もう一度押すと確定`, () => { confirmDays = 0; act.waitDays(); close(); }, 'tb-btn'));
+      else put(plan, btn(`次の予定の日まで待つ（${m.waitDays.label}）`, () => { confirmDays = m.waitDays.day; confirmSkip = null; draw(); }, 'tb-btn ghost'));
+    }
+    // （すべて無視して進める) the skip, kept apart from the waiting above: everything mandatory
+    // on the way is resolved as スキップ — not lived, not passed, and nothing grows. Its button
+    // names the boundary, the nights it takes and what will be skipped; armed, it shows the
+    // consequences in full and asks a second time, as the careful advance asks twice
+    if (m.skipOpts && m.skipOpts.length) {
+      put(plan, make('div', 'tb-note', 'すべて無視して進める：途中の予定は全部「スキップ」の記録になります。成長はしません。試験・チェック・勤務は受けたことにならず、卒業や一人前の評価は、実際の結果どおりに付きます。'));
+      for (const o of m.skipOpts) {
+        if (confirmSkip === o.target) put(plan, btn(`${o.label}：${o.days} 日進みます。${o.detail} — もう一度押すと確定`, () => { confirmSkip = null; act.skipDays(o.target); close(); }, 'tb-btn'));
+        else put(plan, btn(`すべて無視して進める：${o.label}（${o.days} 日）`, () => { confirmSkip = o.target; confirmDays = 0; draw(); }, 'tb-btn ghost'));
+      }
+    }
     if (m.evening) put(plan, make('div', 'tb-note', '今日はここまで。寮の自室のベッドで寝ると、次の日になります。'));
     // (M8) after the graduation: the epilogue again (Haneda, the right seat of the 737)
     if (m.graduated && act.epilogue) put(plan, btn('終章：羽田の 737（もう一度）', () => { close(); act.epilogue(); }, 'tb-btn ghost'));

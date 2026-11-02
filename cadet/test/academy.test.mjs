@@ -134,3 +134,22 @@ test('academy: the walk to today\'s aircraft goes from room to room through door
   const last = S.route[S.route.length - 1];
   assert.ok(Math.hypot(last.a - S.target.a, last.c - S.target.c) < 4, 'the route ends by the aircraft');
 });
+
+test('academy: the full flight simulator stands in the device room — its own unit, screen and seat target', () => {
+  const sim = room('sim');
+  const types = sim.furniture.map(f => f.type);
+  assert.equal(types.filter(t => t === 'sim_station').length, 7, 'the seven training devices remain');
+  assert.equal(types.filter(t => t === 'ffs_station').length, 1, 'one full flight simulator');
+  assert.equal(types.filter(t => t === 'ffs_screen').length, 1, 'its own wall screen');
+  const ffs = sim.furniture.find(f => f.type === 'ffs_station');
+  // the unit (2.32 × 1.12 m about its centre) stands inside the room, clear of the door's span and
+  // of the training devices' row, with its seat's chair in front of it
+  assert.ok(inRoom(sim, ffs.a - 1.16, ffs.c - 0.56, 0.1) && inRoom(sim, ffs.a + 1.16, ffs.c + 0.56, 0.1), 'the FFS footprint is inside the room');
+  const door = S.doors.find(d => d.id === 'd-sim');
+  assert.ok(ffs.c - 0.56 > door.at + 8, 'the FFS is nowhere near the doorway sweep');
+  const seat = S.interactables.find(i => i.id === 'ffs-station');
+  assert.ok(seat && seat.room === 'sim', 'the FFS seat is a thing to use');
+  assert.ok(Math.abs(seat.a - ffs.a) < 0.1 && seat.c < ffs.c, 'the seat stands in front of the unit');
+  // and the training device's own seat is untouched
+  assert.ok(S.interactables.some(i => i.id === 'sim-station'), 'the FTD seat remains');
+});

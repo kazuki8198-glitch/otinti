@@ -1,0 +1,12 @@
+{
+ "EVENT_HOOKS": [
+  "done",
+  "look",
+  "nod",
+  "point",
+  "ans"
+ ],
+ "eventDialogs": {
+  "__fn": "eventDialogs"
+ }
+}

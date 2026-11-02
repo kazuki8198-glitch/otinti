@@ -1,0 +1,24 @@
+{
+ "INSTRUCTOR": {
+  "id": "instructor",
+  "name_ja": "早瀬 航",
+  "title_ja": "早瀬 教官",
+  "role_ja": "担当教官"
+ },
+ "NOT_SPOKEN": {},
+ "instructorDialogs": {
+  "__fn": "instructorDialogs"
+ },
+ "polite": {
+  "__fn": "polite"
+ },
+ "sampleCtx": {
+  "__fn": "sampleCtx"
+ },
+ "speakable": {
+  "__fn": "speakable"
+ },
+ "speechLines": {
+  "__fn": "speechLines"
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "DEBRIEF_FLAGS": [
+  "day1_done"
+ ],
+ "DEBRIEF_HOOKS": [
+  "look",
+  "nod",
+  "logbook",
+  "ai"
+ ],
+ "VOICES": {
+  "instructor": null,
+  "chief": {
+   "open": "審査の講評をします。結果の前に、いつもどおり、順番に見ていきます。",
+   "tem": {
+    "__fn": "tem"
+   },
+   "errs": {
+    "__fn": "errs"
+   },
+   "noErr": "エラーらしいエラーは、見当たりませんでした。",
+   "next": {
+    "__fn": "next"
+   },
+   "trust": {
+    "__fn": "trust"
+   },
+   "sign": "航空日誌に、審査の記録を書いて署名します。",
+   "bye": "お疲れさま。今日は、よく休みなさい。",
+   "en": {
+    "open": "Here is the check debrief. Before the result, we go through it in order, as always.",
+    "tem": {
+     "__fn": "tem"
+    },
+    "errs": {
+     "__fn": "errs"
+    },
+    "noErr": "I saw no errors to speak of.",
+    "next": {
+     "__fn": "next"
+    },
+    "trust": {
+     "__fn": "trust"
+    },
+    "sign": "I'll write the check in your logbook and sign it.",
+    "bye": "Well done. Rest well today."
+   }
+  },
+  "examiner": {
+   "open": "審査官の講評です。結果は、最後に航空日誌で。まず、見たことを順に言います。",
+   "tem": {
+    "__fn": "tem"
+   },
+   "errs": {
+    "__fn": "errs"
+   },
+   "noErr": "記録すべきエラーはありません。",
+   "next": {
+    "__fn": "next"
+   },
+   "trust": {
+    "__fn": "trust"
+   },
+   "sign": "航空日誌に、審査の結果を書きます。署名は私が。",
+   "bye": "以上です。お疲れさまでした。",
+   "en": {
+    "open": "The examiner's debrief. The result comes last, in your logbook. First, what I saw, in order.",
+    "tem": {
+     "__fn": "tem"
+    },
+    "errs": {
+     "__fn": "errs"
+    },
+    "noErr": "No errors to record.",
+    "next": {
+     "__fn": "next"
+    },
+    "trust": {
+     "__fn": "trust"
+    },
+    "sign": "I'll write the check result in your logbook. I'll sign it.",
+    "bye": "That is all. Thank you."
+   }
+  }
+ },
+ "debriefDialogs": {
+  "__fn": "debriefDialogs"
+ }
+}

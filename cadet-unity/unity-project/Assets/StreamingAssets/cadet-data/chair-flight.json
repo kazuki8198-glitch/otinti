@@ -1,0 +1,17 @@
+{
+ "FIRST_FLIGHT": "a1",
+ "STATION_JA": {
+  "ATIS": "LAB ATIS",
+  "GND": "LAB Ground",
+  "TWR": "LAB Tower",
+  "DEP": "LAB Departure",
+  "APP": "LAB Approach",
+  "OPS": "操作"
+ },
+ "chairScript": {
+  "__fn": "chairScript"
+ },
+ "radioPlan": {
+  "__fn": "radioPlan"
+ }
+}

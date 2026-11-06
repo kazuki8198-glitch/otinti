@@ -1,0 +1,16 @@
+2026-11-06T13:56:00.671Z universe 1571件（プライム 1547）
+2026-11-06T13:56:00.672Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-06T14:16:53.942Z 投信基準価額 8/8
+2026-11-06T14:17:02.635Z warmup 1262s: 全履歴0/軽量0/失敗1563/未着手8
+2026-11-06T14:17:02.663Z site built: hist 8, trades 0
+2026-11-06T14:19:13.254Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-06T14:19:13.451Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-06T14:19:14.028Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-06T14:19:14.547Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-06T14:19:14.975Z probe google finance: HTTP 200 len=1362494 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-06T14:19:16.039Z probe yahoo jp: HTTP 200 len=357299 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-06T14:19:16.098Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-06T14:19:24.724Z 取得元が全件失敗のため中断
+2026-11-06T14:19:24.883Z 取得元が全件失敗のため中断
+2026-11-06T14:19:29.425Z warmup 13s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-06T14:19:29.450Z site built: hist 8, trades 0

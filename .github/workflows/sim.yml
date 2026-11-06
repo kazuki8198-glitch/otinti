@@ -55,6 +55,10 @@ jobs:
             esac
           fi
           echo "mode=$M" >> "$GITHUB_OUTPUT"; echo "mode=$M"
+      - name: Probe data sources
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+        run: node sim/run.js probe
       - name: Run
         env:
           DATA_DIR: ${{ github.workspace }}/data

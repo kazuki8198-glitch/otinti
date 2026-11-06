@@ -54,7 +54,7 @@ async function fetchChart(sym, range, interval, tfmt) { try { const r = await ge
 async function fetchBatches(items, stats, deadline) { const out = {}, failed = [];
   for (let i = 0; i < items.length; i += CFG.BATCH) { if (deadline && Date.now() > deadline) break; const chunk = items.slice(i, i + CFG.BATCH);
     const res = await Promise.all(chunk.map(it => fetchChart(it.code, it.range, it.interval))); let nf = 0;
-    res.forEach((p, k) => { out[chunk[k].code] = p; if (!p) { failed.push(chunk[k]); nf++; } }); if (stats) { stats.requests += chunk.length; stats.failed += nf; }
+    res.forEach((p, k) => { out[chunk[k].code] = p; if (!p) { failed.push(chunk[k]); nf++; } }); if (stats) { stats.requests += chunk.length; stats.failed += nf; if (stats.requests >= 40 && stats.failed === stats.requests) { log('取得元が全件失敗のため中断'); break; } }
     await sleep(nf >= Math.ceil(chunk.length / 2) ? CFG.FAIL_GAP_MS : CFG.BATCH_GAP_MS); }
   return { out, failed }; }
 function mergeBars(oldB, newB) { if (!oldB) return trimBars(newB); const idx = {}; oldB.t.forEach((t, i) => idx[t] = i); const r = { t: oldB.t.slice(), o: oldB.o.slice(), h: oldB.h.slice(), l: oldB.l.slice(), c: oldB.c.slice(), v: oldB.v.slice() };
@@ -189,8 +189,12 @@ function buildSite() { ensureDir(SITE); fs.copyFileSync(path.join(__dirname, 'in
   writeJson(path.join(D, 'export.json'), { exportedAt: nowIso(), trades, states, nav: readJsonl(P.nav) });
   fs.writeFileSync(path.join(SITE, '.nojekyll'), ''); log(`site built: hist ${Object.keys(histAll).length}, trades ${trades.length}`); }
 
+// ---------- 取得元の疎通確認 ----------
+async function probe() { const urls = [['yahoo q1 v8', yahooUrl('7203.T', '5d', '1d')], ['yahoo q2 v8', yahooUrl('7203.T', '5d', '1d').replace('query1', 'query2')], ['stooq daily', 'https://stooq.com/q/d/l/?s=7203.jp&i=d'], ['stooq quote', 'https://stooq.com/q/l/?s=7203.jp&f=sd2t2ohlcv&h&e=csv'], ['google finance', 'https://www.google.com/finance/quote/7203:TYO'], ['yahoo jp', 'https://finance.yahoo.co.jp/quote/7203.T']];
+  for (const [name, url] of urls) { try { const r = await get(url, { timeout: 20000 }); const txt = await r.text(); log(`probe ${name}: HTTP ${r.status} len=${txt.length} :: ${txt.slice(0, 160).replace(/\s+/g, ' ')}`); } catch (e) { log(`probe ${name}: ERR ${e.message}`); } } }
 // ---------- main ----------
 (async () => { const mode = process.argv[2] || 'scan'; ensureDir(DATA); try {
+  if (mode === 'probe') { await probe(); return; }
   if (mode === 'scan') await scan({ force: process.env.FORCE === '1' });
   else if (mode === 'warmup') await warmup();
   else if (mode === 'backtest') { ensureDir(P.backtest); for (const p of E.PATTERNS) runBacktest(p.id); }

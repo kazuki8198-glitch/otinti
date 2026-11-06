@@ -1,0 +1,109 @@
+# 仮想資金 投資シミュレーション（東証プライム）— 定期スキャン・データ保存・ページ公開
+# 実資金は使わず、発注機能はない。
+name: sim
+on:
+  schedule:
+    # JST 9:05〜11:05 の15分刻み + 11:15、12:35〜15:05 の15分刻み + 15:15（計22回、cron は UTC）
+    - cron: '5,20,35,50 0-1 * * 1-5'
+    - cron: '5,15 2 * * 1-5'
+    - cron: '35,50 3 * * 1-5'
+    - cron: '5,20,35,50 4-5 * * 1-5'
+    - cron: '5,15 6 * * 1-5'
+    # 平日 21:00 JST: 履歴の温め直し・投信・ニュース（売買判定なし）
+    - cron: '0 12 * * 1-5'
+    # 日曜 7:00 JST: バックテスト（過去200営業日）
+    - cron: '0 22 * * 6'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'scan | warmup | backtest | build'
+        default: 'scan'
+  push:
+    paths: ['sim/**', '.github/workflows/sim.yml']
+concurrency:
+  group: sim
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      TZ: Asia/Tokyo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Restore data branch
+        run: |
+          mkdir -p data
+          if git fetch --depth 1 origin sim-data 2>/dev/null; then git --work-tree=data checkout origin/sim-data -- . ; echo "restored"; else echo "no data branch yet"; fi
+          ls data | head
+      - name: Decide mode
+        id: mode
+        run: |
+          M="${{ github.event.inputs.mode }}"
+          if [ -z "$M" ]; then
+            case "${{ github.event.schedule }}" in
+              '0 12 * * 1-5') M=warmup ;;
+              '0 22 * * 6') M=backtest ;;
+              *) M=scan ;;
+            esac
+          fi
+          echo "mode=$M" >> "$GITHUB_OUTPUT"; echo "mode=$M"
+      - name: Run
+        env:
+          DATA_DIR: ${{ github.workspace }}/data
+          SITE_DIR: ${{ github.workspace }}/site
+        run: node sim/run.js ${{ steps.mode.outputs.mode }}
+      - name: Save data branch (orphan, force)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd data
+          rm -rf .git
+          git init -q
+          git config user.name sim-bot
+          git config user.email sim-bot@users.noreply.github.com
+          git checkout -q -b sim-data
+          git add -A
+          git commit -qm "data $(date -u +%FT%TZ) ${{ steps.mode.outputs.mode }}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" sim-data
+      - name: Save site branch (fallback host, orphan, force)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd site
+          git init -q
+          git config user.name sim-bot
+          git config user.email sim-bot@users.noreply.github.com
+          git checkout -q -b sim-site
+          git add -A
+          git commit -qm "site $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" sim-site
+          rm -rf .git
+      - name: Configure Pages
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload site
+        if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy Pages
+        if: steps.pages.outcome == 'success'
+        id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Report
+        run: |
+          echo "mode=${{ steps.mode.outputs.mode }}"
+          echo "pages=${{ steps.deploy.outputs.page_url }}"
+          tail -n 20 data/log.txt || true

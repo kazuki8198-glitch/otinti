@@ -1,0 +1,32 @@
+{"ts":"2026-11-06T14:17:02.634Z","date":"2026-11-06","slot":"23:17","warmup":true,"full":0,"light":0,"fail":1563,"untouched":8,"durationSec":1262,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-06T14:19:29.425Z","date":"2026-11-06","slot":"23:19","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":13,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-09T05:51:14.309Z","date":"2026-11-09","slot":"14:50","regime":"unknown","full":0,"light":0,"fail":40,"untouched":1563,"fundsFetched":8,"durationSec":16,"notes":"コア＋集中: 新規買い停止: レジーム判定不能（フェイルクローズ） / モメンタム: 新規買い停止: レジーム判定不能（フェイルクローズ） / バランス: 新規買い停止: レジーム判定不能（フェイルクローズ） / クオリティ・低ボラ: 新規買い停止: レジーム判定不能（フェイルクローズ） / 広分散: 新規買い停止: レジーム判定不能（フェイルクローズ）"}
+{"ts":"2026-11-09T09:37:45.597Z","date":"2026-11-09","slot":"18:37","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-09T12:02:47.014Z","date":"2026-11-09","slot":"21:02","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":19,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-09T12:38:19.420Z","date":"2026-11-09","slot":"21:38","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":12,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-09T16:01:00.533Z","date":"2026-11-10","slot":"01:01","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":25,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-09T22:02:54.110Z","date":"2026-11-10","slot":"07:02","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T06:56:46.361Z","date":"2026-11-10","slot":"15:56","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T09:38:32.566Z","date":"2026-11-10","slot":"18:38","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T11:41:59.772Z","date":"2026-11-10","slot":"20:41","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T12:17:37.444Z","date":"2026-11-10","slot":"21:17","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":10,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T14:45:43.744Z","date":"2026-11-10","slot":"23:45","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":20,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-10T19:27:30.342Z","date":"2026-11-11","slot":"04:27","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":24,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-11T05:47:08.472Z","date":"2026-11-11","slot":"14:50","regime":"unknown","full":0,"light":0,"fail":40,"untouched":1571,"fundsFetched":0,"durationSec":8,"notes":"コア＋集中: 新規買い停止: レジーム判定不能（フェイルクローズ） / モメンタム: 新規買い停止: レジーム判定不能（フェイルクローズ） / バランス: 新規買い停止: レジーム判定不能（フェイルクローズ） / クオリティ・低ボラ: 新規買い停止: レジーム判定不能（フェイルクローズ） / 広分散: 新規買い停止: レジーム判定不能（フェイルクローズ）"}
+{"ts":"2026-11-11T09:14:31.884Z","date":"2026-11-11","slot":"18:14","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-11T11:24:55.793Z","date":"2026-11-11","slot":"20:24","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-11T11:44:16.307Z","date":"2026-11-11","slot":"20:44","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":11,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-11T14:04:14.999Z","date":"2026-11-11","slot":"23:04","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-11T19:22:59.357Z","date":"2026-11-12","slot":"04:22","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":24,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T06:53:04.852Z","date":"2026-11-12","slot":"15:53","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":19,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T09:42:24.769Z","date":"2026-11-12","slot":"18:42","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":19,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T11:46:27.608Z","date":"2026-11-12","slot":"20:46","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T12:19:56.366Z","date":"2026-11-12","slot":"21:19","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":11,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T15:02:48.777Z","date":"2026-11-13","slot":"00:02","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":25,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-12T19:41:04.575Z","date":"2026-11-13","slot":"04:41","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":19,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-13T06:12:47.292Z","date":"2026-11-13","slot":"15:15","regime":"unknown","full":0,"light":0,"fail":40,"untouched":1571,"fundsFetched":0,"durationSec":8,"notes":"コア＋集中: 新規買い停止: レジーム判定不能（フェイルクローズ） / モメンタム: 新規買い停止: レジーム判定不能（フェイルクローズ） / バランス: 新規買い停止: レジーム判定不能（フェイルクローズ） / クオリティ・低ボラ: 新規買い停止: レジーム判定不能（フェイルクローズ） / 広分散: 新規買い停止: レジーム判定不能（フェイルクローズ）"}
+{"ts":"2026-11-13T09:25:50.923Z","date":"2026-11-13","slot":"18:25","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":17,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-13T11:29:17.955Z","date":"2026-11-13","slot":"20:29","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-13T11:57:27.298Z","date":"2026-11-13","slot":"20:57","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":11,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-13T14:28:10.785Z","date":"2026-11-13","slot":"23:28","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":18,"notes":"履歴の温め（売買判定なし）"}
+{"ts":"2026-11-13T19:22:19.806Z","date":"2026-11-14","slot":"04:22","warmup":true,"full":0,"light":0,"fail":40,"untouched":8,"durationSec":24,"notes":"履歴の温め（売買判定なし）"}

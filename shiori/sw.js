@@ -1,5 +1,5 @@
 // オフラインでも開けるように、最後に読み込んだページを端末に残す
-const C = 'shiori-daf79ed0dc';
+const C = 'shiori-1330461559';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(C).then(c => c.addAll(['./', './icon-180.png']))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {

@@ -74,6 +74,8 @@ nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:700}
 .alert.ask b{color:var(--ask)}
 .alert.warn{background:var(--warn-bg);border-color:transparent}
 .alert.warn b{color:var(--warn)}
+.alert.ok{background:var(--accent-soft);border-color:transparent;color:var(--ink)}
+.alert.ok b{color:var(--ok)}
 .dayhead h2{font-size:1.06rem;line-height:1.4}
 .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.78rem;color:var(--sub);margin-top:6px}
 .tl{list-style:none;margin:0;padding:0}
@@ -402,6 +404,7 @@ function dayView(day, pk){
   var h = '<div class="card dayhead"><h2>' + md(day.date) + '(' + day.dow + ')　' + esc(p.title) + '</h2><p class="lead">' + esc(p.lead || '') + '</p>' +
     '<div class="meta"><span>歩く量 約' + p.km + ' km</span><span>日の出 ' + day.sun.rise + '</span><span>日の入り ' + day.sun.set + '</span><span>現地の出費 約' + yen(c.t + c.a + c.f) + '</span></div></div>';
   if (day.alert) h += '<div class="alert ask"><b>要確認</b>　' + esc(day.alert) + '</div>';
+  if (day.ok) h += '<div class="alert ok"><b>確認済み</b>　' + esc(day.ok) + '</div>';
   if (day.map && D.maps[day.map]) h += '<div class="card">' + mapSvg(D.maps[day.map]) + '</div>';
   h += '<div class="card"><ol class="tl">' + p.items.map(function(it, i){ return itemHtml(day, pk, it, i, today, nx ? nx.i : -1); }).join('') + '</ol></div>';
   return h;
@@ -535,7 +538,8 @@ function redrawTrainer(){ var el = document.getElementById('trainer'); if (!el) 
 function viewExam(){
   var E = D.exam, to = daysTo(E.date);
   var h = '<div class="card"><h2>' + esc(E.title) + '</h2><p class="lead">' + esc(E.lead) + (to > 0 ? '　' + esc(E.countLabel || '') + 'あと' + to + '日。' : '') + '</p></div>';
-  h += '<div class="alert ask"><b>要確認</b>　' + esc(E.flag) + '</div>';
+  if (E.flag) h += '<div class="alert ask"><b>要確認</b>　' + esc(E.flag) + '</div>';
+  if (E.ok) h += '<div class="alert ok"><b>確認済み</b>　' + esc(E.ok) + '</div>';
   if (!isPrint()) h += acc(E.trainerTitle, '<p class="small" style="margin-bottom:8px">' + esc(E.tsushin) + '</p><div id="trainer">' + trainerHtml() + '</div>', true);
   h += acc('学習の進め方', checks(E.plan.map(function(p, i){ return { id: i, html: '<b>' + esc(p.when) + '　' + esc(p.title) + '</b><div class="small">' + esc(p.body) + '</div>' }; }), 'study', 'study.') + '<p class="small" style="margin-top:8px">' + esc(E.planNote) + '</p>', true);
   h += acc('当日の時間割', table(['時刻', '科目', '備考'], E.timetable, null, true) + '<p class="small" style="margin-top:8px">' + esc(E.timetableNote) + '</p>', true);
@@ -587,7 +591,7 @@ function viewMore(){
   h += acc('当日の朝に見るもの', '<p class="small">' + esc(I.climate) + '</p>' + I.morning.map(function(m){ return '<div class="rowcard"><div class="h"><a href="' + esc(m.url) + '" target="_blank" rel="noopener noreferrer"><b>' + esc(m.label) + '</b></a></div><p class="small">' + esc(m.note) + '</p></div>'; }).join(''), true);
   h += acc('連絡先', I.contacts.map(function(c){ return '<div class="rowcard"><div class="h"><b>' + esc(c.label) + '</b><a class="btn" href="tel:' + c.tel.replace(/-/g, '') + '">' + esc(c.tel) + '</a></div></div>'; }).join('') + '<p class="small" style="margin-top:8px">' + esc(I.contactsNote) + '</p>');
   h += acc('まだ決められないこと', I.open.map(function(q){ return '<div class="qa"><b>' + esc(q.q) + '</b>' + esc(q.a) + '<div class="by">' + esc(q.by) + '</div></div>'; }).join(''), true);
-  h += acc('前のしおりから直した点', '<ul class="plain">' + I.changes.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>');
+  h += acc('直した点の記録', '<ul class="plain">' + I.changes.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>');
   h += acc('出典', '<ul class="plain">' + I.sources.map(function(s){ return '<li><a href="' + esc(s[1]) + '" target="_blank" rel="noopener noreferrer">' + esc(s[0]) + '</a></li>'; }).join('') + '</ul><p class="small">' + esc(I.sourcesNote) + '</p>');
   if (!isPrint()) h += acc('設定', '<div class="field"><span>文字の大きさ</span><button class="chip" data-act="font" data-id="m" aria-pressed="' + (S.font === 'm') + '">標準</button><button class="chip" data-act="font" data-id="l" aria-pressed="' + (S.font === 'l') + '">大きく</button></div>' +
     '<div class="field"><button class="btn big" data-act="print">印刷・PDF用に全部を表示</button></div>' +

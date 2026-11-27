@@ -1,0 +1,1043 @@
+2026-11-06T13:56:00.671Z universe 1571件（プライム 1547）
+2026-11-06T13:56:00.672Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-06T14:16:53.942Z 投信基準価額 8/8
+2026-11-06T14:17:02.635Z warmup 1262s: 全履歴0/軽量0/失敗1563/未着手8
+2026-11-06T14:17:02.663Z site built: hist 8, trades 0
+2026-11-06T14:19:13.254Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-06T14:19:13.451Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-06T14:19:14.028Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-06T14:19:14.547Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-06T14:19:14.975Z probe google finance: HTTP 200 len=1362494 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-06T14:19:16.039Z probe yahoo jp: HTTP 200 len=357299 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-06T14:19:16.098Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-06T14:19:24.724Z 取得元が全件失敗のため中断
+2026-11-06T14:19:24.883Z 取得元が全件失敗のため中断
+2026-11-06T14:19:29.425Z warmup 13s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-06T14:19:29.450Z site built: hist 8, trades 0
+2026-11-08T00:59:09.633Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-08T00:59:09.807Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-08T00:59:10.367Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-08T00:59:10.882Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-08T00:59:11.508Z probe google finance: HTTP 200 len=1364587 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-08T00:59:12.840Z probe yahoo jp: HTTP 200 len=357523 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-08T00:59:12.909Z backtest p10: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-08T00:59:12.928Z backtest p50: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-08T00:59:12.940Z backtest p100: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-08T00:59:12.951Z backtest p500: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-08T00:59:12.964Z backtest p1000: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-08T00:59:12.977Z site built: hist 8, trades 0
+2026-11-09T05:50:55.451Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T05:50:55.687Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T05:50:56.240Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T05:50:56.730Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T05:50:57.276Z probe google finance: HTTP 200 len=1365745 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T05:50:58.642Z probe yahoo jp: HTTP 200 len=350259 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T05:51:07.191Z 取得元が全件失敗のため中断
+2026-11-09T05:51:07.342Z 取得元が全件失敗のため中断
+2026-11-09T05:51:14.292Z 投信基準価額 8/8
+2026-11-09T05:51:24.764Z scan 14:50 完了 16s: 全0/軽0/失敗40/未着手1563 売買0 regime=unknown req=60
+2026-11-09T05:51:24.778Z site built: hist 8, trades 0
+2026-11-09T09:37:23.606Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T09:37:23.740Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T09:37:24.491Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T09:37:25.196Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T09:37:25.804Z probe google finance: HTTP 200 len=1370815 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T09:37:26.900Z probe yahoo jp: HTTP 200 len=356103 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T09:37:27.135Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-09T09:37:35.441Z 取得元が全件失敗のため中断
+2026-11-09T09:37:35.601Z 取得元が全件失敗のため中断
+2026-11-09T09:37:45.598Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-09T09:37:45.624Z site built: hist 8, trades 0
+2026-11-09T12:02:24.631Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T12:02:24.778Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T12:02:25.328Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T12:02:25.858Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T12:02:26.531Z probe google finance: HTTP 200 len=1365771 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T12:02:27.839Z probe yahoo jp: HTTP 200 len=356108 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T12:02:27.886Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-09T12:02:36.377Z 取得元が全件失敗のため中断
+2026-11-09T12:02:36.528Z 取得元が全件失敗のため中断
+2026-11-09T12:02:47.014Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-09T12:02:47.034Z site built: hist 8, trades 0
+2026-11-09T12:38:03.860Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T12:38:03.990Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T12:38:04.568Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T12:38:05.130Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T12:38:05.819Z probe google finance: HTTP 200 len=1372199 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T12:38:07.360Z probe yahoo jp: HTTP 200 len=356108 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T12:38:07.397Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-09T12:38:15.794Z 取得元が全件失敗のため中断
+2026-11-09T12:38:15.914Z 取得元が全件失敗のため中断
+2026-11-09T12:38:19.420Z warmup 12s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-09T12:38:19.439Z site built: hist 8, trades 0
+2026-11-09T16:00:31.752Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T16:00:31.796Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T16:00:32.231Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T16:00:32.652Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T16:00:33.205Z probe google finance: HTTP 200 len=1367089 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T16:00:35.090Z probe yahoo jp: HTTP 200 len=357394 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T16:00:35.143Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-09T16:00:43.464Z 取得元が全件失敗のため中断
+2026-11-09T16:00:43.554Z 取得元が全件失敗のため中断
+2026-11-09T16:00:50.826Z 投信基準価額 8/8
+2026-11-09T16:01:00.534Z warmup 25s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-09T16:01:00.568Z site built: hist 8, trades 0
+2026-11-09T22:02:32.930Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T22:02:32.973Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-09T22:02:33.459Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T22:02:33.888Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-09T22:02:34.399Z probe google finance: HTTP 200 len=1366206 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-09T22:02:36.214Z probe yahoo jp: HTTP 200 len=357393 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-09T22:02:44.562Z 取得元が全件失敗のため中断
+2026-11-09T22:02:44.625Z 取得元が全件失敗のため中断
+2026-11-09T22:02:54.110Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-09T22:02:54.145Z site built: hist 8, trades 0
+2026-11-10T06:56:26.448Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T06:56:26.519Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T06:56:27.202Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T06:56:27.667Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T06:56:28.142Z probe google finance: HTTP 200 len=1359249 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T06:56:29.406Z probe yahoo jp: HTTP 200 len=357611 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-10T06:56:29.452Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-10T06:56:37.652Z 取得元が全件失敗のため中断
+2026-11-10T06:56:37.688Z 取得元が全件失敗のため中断
+2026-11-10T06:56:46.361Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T06:56:46.388Z site built: hist 8, trades 0
+2026-11-10T09:38:11.927Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T09:38:11.990Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T09:38:12.411Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T09:38:12.896Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T09:38:13.225Z probe google finance: HTTP 200 len=1365968 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T09:38:14.881Z probe yahoo jp: HTTP 200 len=358504 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-10T09:38:14.932Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-10T09:38:23.228Z 取得元が全件失敗のため中断
+2026-11-10T09:38:23.305Z 取得元が全件失敗のため中断
+2026-11-10T09:38:32.566Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T09:38:32.597Z site built: hist 8, trades 0
+2026-11-10T11:41:40.185Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T11:41:40.239Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T11:41:40.962Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T11:41:41.432Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T11:41:41.873Z probe google finance: HTTP 200 len=1364160 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T11:41:42.826Z probe yahoo jp: HTTP 200 len=358515 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-10T11:41:42.877Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-10T11:41:51.128Z 取得元が全件失敗のため中断
+2026-11-10T11:41:51.185Z 取得元が全件失敗のため中断
+2026-11-10T11:41:59.772Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T11:41:59.805Z site built: hist 8, trades 0
+2026-11-10T12:17:24.460Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T12:17:24.504Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T12:17:25.151Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T12:17:25.893Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T12:17:26.449Z probe google finance: HTTP 200 len=1365299 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T12:17:26.985Z probe yahoo jp: HTTP 500 len=3695 :: <HTML> <HEAD> <meta http-equiv="Content-Type" content="text/html;charset=utf-8" > <!-- Title --> <TITLE> Yahoo! JAPAN - ご覧になろうとしているページは現在表示できません。 </TITLE> <!--
+2026-11-10T12:17:27.034Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-10T12:17:35.289Z 取得元が全件失敗のため中断
+2026-11-10T12:17:35.324Z 取得元が全件失敗のため中断
+2026-11-10T12:17:37.444Z warmup 10s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T12:17:37.478Z site built: hist 8, trades 0
+2026-11-10T14:45:20.155Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T14:45:20.306Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T14:45:20.871Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T14:45:21.384Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T14:45:21.797Z probe google finance: HTTP 200 len=1361507 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T14:45:23.538Z probe yahoo jp: HTTP 200 len=358403 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-10T14:45:23.575Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-10T14:45:32.065Z 取得元が全件失敗のため中断
+2026-11-10T14:45:32.215Z 取得元が全件失敗のため中断
+2026-11-10T14:45:43.744Z warmup 20s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T14:45:43.764Z site built: hist 8, trades 0
+2026-11-10T19:27:03.009Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T19:27:03.060Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-10T19:27:03.804Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T19:27:04.564Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-10T19:27:05.203Z probe google finance: HTTP 200 len=1361963 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-10T19:27:06.155Z probe yahoo jp: HTTP 200 len=358420 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-10T19:27:14.651Z 取得元が全件失敗のため中断
+2026-11-10T19:27:14.707Z 取得元が全件失敗のため中断
+2026-11-10T19:27:21.340Z 投信基準価額 8/8
+2026-11-10T19:27:30.342Z warmup 24s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-10T19:27:30.375Z site built: hist 8, trades 0
+2026-11-11T05:46:57.304Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T05:46:57.434Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T05:46:57.817Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T05:46:58.238Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T05:46:58.589Z probe google finance: HTTP 200 len=1355020 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T05:47:00.024Z probe yahoo jp: HTTP 200 len=358406 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T05:47:08.388Z 取得元が全件失敗のため中断
+2026-11-11T05:47:08.449Z 取得元が全件失敗のため中断
+2026-11-11T05:47:17.825Z scan 14:50 完了 8s: 全0/軽0/失敗40/未着手1571 売買0 regime=unknown req=60
+2026-11-11T05:47:17.843Z site built: hist 8, trades 0
+2026-11-11T09:14:11.235Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T09:14:11.280Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T09:14:11.751Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T09:14:12.239Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T09:14:12.735Z probe google finance: HTTP 200 len=1357447 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T09:14:14.380Z probe yahoo jp: HTTP 200 len=351632 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T09:14:14.431Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-11T09:14:22.679Z 取得元が全件失敗のため中断
+2026-11-11T09:14:22.715Z 取得元が全件失敗のため中断
+2026-11-11T09:14:31.885Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-11T09:14:31.918Z site built: hist 8, trades 0
+2026-11-11T11:24:34.937Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T11:24:35.090Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T11:24:35.505Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T11:24:35.904Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T11:24:36.325Z probe google finance: HTTP 200 len=1361465 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T11:24:38.169Z probe yahoo jp: HTTP 200 len=351353 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T11:24:38.215Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-11T11:24:46.489Z 取得元が全件失敗のため中断
+2026-11-11T11:24:46.537Z 取得元が全件失敗のため中断
+2026-11-11T11:24:55.793Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-11T11:24:55.821Z site built: hist 8, trades 0
+2026-11-11T11:44:02.116Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T11:44:02.178Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T11:44:02.619Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T11:44:03.074Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T11:44:03.526Z probe google finance: HTTP 200 len=1361093 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T11:44:05.186Z probe yahoo jp: HTTP 200 len=351353 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T11:44:05.229Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-11T11:44:13.565Z 取得元が全件失敗のため中断
+2026-11-11T11:44:13.641Z 取得元が全件失敗のため中断
+2026-11-11T11:44:16.307Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-11T11:44:16.333Z site built: hist 8, trades 0
+2026-11-11T14:03:55.030Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T14:03:55.126Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T14:03:55.812Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T14:03:56.480Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T14:03:57.006Z probe google finance: HTTP 200 len=1357524 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T14:03:58.066Z probe yahoo jp: HTTP 200 len=351353 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T14:03:58.118Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-11T14:04:06.385Z 取得元が全件失敗のため中断
+2026-11-11T14:04:06.423Z 取得元が全件失敗のため中断
+2026-11-11T14:04:15.000Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-11T14:04:15.033Z site built: hist 8, trades 0
+2026-11-11T19:22:32.331Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T19:22:32.374Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-11T19:22:33.069Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T19:22:33.858Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-11T19:22:34.354Z probe google finance: HTTP 200 len=1380254 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-11T19:22:35.548Z probe yahoo jp: HTTP 200 len=351387 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-11T19:22:43.829Z 取得元が全件失敗のため中断
+2026-11-11T19:22:43.876Z 取得元が全件失敗のため中断
+2026-11-11T19:22:50.335Z 投信基準価額 8/8
+2026-11-11T19:22:59.358Z warmup 24s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-11T19:22:59.393Z site built: hist 8, trades 0
+2026-11-12T06:52:42.518Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T06:52:42.698Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T06:52:43.282Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T06:52:43.850Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T06:52:44.726Z probe google finance: HTTP 200 len=1383227 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T06:52:45.796Z probe yahoo jp: HTTP 200 len=358844 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T06:52:45.856Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-12T06:52:54.326Z 取得元が全件失敗のため中断
+2026-11-12T06:52:54.500Z 取得元が全件失敗のため中断
+2026-11-12T06:53:04.852Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T06:53:04.887Z site built: hist 8, trades 0
+2026-11-12T09:42:02.344Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T09:42:02.570Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T09:42:03.157Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T09:42:03.680Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T09:42:04.230Z probe google finance: HTTP 200 len=1374838 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T09:42:05.568Z probe yahoo jp: HTTP 200 len=358850 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T09:42:05.607Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-12T09:42:14.020Z 取得元が全件失敗のため中断
+2026-11-12T09:42:14.166Z 取得元が全件失敗のため中断
+2026-11-12T09:42:24.769Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T09:42:24.788Z site built: hist 8, trades 0
+2026-11-12T11:46:07.745Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T11:46:07.839Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T11:46:08.537Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T11:46:09.295Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T11:46:09.832Z probe google finance: HTTP 200 len=1375715 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T11:46:10.779Z probe yahoo jp: HTTP 200 len=358882 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T11:46:10.823Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-12T11:46:19.039Z 取得元が全件失敗のため中断
+2026-11-12T11:46:19.085Z 取得元が全件失敗のため中断
+2026-11-12T11:46:27.608Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T11:46:27.635Z site built: hist 8, trades 0
+2026-11-12T12:19:42.489Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T12:19:42.568Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T12:19:43.017Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T12:19:43.443Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T12:19:43.846Z probe google finance: HTTP 200 len=1380136 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T12:19:45.318Z probe yahoo jp: HTTP 200 len=358903 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T12:19:45.363Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-12T12:19:53.661Z 取得元が全件失敗のため中断
+2026-11-12T12:19:53.733Z 取得元が全件失敗のため中断
+2026-11-12T12:19:56.366Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T12:19:56.392Z site built: hist 8, trades 0
+2026-11-12T15:02:20.879Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T15:02:20.936Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T15:02:21.389Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T15:02:21.884Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T15:02:22.375Z probe google finance: HTTP 200 len=1379770 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T15:02:23.741Z probe yahoo jp: HTTP 200 len=358910 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T15:02:23.791Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-12T15:02:32.124Z 取得元が全件失敗のため中断
+2026-11-12T15:02:32.204Z 取得元が全件失敗のため中断
+2026-11-12T15:02:39.186Z 投信基準価額 8/8
+2026-11-12T15:02:48.778Z warmup 25s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T15:02:48.810Z site built: hist 8, trades 0
+2026-11-12T19:40:41.732Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T19:40:41.866Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-12T19:40:42.493Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T19:40:43.068Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-12T19:40:43.698Z probe google finance: HTTP 200 len=1379026 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-12T19:40:45.067Z probe yahoo jp: HTTP 200 len=358867 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-12T19:40:53.708Z 取得元が全件失敗のため中断
+2026-11-12T19:40:53.913Z 取得元が全件失敗のため中断
+2026-11-12T19:41:04.575Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-12T19:41:04.608Z site built: hist 8, trades 0
+2026-11-13T06:12:35.678Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T06:12:35.805Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T06:12:36.316Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T06:12:36.841Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T06:12:37.472Z probe google finance: HTTP 200 len=1380889 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T06:12:38.851Z probe yahoo jp: HTTP 200 len=353037 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T06:12:47.173Z 取得元が全件失敗のため中断
+2026-11-13T06:12:47.267Z 取得元が全件失敗のため中断
+2026-11-13T06:12:56.794Z scan 15:15 完了 8s: 全0/軽0/失敗40/未着手1571 売買0 regime=unknown req=60
+2026-11-13T06:12:56.812Z site built: hist 8, trades 0
+2026-11-13T09:25:30.450Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T09:25:30.493Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T09:25:30.972Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T09:25:31.443Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T09:25:31.771Z probe google finance: HTTP 200 len=1373498 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T09:25:33.642Z probe yahoo jp: HTTP 200 len=359860 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T09:25:33.693Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-13T09:25:41.966Z 取得元が全件失敗のため中断
+2026-11-13T09:25:42.026Z 取得元が全件失敗のため中断
+2026-11-13T09:25:50.923Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-13T09:25:50.958Z site built: hist 8, trades 0
+2026-11-13T11:28:57.102Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T11:28:57.195Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T11:28:57.870Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T11:28:58.505Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T11:28:59.037Z probe google finance: HTTP 200 len=1381342 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T11:29:00.219Z probe yahoo jp: HTTP 200 len=359839 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T11:29:00.270Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-13T11:29:08.615Z 取得元が全件失敗のため中断
+2026-11-13T11:29:08.656Z 取得元が全件失敗のため中断
+2026-11-13T11:29:17.955Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-13T11:29:17.987Z site built: hist 8, trades 0
+2026-11-13T11:57:13.104Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T11:57:13.152Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T11:57:13.689Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T11:57:14.217Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T11:57:14.711Z probe google finance: HTTP 200 len=1379687 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T11:57:16.421Z probe yahoo jp: HTTP 200 len=359856 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T11:57:16.471Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-13T11:57:24.737Z 取得元が全件失敗のため中断
+2026-11-13T11:57:24.824Z 取得元が全件失敗のため中断
+2026-11-13T11:57:27.298Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-13T11:57:27.331Z site built: hist 8, trades 0
+2026-11-13T14:27:49.145Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T14:27:49.183Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T14:27:49.678Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T14:27:50.180Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T14:27:50.650Z probe google finance: HTTP 200 len=1378961 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T14:27:52.328Z probe yahoo jp: HTTP 200 len=359846 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T14:27:52.383Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-13T14:28:00.725Z 取得元が全件失敗のため中断
+2026-11-13T14:28:01.020Z 取得元が全件失敗のため中断
+2026-11-13T14:28:10.785Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-13T14:28:10.818Z site built: hist 8, trades 0
+2026-11-13T19:21:52.952Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T19:21:52.998Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-13T19:21:53.735Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T19:21:54.249Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-13T19:21:54.748Z probe google finance: HTTP 200 len=1378745 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-13T19:21:55.699Z probe yahoo jp: HTTP 200 len=359868 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-13T19:22:04.177Z 取得元が全件失敗のため中断
+2026-11-13T19:22:04.245Z 取得元が全件失敗のため中断
+2026-11-13T19:22:11.040Z 投信基準価額 8/8
+2026-11-13T19:22:19.806Z warmup 24s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-13T19:22:19.829Z site built: hist 8, trades 0
+2026-11-15T01:27:01.282Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-15T01:27:01.321Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-15T01:27:01.759Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-15T01:27:02.075Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-15T01:27:02.612Z probe google finance: HTTP 200 len=1370419 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-15T01:27:03.933Z probe yahoo jp: HTTP 200 len=352743 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-15T01:27:03.993Z backtest p10: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-15T01:27:04.009Z backtest p50: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-15T01:27:04.020Z backtest p100: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-15T01:27:04.030Z backtest p500: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-15T01:27:04.040Z backtest p1000: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-15T01:27:04.054Z site built: hist 8, trades 0
+2026-11-16T05:58:08.602Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T05:58:08.753Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T05:58:09.339Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T05:58:09.937Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T05:58:10.502Z probe google finance: HTTP 200 len=1374225 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T05:58:11.843Z probe yahoo jp: HTTP 200 len=346183 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T05:58:12.490Z universe 1571件（プライム 1547）
+2026-11-16T05:58:20.903Z 取得元が全件失敗のため中断
+2026-11-16T05:58:21.035Z 取得元が全件失敗のため中断
+2026-11-16T05:58:27.885Z 投信基準価額 8/8
+2026-11-16T05:58:38.304Z scan 15:05 完了 16s: 全0/軽0/失敗40/未着手1563 売買0 regime=unknown req=60
+2026-11-16T05:58:38.331Z site built: hist 8, trades 0
+2026-11-16T09:26:41.681Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T09:26:41.774Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T09:26:42.543Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T09:26:43.248Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T09:26:43.667Z probe google finance: HTTP 200 len=1367183 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T09:26:44.625Z probe yahoo jp: HTTP 200 len=346927 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T09:26:44.670Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-16T09:26:52.891Z 取得元が全件失敗のため中断
+2026-11-16T09:26:52.925Z 取得元が全件失敗のため中断
+2026-11-16T09:27:01.564Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-16T09:27:01.592Z site built: hist 8, trades 0
+2026-11-16T11:58:56.807Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T11:58:56.859Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T11:58:57.246Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T11:58:57.630Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T11:58:58.100Z probe google finance: HTTP 200 len=1367703 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T11:58:59.884Z probe yahoo jp: HTTP 200 len=346955 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T11:58:59.936Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-16T11:59:08.250Z 取得元が全件失敗のため中断
+2026-11-16T11:59:08.326Z 取得元が全件失敗のため中断
+2026-11-16T11:59:17.755Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-16T11:59:17.788Z site built: hist 8, trades 0
+2026-11-16T12:30:36.204Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T12:30:36.299Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T12:30:36.846Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T12:30:37.416Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T12:30:37.988Z probe google finance: HTTP 200 len=1369108 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T12:30:39.434Z probe yahoo jp: HTTP 200 len=346898 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T12:30:39.479Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-16T12:30:47.812Z 取得元が全件失敗のため中断
+2026-11-16T12:30:47.920Z 取得元が全件失敗のため中断
+2026-11-16T12:30:51.333Z warmup 12s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-16T12:30:51.360Z site built: hist 8, trades 0
+2026-11-16T15:33:45.443Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T15:33:45.581Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T15:33:46.303Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T15:33:46.981Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-16T15:33:47.701Z probe google finance: HTTP 200 len=1375218 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T15:33:48.829Z probe yahoo jp: HTTP 200 len=346897 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T15:33:48.868Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-16T15:33:57.250Z 取得元が全件失敗のため中断
+2026-11-16T15:33:57.372Z 取得元が全件失敗のため中断
+2026-11-16T15:34:04.378Z 投信基準価額 8/8
+2026-11-16T15:34:14.848Z warmup 26s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-16T15:34:14.868Z site built: hist 8, trades 0
+2026-11-16T21:45:09.811Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T21:45:09.887Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-16T21:45:20.256Z probe stooq daily: ERR fetch failed
+2026-11-16T21:45:30.752Z probe stooq quote: ERR fetch failed
+2026-11-16T21:45:31.037Z probe google finance: HTTP 200 len=1361050 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-16T21:45:32.053Z probe yahoo jp: HTTP 200 len=346978 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-16T21:45:40.463Z 取得元が全件失敗のため中断
+2026-11-16T21:45:40.538Z 取得元が全件失敗のため中断
+2026-11-16T21:45:50.882Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-16T21:45:50.907Z site built: hist 8, trades 0
+2026-11-17T07:36:06.837Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T07:36:06.899Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T07:36:07.340Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T07:36:07.774Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T07:36:08.253Z probe google finance: HTTP 200 len=1359686 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T07:36:10.095Z probe yahoo jp: HTTP 200 len=353448 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T07:36:10.146Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-17T07:36:18.473Z 取得元が全件失敗のため中断
+2026-11-17T07:36:18.536Z 取得元が全件失敗のため中断
+2026-11-17T07:36:28.583Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T07:36:28.617Z site built: hist 8, trades 0
+2026-11-17T10:32:02.023Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T10:32:02.152Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T10:32:02.651Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T10:32:03.158Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T10:32:03.592Z probe google finance: HTTP 200 len=1359806 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T10:32:05.355Z probe yahoo jp: HTTP 200 len=353341 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T10:32:05.400Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-17T10:32:13.812Z 取得元が全件失敗のため中断
+2026-11-17T10:32:13.891Z 取得元が全件失敗のため中断
+2026-11-17T10:32:23.531Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T10:32:23.561Z site built: hist 8, trades 0
+2026-11-17T12:24:02.118Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T12:24:02.167Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T12:24:02.866Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T12:24:03.518Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T12:24:04.041Z probe google finance: HTTP 200 len=1362934 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T12:24:04.994Z probe yahoo jp: HTTP 200 len=353345 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T12:24:05.038Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-17T12:24:13.257Z 取得元が全件失敗のため中断
+2026-11-17T12:24:13.299Z 取得元が全件失敗のため中断
+2026-11-17T12:24:21.879Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T12:24:21.905Z site built: hist 8, trades 0
+2026-11-17T12:51:57.135Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T12:51:57.174Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T12:52:07.589Z probe stooq daily: ERR fetch failed
+2026-11-17T12:52:18.080Z probe stooq quote: ERR fetch failed
+2026-11-17T12:52:18.602Z probe google finance: HTTP 200 len=1360943 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T12:52:19.599Z probe yahoo jp: HTTP 200 len=353361 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T12:52:19.633Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-17T12:52:27.859Z 取得元が全件失敗のため中断
+2026-11-17T12:52:27.897Z 取得元が全件失敗のため中断
+2026-11-17T12:52:30.061Z warmup 10s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T12:52:30.083Z site built: hist 8, trades 0
+2026-11-17T15:52:38.001Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T15:52:38.054Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T15:52:38.487Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T15:52:38.880Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T15:52:39.192Z probe google finance: HTTP 200 len=1360437 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T15:52:40.693Z probe yahoo jp: HTTP 200 len=353366 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T15:52:40.744Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-17T15:52:49.217Z 取得元が全件失敗のため中断
+2026-11-17T15:52:49.274Z 取得元が全件失敗のため中断
+2026-11-17T15:52:59.893Z 投信基準価額 8/8
+2026-11-17T15:53:10.124Z warmup 29s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T15:53:10.157Z site built: hist 8, trades 0
+2026-11-17T20:36:08.163Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T20:36:08.306Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-17T20:36:08.856Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T20:36:09.535Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-17T20:36:10.023Z probe google finance: HTTP 200 len=1359534 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-17T20:36:11.511Z probe yahoo jp: HTTP 200 len=353366 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-17T20:36:19.971Z 取得元が全件失敗のため中断
+2026-11-17T20:36:20.052Z 取得元が全件失敗のため中断
+2026-11-17T20:36:30.530Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-17T20:36:30.565Z site built: hist 8, trades 0
+2026-11-18T06:58:26.138Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T06:58:26.354Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T06:58:26.955Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T06:58:27.567Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T06:58:28.491Z probe google finance: HTTP 200 len=1361106 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T06:58:29.753Z probe yahoo jp: HTTP 200 len=352506 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T06:58:29.791Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-18T06:58:38.200Z 取得元が全件失敗のため中断
+2026-11-18T06:58:38.321Z 取得元が全件失敗のため中断
+2026-11-18T06:58:48.525Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T06:58:48.544Z site built: hist 8, trades 0
+2026-11-18T10:00:28.647Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T10:00:28.701Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T10:00:29.153Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T10:00:29.621Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T10:00:30.141Z probe google finance: HTTP 200 len=1357373 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T10:00:31.438Z probe yahoo jp: HTTP 200 len=352431 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T10:00:31.487Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-18T10:00:39.761Z 取得元が全件失敗のため中断
+2026-11-18T10:00:39.819Z 取得元が全件失敗のため中断
+2026-11-18T10:00:49.386Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T10:00:49.419Z site built: hist 8, trades 0
+2026-11-18T12:10:44.676Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T12:10:44.851Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T12:10:45.389Z probe stooq daily: HTTP 403 len=0 :: 
+2026-11-18T12:10:45.882Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T12:10:46.193Z probe google finance: HTTP 200 len=1360211 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T12:10:47.486Z probe yahoo jp: HTTP 200 len=352961 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T12:10:47.535Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-18T12:10:55.938Z 取得元が全件失敗のため中断
+2026-11-18T12:10:56.010Z 取得元が全件失敗のため中断
+2026-11-18T12:11:06.331Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T12:11:06.364Z site built: hist 8, trades 0
+2026-11-18T12:44:23.150Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T12:44:23.253Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T12:44:23.782Z probe stooq daily: HTTP 403 len=0 :: 
+2026-11-18T12:44:24.400Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T12:44:25.115Z probe google finance: HTTP 200 len=1359089 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T12:44:26.409Z probe yahoo jp: HTTP 200 len=352780 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T12:44:26.451Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-18T12:44:34.753Z 取得元が全件失敗のため中断
+2026-11-18T12:44:34.859Z 取得元が全件失敗のため中断
+2026-11-18T12:44:37.748Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T12:44:37.769Z site built: hist 8, trades 0
+2026-11-18T15:31:45.777Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T15:31:45.889Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T15:31:46.466Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T15:31:47.048Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-18T15:31:47.658Z probe google finance: HTTP 200 len=1360180 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T15:31:48.987Z probe yahoo jp: HTTP 200 len=352880 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T15:31:49.028Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-18T15:31:57.596Z 取得元が全件失敗のため中断
+2026-11-18T15:31:57.810Z 取得元が全件失敗のため中断
+2026-11-18T15:32:05.991Z 投信基準価額 8/8
+2026-11-18T15:32:17.691Z warmup 29s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T15:32:17.716Z site built: hist 8, trades 0
+2026-11-18T20:08:50.968Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T20:08:51.013Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-18T20:09:01.414Z probe stooq daily: ERR fetch failed
+2026-11-18T20:09:11.909Z probe stooq quote: ERR fetch failed
+2026-11-18T20:09:12.384Z probe google finance: HTTP 200 len=1360321 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-18T20:09:13.409Z probe yahoo jp: HTTP 200 len=352843 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-18T20:09:21.697Z 取得元が全件失敗のため中断
+2026-11-18T20:09:21.739Z 取得元が全件失敗のため中断
+2026-11-18T20:09:30.399Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-18T20:09:30.423Z site built: hist 8, trades 0
+2026-11-19T06:58:54.471Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T06:58:54.730Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T06:58:55.203Z probe stooq daily: HTTP 403 len=0 :: 
+2026-11-19T06:58:55.658Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T06:58:56.110Z probe google finance: HTTP 200 len=1371078 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T06:58:57.725Z probe yahoo jp: HTTP 200 len=353344 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T06:58:57.773Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-19T06:59:06.585Z 取得元が全件失敗のため中断
+2026-11-19T06:59:06.848Z 取得元が全件失敗のため中断
+2026-11-19T06:59:19.824Z warmup 22s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T06:59:19.856Z site built: hist 8, trades 0
+2026-11-19T10:10:11.579Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T10:10:11.621Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T10:10:12.338Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T10:10:12.849Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T10:10:13.507Z probe google finance: HTTP 200 len=1368689 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T10:10:14.443Z probe yahoo jp: HTTP 200 len=352352 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T10:10:14.481Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-19T10:10:22.694Z 取得元が全件失敗のため中断
+2026-11-19T10:10:22.758Z 取得元が全件失敗のため中断
+2026-11-19T10:10:31.574Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T10:10:31.598Z site built: hist 8, trades 0
+2026-11-19T12:04:28.234Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T12:04:28.411Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T12:04:28.945Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T12:04:29.513Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T12:04:30.145Z probe google finance: HTTP 200 len=1372640 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T12:04:31.869Z probe yahoo jp: HTTP 200 len=366237 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T12:04:31.915Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-19T12:04:40.375Z 取得元が全件失敗のため中断
+2026-11-19T12:04:40.511Z 取得元が全件失敗のため中断
+2026-11-19T12:04:50.737Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T12:04:50.764Z site built: hist 8, trades 0
+2026-11-19T12:36:29.408Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T12:36:29.458Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T12:36:30.184Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T12:36:30.918Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T12:36:31.523Z probe google finance: HTTP 200 len=1368024 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T12:36:32.526Z probe yahoo jp: HTTP 200 len=366244 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T12:36:32.573Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-19T12:36:40.781Z 取得元が全件失敗のため中断
+2026-11-19T12:36:40.817Z 取得元が全件失敗のため中断
+2026-11-19T12:36:42.847Z warmup 10s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T12:36:42.874Z site built: hist 8, trades 0
+2026-11-19T15:38:37.141Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T15:38:37.308Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T15:38:37.849Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T15:38:38.438Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T15:38:38.980Z probe google finance: HTTP 200 len=1373713 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T15:38:40.431Z probe yahoo jp: HTTP 200 len=366281 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T15:38:40.467Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-19T15:38:48.942Z 取得元が全件失敗のため中断
+2026-11-19T15:38:49.146Z 取得元が全件失敗のため中断
+2026-11-19T15:38:55.882Z 投信基準価額 8/8
+2026-11-19T15:39:07.282Z warmup 27s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T15:39:07.317Z site built: hist 8, trades 0
+2026-11-19T20:08:58.672Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T20:08:58.721Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-19T20:08:59.354Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T20:09:00.017Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-19T20:09:00.582Z probe google finance: HTTP 200 len=1369908 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-19T20:09:01.564Z probe yahoo jp: HTTP 200 len=366240 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-19T20:09:09.814Z 取得元が全件失敗のため中断
+2026-11-19T20:09:09.863Z 取得元が全件失敗のため中断
+2026-11-19T20:09:18.699Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-19T20:09:18.725Z site built: hist 8, trades 0
+2026-11-20T06:51:23.770Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T06:51:23.817Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T06:51:24.551Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T06:51:25.252Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T06:51:25.841Z probe google finance: HTTP 200 len=1368825 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T06:51:26.838Z probe yahoo jp: HTTP 200 len=360560 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T06:51:26.883Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-20T06:51:35.125Z 取得元が全件失敗のため中断
+2026-11-20T06:51:35.157Z 取得元が全件失敗のため中断
+2026-11-20T06:51:43.664Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T06:51:43.692Z site built: hist 8, trades 0
+2026-11-20T09:56:37.395Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T09:56:37.772Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T09:56:38.523Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T09:56:39.216Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T09:56:39.840Z probe google finance: HTTP 200 len=1370623 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T09:56:40.997Z probe yahoo jp: HTTP 200 len=360518 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T09:56:41.040Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-20T09:56:49.428Z 取得元が全件失敗のため中断
+2026-11-20T09:56:49.461Z 取得元が全件失敗のため中断
+2026-11-20T09:56:58.265Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T09:56:58.291Z site built: hist 8, trades 0
+2026-11-20T12:06:49.894Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T12:06:49.937Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T12:07:00.347Z probe stooq daily: ERR fetch failed
+2026-11-20T12:07:10.842Z probe stooq quote: ERR fetch failed
+2026-11-20T12:07:11.343Z probe google finance: HTTP 200 len=1371529 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T12:07:12.447Z probe yahoo jp: HTTP 200 len=359658 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T12:07:12.481Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-20T12:07:20.670Z 取得元が全件失敗のため中断
+2026-11-20T12:07:20.706Z 取得元が全件失敗のため中断
+2026-11-20T12:07:29.250Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T12:07:29.275Z site built: hist 8, trades 0
+2026-11-20T12:36:14.981Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T12:36:15.019Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T12:36:25.434Z probe stooq daily: ERR fetch failed
+2026-11-20T12:36:35.929Z probe stooq quote: ERR fetch failed
+2026-11-20T12:36:36.329Z probe google finance: HTTP 200 len=1369637 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T12:36:37.648Z probe yahoo jp: HTTP 200 len=359658 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T12:36:37.682Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-20T12:36:45.929Z 取得元が全件失敗のため中断
+2026-11-20T12:36:45.995Z 取得元が全件失敗のため中断
+2026-11-20T12:36:48.557Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T12:36:48.582Z site built: hist 8, trades 0
+2026-11-20T15:19:40.471Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T15:19:40.598Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T15:19:41.182Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T15:19:41.700Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T15:19:42.278Z probe google finance: HTTP 200 len=1370251 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T15:19:43.522Z probe yahoo jp: HTTP 200 len=359614 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T15:19:43.573Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-20T15:19:52.261Z 取得元が全件失敗のため中断
+2026-11-20T15:19:52.858Z 取得元が全件失敗のため中断
+2026-11-20T15:20:01.442Z 投信基準価額 8/8
+2026-11-20T15:20:11.511Z warmup 28s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T15:20:11.544Z site built: hist 8, trades 0
+2026-11-20T19:43:47.758Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T19:43:47.825Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-20T19:43:48.306Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T19:43:48.599Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-20T19:43:48.990Z probe google finance: HTTP 200 len=1368568 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-20T19:43:50.538Z probe yahoo jp: HTTP 200 len=359616 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-20T19:43:58.908Z 取得元が全件失敗のため中断
+2026-11-20T19:43:58.987Z 取得元が全件失敗のため中断
+2026-11-20T19:44:08.650Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-20T19:44:08.683Z site built: hist 8, trades 0
+2026-11-22T01:49:44.799Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-22T01:49:44.955Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-22T01:49:45.565Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-22T01:49:46.142Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-22T01:49:46.686Z probe google finance: HTTP 200 len=1368938 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-22T01:49:47.911Z probe yahoo jp: HTTP 200 len=359888 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-22T01:49:47.978Z backtest p10: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-22T01:49:47.996Z backtest p50: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-22T01:49:48.008Z backtest p100: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-22T01:49:48.019Z backtest p500: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-22T01:49:48.031Z backtest p1000: 200日 ret 0.00% maxDD 0.00% trades 0
+2026-11-22T01:49:48.049Z site built: hist 8, trades 0
+2026-11-23T07:08:14.806Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T07:08:14.922Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T07:08:15.548Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T07:08:16.113Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T07:08:16.868Z probe google finance: HTTP 200 len=1365434 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T07:08:17.997Z probe yahoo jp: HTTP 200 len=359904 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T07:08:18.038Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-23T07:08:26.415Z 取得元が全件失敗のため中断
+2026-11-23T07:08:26.522Z 取得元が全件失敗のため中断
+2026-11-23T07:08:38.077Z 投信基準価額 8/8
+2026-11-23T07:08:48.337Z warmup 30s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T07:08:48.371Z site built: hist 8, trades 0
+2026-11-23T10:38:26.232Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T10:38:26.292Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T10:38:27.004Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T10:38:27.734Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T10:38:28.284Z probe google finance: HTTP 200 len=1368477 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T10:38:29.282Z probe yahoo jp: HTTP 200 len=359793 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T10:38:29.324Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-23T10:38:37.540Z 取得元が全件失敗のため中断
+2026-11-23T10:38:37.584Z 取得元が全件失敗のため中断
+2026-11-23T10:38:45.959Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T10:38:45.985Z site built: hist 8, trades 0
+2026-11-23T13:35:17.066Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T13:35:17.164Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T13:35:17.793Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T13:35:18.209Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T13:35:18.883Z probe google finance: HTTP 200 len=1367972 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T13:35:19.917Z probe yahoo jp: HTTP 200 len=359879 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T13:35:19.962Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-23T13:35:28.387Z 取得元が全件失敗のため中断
+2026-11-23T13:35:28.481Z 取得元が全件失敗のため中断
+2026-11-23T13:35:39.154Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T13:35:39.183Z site built: hist 8, trades 0
+2026-11-23T14:10:16.908Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T14:10:16.956Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T14:10:17.686Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T14:10:18.350Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T14:10:18.831Z probe google finance: HTTP 200 len=1367575 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T14:10:19.720Z probe yahoo jp: HTTP 200 len=359879 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T14:10:19.770Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-23T14:10:28.080Z 取得元が全件失敗のため中断
+2026-11-23T14:10:28.309Z 取得元が全件失敗のため中断
+2026-11-23T14:10:31.199Z warmup 11s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T14:10:31.232Z site built: hist 8, trades 0
+2026-11-23T17:56:32.250Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T17:56:32.292Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T17:56:32.988Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T17:56:33.509Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T17:56:34.035Z probe google finance: HTTP 200 len=1369719 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T17:56:35.049Z probe yahoo jp: HTTP 200 len=359917 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T17:56:35.688Z universe 1571件（プライム 1547）
+2026-11-23T17:56:35.690Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-23T17:56:43.869Z 取得元が全件失敗のため中断
+2026-11-23T17:56:43.914Z 取得元が全件失敗のため中断
+2026-11-23T17:56:50.142Z 投信基準価額 8/8
+2026-11-23T17:56:59.048Z warmup 23s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T17:56:59.071Z site built: hist 8, trades 0
+2026-11-23T23:33:01.567Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T23:33:01.675Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-23T23:33:02.079Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T23:33:02.472Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-23T23:33:02.782Z probe google finance: HTTP 200 len=1368637 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-23T23:33:04.294Z probe yahoo jp: HTTP 200 len=355594 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-23T23:33:12.575Z 取得元が全件失敗のため中断
+2026-11-23T23:33:12.645Z 取得元が全件失敗のため中断
+2026-11-23T23:33:21.856Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-23T23:33:21.883Z site built: hist 8, trades 0
+2026-11-24T09:32:18.757Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T09:32:18.806Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T09:32:19.463Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T09:32:20.148Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T09:32:20.806Z probe google finance: HTTP 200 len=1366317 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T09:32:21.978Z probe yahoo jp: HTTP 200 len=359688 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T09:32:22.028Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-24T09:32:30.312Z 取得元が全件失敗のため中断
+2026-11-24T09:32:30.399Z 取得元が全件失敗のため中断
+2026-11-24T09:32:39.627Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T09:32:39.661Z site built: hist 8, trades 0
+2026-11-24T12:21:33.113Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T12:21:33.160Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T12:21:33.877Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T12:21:34.359Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T12:21:34.837Z probe google finance: HTTP 200 len=1366066 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T12:21:35.808Z probe yahoo jp: HTTP 200 len=359677 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T12:21:35.854Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-24T12:21:44.149Z 取得元が全件失敗のため中断
+2026-11-24T12:21:44.233Z 取得元が全件失敗のため中断
+2026-11-24T12:21:53.455Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T12:21:53.488Z site built: hist 8, trades 0
+2026-11-24T14:13:01.836Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T14:13:01.884Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T14:13:12.284Z probe stooq daily: ERR fetch failed
+2026-11-24T14:13:22.780Z probe stooq quote: ERR fetch failed
+2026-11-24T14:13:23.259Z probe google finance: HTTP 200 len=1367609 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T14:13:24.238Z probe yahoo jp: HTTP 200 len=359679 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T14:13:24.273Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-24T14:13:32.518Z 取得元が全件失敗のため中断
+2026-11-24T14:13:32.558Z 取得元が全件失敗のため中断
+2026-11-24T14:13:41.393Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T14:13:41.417Z site built: hist 8, trades 0
+2026-11-24T14:38:32.276Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T14:38:32.401Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T14:38:33.004Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T14:38:33.546Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T14:38:34.084Z probe google finance: HTTP 200 len=1365838 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T14:38:35.875Z probe yahoo jp: HTTP 200 len=359675 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T14:38:35.914Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-24T14:38:44.358Z 取得元が全件失敗のため中断
+2026-11-24T14:38:44.690Z 取得元が全件失敗のため中断
+2026-11-24T14:38:49.255Z warmup 13s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T14:38:49.276Z site built: hist 8, trades 0
+2026-11-24T17:29:58.366Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T17:29:58.458Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T17:29:58.861Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T17:29:59.267Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T17:29:59.828Z probe google finance: HTTP 200 len=1368994 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T17:30:01.163Z probe yahoo jp: HTTP 200 len=359745 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T17:30:01.211Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-24T17:30:09.543Z 取得元が全件失敗のため中断
+2026-11-24T17:30:09.631Z 取得元が全件失敗のため中断
+2026-11-24T17:30:16.685Z 投信基準価額 8/8
+2026-11-24T17:30:27.120Z warmup 26s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T17:30:27.153Z site built: hist 8, trades 0
+2026-11-24T22:02:20.139Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T22:02:20.183Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-24T22:02:20.864Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T22:02:21.520Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-24T22:02:21.941Z probe google finance: HTTP 200 len=1368030 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-24T22:02:23.001Z probe yahoo jp: HTTP 200 len=359701 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-24T22:02:31.364Z 取得元が全件失敗のため中断
+2026-11-24T22:02:31.452Z 取得元が全件失敗のため中断
+2026-11-24T22:02:41.713Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-24T22:02:41.746Z site built: hist 8, trades 0
+2026-11-25T08:02:31.981Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T08:02:32.037Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T08:02:42.399Z probe stooq daily: ERR fetch failed
+2026-11-25T08:02:52.895Z probe stooq quote: ERR fetch failed
+2026-11-25T08:02:53.329Z probe google finance: HTTP 200 len=1367848 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T08:02:54.810Z probe yahoo jp: HTTP 200 len=359626 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T08:02:54.867Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-25T08:03:03.118Z 取得元が全件失敗のため中断
+2026-11-25T08:03:03.156Z 取得元が全件失敗のため中断
+2026-11-25T08:03:12.365Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T08:03:12.401Z site built: hist 8, trades 0
+2026-11-25T11:08:16.890Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T11:08:17.021Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T11:08:17.676Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T11:08:18.277Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T11:08:18.887Z probe google finance: HTTP 200 len=1369866 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T11:08:20.030Z probe yahoo jp: HTTP 200 len=359535 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T11:08:20.081Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-25T11:08:28.433Z 取得元が全件失敗のため中断
+2026-11-25T11:08:28.537Z 取得元が全件失敗のため中断
+2026-11-25T11:08:39.453Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T11:08:39.484Z site built: hist 8, trades 0
+2026-11-25T13:25:46.465Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T13:25:46.507Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T13:25:47.230Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T13:25:48.000Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T13:25:54.423Z probe google finance: HTTP 200 len=1368367 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T13:25:55.496Z probe yahoo jp: HTTP 200 len=358997 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T13:25:55.549Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-25T13:26:03.806Z 取得元が全件失敗のため中断
+2026-11-25T13:26:03.850Z 取得元が全件失敗のため中断
+2026-11-25T13:26:12.805Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T13:26:12.836Z site built: hist 8, trades 0
+2026-11-25T13:58:51.983Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T13:58:52.127Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T13:58:52.723Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T13:58:53.300Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T13:58:53.782Z probe google finance: HTTP 200 len=1369407 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T13:58:55.092Z probe yahoo jp: HTTP 200 len=358997 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T13:58:55.135Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-25T13:59:03.805Z 取得元が全件失敗のため中断
+2026-11-25T13:59:03.943Z 取得元が全件失敗のため中断
+2026-11-25T13:59:07.919Z warmup 13s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T13:59:07.947Z site built: hist 8, trades 0
+2026-11-25T17:04:33.814Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T17:04:34.013Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T17:04:34.551Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T17:04:35.094Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T17:04:35.641Z probe google finance: HTTP 200 len=1370615 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T17:04:36.904Z probe yahoo jp: HTTP 200 len=359024 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T17:04:36.949Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-25T17:04:45.487Z 取得元が全件失敗のため中断
+2026-11-25T17:04:45.647Z 取得元が全件失敗のため中断
+2026-11-25T17:04:52.692Z 投信基準価額 8/8
+2026-11-25T17:05:04.018Z warmup 27s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T17:05:04.050Z site built: hist 8, trades 0
+2026-11-25T21:17:00.727Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T21:17:00.800Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-25T21:17:01.271Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T21:17:01.704Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-25T21:17:02.205Z probe google finance: HTTP 200 len=1370894 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-25T21:17:03.577Z probe yahoo jp: HTTP 200 len=359023 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-25T21:17:11.980Z 取得元が全件失敗のため中断
+2026-11-25T21:17:12.042Z 取得元が全件失敗のため中断
+2026-11-25T21:17:21.697Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-25T21:17:21.730Z site built: hist 8, trades 0
+2026-11-26T07:53:53.058Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T07:53:53.230Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T07:53:53.839Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T07:53:54.416Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T07:53:55.054Z probe google finance: HTTP 200 len=1367517 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T07:53:55.799Z probe yahoo jp: HTTP 500 len=3697 :: <HTML> <HEAD> <meta http-equiv="Content-Type" content="text/html;charset=utf-8" > <!-- Title --> <TITLE> Yahoo! JAPAN - ご覧になろうとしているページは現在表示できません。 </TITLE> <!--
+2026-11-26T07:53:55.840Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-26T07:54:04.205Z 取得元が全件失敗のため中断
+2026-11-26T07:54:04.301Z 取得元が全件失敗のため中断
+2026-11-26T07:54:15.044Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T07:54:15.070Z site built: hist 8, trades 0
+2026-11-26T10:43:50.009Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T10:43:50.055Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T10:43:50.836Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T10:43:51.602Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T10:43:52.106Z probe google finance: HTTP 200 len=1371618 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T10:43:53.064Z probe yahoo jp: HTTP 200 len=359664 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-26T10:43:53.119Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-26T10:44:01.364Z 取得元が全件失敗のため中断
+2026-11-26T10:44:01.448Z 取得元が全件失敗のため中断
+2026-11-26T10:44:10.959Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T10:44:10.991Z site built: hist 8, trades 0
+2026-11-26T13:04:55.684Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T13:04:55.731Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T13:04:56.396Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T13:04:57.112Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T13:04:57.653Z probe google finance: HTTP 200 len=1371698 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T13:04:58.714Z probe yahoo jp: HTTP 200 len=359905 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-26T13:04:58.764Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-26T13:05:07.100Z 取得元が全件失敗のため中断
+2026-11-26T13:05:07.187Z 取得元が全件失敗のため中断
+2026-11-26T13:05:16.598Z warmup 18s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T13:05:16.631Z site built: hist 8, trades 0
+2026-11-26T13:38:41.594Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T13:38:41.801Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T13:38:42.376Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T13:38:42.750Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T13:38:43.306Z probe google finance: HTTP 200 len=1371381 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T13:38:44.895Z probe yahoo jp: HTTP 200 len=359925 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-26T13:38:44.962Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-26T13:38:53.385Z 取得元が全件失敗のため中断
+2026-11-26T13:38:53.515Z 取得元が全件失敗のため中断
+2026-11-26T13:38:57.699Z warmup 13s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T13:38:57.722Z site built: hist 8, trades 0
+2026-11-26T16:45:15.945Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T16:45:15.993Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T16:45:16.703Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T16:45:17.438Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T16:45:17.882Z probe google finance: HTTP 200 len=1366582 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T16:45:18.813Z probe yahoo jp: HTTP 200 len=359946 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-26T16:45:18.860Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-26T16:45:27.108Z 取得元が全件失敗のため中断
+2026-11-26T16:45:27.200Z 取得元が全件失敗のため中断
+2026-11-26T16:45:33.611Z 投信基準価額 8/8
+2026-11-26T16:45:43.288Z warmup 24s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T16:45:43.355Z site built: hist 8, trades 0
+2026-11-26T21:05:13.355Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T21:05:13.544Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-26T21:05:14.147Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T21:05:14.730Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-26T21:05:15.322Z probe google finance: HTTP 200 len=1370355 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-26T21:05:16.647Z probe yahoo jp: HTTP 200 len=359902 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-26T21:05:25.207Z 取得元が全件失敗のため中断
+2026-11-26T21:05:25.364Z 取得元が全件失敗のため中断
+2026-11-26T21:05:36.224Z warmup 20s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-26T21:05:36.244Z site built: hist 8, trades 0
+2026-11-27T07:54:39.590Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T07:54:39.637Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T07:54:40.095Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T07:54:40.558Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T07:54:40.898Z probe google finance: HTTP 200 len=1368241 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T07:54:42.405Z probe yahoo jp: HTTP 200 len=360115 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T07:54:42.455Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-27T07:54:50.670Z 取得元が全件失敗のため中断
+2026-11-27T07:54:50.712Z 取得元が全件失敗のため中断
+2026-11-27T07:54:59.766Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T07:54:59.798Z site built: hist 8, trades 0
+2026-11-27T10:45:20.488Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T10:45:20.532Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T10:45:20.969Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T10:45:21.438Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T10:45:21.882Z probe google finance: HTTP 200 len=1370306 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T10:45:23.532Z probe yahoo jp: HTTP 200 len=360089 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T10:45:23.583Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-27T10:45:31.875Z 取得元が全件失敗のため中断
+2026-11-27T10:45:31.931Z 取得元が全件失敗のため中断
+2026-11-27T10:45:40.808Z warmup 17s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T10:45:40.840Z site built: hist 8, trades 0
+2026-11-27T13:02:08.810Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T13:02:08.936Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T13:02:09.532Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T13:02:10.109Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T13:02:10.689Z probe google finance: HTTP 200 len=1369356 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T13:02:11.992Z probe yahoo jp: HTTP 200 len=352599 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T13:02:12.031Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-27T13:02:20.465Z 取得元が全件失敗のため中断
+2026-11-27T13:02:20.560Z 取得元が全件失敗のため中断
+2026-11-27T13:02:31.392Z warmup 19s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T13:02:31.416Z site built: hist 8, trades 0
+2026-11-27T13:34:15.007Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T13:34:15.124Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T13:34:15.789Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T13:34:16.413Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T13:34:16.887Z probe google finance: HTTP 200 len=1369158 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T13:34:18.360Z probe yahoo jp: HTTP 200 len=352556 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T13:34:18.404Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-27T13:34:26.775Z 取得元が全件失敗のため中断
+2026-11-27T13:34:26.895Z 取得元が全件失敗のため中断
+2026-11-27T13:34:30.305Z warmup 12s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T13:34:30.332Z site built: hist 8, trades 0
+2026-11-27T16:31:38.781Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T16:31:38.835Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T16:31:39.582Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T16:31:40.245Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T16:31:40.663Z probe google finance: HTTP 200 len=1363277 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T16:31:41.795Z probe yahoo jp: HTTP 200 len=352588 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T16:31:41.847Z 取引時間外: 履歴の温め（売買判定はしない）
+2026-11-27T16:31:50.111Z 取得元が全件失敗のため中断
+2026-11-27T16:31:50.157Z 取得元が全件失敗のため中断
+2026-11-27T16:31:56.438Z 投信基準価額 8/8
+2026-11-27T16:32:05.256Z warmup 23s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T16:32:05.289Z site built: hist 8, trades 0
+2026-11-27T20:49:55.237Z probe yahoo q1 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T20:49:55.273Z probe yahoo q2 v8: HTTP 429 len=19 :: Too Many Requests 
+2026-11-27T20:49:55.770Z probe stooq daily: HTTP 403 len=226 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T20:49:56.228Z probe stooq quote: HTTP 404 len=271 :: <meta charset=utf-8><title>Stooq</title><center style=font-family:arial;margin-top:50px><p><a href=/><img src=//static.stooq.com/stooq.svg height=68></a><p styl
+2026-11-27T20:49:56.721Z probe google finance: HTTP 200 len=1368865 :: <!doctype html><html lang="en-US" dir="ltr"><head><base href="https://www.google.com/finance/"><link rel="preconnect" href="//www.gstatic.com"><meta name="refer
+2026-11-27T20:49:58.123Z probe yahoo jp: HTTP 200 len=352562 :: <!DOCTYPE html><html lang="ja" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-
+2026-11-27T20:50:06.497Z 取得元が全件失敗のため中断
+2026-11-27T20:50:06.554Z 取得元が全件失敗のため中断
+2026-11-27T20:50:18.091Z warmup 20s: 全履歴0/軽量0/失敗40/未着手8
+2026-11-27T20:50:18.126Z site built: hist 8, trades 0
